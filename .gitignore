@@ -1,0 +1,33 @@
+# 神迹输入法项目 .gitignore
+
+# 忽略大型词典文件
+app/src/main/assets/cn_dicts/*.dict.yaml
+app/src/main/assets/cn_dicts/*.realm
+
+# 忽略构建文件
+app/build/
+build/
+.gradle/
+
+# IDE相关文件
+.idea/
+*.iml
+.DS_Store
+local.properties
+
+# 日志文件
+*.log
+
+# APK文件
+*.apk
+*.aab
+
+# 临时文件
+*.tmp
+.externalNativeBuild/
+.cxx/
+
+# 输出文件
+out/
+release/
+debug/ 
