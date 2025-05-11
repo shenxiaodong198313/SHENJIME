@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#E0E0E0">
+    
+    <!-- 候选词区域 -->
+    <LinearLayout
+        android:id="@+id/candidates_layout"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:background="#F5F5F5"
+        android:gravity="center_vertical">
+        
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none">
+            
+            <LinearLayout
+                android:id="@+id/candidates_container"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:padding="5dp">
+                
+                <!-- 候选词将动态添加 -->
+                
+            </LinearLayout>
+            
+        </HorizontalScrollView>
+        
+    </LinearLayout>
+    
+    <!-- 键盘视图 -->
+    <android.inputmethodservice.KeyboardView
+        android:id="@+id/keyboard_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/candidates_layout"
+        android:background="#CFCFCF"
+        android:keyPreviewLayout="@layout/key_preview"
+        android:keyPreviewOffset="0dp"
+        android:keyPreviewHeight="80dp" />
+
+</RelativeLayout> 

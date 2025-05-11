@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/candidate_item.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/candidate_item.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/activity_main.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/keyboard_view.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/keyboard_view.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/key_preview.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/key_preview.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/activity_log_detail.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_log_detail.xml"
+    }
+]

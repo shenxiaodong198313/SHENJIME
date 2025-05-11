@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="key_text">#333333</color>
+    <color name="keyboard_background">#E0E0E0</color>
+    <color name="keyboard_key_normal">#FFFFFF</color>
+    <color name="keyboard_key_pressed">#BBBBBB</color>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="white">#FFFFFFFF</color>
+    <string name="app_name">神迹</string>
+    <string name="copy_log">复制日志内容</string>
+    <string name="help_text">请在系统设置中启用"神迹输入法"，并选择作为默认输入法使用。</string>
+    <string name="ime_name">神迹输入法</string>
+    <string name="ime_settings">输入法设置</string>
+    <string name="ime_status">输入法状态: 未启用</string>
+    <string name="log_copied">日志内容已复制到剪贴板</string>
+    <string name="log_details">日志详情</string>
+    <string name="no_logs">没有发现日志文件</string>
+    <string name="view_logs">查看日志</string>
+    <style name="Theme.SHENJI" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+        
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        
+    </style>
+</resources>
