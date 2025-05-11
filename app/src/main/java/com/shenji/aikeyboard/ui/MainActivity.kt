@@ -3,6 +3,7 @@ package com.shenji.aikeyboard.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Looper
 import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -257,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 
                 // 在主线程显示错误
-                lifecycleScope.launch(Dispatchers.Main) {
+                updateUIThreadSafe {
                     binding.pbDictExport.isIndeterminate = false
                     binding.pbDictExport.progress = 0
                     binding.tvDictStatus.text = "处理失败: ${exception.message}\n" +
@@ -358,6 +359,20 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
+     * 安全地在主线程更新UI
+     * 无论调用来自哪个线程，都确保UI操作在主线程执行
+     */
+    private fun updateUIThreadSafe(action: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            // 当前已在主线程，直接执行
+            action()
+        } else {
+            // 当前在非主线程，切换到主线程
+            runOnUiThread(action)
+        }
+    }
+    
+    /**
      * 合并词典
      */
     private fun mergeDictionaries() {
@@ -424,8 +439,8 @@ class MainActivity : AppCompatActivity() {
                     Timber.e(logEx, "写入错误日志失败")
                 }
                 
-                // 在主线程显示错误
-                lifecycleScope.launch(Dispatchers.Main) {
+                // 在主线程显示错误（使用更安全的方式）
+                updateUIThreadSafe {
                     binding.pbDictExport.isIndeterminate = false
                     binding.pbDictExport.progress = 0
                     binding.tvDictStatus.text = "合并失败: ${exception.message}\n" +
@@ -462,7 +477,7 @@ class MainActivity : AppCompatActivity() {
                     // 开始合并
                     val outputFile = dictionaryManager.mergeAllDictionaries { progress ->
                         // 更新进度条和进度文本
-                        withContext(Dispatchers.Main) {
+                        updateUIThreadSafe {
                             binding.pbDictExport.progress = progress
                             binding.tvDictStatus.text = "合并中: $progress%"
                             
@@ -480,7 +495,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     
                     // 合并完成，更新UI
-                    withContext(Dispatchers.Main) {
+                    updateUIThreadSafe {
                         binding.tvDictStatus.text = "合并成功!\n" +
                                 "文件路径: $outputFile"
                         binding.btnCancelExport.visibility = View.GONE
@@ -488,7 +503,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) {
-                        withContext(Dispatchers.Main) {
+                        updateUIThreadSafe {
                             binding.tvDictStatus.text = "合并已取消"
                             binding.pbDictExport.progress = 0
                             enableAllButtons()
@@ -498,14 +513,18 @@ class MainActivity : AppCompatActivity() {
                     }
                 } finally {
                     // 关闭屏幕常亮
-                    window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    updateUIThreadSafe {
+                        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    }
                 }
             }
             
             // 设置取消按钮
             binding.btnCancelExport.setOnClickListener {
                 currentJob?.cancel()
-                binding.tvDictStatus.text = "正在取消合并..."
+                updateUIThreadSafe {
+                    binding.tvDictStatus.text = "正在取消合并..."
+                }
             }
             
         } catch (e: Exception) {
@@ -535,36 +554,40 @@ class MainActivity : AppCompatActivity() {
      * 禁用所有按钮
      */
     private fun disableAllButtons() {
-        binding.btnSettings.isEnabled = false
-        binding.btnLogs.isEnabled = false
-        binding.btnDictManager.isEnabled = false
-        binding.btnProcessChars.isEnabled = false
-        binding.btnProcessBase1.isEnabled = false
-        binding.btnProcessBase2.isEnabled = false
-        binding.btnProcessBase3.isEnabled = false
-        binding.btnProcessBase4.isEnabled = false
-        binding.btnProcessBase5.isEnabled = false
-        binding.btnProcessBase6.isEnabled = false
-        binding.btnProcessBase7.isEnabled = false
-        binding.btnMergeDictionaries.isEnabled = false
+        updateUIThreadSafe {
+            binding.btnSettings.isEnabled = false
+            binding.btnLogs.isEnabled = false
+            binding.btnDictManager.isEnabled = false
+            binding.btnProcessChars.isEnabled = false
+            binding.btnProcessBase1.isEnabled = false
+            binding.btnProcessBase2.isEnabled = false
+            binding.btnProcessBase3.isEnabled = false
+            binding.btnProcessBase4.isEnabled = false
+            binding.btnProcessBase5.isEnabled = false
+            binding.btnProcessBase6.isEnabled = false
+            binding.btnProcessBase7.isEnabled = false
+            binding.btnMergeDictionaries.isEnabled = false
+        }
     }
     
     /**
      * 启用所有按钮
      */
     private fun enableAllButtons() {
-        binding.btnSettings.isEnabled = true
-        binding.btnLogs.isEnabled = true
-        binding.btnDictManager.isEnabled = true
-        binding.btnProcessChars.isEnabled = true
-        binding.btnProcessBase1.isEnabled = true
-        binding.btnProcessBase2.isEnabled = true
-        binding.btnProcessBase3.isEnabled = true
-        binding.btnProcessBase4.isEnabled = true
-        binding.btnProcessBase5.isEnabled = true
-        binding.btnProcessBase6.isEnabled = true
-        binding.btnProcessBase7.isEnabled = true
-        binding.btnMergeDictionaries.isEnabled = true
+        updateUIThreadSafe {
+            binding.btnSettings.isEnabled = true
+            binding.btnLogs.isEnabled = true
+            binding.btnDictManager.isEnabled = true
+            binding.btnProcessChars.isEnabled = true
+            binding.btnProcessBase1.isEnabled = true
+            binding.btnProcessBase2.isEnabled = true
+            binding.btnProcessBase3.isEnabled = true
+            binding.btnProcessBase4.isEnabled = true
+            binding.btnProcessBase5.isEnabled = true
+            binding.btnProcessBase6.isEnabled = true
+            binding.btnProcessBase7.isEnabled = true
+            binding.btnMergeDictionaries.isEnabled = true
+        }
     }
     
     /**
@@ -750,7 +773,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 
                 // 在主线程显示错误
-                lifecycleScope.launch(Dispatchers.Main) {
+                updateUIThreadSafe {
                     binding.pbDictExport.isIndeterminate = false
                     binding.pbDictExport.progress = 0
                     binding.tvDictStatus.text = "导出失败: ${exception.message}\n" +

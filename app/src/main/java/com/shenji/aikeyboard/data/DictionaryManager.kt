@@ -540,30 +540,39 @@ class DictionaryManager private constructor() {
     
     /**
      * 超低内存合并多个临时Trie树文件
+     * @param tempDir 临时文件目录
+     * @param tempFiles 需要合并的临时文件列表
+     * @param numWorkers 工作线程数
+     * @param progressCallback 进度回调函数
+     * @return 合并后的文件
      */
     private suspend fun mergeWithUltraLowMemory(
         tempDir: File,
         tempFiles: List<File>,
-        numWorkers: Int,
+        numWorkers: Int = 2,
         progressCallback: suspend (Int) -> Unit
     ): File {
-        val mergedFile = File(tempDir, "merged_trie.bin")
-        val mergedTree = TrieTree()
-        
         addLog("开始超低内存合并${tempFiles.size}个临时Trie树文件...")
         
-        // 增强的批处理逻辑，先对文件进行分组
-        val effectiveWorkers = numWorkers.coerceAtLeast(1).coerceAtMost(4) // 限制最大工作线程数为4
-        val fileGroups = tempFiles.chunked((tempFiles.size + effectiveWorkers - 1) / effectiveWorkers)
+        // 确保临时目录存在
+        if (!tempDir.exists()) {
+            tempDir.mkdirs()
+        }
         
-        addLog("将${tempFiles.size}个文件分成${fileGroups.size}组进行处理，每组约${if (fileGroups.isNotEmpty()) fileGroups[0].size else 0}个文件")
+        // 记录开始时间
+        val startTime = System.currentTimeMillis()
         
-        var processedGroups = 0
+        // 将所有临时文件分成更小的组，每组最多4个文件
+        // 减小组大小，降低内存需求
+        val maxFilesPerGroup = 3  // 从4减少到3
+        val fileGroups = tempFiles.chunked(maxFilesPerGroup)
+        
+        addLog("文件分成${fileGroups.size}组，每组最多${maxFilesPerGroup}个文件")
+        
+        val intermediateFiles = mutableListOf<File>()
         var totalProcessedFiles = 0
         
         // 先处理每个组内的文件，生成中间合并文件
-        val intermediateFiles = mutableListOf<File>()
-        
         for ((groupIndex, group) in fileGroups.withIndex()) {
             addLog("处理文件组 ${groupIndex + 1}/${fileGroups.size}，包含${group.size}个文件")
             
@@ -581,7 +590,7 @@ class DictionaryManager private constructor() {
                     val words = tree.getAllWords()
                     
                     // 分小批次将词条添加到组合并树中
-                    val wordBatchSize = 200 // 增加批次大小
+                    val wordBatchSize = 100 // 从200减少到100，降低每批内存占用
                     val wordBatches = words.chunked(wordBatchSize)
                     
                     for (wordBatch in wordBatches) {
@@ -606,13 +615,12 @@ class DictionaryManager private constructor() {
                         progressCallback(progress)
                     }
                     
-                    // 每处理几个文件执行一次GC
-                    if (processedFilesInGroup % 5 == 0) {
-                        System.gc()
-                        delay(100)
-                    }
+                    // 每处理完一个文件执行一次GC
+                    System.gc()
+                    delay(200)
+                    
                 } catch (e: Exception) {
-                    addLog("处理文件失败: ${e.message}，跳过此文件")
+                    addLog("合并文件失败: ${e.message}，尝试继续处理其他文件")
                     Timber.e(e, "合并文件失败: ${e.message}")
                 }
             }
@@ -622,18 +630,22 @@ class DictionaryManager private constructor() {
             saveTreeToFile(groupTree, intermediateFile)
             intermediateFiles.add(intermediateFile)
             
-            // 清空组树，释放内存
+            // 清空组合并树，释放内存
             groupTree.clear()
             System.gc()
-            delay(300)
+            delay(300)  // 增加延迟，给GC更多时间
             
-            processedGroups++
             addLog("完成文件组 ${groupIndex + 1}/${fileGroups.size} 的合并，生成中间文件: ${intermediateFile.name}")
         }
         
         // 最后合并所有中间文件
         addLog("开始合并${intermediateFiles.size}个中间文件...")
         
+        // 最终的合并树
+        val mergedTree = TrieTree()
+        val mergedFile = File(tempDir, "merged_result.bin")
+        
+        // 处理中间文件
         for ((index, file) in intermediateFiles.withIndex()) {
             try {
                 // 加载中间文件
@@ -643,7 +655,7 @@ class DictionaryManager private constructor() {
                 val words = tree.getAllWords()
                 
                 // 分大批次将词条添加到最终合并树中
-                val wordBatchSize = 500 // 使用更大的批次
+                val wordBatchSize = 200 // 从500减少到200
                 val wordBatches = words.chunked(wordBatchSize)
                 
                 for (wordBatch in wordBatches) {
@@ -653,6 +665,12 @@ class DictionaryManager private constructor() {
                     
                     // 让出线程时间
                     yield()
+                    
+                    // 每处理50个批次，执行一次GC
+                    if (wordBatches.indexOf(wordBatch) % 50 == 0) {
+                        System.gc()
+                        delay(100)
+                    }
                 }
                 
                 // 清空源树，帮助GC
@@ -665,7 +683,7 @@ class DictionaryManager private constructor() {
                 
                 // 每处理一个文件执行一次GC
                 System.gc()
-                delay(200)
+                delay(300)  // 增加延迟
                 
             } catch (e: Exception) {
                 addLog("处理中间文件失败: ${e.message}，尝试继续处理其他文件")
@@ -683,15 +701,19 @@ class DictionaryManager private constructor() {
         System.gc()
         
         // 删除中间文件
-        for (file in intermediateFiles) {
+        intermediateFiles.forEach { 
             try {
-                file.delete()
+                it.delete()
             } catch (e: Exception) {
                 Timber.e(e, "删除中间文件失败: ${e.message}")
             }
         }
         
+        val endTime = System.currentTimeMillis()
+        val timeCost = endTime - startTime
         addLog("临时Trie树文件合并完成，最终文件: ${mergedFile.name}")
+        addLog("合并耗时: ${formatTime(timeCost)}")
+        
         return mergedFile
     }
     
@@ -1016,82 +1038,148 @@ class DictionaryManager private constructor() {
         
         addLog("开始合并所有词典文件")
         
-        // 记录开始时间
-        val startTime = System.currentTimeMillis()
-        
-        // 查找所有需要合并的词典文件
-        val dictFiles = mutableListOf<File>()
-        
-        // 查找base词典子集文件
-        for (i in 0..6) {
-            val file = File(exportDir, "base_subset${i+1}_trie.bin")
-            if (file.exists()) {
-                dictFiles.add(file)
-                addLog("找到base词典子集${i+1}文件: ${file.name}")
-            } else {
-                addLog("警告: 未找到base词典子集${i+1}文件")
-            }
-        }
-        
-        // 查找chars词典文件
-        val charsFile = File(exportDir, "chars_trie.bin")
-        if (charsFile.exists()) {
-            dictFiles.add(charsFile)
-            addLog("找到chars词典文件: ${charsFile.name}")
-        } else {
-            addLog("警告: 未找到chars词典文件")
-        }
-        
-        // 检查是否有足够的文件需要合并
-        if (dictFiles.size <= 1) {
-            addLog("错误: 没有足够的词典文件需要合并，至少需要2个文件")
-            throw IllegalStateException("没有足够的词典文件需要合并，至少需要2个文件")
-        }
-        
-        addLog("共找到${dictFiles.size}个词典文件需要合并")
-        progressCallback(10)
-        
-        // 复制所有文件到临时目录
-        val tempFiles = mutableListOf<File>()
-        for ((index, file) in dictFiles.withIndex()) {
-            val tempFile = File(tempDir, "dict_${index}.bin")
-            file.copyTo(tempFile, overwrite = true)
-            tempFiles.add(tempFile)
+        try {
+            // 主动触发内存回收
+            addLog("执行初始内存清理...")
+            System.gc()
+            delay(1000)  // 给GC足够时间
             
-            // 更新进度
-            val progress = 10 + ((index * 20) / dictFiles.size)
-            progressCallback(progress)
-        }
-        
-        addLog("所有词典文件已复制到临时目录")
-        progressCallback(30)
-        
-        // 使用超低内存模式合并所有临时文件
-        val mergedFile = mergeWithUltraLowMemory(
-            tempDir = tempDir,
-            tempFiles = tempFiles,
-            numWorkers = 2,
-            progressCallback = { progress ->
-                val adjustedProgress = 30 + ((progress * 60) / 100)
-                progressCallback(adjustedProgress)
+            // 记录开始时间
+            val startTime = System.currentTimeMillis()
+            
+            // 查找所有需要合并的词典文件
+            val dictFiles = mutableListOf<File>()
+            
+            // 查找base词典子集文件，分批次处理
+            val baseFiles = mutableListOf<File>()
+            for (i in 0..6) {
+                val file = File(exportDir, "base_subset${i+1}_trie.bin")
+                if (file.exists()) {
+                    baseFiles.add(file)
+                    addLog("找到base词典子集${i+1}文件: ${file.name}")
+                } else {
+                    addLog("警告: 未找到base词典子集${i+1}文件")
+                }
             }
-        )
-        
-        // 复制到最终位置
-        val outputFile = File(exportDir, "shenji_dict_trie.bin")
-        mergedFile.copyTo(outputFile, overwrite = true)
-        
-        // 清理临时文件
-        tempDir.deleteRecursively()
-        
-        val endTime = System.currentTimeMillis()
-        val timeCost = endTime - startTime
-        addLog("所有词典合并完成，耗时: ${formatTime(timeCost)}")
-        addLog("最终词典文件: ${outputFile.absolutePath}")
-        addLog("文件大小: ${formatFileSize(outputFile.length())}")
-        
-        progressCallback(100)
-        
-        return outputFile.absolutePath
+            
+            // 查找chars词典文件
+            val charsFile = File(exportDir, "chars_trie.bin")
+            if (charsFile.exists()) {
+                dictFiles.add(charsFile)
+                addLog("找到chars词典文件: ${charsFile.name}")
+            } else {
+                addLog("警告: 未找到chars词典文件")
+            }
+            
+            // 将所有base词典文件添加到最后
+            dictFiles.addAll(baseFiles)
+            
+            // 检查是否有足够的文件需要合并
+            if (dictFiles.size <= 1) {
+                addLog("错误: 没有足够的词典文件需要合并，至少需要2个文件")
+                throw IllegalStateException("没有足够的词典文件需要合并，至少需要2个文件")
+            }
+            
+            addLog("共找到${dictFiles.size}个词典文件需要合并")
+            progressCallback(5)
+            
+            // 再次强制GC
+            System.gc()
+            delay(500)
+            
+            // 复制所有文件到临时目录，每处理一个文件就进行一次GC
+            val tempFiles = mutableListOf<File>()
+            for ((index, file) in dictFiles.withIndex()) {
+                val tempFile = File(tempDir, "dict_${index}.bin")
+                file.copyTo(tempFile, overwrite = true)
+                tempFiles.add(tempFile)
+                
+                // 每复制一个文件后执行GC
+                if (index % 2 == 1) {
+                    System.gc()
+                    delay(200)
+                }
+                
+                // 更新进度
+                val progress = 5 + ((index * 15) / dictFiles.size)
+                progressCallback(progress)
+            }
+            
+            addLog("所有词典文件已复制到临时目录")
+            progressCallback(20)
+            
+            // 再次强制GC
+            System.gc()
+            delay(1000)
+            addLog("再次执行内存清理...")
+            
+            // 使用超低内存模式合并临时文件，采用更保守的参数
+            val mergedFile = mergeWithUltraLowMemory(
+                tempDir = tempDir,
+                tempFiles = tempFiles,
+                numWorkers = 1,  // 减少工作线程，降低内存压力
+                progressCallback = { progress ->
+                    val adjustedProgress = 20 + ((progress * 70) / 100)
+                    progressCallback(adjustedProgress)
+                }
+            )
+            
+            progressCallback(90)
+            
+            // 强制GC
+            System.gc()
+            delay(500)
+            
+            // 复制到最终位置
+            val outputFile = File(exportDir, "shenji_dict_trie.bin")
+            
+            // 如果目标文件已存在，先删除
+            if (outputFile.exists()) {
+                outputFile.delete()
+            }
+            
+            // 使用输入输出流复制而不是直接copyTo，可能有助于减少内存使用
+            addLog("将合并结果复制到最终位置...")
+            FileInputStream(mergedFile).use { input ->
+                FileOutputStream(outputFile).use { output ->
+                    val buffer = ByteArray(8192) // 8KB的缓冲区
+                    var bytesRead: Int
+                    while (input.read(buffer).also { bytesRead = it } != -1) {
+                        output.write(buffer, 0, bytesRead)
+                    }
+                }
+            }
+            
+            // 清理临时文件
+            addLog("清理临时文件...")
+            try {
+                tempDir.deleteRecursively()
+            } catch (e: Exception) {
+                Timber.e(e, "清理临时文件失败: ${e.message}")
+                addLog("清理临时文件失败: ${e.message}")
+            }
+            
+            val endTime = System.currentTimeMillis()
+            val timeCost = endTime - startTime
+            addLog("所有词典合并完成，耗时: ${formatTime(timeCost)}")
+            addLog("最终词典文件: ${outputFile.absolutePath}")
+            addLog("文件大小: ${formatFileSize(outputFile.length())}")
+            
+            progressCallback(100)
+            
+            return outputFile.absolutePath
+            
+        } catch (e: Exception) {
+            // 清理临时文件，防止占用存储空间
+            try {
+                tempDir.deleteRecursively()
+            } catch (cleanupEx: Exception) {
+                Timber.e(cleanupEx, "清理临时文件失败: ${cleanupEx.message}")
+            }
+            
+            Timber.e(e, "合并词典失败: ${e.message}")
+            addLog("合并词典失败: ${e.message}")
+            throw e
+        }
     }
 } 

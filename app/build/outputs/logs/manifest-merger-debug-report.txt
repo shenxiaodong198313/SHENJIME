@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-75:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-75:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-75:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-75:12
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-76:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-76:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-76:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-76:12
 MERGED from [androidx.databinding:viewbinding:8.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\04aa97af57cd6c319482d0e39cab2bb3\transformed\viewbinding-8.3.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\3eb54cf68f6e6cdcf07521e573239344\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -96,8 +96,8 @@ ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:17:5-18:40
 	android:name
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:17:22-79
 application
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-73:19
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-73:19
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-74:19
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-74:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\3eb54cf68f6e6cdcf07521e573239344\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -128,76 +128,78 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\15811\scoop\apps\g
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:24:9-41
 	android:roundIcon
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:25:9-54
+	android:largeHeap
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:27:9-33
 	android:icon
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:23:9-43
 	android:allowBackup
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:22:9-35
 	android:theme
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:27:9-44
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:28:9-44
 	android:name
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:21:9-42
 activity#com.shenji.aikeyboard.ui.MainActivity
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:30:9-37:20
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:31:9-38:20
 	android:exported
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:32:13-36
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:33:13-36
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:31:13-44
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:32:13-44
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:33:13-36:29
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:34:13-37:29
 action#android.intent.action.MAIN
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:34:17-69
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:35:17-69
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:34:25-66
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:35:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:35:17-77
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:36:17-77
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:35:27-74
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:36:27-74
 activity#com.shenji.aikeyboard.ui.LogDetailActivity
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:40:9-42:40
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:41:9-43:40
 	android:exported
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:42:13-37
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:43:13-37
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:41:13-49
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:42:13-49
 activity#com.shenji.aikeyboard.ui.DictionaryManagerActivity
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:45:9-47:40
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:46:9-48:40
 	android:exported
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:47:13-37
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:48:13-37
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:46:13-57
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:47:13-57
 activity#com.shenji.aikeyboard.ui.DictionaryDetailActivity
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:50:9-52:40
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:51:9-53:40
 	android:exported
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:52:13-37
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:53:13-37
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:51:13-56
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:52:13-56
 activity#com.shenji.aikeyboard.ui.DictionaryLogsActivity
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:55:9-57:40
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:56:9-58:40
 	android:exported
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:57:13-37
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:58:13-37
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:56:13-54
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:57:13-54
 service#com.shenji.aikeyboard.ime.ShenjiInputMethodService
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:60:9-71:19
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:61:9-72:19
 	android:label
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:62:13-45
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:63:13-45
 	android:exported
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:64:13-36
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:65:13-36
 	android:permission
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:63:13-70
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:64:13-70
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:61:13-57
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:62:13-57
 intent-filter#action:name:android.view.InputMethod
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:65:13-67:29
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:66:13-68:29
 action#android.view.InputMethod
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:66:17-67
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:67:17-67
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:66:25-64
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:67:25-64
 meta-data#android.view.im
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:68:13-70:50
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:69:13-71:50
 	android:resource
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:70:17-47
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:71:17-47
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:69:17-47
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:70:17-47
 uses-sdk
 INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml
