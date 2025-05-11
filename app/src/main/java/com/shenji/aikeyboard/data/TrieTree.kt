@@ -242,6 +242,29 @@ class TrieTree {
     fun isEmpty(): Boolean {
         return root.children.isEmpty()
     }
+
+    /**
+     * 获取树中存储的词条总数
+     */
+    fun getWordCount(): Int {
+        return countWords(root)
+    }
+    
+    /**
+     * 递归计算从给定节点开始的词条数量
+     */
+    private fun countWords(node: TrieNode): Int {
+        var count = 0
+        if (node.isEnd) {
+            count = 1
+        }
+        
+        for (child in node.children.values) {
+            count += countWords(child)
+        }
+        
+        return count
+    }
 }
 
  

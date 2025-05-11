@@ -19,8 +19,8 @@ class ShenjiApplication : Application() {
         lateinit var instance: ShenjiApplication
             private set
         
-        val appContext: Context
-            get() = instance.applicationContext
+        lateinit var appContext: Context
+            private set
             
         lateinit var realm: Realm
             private set
@@ -29,7 +29,8 @@ class ShenjiApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        appContext = this
+        instance = this
+        appContext = applicationContext
         
         // 设置Timber日志框架
         if (BuildConfig.DEBUG) {
