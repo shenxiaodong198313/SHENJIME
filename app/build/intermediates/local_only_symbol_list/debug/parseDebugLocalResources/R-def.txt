@@ -19,9 +19,11 @@ drawable candidate_background
 drawable key_preview_background
 id action_export_trie
 id action_logs
+id btnCancelExport
 id btnClearLogs
 id btnCopyLog
 id btnCopyLogs
+id btnDictExport
 id btnDictManager
 id btnLogs
 id btnPrecompileDict
@@ -32,6 +34,9 @@ id candidates_layout
 id cardStats
 id keyboard_view
 id loadMoreProgress
+id mainButtonContainer
+id mainContainer
+id pbDictExport
 id progressBar
 id progressBarLoading
 id progressDict

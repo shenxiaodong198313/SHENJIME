@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -23,6 +24,12 @@ public final class ActivityMainBinding implements ViewBinding {
   private final ConstraintLayout rootView;
 
   @NonNull
+  public final Button btnCancelExport;
+
+  @NonNull
+  public final Button btnDictExport;
+
+  @NonNull
   public final Button btnDictManager;
 
   @NonNull
@@ -33,6 +40,15 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final Button btnSettings;
+
+  @NonNull
+  public final LinearLayout mainButtonContainer;
+
+  @NonNull
+  public final ConstraintLayout mainContainer;
+
+  @NonNull
+  public final ProgressBar pbDictExport;
 
   @NonNull
   public final ProgressBar progressDict;
@@ -52,15 +68,23 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final TextView tvTitle;
 
-  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnDictManager,
-      @NonNull Button btnLogs, @NonNull Button btnPrecompileDict, @NonNull Button btnSettings,
-      @NonNull ProgressBar progressDict, @NonNull Toolbar toolbar, @NonNull TextView tvDictStatus,
-      @NonNull TextView tvHelpText, @NonNull TextView tvStatus, @NonNull TextView tvTitle) {
+  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnCancelExport,
+      @NonNull Button btnDictExport, @NonNull Button btnDictManager, @NonNull Button btnLogs,
+      @NonNull Button btnPrecompileDict, @NonNull Button btnSettings,
+      @NonNull LinearLayout mainButtonContainer, @NonNull ConstraintLayout mainContainer,
+      @NonNull ProgressBar pbDictExport, @NonNull ProgressBar progressDict,
+      @NonNull Toolbar toolbar, @NonNull TextView tvDictStatus, @NonNull TextView tvHelpText,
+      @NonNull TextView tvStatus, @NonNull TextView tvTitle) {
     this.rootView = rootView;
+    this.btnCancelExport = btnCancelExport;
+    this.btnDictExport = btnDictExport;
     this.btnDictManager = btnDictManager;
     this.btnLogs = btnLogs;
     this.btnPrecompileDict = btnPrecompileDict;
     this.btnSettings = btnSettings;
+    this.mainButtonContainer = mainButtonContainer;
+    this.mainContainer = mainContainer;
+    this.pbDictExport = pbDictExport;
     this.progressDict = progressDict;
     this.toolbar = toolbar;
     this.tvDictStatus = tvDictStatus;
@@ -96,6 +120,18 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnCancelExport;
+      Button btnCancelExport = ViewBindings.findChildViewById(rootView, id);
+      if (btnCancelExport == null) {
+        break missingId;
+      }
+
+      id = R.id.btnDictExport;
+      Button btnDictExport = ViewBindings.findChildViewById(rootView, id);
+      if (btnDictExport == null) {
+        break missingId;
+      }
+
       id = R.id.btnDictManager;
       Button btnDictManager = ViewBindings.findChildViewById(rootView, id);
       if (btnDictManager == null) {
@@ -117,6 +153,20 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnSettings;
       Button btnSettings = ViewBindings.findChildViewById(rootView, id);
       if (btnSettings == null) {
+        break missingId;
+      }
+
+      id = R.id.mainButtonContainer;
+      LinearLayout mainButtonContainer = ViewBindings.findChildViewById(rootView, id);
+      if (mainButtonContainer == null) {
+        break missingId;
+      }
+
+      ConstraintLayout mainContainer = (ConstraintLayout) rootView;
+
+      id = R.id.pbDictExport;
+      ProgressBar pbDictExport = ViewBindings.findChildViewById(rootView, id);
+      if (pbDictExport == null) {
         break missingId;
       }
 
@@ -156,8 +206,9 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((ConstraintLayout) rootView, btnDictManager, btnLogs,
-          btnPrecompileDict, btnSettings, progressDict, toolbar, tvDictStatus, tvHelpText, tvStatus,
+      return new ActivityMainBinding((ConstraintLayout) rootView, btnCancelExport, btnDictExport,
+          btnDictManager, btnLogs, btnPrecompileDict, btnSettings, mainButtonContainer,
+          mainContainer, pbDictExport, progressDict, toolbar, tvDictStatus, tvHelpText, tvStatus,
           tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
