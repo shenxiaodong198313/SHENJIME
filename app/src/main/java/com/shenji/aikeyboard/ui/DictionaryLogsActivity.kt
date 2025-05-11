@@ -126,6 +126,17 @@ class DictionaryLogsActivity : AppCompatActivity() {
         if (logs.isEmpty()) {
             binding.tvNoLogs.visibility = View.VISIBLE
             binding.rvLogs.visibility = View.GONE
+            
+            // 如果日志为空但预编译词典已加载，显示加载状态信息
+            if (DictionaryManager.instance.isLoaded()) {
+                val loadedWordCount = (DictionaryManager.instance.typeLoadedCountMap["chars"] ?: 0) +
+                        (DictionaryManager.instance.typeLoadedCountMap["base"] ?: 0)
+                        
+                if (loadedWordCount > 0) {
+                    binding.tvNoLogs.text = "预编译高频词典已加载到内存，包含${loadedWordCount}个词条。\n\n目前没有其他日志记录。"
+                    binding.tvNoLogs.visibility = View.VISIBLE
+                }
+            }
         } else {
             binding.tvNoLogs.visibility = View.GONE
             binding.rvLogs.visibility = View.VISIBLE

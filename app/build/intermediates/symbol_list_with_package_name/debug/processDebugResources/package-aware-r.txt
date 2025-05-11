@@ -1390,6 +1390,7 @@ color cardview_light_background
 color cardview_shadow_end_color
 color cardview_shadow_start_color
 color colorAccent
+color colorPrecompiledBackground
 color colorPrimary
 color colorPrimaryDark
 color design_bottom_navigation_shadow_color
@@ -3646,6 +3647,8 @@ id tvEmpty
 id tvEntryCount
 id tvExportSection
 id tvFrequency
+id tvGroupCount
+id tvGroupTitle
 id tvHelpText
 id tvLogContent
 id tvMemoryStatus
@@ -3821,6 +3824,7 @@ layout dialog_export_settings
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_dictionary_entry
+layout item_dictionary_group_header
 layout item_dictionary_log
 layout item_dictionary_module
 layout key_preview

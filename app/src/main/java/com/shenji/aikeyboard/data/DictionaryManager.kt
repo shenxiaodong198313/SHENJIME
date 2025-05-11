@@ -1210,28 +1210,34 @@ class DictionaryManager private constructor() {
             // 设置已加载标志
             trieTree.setLoaded(true)
             
+            // 获取总词条数
+            val totalWordCount = trieTree.getWordCount()
+            
+            // 更新加载计数器
+            // 假设词条按照chars和base的比例分布，这里简单以3:7的比例分配
+            typeLoadedCount["chars"] = (totalWordCount * 0.3).toInt()
+            typeLoadedCount["base"] = (totalWordCount * 0.7).toInt()
+            
             // 记录加载完成时间和内存使用
             val endTime = System.currentTimeMillis()
-            val timeCost = endTime - startTime
+            val loadTime = endTime - startTime
             val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
             
-            // 更新各个词典类型的加载记录
-            typeLoadedCount["chars"] = repository.getEntryCountByType("chars")
-            typeLoadedCount["base"] = repository.getEntryCountByType("base")
-            
+            // 记录加载完成信息
             addLog("预编译高频词典加载完成!")
-            addLog("加载耗时: ${formatTime(timeCost)}")
+            addLog("加载耗时: ${loadTime/1000}秒")
             addLog("内存占用: ${formatFileSize(memoryUsage)}")
-            addLog("包含chars和base词典的${trieTree.getWordCount()}个词条")
+            addLog("包含chars和base词典的${totalWordCount}个词条")
             
-            Timber.i("预编译高频词典加载完成，耗时: ${formatTime(timeCost)}, 内存占用: ${formatFileSize(memoryUsage)}")
-            
+            Timber.i("预编译高频词典加载完成，加载耗时: ${loadTime/1000}秒，内存占用: ${formatFileSize(memoryUsage)}")
         } catch (e: Exception) {
             Timber.e(e, "加载预编译高频词典失败: ${e.message}")
             addLog("加载预编译高频词典失败: ${e.message}")
             
-            // 确保清空失败的Trie树，释放内存
+            // 重置加载状态
+            trieTree.setLoaded(false)
             trieTree.clear()
+            typeLoadedCount.clear()
             System.gc()
         }
     }

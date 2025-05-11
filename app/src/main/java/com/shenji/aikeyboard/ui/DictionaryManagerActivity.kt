@@ -153,18 +153,44 @@ class DictionaryManagerActivity : AppCompatActivity() {
                 // 为了更好地展示骨架屏效果，添加轻微延迟
                 delay(800)
                 
+                // 添加调试日志
+                Timber.d("开始加载词典统计数据...")
+                
                 // 获取统计数据
                 val totalEntries = dictionaryRepository.getTotalEntryCount()
                 val dbSize = dictionaryRepository.getDictionaryFileSize()
                 val formattedDbSize = dictionaryRepository.formatFileSize(dbSize)
                 
+                Timber.d("获取到总词条数: $totalEntries, 数据库大小: $formattedDbSize")
+                
                 // 获取词典模块列表
                 val modules = dictionaryRepository.getDictionaryModules()
+                
+                Timber.d("获取词典模块列表: ${modules.size}个模块")
+                for (module in modules) {
+                    Timber.d("词典模块: ${module.type} - ${module.chineseName} (${module.entryCount}条)")
+                }
+                
+                // 获取预编译词典内存使用情况和已加载词条数
+                val dictManager = DictionaryManager.instance
+                val isPrecompiledDictLoaded = dictManager.isLoaded()
+                var memoryUsage = 0L
+                var loadedWordCount = 0
+                
+                if (isPrecompiledDictLoaded) {
+                    // 如果预编译词典已加载，获取其内存使用情况
+                    memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+                    loadedWordCount = dictManager.typeLoadedCountMap["chars"] ?: 0
+                    loadedWordCount += dictManager.typeLoadedCountMap["base"] ?: 0
+                    Timber.d("预编译词典已加载，内存占用: ${dictionaryRepository.formatFileSize(memoryUsage)}, 加载词条数: $loadedWordCount")
+                } else {
+                    Timber.d("预编译词典未加载")
+                }
                 
                 // 更新缓存
                 cachedTotalEntries = totalEntries
                 cachedDbSize = dbSize
-                cachedMemoryUsage = 0L // 无内存占用
+                cachedMemoryUsage = memoryUsage
                 cachedModules = modules
                 isDataLoaded = true
                 
@@ -172,11 +198,26 @@ class DictionaryManagerActivity : AppCompatActivity() {
                     // 更新UI
                     binding.tvTotalEntries.text = getString(R.string.dict_total_entries, totalEntries)
                     binding.tvDatabaseSize.text = getString(R.string.dict_db_size, formattedDbSize)
-                    binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, "0 B") // 无内存占用
+                    
+                    // 根据预编译词典是否加载，显示对应内存使用情况
+                    val memoryUsageFormatted = if (isPrecompiledDictLoaded) {
+                        dictionaryRepository.formatFileSize(memoryUsage)
+                    } else {
+                        "0 B" // 未加载内存词典
+                    }
+                    binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, memoryUsageFormatted)
+                    
+                    // 添加高频词典加载状态提示
+                    if (isPrecompiledDictLoaded && loadedWordCount > 0) {
+                        binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, memoryUsageFormatted) + 
+                                " (已加载${loadedWordCount}个高频词条)"
+                    }
+                    
                     binding.tvModuleCount.text = getString(R.string.dict_module_count, modules.size)
                     
                     // 更新列表
                     moduleAdapter.submitList(modules)
+                    Timber.d("更新UI完成，提交了${modules.size}个模块到适配器")
                     
                     // 隐藏骨架屏，显示实际内容
                     showShimmerEffect(false)
@@ -186,7 +227,22 @@ class DictionaryManagerActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     // 隐藏骨架屏，显示错误提示
                     showShimmerEffect(false)
-                    // 可以在这里显示错误提示
+                    
+                    // 在UI上显示错误信息
+                    binding.tvTotalEntries.text = "加载失败"
+                    binding.tvDatabaseSize.text = "数据库错误: ${e.message}"
+                    binding.tvMemoryUsage.text = "请检查assets/shenji_dict.realm文件"
+                    
+                    // 添加至少一个显示错误的模块
+                    val errorModule = DictionaryModule(
+                        type = "error",
+                        chineseName = "加载错误",
+                        entryCount = 0,
+                        isInMemory = false,
+                        memoryUsage = 0,
+                        isGroupHeader = true
+                    )
+                    moduleAdapter.submitList(listOf(errorModule))
                 }
             }
         }

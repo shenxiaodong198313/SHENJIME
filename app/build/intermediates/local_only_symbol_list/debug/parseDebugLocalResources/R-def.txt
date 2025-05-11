@@ -2,6 +2,7 @@ R_DEF: Internal format may change without notice
 local
 color black
 color colorAccent
+color colorPrecompiledBackground
 color colorPrimary
 color colorPrimaryDark
 color key_text
@@ -72,6 +73,8 @@ id tvEmpty
 id tvEntryCount
 id tvExportSection
 id tvFrequency
+id tvGroupCount
+id tvGroupTitle
 id tvHelpText
 id tvLogContent
 id tvMemoryStatus
@@ -92,6 +95,7 @@ layout activity_main
 layout candidate_item
 layout dialog_export_settings
 layout item_dictionary_entry
+layout item_dictionary_group_header
 layout item_dictionary_log
 layout item_dictionary_module
 layout key_preview

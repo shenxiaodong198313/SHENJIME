@@ -86,6 +86,9 @@ class ShenjiApplication : Application() {
     }
     
     private fun initRealm() {
+        // 首先确保词典文件存在
+        ensureDictionaryFileExists()
+        
         val dictFile = File(filesDir, "dictionaries/shenji_dict.realm")
         
         try {

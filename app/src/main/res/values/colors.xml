@@ -15,4 +15,5 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="shimmer_color">#DDDDDD</color>
+    <color name="colorPrecompiledBackground">#E8F5E9</color>
 </resources> 
