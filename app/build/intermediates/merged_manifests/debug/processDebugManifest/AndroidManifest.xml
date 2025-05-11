@@ -68,6 +68,11 @@
             android:name="com.shenji.aikeyboard.ui.DictionaryDetailActivity"
             android:exported="false" />
 
+        <!-- 词典日志活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.DictionaryLogsActivity"
+            android:exported="false" />
+
         <!-- 输入法服务 -->
         <service
             android:name="com.shenji.aikeyboard.ime.ShenjiInputMethodService"

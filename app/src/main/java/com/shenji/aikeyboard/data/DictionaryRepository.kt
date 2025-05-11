@@ -100,14 +100,30 @@ class DictionaryRepository {
     }
     
     /**
-     * 构建虚拟词典模块列表（真实系统中应该从数据库加载）
+     * 构建词典模块列表
      */
     fun getDictionaryModules(): List<DictionaryModule> {
         val types = getAllDictionaryTypes()
+        val dictionaryManager = DictionaryManager.instance
+        
         return types.map { type ->
             val count = getEntryCountByType(type)
             val chineseName = getChineseNameForType(type)
-            DictionaryModule(type, chineseName, count)
+            
+            // 判断是否是高频词库以及是否已加载到内存
+            val isHighFrequencyDict = type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES
+            
+            // 直接使用DictionaryManager的实时加载状态
+            val isInMemory = isHighFrequencyDict && dictionaryManager.isTypeLoaded(type)
+            
+            // 获取内存占用
+            val memoryUsage = if (isInMemory) {
+                dictionaryManager.getTypeMemoryUsage(type)
+            } else {
+                0L
+            }
+            
+            DictionaryModule(type, chineseName, count, isInMemory, memoryUsage)
         }
     }
     
@@ -128,6 +144,28 @@ class DictionaryRepository {
             else -> "${type}词库"
         }
     }
+    
+    /**
+     * 获取特定类型词典的最后修改时间戳
+     * 注意：由于Realm不提供单个表的修改时间，这里使用数据库文件修改时间和类型数量作为特征
+     */
+    fun getLastModifiedTime(type: String): Long {
+        val context = com.shenji.aikeyboard.ShenjiApplication.appContext
+        val dictFile = File(context.filesDir, "dictionaries/shenji_dict.realm")
+        
+        // 获取文件的最后修改时间
+        val fileModTime = if (dictFile.exists()) dictFile.lastModified() else 0L
+        
+        try {
+            // 结合词条数量，以检测该类型词典内容变化
+            val entryCount = getEntryCountByType(type)
+            // 使用文件修改时间和词条数量的组合作为特征
+            return fileModTime + entryCount
+        } catch (e: Exception) {
+            Timber.e(e, "获取词典类型 $type 的最后修改时间失败")
+            return fileModTime
+        }
+    }
 }
 
 /**
@@ -136,5 +174,7 @@ class DictionaryRepository {
 data class DictionaryModule(
     val type: String,         // 词典类型代码
     val chineseName: String,  // 中文名称
-    val entryCount: Int       // 词条数量
+    val entryCount: Int,      // 词条数量
+    val isInMemory: Boolean = false, // 是否已加载到内存
+    val memoryUsage: Long = 0L       // 内存占用大小(字节)
 ) 

@@ -4,6 +4,7 @@ package com.shenji.aikeyboard.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,6 +21,9 @@ public final class ItemDictionaryModuleBinding implements ViewBinding {
   private final CardView rootView;
 
   @NonNull
+  public final ProgressBar progressBarLoading;
+
+  @NonNull
   public final TextView tvDictName;
 
   @NonNull
@@ -28,12 +32,23 @@ public final class ItemDictionaryModuleBinding implements ViewBinding {
   @NonNull
   public final TextView tvEntryCount;
 
-  private ItemDictionaryModuleBinding(@NonNull CardView rootView, @NonNull TextView tvDictName,
-      @NonNull TextView tvDictType, @NonNull TextView tvEntryCount) {
+  @NonNull
+  public final TextView tvMemoryStatus;
+
+  @NonNull
+  public final TextView tvMemoryUsage;
+
+  private ItemDictionaryModuleBinding(@NonNull CardView rootView,
+      @NonNull ProgressBar progressBarLoading, @NonNull TextView tvDictName,
+      @NonNull TextView tvDictType, @NonNull TextView tvEntryCount,
+      @NonNull TextView tvMemoryStatus, @NonNull TextView tvMemoryUsage) {
     this.rootView = rootView;
+    this.progressBarLoading = progressBarLoading;
     this.tvDictName = tvDictName;
     this.tvDictType = tvDictType;
     this.tvEntryCount = tvEntryCount;
+    this.tvMemoryStatus = tvMemoryStatus;
+    this.tvMemoryUsage = tvMemoryUsage;
   }
 
   @Override
@@ -63,6 +78,12 @@ public final class ItemDictionaryModuleBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.progressBarLoading;
+      ProgressBar progressBarLoading = ViewBindings.findChildViewById(rootView, id);
+      if (progressBarLoading == null) {
+        break missingId;
+      }
+
       id = R.id.tvDictName;
       TextView tvDictName = ViewBindings.findChildViewById(rootView, id);
       if (tvDictName == null) {
@@ -81,8 +102,20 @@ public final class ItemDictionaryModuleBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ItemDictionaryModuleBinding((CardView) rootView, tvDictName, tvDictType,
-          tvEntryCount);
+      id = R.id.tvMemoryStatus;
+      TextView tvMemoryStatus = ViewBindings.findChildViewById(rootView, id);
+      if (tvMemoryStatus == null) {
+        break missingId;
+      }
+
+      id = R.id.tvMemoryUsage;
+      TextView tvMemoryUsage = ViewBindings.findChildViewById(rootView, id);
+      if (tvMemoryUsage == null) {
+        break missingId;
+      }
+
+      return new ItemDictionaryModuleBinding((CardView) rootView, progressBarLoading, tvDictName,
+          tvDictType, tvEntryCount, tvMemoryStatus, tvMemoryUsage);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

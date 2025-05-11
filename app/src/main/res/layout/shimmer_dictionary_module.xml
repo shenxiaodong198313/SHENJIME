@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- 词库名称骨架 -->
+        <View
+            android:id="@+id/shimmerDictName"
+            android:layout_width="0dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="80dp"
+            android:background="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/shimmerEntryCount"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- 词条数量骨架 -->
+        <View
+            android:id="@+id/shimmerEntryCount"
+            android:layout_width="80dp"
+            android:layout_height="16dp"
+            android:background="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- 类型骨架 -->
+        <View
+            android:id="@+id/shimmerDictType"
+            android:layout_width="80dp"
+            android:layout_height="12dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/shimmerDictName" />
+
+        <!-- 内存加载状态骨架 -->
+        <View
+            android:id="@+id/shimmerMemoryStatus"
+            android:layout_width="120dp"
+            android:layout_height="14dp"
+            android:layout_marginTop="4dp"
+            android:background="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/shimmerDictType" />
+
+        <!-- 内存占用骨架 -->
+        <View
+            android:id="@+id/shimmerMemoryUsage"
+            android:layout_width="100dp"
+            android:layout_height="14dp"
+            android:layout_marginTop="4dp"
+            android:background="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/shimmerMemoryStatus" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView> 

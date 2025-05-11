@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-70:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-70:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-70:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-70:12
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-75:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-75:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-75:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-75:12
 MERGED from [androidx.databinding:viewbinding:8.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\04aa97af57cd6c319482d0e39cab2bb3\transformed\viewbinding-8.3.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\3eb54cf68f6e6cdcf07521e573239344\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -40,6 +40,7 @@ MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\15811\scoo
 MERGED from [io.realm.kotlin:library-base-android:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\52eb829a90d61344eda682babe000794\transformed\library-base-release\AndroidManifest.xml:18:1-26:12
 MERGED from [io.realm.kotlin:cinterop-android:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\50a7e22c2b7acbce8c4a9eaa54f44bd1\transformed\cinterop-release\AndroidManifest.xml:18:1-38:12
 MERGED from [org.mongodb.kbson:kbson-android-debug:0.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\75c40dcfe0f74a810dd0aeeda06101e4\transformed\kbson-debug\AndroidManifest.xml:18:1-27:12
+MERGED from [com.facebook.shimmer:shimmer:0.5.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\c6cef8e4ae5549bc871004580dc285fa\transformed\shimmer-0.5.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\24563dcac04af4536f5f8479b5335975\transformed\timber-5.0.1\AndroidManifest.xml:2:1-9:12
 MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\154093f8e061b66fc1d45008575b8111\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\464b4d19f4b1ccb1ff50eac7327c9d62\transformed\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
@@ -95,8 +96,8 @@ ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:17:5-18:40
 	android:name
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:17:22-79
 application
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-68:19
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-68:19
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-73:19
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-73:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\3eb54cf68f6e6cdcf07521e573239344\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -169,28 +170,34 @@ ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:50:9-52:40
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:52:13-37
 	android:name
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:51:13-56
-service#com.shenji.aikeyboard.ime.ShenjiInputMethodService
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:55:9-66:19
-	android:label
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:57:13-45
+activity#com.shenji.aikeyboard.ui.DictionaryLogsActivity
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:55:9-57:40
 	android:exported
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:59:13-36
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:57:13-37
+	android:name
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:56:13-54
+service#com.shenji.aikeyboard.ime.ShenjiInputMethodService
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:60:9-71:19
+	android:label
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:62:13-45
+	android:exported
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:64:13-36
 	android:permission
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:58:13-70
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:63:13-70
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:56:13-57
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:61:13-57
 intent-filter#action:name:android.view.InputMethod
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:60:13-62:29
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:65:13-67:29
 action#android.view.InputMethod
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:61:17-67
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:66:17-67
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:61:25-64
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:66:25-64
 meta-data#android.view.im
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:63:13-65:50
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:68:13-70:50
 	android:resource
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:65:17-47
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:70:17-47
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:64:17-47
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:69:17-47
 uses-sdk
 INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml
@@ -267,6 +274,8 @@ MERGED from [io.realm.kotlin:cinterop-android:1.11.0] C:\Users\15811\scoop\apps\
 MERGED from [io.realm.kotlin:cinterop-android:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\50a7e22c2b7acbce8c4a9eaa54f44bd1\transformed\cinterop-release\AndroidManifest.xml:22:5-24:41
 MERGED from [org.mongodb.kbson:kbson-android-debug:0.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\75c40dcfe0f74a810dd0aeeda06101e4\transformed\kbson-debug\AndroidManifest.xml:23:5-25:41
 MERGED from [org.mongodb.kbson:kbson-android-debug:0.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\75c40dcfe0f74a810dd0aeeda06101e4\transformed\kbson-debug\AndroidManifest.xml:23:5-25:41
+MERGED from [com.facebook.shimmer:shimmer:0.5.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\c6cef8e4ae5549bc871004580dc285fa\transformed\shimmer-0.5.0\AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.shimmer:shimmer:0.5.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\c6cef8e4ae5549bc871004580dc285fa\transformed\shimmer-0.5.0\AndroidManifest.xml:5:5-44
 MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\24563dcac04af4536f5f8479b5335975\transformed\timber-5.0.1\AndroidManifest.xml:5:5-44
 MERGED from [com.jakewharton.timber:timber:5.0.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\24563dcac04af4536f5f8479b5335975\transformed\timber-5.0.1\AndroidManifest.xml:5:5-44
 MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\154093f8e061b66fc1d45008575b8111\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44

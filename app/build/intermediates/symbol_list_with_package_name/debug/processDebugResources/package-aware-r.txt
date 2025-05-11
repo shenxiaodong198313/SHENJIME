@@ -1032,6 +1032,26 @@ attr shapeAppearanceMediumComponent
 attr shapeAppearanceOverlay
 attr shapeAppearanceSmallComponent
 attr shapeCornerFamily
+attr shimmer_auto_start
+attr shimmer_base_alpha
+attr shimmer_base_color
+attr shimmer_clip_to_children
+attr shimmer_colored
+attr shimmer_direction
+attr shimmer_dropoff
+attr shimmer_duration
+attr shimmer_fixed_height
+attr shimmer_fixed_width
+attr shimmer_height_ratio
+attr shimmer_highlight_alpha
+attr shimmer_highlight_color
+attr shimmer_intensity
+attr shimmer_repeat_count
+attr shimmer_repeat_delay
+attr shimmer_repeat_mode
+attr shimmer_shape
+attr shimmer_tilt
+attr shimmer_width_ratio
 attr shortcutMatchRequired
 attr shouldRemoveExpandedCorners
 attr showAnimationBehavior
@@ -1369,6 +1389,9 @@ color cardview_dark_background
 color cardview_light_background
 color cardview_shadow_end_color
 color cardview_shadow_start_color
+color colorAccent
+color colorPrimary
+color colorPrimaryDark
 color design_bottom_navigation_shadow_color
 color design_box_stroke_color
 color design_dark_default_color_background
@@ -2091,6 +2114,7 @@ color secondary_text_default_material_dark
 color secondary_text_default_material_light
 color secondary_text_disabled_material_dark
 color secondary_text_disabled_material_light
+color shimmer_color
 color switch_thumb_disabled_material_dark
 color switch_thumb_disabled_material_light
 color switch_thumb_material_dark
@@ -3149,6 +3173,7 @@ id action_container
 id action_context_bar
 id action_divider
 id action_image
+id action_logs
 id action_menu_divider
 id action_menu_presenter
 id action_mode_bar
@@ -3181,6 +3206,7 @@ id beginning
 id bestChoice
 id blocking
 id bottom
+id bottom_to_top
 id bounce
 id bounceBoth
 id bounceEnd
@@ -3330,6 +3356,7 @@ id labeled
 id layout
 id left
 id leftToRight
+id left_to_right
 id legacy
 id line1
 id line3
@@ -3451,22 +3478,29 @@ id position
 id postLayout
 id pressed
 id progressBar
+id progressBarLoading
 id progressDict
 id progress_circular
 id progress_horizontal
+id radial
 id radio
 id ratio
 id rectangles
 id report_drawn
+id restart
+id reverse
 id reverseSawtooth
 id right
 id rightToLeft
 id right_icon
 id right_side
+id right_to_left
 id rounded
 id row_index_key
 id rvDictionaryModules
 id rvEntries
+id rvLogs
+id rvShimmerModules
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -3492,6 +3526,13 @@ id selected
 id selection_type
 id sharedValueSet
 id sharedValueUnset
+id shimmerDictName
+id shimmerDictType
+id shimmerEntryCount
+id shimmerMemoryStatus
+id shimmerMemoryUsage
+id shimmerModuleList
+id shimmerStatCard
 id shortcut
 id showCustom
 id showHome
@@ -3566,6 +3607,7 @@ id toggle
 id toolbar
 id top
 id topPanel
+id top_to_bottom
 id touch_outside
 id transitionToEnd
 id transitionToStart
@@ -3584,9 +3626,11 @@ id tvEntryCount
 id tvFrequency
 id tvHelpText
 id tvLogContent
+id tvMemoryStatus
 id tvMemoryUsage
 id tvModuleCount
 id tvModuleListTitle
+id tvNoLogs
 id tvPinyin
 id tvStatus
 id tvTitle
@@ -3730,6 +3774,7 @@ layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
 layout activity_dictionary_detail
+layout activity_dictionary_logs
 layout activity_dictionary_manager
 layout activity_log_detail
 layout activity_main
@@ -3753,6 +3798,7 @@ layout design_text_input_start_icon
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_dictionary_entry
+layout item_dictionary_log
 layout item_dictionary_module
 layout key_preview
 layout keyboard_view
@@ -3816,7 +3862,10 @@ layout notification_template_part_time
 layout select_dialog_item_material
 layout select_dialog_multichoice_material
 layout select_dialog_singlechoice_material
+layout shimmer_dictionary_module
+layout shimmer_dictionary_stat_card
 layout support_simple_spinner_dropdown_item
+menu menu_dictionary_manager
 mipmap ic_launcher
 mipmap ic_launcher_round
 plurals mtrl_badge_content_description
@@ -5252,6 +5301,7 @@ styleable SearchBar android_textAppearance android_text android_hint backgroundT
 styleable SearchView android_textAppearance android_focusable android_maxWidth android_text android_hint android_inputType android_imeOptions animateMenuItems animateNavigationIcon autoShowKeyboard backHandlingEnabled backgroundTint closeIcon commitIcon defaultQueryHint goIcon headerLayout hideNavigationIcon iconifiedByDefault layout queryBackground queryHint searchHintIcon searchIcon searchPrefixText submitBackground suggestionRowLayout useDrawerArrowDrawable voiceIcon
 styleable ShapeAppearance cornerFamily cornerFamilyBottomLeft cornerFamilyBottomRight cornerFamilyTopLeft cornerFamilyTopRight cornerSize cornerSizeBottomLeft cornerSizeBottomRight cornerSizeTopLeft cornerSizeTopRight
 styleable ShapeableImageView contentPadding contentPaddingBottom contentPaddingEnd contentPaddingLeft contentPaddingRight contentPaddingStart contentPaddingTop shapeAppearance shapeAppearanceOverlay strokeColor strokeWidth
+styleable ShimmerFrameLayout shimmer_auto_start shimmer_base_alpha shimmer_base_color shimmer_clip_to_children shimmer_colored shimmer_direction shimmer_dropoff shimmer_duration shimmer_fixed_height shimmer_fixed_width shimmer_height_ratio shimmer_highlight_alpha shimmer_highlight_color shimmer_intensity shimmer_repeat_count shimmer_repeat_delay shimmer_repeat_mode shimmer_shape shimmer_tilt shimmer_width_ratio
 styleable SideSheetBehavior_Layout android_maxWidth android_maxHeight android_elevation backgroundTint behavior_draggable coplanarSiblingViewId shapeAppearance shapeAppearanceOverlay
 styleable Slider android_enabled android_value android_stepSize android_valueFrom android_valueTo haloColor haloRadius labelBehavior labelStyle minTouchTargetSize thumbColor thumbElevation thumbRadius thumbStrokeColor thumbStrokeWidth tickColor tickColorActive tickColorInactive tickRadiusActive tickRadiusInactive tickVisible trackColor trackColorActive trackColorInactive trackHeight
 styleable Snackbar snackbarButtonStyle snackbarStyle snackbarTextViewStyle

@@ -4,7 +4,6 @@ package com.shenji.aikeyboard.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,6 +13,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.shenji.aikeyboard.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -27,10 +27,16 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
   public final CardView cardStats;
 
   @NonNull
-  public final ProgressBar progressBar;
+  public final RecyclerView rvDictionaryModules;
 
   @NonNull
-  public final RecyclerView rvDictionaryModules;
+  public final RecyclerView rvShimmerModules;
+
+  @NonNull
+  public final ShimmerFrameLayout shimmerModuleList;
+
+  @NonNull
+  public final ShimmerFrameLayout shimmerStatCard;
 
   @NonNull
   public final Toolbar toolbar;
@@ -51,15 +57,18 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
   public final TextView tvTotalEntries;
 
   private ActivityDictionaryManagerBinding(@NonNull ConstraintLayout rootView,
-      @NonNull CardView cardStats, @NonNull ProgressBar progressBar,
-      @NonNull RecyclerView rvDictionaryModules, @NonNull Toolbar toolbar,
+      @NonNull CardView cardStats, @NonNull RecyclerView rvDictionaryModules,
+      @NonNull RecyclerView rvShimmerModules, @NonNull ShimmerFrameLayout shimmerModuleList,
+      @NonNull ShimmerFrameLayout shimmerStatCard, @NonNull Toolbar toolbar,
       @NonNull TextView tvDatabaseSize, @NonNull TextView tvMemoryUsage,
       @NonNull TextView tvModuleCount, @NonNull TextView tvModuleListTitle,
       @NonNull TextView tvTotalEntries) {
     this.rootView = rootView;
     this.cardStats = cardStats;
-    this.progressBar = progressBar;
     this.rvDictionaryModules = rvDictionaryModules;
+    this.rvShimmerModules = rvShimmerModules;
+    this.shimmerModuleList = shimmerModuleList;
+    this.shimmerStatCard = shimmerStatCard;
     this.toolbar = toolbar;
     this.tvDatabaseSize = tvDatabaseSize;
     this.tvMemoryUsage = tvMemoryUsage;
@@ -101,15 +110,27 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.progressBar;
-      ProgressBar progressBar = ViewBindings.findChildViewById(rootView, id);
-      if (progressBar == null) {
-        break missingId;
-      }
-
       id = R.id.rvDictionaryModules;
       RecyclerView rvDictionaryModules = ViewBindings.findChildViewById(rootView, id);
       if (rvDictionaryModules == null) {
+        break missingId;
+      }
+
+      id = R.id.rvShimmerModules;
+      RecyclerView rvShimmerModules = ViewBindings.findChildViewById(rootView, id);
+      if (rvShimmerModules == null) {
+        break missingId;
+      }
+
+      id = R.id.shimmerModuleList;
+      ShimmerFrameLayout shimmerModuleList = ViewBindings.findChildViewById(rootView, id);
+      if (shimmerModuleList == null) {
+        break missingId;
+      }
+
+      id = R.id.shimmerStatCard;
+      ShimmerFrameLayout shimmerStatCard = ViewBindings.findChildViewById(rootView, id);
+      if (shimmerStatCard == null) {
         break missingId;
       }
 
@@ -150,8 +171,8 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
       }
 
       return new ActivityDictionaryManagerBinding((ConstraintLayout) rootView, cardStats,
-          progressBar, rvDictionaryModules, toolbar, tvDatabaseSize, tvMemoryUsage, tvModuleCount,
-          tvModuleListTitle, tvTotalEntries);
+          rvDictionaryModules, rvShimmerModules, shimmerModuleList, shimmerStatCard, toolbar,
+          tvDatabaseSize, tvMemoryUsage, tvModuleCount, tvModuleListTitle, tvTotalEntries);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

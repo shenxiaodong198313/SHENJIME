@@ -51,6 +51,11 @@
             android:name=".ui.DictionaryDetailActivity"
             android:exported="false" />
 
+        <!-- 词典日志活动 -->
+        <activity
+            android:name=".ui.DictionaryLogsActivity"
+            android:exported="false" />
+
         <!-- 输入法服务 -->
         <service
             android:name=".ime.ShenjiInputMethodService"
