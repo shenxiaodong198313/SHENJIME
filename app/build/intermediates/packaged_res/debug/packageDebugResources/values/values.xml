@@ -13,6 +13,10 @@
     <color name="white">#FFFFFFFF</color>
     <string name="app_name">神迹</string>
     <string name="copy_log">复制日志内容</string>
+    <string name="dict_completed">转换完成！</string>
+    <string name="dict_convert">词典转换</string>
+    <string name="dict_converting">正在转换词典...</string>
+    <string name="dict_error">转换出错</string>
     <string name="help_text">请在系统设置中启用"神迹输入法"，并选择作为默认输入法使用。</string>
     <string name="ime_name">神迹输入法</string>
     <string name="ime_settings">输入法设置</string>
@@ -20,6 +24,7 @@
     <string name="log_copied">日志内容已复制到剪贴板</string>
     <string name="log_details">日志详情</string>
     <string name="no_logs">没有发现日志文件</string>
+    <string name="storage_permission_required">需要存储权限以保存数据库文件</string>
     <string name="view_logs">查看日志</string>
     <style name="Theme.SHENJI" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         

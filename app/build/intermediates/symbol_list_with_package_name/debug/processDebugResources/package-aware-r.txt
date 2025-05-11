@@ -3185,6 +3185,7 @@ id bounce
 id bounceBoth
 id bounceEnd
 id bounceStart
+id btnConvertDict
 id btnCopyLog
 id btnLogs
 id btnSettings
@@ -3446,6 +3447,7 @@ id pin
 id position
 id postLayout
 id pressed
+id progressDict
 id progress_circular
 id progress_horizontal
 id radio
@@ -3566,6 +3568,7 @@ id transition_position
 id transition_scene_layoutid_cache
 id transition_transform
 id triangle
+id tvDictStatus
 id tvHelpText
 id tvLogContent
 id tvLogTitle
@@ -3843,6 +3846,10 @@ string character_counter_overflowed_content_description
 string character_counter_pattern
 string clear_text_end_icon_content_description
 string copy_log
+string dict_completed
+string dict_convert
+string dict_converting
+string dict_error
 string error_a11y_label
 string error_icon_content_description
 string exposed_dropdown_menu_content_description
@@ -3970,6 +3977,7 @@ string searchview_navigation_content_description
 string side_sheet_accessibility_pane_title
 string side_sheet_behavior
 string status_bar_notification_info_overflow
+string storage_permission_required
 string view_logs
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light

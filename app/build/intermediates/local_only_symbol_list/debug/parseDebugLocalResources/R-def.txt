@@ -13,12 +13,15 @@ color teal_700
 color white
 drawable candidate_background
 drawable key_preview_background
+id btnConvertDict
 id btnCopyLog
 id btnLogs
 id btnSettings
 id candidates_container
 id candidates_layout
 id keyboard_view
+id progressDict
+id tvDictStatus
 id tvHelpText
 id tvLogContent
 id tvLogTitle
@@ -33,6 +36,10 @@ mipmap ic_launcher
 mipmap ic_launcher_round
 string app_name
 string copy_log
+string dict_completed
+string dict_convert
+string dict_converting
+string dict_error
 string help_text
 string ime_name
 string ime_settings
@@ -40,6 +47,7 @@ string ime_status
 string log_copied
 string log_details
 string no_logs
+string storage_permission_required
 string view_logs
 style Theme.SHENJI
 xml keyboard_layout

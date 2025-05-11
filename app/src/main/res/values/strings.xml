@@ -10,4 +10,9 @@
     <string name="copy_log">复制日志内容</string>
     <string name="log_copied">日志内容已复制到剪贴板</string>
     <string name="no_logs">没有发现日志文件</string>
+    <string name="dict_convert">词典转换</string>
+    <string name="dict_converting">正在转换词典...</string>
+    <string name="dict_completed">转换完成！</string>
+    <string name="dict_error">转换出错</string>
+    <string name="storage_permission_required">需要存储权限以保存数据库文件</string>
 </resources> 
