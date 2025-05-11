@@ -1182,4 +1182,57 @@ class DictionaryManager private constructor() {
             throw e
         }
     }
+    
+    /**
+     * 加载预编译的高频词典到内存
+     * @param file 预编译的Trie树文件
+     */
+    fun loadPrecompiledDictionary(file: File) {
+        if (!file.exists()) {
+            addLog("预编译高频词典文件不存在: ${file.absolutePath}")
+            Timber.e("预编译高频词典文件不存在: ${file.absolutePath}")
+            return
+        }
+        
+        try {
+            addLog("开始加载预编译高频词典(chars和base)...")
+            
+            // 记录开始时间
+            val startTime = System.currentTimeMillis()
+            
+            // 清空当前Trie树，确保释放内存
+            trieTree.clear()
+            System.gc()
+            
+            // 从文件加载预编译的Trie树
+            trieTree = loadTrieFromFile(file)
+            
+            // 设置已加载标志
+            trieTree.setLoaded(true)
+            
+            // 记录加载完成时间和内存使用
+            val endTime = System.currentTimeMillis()
+            val timeCost = endTime - startTime
+            val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+            
+            // 更新各个词典类型的加载记录
+            typeLoadedCount["chars"] = repository.getEntryCountByType("chars")
+            typeLoadedCount["base"] = repository.getEntryCountByType("base")
+            
+            addLog("预编译高频词典加载完成!")
+            addLog("加载耗时: ${formatTime(timeCost)}")
+            addLog("内存占用: ${formatFileSize(memoryUsage)}")
+            addLog("包含chars和base词典的${trieTree.getWordCount()}个词条")
+            
+            Timber.i("预编译高频词典加载完成，耗时: ${formatTime(timeCost)}, 内存占用: ${formatFileSize(memoryUsage)}")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "加载预编译高频词典失败: ${e.message}")
+            addLog("加载预编译高频词典失败: ${e.message}")
+            
+            // 确保清空失败的Trie树，释放内存
+            trieTree.clear()
+            System.gc()
+        }
+    }
 } 

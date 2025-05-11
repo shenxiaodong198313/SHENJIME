@@ -28,47 +28,27 @@ class ShenjiApplication : Application() {
     
     override fun onCreate() {
         super.onCreate()
-        instance = this
         
-        // 确保日志目录存在
-        val logFile = getCrashLogFile()
-        Log.d("ShenjiApplication", "日志文件路径: ${logFile.absolutePath}")
+        appContext = this
         
-        // 初始化Timber日志
-        try {
-            if (BuildConfig.DEBUG) {
-                Timber.plant(Timber.DebugTree())
-                Log.d("ShenjiApplication", "初始化Timber DebugTree")
-            } else {
-                // 在生产环境使用自定义的CrashReportingTree
-                Timber.plant(CrashReportingTree())
-                Log.d("ShenjiApplication", "初始化Timber CrashReportingTree")
-            }
-            
-            // 测试日志
-            Timber.d("ShenjiApplication初始化开始")
-            
-            // 确保词典文件存在
-            ensureDictionaryFileExists()
-            
-            // 初始化Realm
-            initRealm()
-            
-            // 不再自动初始化词典管理器，改为按需初始化
-            
-            Timber.d("ShenjiApplication初始化完成")
-        } catch (e: Exception) {
-            Log.e("ShenjiApplication", "应用初始化失败", e)
-            // 写入错误到崩溃日志
-            try {
-                FileOutputStream(logFile, true).use { fos ->
-                    val errorMsg = "应用初始化失败: ${e.message}\n${e.stackTraceToString()}\n"
-                    fos.write(errorMsg.toByteArray())
-                }
-            } catch (ioEx: IOException) {
-                Log.e("ShenjiApplication", "写入初始化错误日志失败", ioEx)
-            }
+        // 设置Timber日志框架
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        } else {
+            // 生产环境使用自定义日志树，记录崩溃信息
+            Timber.plant(CrashReportingTree())
         }
+        
+        // 初始化数据库和词典
+        initRealm()
+        
+        // 初始化词典管理器
+        DictionaryManager.init()
+        
+        // 加载预编译的高频词典
+        loadPrecompiledDictionary()
+        
+        Timber.d("应用初始化完成")
     }
     
     private fun ensureDictionaryFileExists() {
@@ -183,5 +163,56 @@ class ShenjiApplication : Application() {
             logDir.mkdirs()
         }
         return File(logDir, "crash_log.txt")
+    }
+    
+    /**
+     * 加载预编译的高频词典
+     * 检查并加载从assets目录中的预编译Trie树文件
+     */
+    private fun loadPrecompiledDictionary() {
+        try {
+            // 检查内部存储目录中是否已存在预编译Trie树文件
+            val internalDir = File(filesDir, "precompiled_dict")
+            if (!internalDir.exists()) {
+                internalDir.mkdirs()
+            }
+            
+            val trieFile = File(internalDir, "shenji_dict_trie.bin")
+            
+            // 如果文件不存在或需要更新，从assets目录复制
+            if (!trieFile.exists()) {
+                Timber.d("预编译高频词典不存在，开始从assets目录复制...")
+                
+                // 从assets目录复制文件
+                trieFile.parentFile?.mkdirs()
+                val inputStream = assets.open("shenji_dict_trie.bin")
+                val outputStream = FileOutputStream(trieFile)
+                
+                try {
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+                    Timber.d("预编译高频词典已成功复制到内部存储")
+                } finally {
+                    inputStream.close()
+                    outputStream.close()
+                }
+            }
+            
+            // 在后台线程中加载预编译词典
+            Thread {
+                try {
+                    DictionaryManager.instance.loadPrecompiledDictionary(trieFile)
+                    Timber.d("预编译高频词典成功加载到内存")
+                } catch (e: Exception) {
+                    Timber.e(e, "加载预编译高频词典失败: ${e.message}")
+                }
+            }.start()
+            
+        } catch (e: Exception) {
+            Timber.e(e, "准备预编译高频词典失败: ${e.message}")
+        }
     }
 }
