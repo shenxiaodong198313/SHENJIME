@@ -3216,10 +3216,18 @@ id btnCancelExport
 id btnClearLogs
 id btnCopyLog
 id btnCopyLogs
-id btnDictExport
 id btnDictManager
+id btnExportDict
 id btnLogs
-id btnPrecompileDict
+id btnMergeDictionaries
+id btnProcessBase1
+id btnProcessBase2
+id btnProcessBase3
+id btnProcessBase4
+id btnProcessBase5
+id btnProcessBase6
+id btnProcessBase7
+id btnProcessChars
 id btnSettings
 id buttonContainer
 id buttonPanel
@@ -3277,6 +3285,7 @@ id design_menu_item_action_area_stub
 id design_menu_item_text
 id design_navigation_view
 id dialog_button
+id dictProcessContainer
 id dimensions
 id direct
 id disableHome
@@ -3306,6 +3315,9 @@ id end
 id endToStart
 id enterAlways
 id enterAlwaysCollapsed
+id etBatchSize
+id etMaxNodesPerBatch
+id etNumWorkers
 id exitUntilCollapsed
 id expand_activities_button
 id expanded_menu
@@ -3488,7 +3500,6 @@ id postLayout
 id pressed
 id progressBar
 id progressBarLoading
-id progressDict
 id progress_circular
 id progress_horizontal
 id radial
@@ -3628,10 +3639,12 @@ id transition_transform
 id triangle
 id tvDatabaseSize
 id tvDictName
+id tvDictProcessTitle
 id tvDictStatus
 id tvDictType
 id tvEmpty
 id tvEntryCount
+id tvExportSection
 id tvFrequency
 id tvHelpText
 id tvLogContent
@@ -3804,6 +3817,7 @@ layout design_navigation_menu
 layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
+layout dialog_export_settings
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_dictionary_entry

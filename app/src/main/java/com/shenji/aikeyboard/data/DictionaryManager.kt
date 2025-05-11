@@ -223,10 +223,18 @@ class DictionaryManager private constructor() {
     /**
      * 导出指定词库到预编译Trie树 - 极低内存占用版本
      * 针对内存溢出问题特别优化
+     * @param batchSize 每批处理的词条数
+     * @param maxNodesPerBatch 每批最大节点数
+     * @param numWorkers 工作线程数
      * @param progressCallback 进度回调函数，参数为0到100的整数
      * @return 导出的文件路径
      */
-    suspend fun exportHighFrequencyDictionaryToTrie(progressCallback: suspend (Int) -> Unit): String {
+    suspend fun exportHighFrequencyDictionaryToTrie(
+        batchSize: Int = 500,
+        maxNodesPerBatch: Int = 2000,
+        numWorkers: Int = 2,
+        progressCallback: suspend (Int) -> Unit
+    ): String {
         val context = ShenjiApplication.appContext
         val exportDir = File(context.getExternalFilesDir(null), "export")
         if (!exportDir.exists()) {
@@ -241,7 +249,8 @@ class DictionaryManager private constructor() {
         tempDir.mkdirs()
         
         try {
-            addLog("开始导出高频词库(chars和base)到预编译Trie树 - 极低内存模式")
+            addLog("开始导出高频词库(chars和base)到预编译Trie树 - 自定义参数模式")
+            addLog("批次大小: $batchSize, 每批最大节点: $maxNodesPerBatch, 工作线程: $numWorkers")
             progressCallback(5)
             
             // 获取词条数量
@@ -254,11 +263,6 @@ class DictionaryManager private constructor() {
             addLog("总计: $totalCount 个词条")
             
             progressCallback(10)
-            
-            // 设置更极端的批处理参数
-            val batchSize = 500  // 减小每批次的大小，避免内存溢出
-            val maxNodesPerBatch = 2000  // 减小每棵临时树的节点数
-            val numWorkers = 2  // 减少并行工作器数量，避免内存压力
             
             // 加载前强制GC一次，清理内存
             addLog("执行内存清理...")
@@ -277,8 +281,8 @@ class DictionaryManager private constructor() {
                 maxNodesPerBatch,
                 tempDir,
                 { progress -> 
-                    // 更新进度 - chars占40%
-                    val adjustedProgress = 10 + ((progress * 40) / 100)
+                    // 更新进度 - chars占20%
+                    val adjustedProgress = 10 + ((progress * 20) / 100)
                     progressCallback(adjustedProgress)
                     
                     // 更新预计剩余时间
@@ -295,30 +299,49 @@ class DictionaryManager private constructor() {
             addLog("chars词库处理完成，执行内存清理...")
             System.gc()
             delay(1000) // 给GC更多时间
-            progressCallback(50)
+            progressCallback(30)
             
-            // 使用超低内存模式处理base词库
-            addLog("使用超低内存模式处理base词库...")
-            val baseTempFiles = processWithUltraLowMemory(
-                "base", 
-                baseCount, 
-                batchSize,
-                maxNodesPerBatch,
-                tempDir,
-                { progress -> 
-                    // 更新进度 - base占30%
-                    val adjustedProgress = 50 + ((progress * 30) / 100)
-                    progressCallback(adjustedProgress)
-                    
-                    // 更新预计剩余时间
-                    val elapsedTime = System.currentTimeMillis() - startTime
-                    val estimatedTotalTime = if (adjustedProgress > 0) elapsedTime * 100 / adjustedProgress else 0
-                    val remainingTime = estimatedTotalTime - elapsedTime
-                    if (progress % 5 == 0 && remainingTime > 0) {
-                        addLog("预计剩余时间: ${formatTime(remainingTime)}")
+            // 将base词库分成7个子集处理
+            addLog("将base词库分成7个子集处理...")
+            val baseTempFiles = mutableListOf<File>()
+            val baseSubsetSize = baseCount / 7
+            val remainingItems = baseCount % 7
+            
+            for (i in 0 until 7) {
+                val subsetStart = i * baseSubsetSize
+                val subsetSize = if (i == 6) baseSubsetSize + remainingItems else baseSubsetSize
+                
+                addLog("处理base词库子集 ${i+1}/7 (${subsetStart}到${subsetStart+subsetSize-1})...")
+                
+                val subsetTempFiles = processBaseSubset(
+                    subsetIndex = i,
+                    offset = subsetStart,
+                    count = subsetSize,
+                    batchSize = batchSize,
+                    maxNodesPerBatch = maxNodesPerBatch,
+                    tempDir = tempDir,
+                    { progress -> 
+                        // 更新进度 - 每个base子集占7%，总共49%
+                        val baseProgress = 30 + (i * 7) + ((progress * 7) / 100)
+                        progressCallback(baseProgress)
+                        
+                        // 更新预计剩余时间
+                        val elapsedTime = System.currentTimeMillis() - startTime
+                        val estimatedTotalTime = if (baseProgress > 0) elapsedTime * 100 / baseProgress else 0
+                        val remainingTime = estimatedTotalTime - elapsedTime
+                        if (progress % 10 == 0 && remainingTime > 0) {
+                            addLog("预计剩余时间: ${formatTime(remainingTime)}")
+                        }
                     }
-                }
-            )
+                )
+                
+                baseTempFiles.addAll(subsetTempFiles)
+                
+                // 每处理完一个子集，执行一次GC
+                addLog("base词库子集 ${i+1}/7 处理完成，执行内存清理...")
+                System.gc()
+                delay(500)
+            }
             
             // 强制GC释放base词库占用的内存
             addLog("所有词库处理完成，执行内存清理...")
@@ -327,7 +350,10 @@ class DictionaryManager private constructor() {
             progressCallback(80)
             
             // 使用超低内存模式合并临时文件
-            val mergedTreeFile = mergeWithUltraLowMemory(tempDir, charsTempFiles + baseTempFiles, 
+            val mergedTreeFile = mergeWithUltraLowMemory(
+                tempDir, 
+                charsTempFiles + baseTempFiles,
+                numWorkers,
                 { progress ->
                     val adjustedProgress = 80 + ((progress * 15) / 100)
                     progressCallback(adjustedProgress)
@@ -422,9 +448,10 @@ class DictionaryManager private constructor() {
         var processedCount = 0
         
         addLog("开始超低内存处理${type}词库，共${totalCount}个词条")
+        addLog("使用批次大小: $batchSize, 每批最大节点: $maxNodesPerBatch")
         
-        // 设置极小的批次大小
-        val microBatchSize = batchSize
+        // 使用传入的批次大小
+        val microBatchSize = batchSize.coerceAtLeast(100) // 确保至少为100
         
         while (processedCount < totalCount) {
             // 取当前批次大小
@@ -439,12 +466,26 @@ class DictionaryManager private constructor() {
             // 添加词条到临时树
             for (entry in entries) {
                 tempTree.insert(entry.word, entry.frequency)
+                
+                // 如果树节点数超过最大限制，提前保存并创建新树
+                if (tempTree.getNodeCount() > maxNodesPerBatch) {
+                    // 保存当前树
+                    val tempFile = File(tempDir, "${type}_batch_${processedCount}_part_${tempFiles.size}.bin")
+                    saveTreeToFile(tempTree, tempFile)
+                    tempFiles.add(tempFile)
+                    
+                    // 清空树，创建新树
+                    tempTree.clear()
+                    System.gc()
+                }
             }
             
-            // 保存临时树到文件
-            val tempFile = File(tempDir, "${type}_batch_${processedCount}.bin")
-            saveTreeToFile(tempTree, tempFile)
-            tempFiles.add(tempFile)
+            // 保存最后的临时树（如果不为空）
+            if (!tempTree.isEmpty()) {
+                val tempFile = File(tempDir, "${type}_batch_${processedCount}_part_${tempFiles.size}.bin")
+                saveTreeToFile(tempTree, tempFile)
+                tempFiles.add(tempFile)
+            }
             
             // 更新已处理数量
             processedCount += currentBatchSize
@@ -503,6 +544,7 @@ class DictionaryManager private constructor() {
     private suspend fun mergeWithUltraLowMemory(
         tempDir: File,
         tempFiles: List<File>,
+        numWorkers: Int,
         progressCallback: suspend (Int) -> Unit
     ): File {
         val mergedFile = File(tempDir, "merged_trie.bin")
@@ -510,26 +552,98 @@ class DictionaryManager private constructor() {
         
         addLog("开始超低内存合并${tempFiles.size}个临时Trie树文件...")
         
-        // 以极小的批次合并文件
-        val microBatchSize = 2
-        val batches = tempFiles.chunked(microBatchSize)
+        // 增强的批处理逻辑，先对文件进行分组
+        val effectiveWorkers = numWorkers.coerceAtLeast(1).coerceAtMost(4) // 限制最大工作线程数为4
+        val fileGroups = tempFiles.chunked((tempFiles.size + effectiveWorkers - 1) / effectiveWorkers)
         
-        var processedFiles = 0
-        var batchIndex = 0
+        addLog("将${tempFiles.size}个文件分成${fileGroups.size}组进行处理，每组约${if (fileGroups.isNotEmpty()) fileGroups[0].size else 0}个文件")
         
-        for (batch in batches) {
-            addLog("处理合并批次 ${++batchIndex}/${batches.size}，包含${batch.size}个文件")
+        var processedGroups = 0
+        var totalProcessedFiles = 0
+        
+        // 先处理每个组内的文件，生成中间合并文件
+        val intermediateFiles = mutableListOf<File>()
+        
+        for ((groupIndex, group) in fileGroups.withIndex()) {
+            addLog("处理文件组 ${groupIndex + 1}/${fileGroups.size}，包含${group.size}个文件")
             
-            // 处理当前批次中的每个文件
-            for (file in batch) {
-                // 加载单个文件
+            // 为当前组创建一个新的合并树
+            val groupTree = TrieTree()
+            var processedFilesInGroup = 0
+            
+            // 处理当前组中的每个文件
+            for (file in group) {
+                try {
+                    // 加载单个文件
+                    val tree = loadTrieFromFile(file)
+                    
+                    // 从树中提取所有词条
+                    val words = tree.getAllWords()
+                    
+                    // 分小批次将词条添加到组合并树中
+                    val wordBatchSize = 200 // 增加批次大小
+                    val wordBatches = words.chunked(wordBatchSize)
+                    
+                    for (wordBatch in wordBatches) {
+                        for ((word, frequency) in wordBatch) {
+                            groupTree.insert(word, frequency)
+                        }
+                        
+                        // 让出线程时间
+                        yield()
+                    }
+                    
+                    // 清空源树，帮助GC
+                    tree.clear()
+                    
+                    // 更新进度
+                    processedFilesInGroup++
+                    totalProcessedFiles++
+                    
+                    val progress = (totalProcessedFiles * 100) / tempFiles.size
+                    if (progress % 5 == 0 || processedFilesInGroup == group.size) {
+                        addLog("组${groupIndex + 1}合并进度: ${processedFilesInGroup}/${group.size} (总进度: ${totalProcessedFiles}/${tempFiles.size}, ${progress}%)")
+                        progressCallback(progress)
+                    }
+                    
+                    // 每处理几个文件执行一次GC
+                    if (processedFilesInGroup % 5 == 0) {
+                        System.gc()
+                        delay(100)
+                    }
+                } catch (e: Exception) {
+                    addLog("处理文件失败: ${e.message}，跳过此文件")
+                    Timber.e(e, "合并文件失败: ${e.message}")
+                }
+            }
+            
+            // 保存当前组的合并树到中间文件
+            val intermediateFile = File(tempDir, "intermediate_group_${groupIndex}.bin")
+            saveTreeToFile(groupTree, intermediateFile)
+            intermediateFiles.add(intermediateFile)
+            
+            // 清空组树，释放内存
+            groupTree.clear()
+            System.gc()
+            delay(300)
+            
+            processedGroups++
+            addLog("完成文件组 ${groupIndex + 1}/${fileGroups.size} 的合并，生成中间文件: ${intermediateFile.name}")
+        }
+        
+        // 最后合并所有中间文件
+        addLog("开始合并${intermediateFiles.size}个中间文件...")
+        
+        for ((index, file) in intermediateFiles.withIndex()) {
+            try {
+                // 加载中间文件
                 val tree = loadTrieFromFile(file)
                 
                 // 从树中提取所有词条
                 val words = tree.getAllWords()
                 
-                // 分小批次将词条添加到合并树中
-                val wordBatchSize = 100
+                // 分大批次将词条添加到最终合并树中
+                val wordBatchSize = 500 // 使用更大的批次
                 val wordBatches = words.chunked(wordBatchSize)
                 
                 for (wordBatch in wordBatches) {
@@ -545,20 +659,17 @@ class DictionaryManager private constructor() {
                 tree.clear()
                 
                 // 更新进度
-                processedFiles++
-                val progress = (processedFiles * 100) / tempFiles.size
+                val progress = 80 + ((index + 1) * 20 / intermediateFiles.size)
+                addLog("中间文件合并进度: ${index + 1}/${intermediateFiles.size}")
                 progressCallback(progress)
                 
-                if (progress % 10 == 0 || progress >= 99) {
-                    addLog("合并进度: ${processedFiles}/${tempFiles.size} (${progress}%)")
-                }
+                // 每处理一个文件执行一次GC
+                System.gc()
+                delay(200)
                 
-                // 每合并几个文件执行一次GC
-                if (processedFiles % (microBatchSize * 2) == 0) {
-                    addLog("执行中间内存清理...")
-                    System.gc()
-                    delay(300)
-                }
+            } catch (e: Exception) {
+                addLog("处理中间文件失败: ${e.message}，尝试继续处理其他文件")
+                Timber.e(e, "合并中间文件失败: ${e.message}")
             }
         }
         
@@ -571,7 +682,16 @@ class DictionaryManager private constructor() {
         mergedTree.clear()
         System.gc()
         
-        addLog("临时Trie树文件合并完成")
+        // 删除中间文件
+        for (file in intermediateFiles) {
+            try {
+                file.delete()
+            } catch (e: Exception) {
+                Timber.e(e, "删除中间文件失败: ${e.message}")
+            }
+        }
+        
+        addLog("临时Trie树文件合并完成，最终文件: ${mergedFile.name}")
         return mergedFile
     }
     
@@ -600,5 +720,378 @@ class DictionaryManager private constructor() {
     private fun calculateVersionHash(type: String): String {
         val lastModTime = repository.getLastModifiedTime(type)
         return "v-${lastModTime}-${repository.getEntryCountByType(type)}"
+    }
+    
+    /**
+     * 处理base词典的子集
+     */
+    private suspend fun processBaseSubset(
+        subsetIndex: Int,
+        offset: Int,
+        count: Int,
+        batchSize: Int,
+        maxNodesPerBatch: Int,
+        tempDir: File,
+        progressCallback: suspend (Int) -> Unit
+    ): List<File> {
+        addLog("处理base词典子集${subsetIndex+1}/7，共${count}个词条，从${offset}开始")
+        
+        // 创建临时文件存储目录
+        if (!tempDir.exists()) {
+            tempDir.mkdirs()
+        }
+        
+        // 记录开始时间
+        val startTime = System.currentTimeMillis()
+        
+        // 分批处理词条，避免内存溢出
+        val tempFiles = mutableListOf<File>()
+        val totalBatches = (count + batchSize - 1) / batchSize
+        
+        addLog("将分${totalBatches}批处理")
+        
+        var processedCount = 0
+        var currentBatch = 0
+        var tree = TrieTree()
+        var nodeCount = 0
+        
+        // 使用分批加载数据
+        var remainingCount = count
+        var currentOffset = offset
+        
+        while (remainingCount > 0) {
+            val batchCount = minOf(batchSize, remainingCount)
+            
+            // 获取当前批次的词条
+            val entries = repository.getEntriesByType("base", currentOffset, batchCount)
+            
+            addLog("加载了${entries.size}个词条，批次${currentBatch+1}/${totalBatches}")
+            
+            for (entry in entries) {
+                // 添加到Trie树
+                tree.insert(entry.word, entry.frequency)
+                nodeCount = tree.getNodeCount()
+                processedCount++
+                
+                // 检查是否达到批次大小或节点数量限制
+                if (processedCount % batchSize == 0 || nodeCount >= maxNodesPerBatch || processedCount == count) {
+                    // 保存当前批次
+                    val tempFile = File(tempDir, "base_subset${subsetIndex}_batch${currentBatch}.bin")
+                    saveTreeToFile(tree, tempFile)
+                    tempFiles.add(tempFile)
+                    
+                    // 重置树
+                    tree = TrieTree()
+                    nodeCount = 0
+                    currentBatch++
+                    
+                    // 更新进度
+                    val progress = (processedCount * 100) / count
+                    progressCallback(progress)
+                    
+                    addLog("处理进度: $progress%, 已处理: $processedCount/$count, 批次: $currentBatch/$totalBatches")
+                }
+            }
+            
+            // 更新剩余数量和偏移量
+            remainingCount -= batchCount
+            currentOffset += batchCount
+            
+            // 让出协程时间，允许UI更新
+            yield()
+        }
+        
+        // 确保最后一批被保存
+        if (nodeCount > 0) {
+            val tempFile = File(tempDir, "base_subset${subsetIndex}_batch${currentBatch}.bin")
+            saveTreeToFile(tree, tempFile)
+            tempFiles.add(tempFile)
+        }
+        
+        val endTime = System.currentTimeMillis()
+        val timeCost = endTime - startTime
+        addLog("子集${subsetIndex+1}/7处理完成，耗时: ${formatTime(timeCost)}")
+        
+        return tempFiles
+    }
+    
+    /**
+     * 处理单个词典并保存到临时文件
+     * @param type 词典类型，如"chars"
+     * @param subsetIndex 子集索引，仅对base词典有效，-1表示不是子集
+     * @param batchSize 每批处理的词条数
+     * @param maxNodesPerBatch 每批最大节点数
+     * @param progressCallback 进度回调函数，参数为0到100的整数
+     * @return 生成的临时文件路径
+     */
+    suspend fun processSingleDictionary(
+        type: String,
+        subsetIndex: Int = -1,
+        batchSize: Int = 500,
+        maxNodesPerBatch: Int = 2000,
+        progressCallback: suspend (Int) -> Unit
+    ): String {
+        val context = ShenjiApplication.appContext
+        val exportDir = File(context.getExternalFilesDir(null), "export")
+        if (!exportDir.exists()) {
+            exportDir.mkdirs()
+        }
+        
+        // 创建临时文件存储目录
+        val tempDir = File(exportDir, "temp_dicts")
+        if (!tempDir.exists()) {
+            tempDir.mkdirs()
+        }
+        
+        addLog("开始处理${if (type == "base" && subsetIndex >= 0) "base词典子集 ${subsetIndex+1}/7" else type + "词典"}")
+        
+        val startTime = System.currentTimeMillis()
+        
+        // 根据类型处理不同词典
+        val tempFiles = if (type == "base" && subsetIndex >= 0) {
+            // 计算这个子集应该处理的词条范围
+            val totalBaseEntries = repository.getEntryCountByType("base")
+            val subsetSize = totalBaseEntries / 7
+            val offset = if (subsetIndex < 6) subsetIndex * subsetSize else 6 * subsetSize
+            val count = if (subsetIndex < 6) subsetSize else (totalBaseEntries - 6 * subsetSize)
+            
+            addLog("base词典总词条数: $totalBaseEntries, 子集${subsetIndex+1}范围: $offset - ${offset+count-1}")
+            
+            // 处理base词典子集
+            processBaseSubset(subsetIndex, offset, count, batchSize, maxNodesPerBatch, tempDir, progressCallback)
+        } else {
+            // 处理其他类型词典
+            val count = repository.getEntryCountByType(type)
+            addLog("${type}词典总词条数: $count")
+            
+            processDictionary(type, batchSize, maxNodesPerBatch, tempDir, progressCallback)
+        }
+        
+        // 如果只有一个临时文件，直接返回
+        if (tempFiles.size == 1) {
+            val outputFile = File(exportDir, "${type}${if (subsetIndex >= 0) "_subset${subsetIndex+1}" else ""}_trie.bin")
+            tempFiles.first().copyTo(outputFile, overwrite = true)
+            
+            val endTime = System.currentTimeMillis()
+            val timeCost = endTime - startTime
+            addLog("处理完成，耗时: ${formatTime(timeCost)}")
+            
+            return outputFile.absolutePath
+        }
+        
+        // 如果有多个临时文件，需要合并
+        addLog("需要合并${tempFiles.size}个临时文件")
+        
+        // 合并临时文件
+        val mergedFile = mergeWithUltraLowMemory(tempDir, tempFiles, 2) { progress ->
+            // 合并进度从50%开始，到100%结束
+            progressCallback(50 + progress / 2)
+        }
+        
+        // 复制到最终位置
+        val outputFile = File(exportDir, "${type}${if (subsetIndex >= 0) "_subset${subsetIndex+1}" else ""}_trie.bin")
+        mergedFile.copyTo(outputFile, overwrite = true)
+        
+        // 删除临时文件
+        tempFiles.forEach { it.delete() }
+        mergedFile.delete()
+        
+        val endTime = System.currentTimeMillis()
+        val timeCost = endTime - startTime
+        addLog("处理完成，耗时: ${formatTime(timeCost)}")
+        
+        return outputFile.absolutePath
+    }
+    
+    /**
+     * 处理普通词典
+     */
+    private suspend fun processDictionary(
+        type: String,
+        batchSize: Int,
+        maxNodesPerBatch: Int,
+        tempDir: File,
+        progressCallback: suspend (Int) -> Unit
+    ): List<File> {
+        // 创建临时文件存储目录
+        if (!tempDir.exists()) {
+            tempDir.mkdirs()
+        }
+        
+        // 记录开始时间
+        val startTime = System.currentTimeMillis()
+        
+        // 获取词典总数
+        val totalCount = repository.getEntryCountByType(type)
+        
+        // 分批处理词条，避免内存溢出
+        val tempFiles = mutableListOf<File>()
+        val totalBatches = (totalCount + batchSize - 1) / batchSize
+        
+        addLog("将分${totalBatches}批处理")
+        
+        var processedCount = 0
+        var currentBatch = 0
+        var tree = TrieTree()
+        var nodeCount = 0
+        
+        // 使用分批加载数据
+        var remainingCount = totalCount
+        var currentOffset = 0
+        
+        while (remainingCount > 0) {
+            val batchCount = minOf(batchSize, remainingCount)
+            
+            // 获取当前批次的词条
+            val entries = repository.getEntriesByType(type, currentOffset, batchCount)
+            
+            addLog("加载了${entries.size}个词条，批次${currentBatch+1}/${totalBatches}")
+            
+            for (entry in entries) {
+                // 添加到Trie树
+                tree.insert(entry.word, entry.frequency)
+                nodeCount = tree.getNodeCount()
+                processedCount++
+                
+                // 检查是否达到批次大小或节点数量限制
+                if (processedCount % batchSize == 0 || nodeCount >= maxNodesPerBatch || processedCount == totalCount) {
+                    // 保存当前批次
+                    val tempFile = File(tempDir, "${type}_batch${currentBatch}.bin")
+                    saveTreeToFile(tree, tempFile)
+                    tempFiles.add(tempFile)
+                    
+                    // 重置树
+                    tree = TrieTree()
+                    nodeCount = 0
+                    currentBatch++
+                    
+                    // 更新进度
+                    val progress = (processedCount * 100) / totalCount
+                    progressCallback(progress)
+                    
+                    addLog("处理进度: $progress%, 已处理: $processedCount/$totalCount, 批次: $currentBatch/$totalBatches")
+                }
+            }
+            
+            // 更新剩余数量和偏移量
+            remainingCount -= batchCount
+            currentOffset += batchCount
+            
+            // 让出协程时间，允许UI更新
+            yield()
+        }
+        
+        // 确保最后一批被保存
+        if (nodeCount > 0) {
+            val tempFile = File(tempDir, "${type}_batch${currentBatch}.bin")
+            saveTreeToFile(tree, tempFile)
+            tempFiles.add(tempFile)
+        }
+        
+        val endTime = System.currentTimeMillis()
+        val timeCost = endTime - startTime
+        addLog("词典${type}处理完成，耗时: ${formatTime(timeCost)}")
+        
+        return tempFiles
+    }
+    
+    /**
+     * 合并所有临时词典文件生成最终Trie树
+     * @param progressCallback 进度回调函数，参数为0到100的整数
+     * @return 合并后的文件路径
+     */
+    suspend fun mergeAllDictionaries(progressCallback: suspend (Int) -> Unit): String {
+        val context = ShenjiApplication.appContext
+        val exportDir = File(context.getExternalFilesDir(null), "export")
+        if (!exportDir.exists()) {
+            exportDir.mkdirs()
+        }
+        
+        // 创建临时文件存储目录
+        val tempDir = File(exportDir, "temp_merge")
+        if (tempDir.exists()) {
+            tempDir.deleteRecursively()
+        }
+        tempDir.mkdirs()
+        
+        addLog("开始合并所有词典文件")
+        
+        // 记录开始时间
+        val startTime = System.currentTimeMillis()
+        
+        // 查找所有需要合并的词典文件
+        val dictFiles = mutableListOf<File>()
+        
+        // 查找base词典子集文件
+        for (i in 0..6) {
+            val file = File(exportDir, "base_subset${i+1}_trie.bin")
+            if (file.exists()) {
+                dictFiles.add(file)
+                addLog("找到base词典子集${i+1}文件: ${file.name}")
+            } else {
+                addLog("警告: 未找到base词典子集${i+1}文件")
+            }
+        }
+        
+        // 查找chars词典文件
+        val charsFile = File(exportDir, "chars_trie.bin")
+        if (charsFile.exists()) {
+            dictFiles.add(charsFile)
+            addLog("找到chars词典文件: ${charsFile.name}")
+        } else {
+            addLog("警告: 未找到chars词典文件")
+        }
+        
+        // 检查是否有足够的文件需要合并
+        if (dictFiles.size <= 1) {
+            addLog("错误: 没有足够的词典文件需要合并，至少需要2个文件")
+            throw IllegalStateException("没有足够的词典文件需要合并，至少需要2个文件")
+        }
+        
+        addLog("共找到${dictFiles.size}个词典文件需要合并")
+        progressCallback(10)
+        
+        // 复制所有文件到临时目录
+        val tempFiles = mutableListOf<File>()
+        for ((index, file) in dictFiles.withIndex()) {
+            val tempFile = File(tempDir, "dict_${index}.bin")
+            file.copyTo(tempFile, overwrite = true)
+            tempFiles.add(tempFile)
+            
+            // 更新进度
+            val progress = 10 + ((index * 20) / dictFiles.size)
+            progressCallback(progress)
+        }
+        
+        addLog("所有词典文件已复制到临时目录")
+        progressCallback(30)
+        
+        // 使用超低内存模式合并所有临时文件
+        val mergedFile = mergeWithUltraLowMemory(
+            tempDir = tempDir,
+            tempFiles = tempFiles,
+            numWorkers = 2,
+            progressCallback = { progress ->
+                val adjustedProgress = 30 + ((progress * 60) / 100)
+                progressCallback(adjustedProgress)
+            }
+        )
+        
+        // 复制到最终位置
+        val outputFile = File(exportDir, "shenji_dict_trie.bin")
+        mergedFile.copyTo(outputFile, overwrite = true)
+        
+        // 清理临时文件
+        tempDir.deleteRecursively()
+        
+        val endTime = System.currentTimeMillis()
+        val timeCost = endTime - startTime
+        addLog("所有词典合并完成，耗时: ${formatTime(timeCost)}")
+        addLog("最终词典文件: ${outputFile.absolutePath}")
+        addLog("文件大小: ${formatFileSize(outputFile.length())}")
+        
+        progressCallback(100)
+        
+        return outputFile.absolutePath
     }
 } 

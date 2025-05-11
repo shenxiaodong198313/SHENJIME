@@ -228,6 +228,20 @@ class TrieTree {
         
         return count
     }
+
+    /**
+     * 获取树中的节点总数
+     */
+    fun getNodeCount(): Int {
+        return countNodes(root)
+    }
+
+    /**
+     * 检查树是否为空
+     */
+    fun isEmpty(): Boolean {
+        return root.children.isEmpty()
+    }
 }
 
  

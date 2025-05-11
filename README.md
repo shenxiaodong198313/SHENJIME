@@ -31,6 +31,17 @@
 
 ## 词典管理系统（详细）
 
+
+   - chars (10万词条)：单字字典
+   - base (78万词条)：2-3字基础词组
+   - correlation (57万词条)：4字词组
+   - associational (34万词条)：5字以上词组
+   - compatible (5千词条)：多音字词组
+   - corrections (137词条)：错音错字词组
+   - place (4.5万词条)：地理位置词典
+   - people (4万词条)：人名词典
+   - poetry (32万词条)：诗词词典
+
 ### 1. 词典数据模型
 - **Entry类**：表示单个词条
   - 包含id、word(词语)、pinyin(拼音)、frequency(词频)、type(词典类型)等字段

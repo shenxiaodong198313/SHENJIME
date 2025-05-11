@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="批次大小（每批处理的词条数）:"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etBatchSize"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:hint="推荐值: 500-2000"
+        android:inputType="number"
+        android:text="500" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="每批最大节点数:"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etMaxNodesPerBatch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:hint="推荐值: 2000-10000"
+        android:inputType="number"
+        android:text="2000" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="工作线程数:"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etNumWorkers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:hint="推荐值: 1-4"
+        android:inputType="number"
+        android:text="2" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="注意: 较大的值可能会加快导出速度，但会增加内存使用，可能导致内存不足。"
+        android:textColor="#E91E63"
+        android:textSize="12sp" />
+
+</LinearLayout> 

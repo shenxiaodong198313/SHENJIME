@@ -27,19 +27,46 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnCancelExport;
 
   @NonNull
-  public final Button btnDictExport;
+  public final Button btnDictManager;
 
   @NonNull
-  public final Button btnDictManager;
+  public final Button btnExportDict;
 
   @NonNull
   public final Button btnLogs;
 
   @NonNull
-  public final Button btnPrecompileDict;
+  public final Button btnMergeDictionaries;
+
+  @NonNull
+  public final Button btnProcessBase1;
+
+  @NonNull
+  public final Button btnProcessBase2;
+
+  @NonNull
+  public final Button btnProcessBase3;
+
+  @NonNull
+  public final Button btnProcessBase4;
+
+  @NonNull
+  public final Button btnProcessBase5;
+
+  @NonNull
+  public final Button btnProcessBase6;
+
+  @NonNull
+  public final Button btnProcessBase7;
+
+  @NonNull
+  public final Button btnProcessChars;
 
   @NonNull
   public final Button btnSettings;
+
+  @NonNull
+  public final LinearLayout dictProcessContainer;
 
   @NonNull
   public final LinearLayout mainButtonContainer;
@@ -51,13 +78,16 @@ public final class ActivityMainBinding implements ViewBinding {
   public final ProgressBar pbDictExport;
 
   @NonNull
-  public final ProgressBar progressDict;
-
-  @NonNull
   public final Toolbar toolbar;
 
   @NonNull
+  public final TextView tvDictProcessTitle;
+
+  @NonNull
   public final TextView tvDictStatus;
+
+  @NonNull
+  public final TextView tvExportSection;
 
   @NonNull
   public final TextView tvHelpText;
@@ -69,25 +99,40 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvTitle;
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnCancelExport,
-      @NonNull Button btnDictExport, @NonNull Button btnDictManager, @NonNull Button btnLogs,
-      @NonNull Button btnPrecompileDict, @NonNull Button btnSettings,
-      @NonNull LinearLayout mainButtonContainer, @NonNull ConstraintLayout mainContainer,
-      @NonNull ProgressBar pbDictExport, @NonNull ProgressBar progressDict,
-      @NonNull Toolbar toolbar, @NonNull TextView tvDictStatus, @NonNull TextView tvHelpText,
-      @NonNull TextView tvStatus, @NonNull TextView tvTitle) {
+      @NonNull Button btnDictManager, @NonNull Button btnExportDict, @NonNull Button btnLogs,
+      @NonNull Button btnMergeDictionaries, @NonNull Button btnProcessBase1,
+      @NonNull Button btnProcessBase2, @NonNull Button btnProcessBase3,
+      @NonNull Button btnProcessBase4, @NonNull Button btnProcessBase5,
+      @NonNull Button btnProcessBase6, @NonNull Button btnProcessBase7,
+      @NonNull Button btnProcessChars, @NonNull Button btnSettings,
+      @NonNull LinearLayout dictProcessContainer, @NonNull LinearLayout mainButtonContainer,
+      @NonNull ConstraintLayout mainContainer, @NonNull ProgressBar pbDictExport,
+      @NonNull Toolbar toolbar, @NonNull TextView tvDictProcessTitle,
+      @NonNull TextView tvDictStatus, @NonNull TextView tvExportSection,
+      @NonNull TextView tvHelpText, @NonNull TextView tvStatus, @NonNull TextView tvTitle) {
     this.rootView = rootView;
     this.btnCancelExport = btnCancelExport;
-    this.btnDictExport = btnDictExport;
     this.btnDictManager = btnDictManager;
+    this.btnExportDict = btnExportDict;
     this.btnLogs = btnLogs;
-    this.btnPrecompileDict = btnPrecompileDict;
+    this.btnMergeDictionaries = btnMergeDictionaries;
+    this.btnProcessBase1 = btnProcessBase1;
+    this.btnProcessBase2 = btnProcessBase2;
+    this.btnProcessBase3 = btnProcessBase3;
+    this.btnProcessBase4 = btnProcessBase4;
+    this.btnProcessBase5 = btnProcessBase5;
+    this.btnProcessBase6 = btnProcessBase6;
+    this.btnProcessBase7 = btnProcessBase7;
+    this.btnProcessChars = btnProcessChars;
     this.btnSettings = btnSettings;
+    this.dictProcessContainer = dictProcessContainer;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
     this.pbDictExport = pbDictExport;
-    this.progressDict = progressDict;
     this.toolbar = toolbar;
+    this.tvDictProcessTitle = tvDictProcessTitle;
     this.tvDictStatus = tvDictStatus;
+    this.tvExportSection = tvExportSection;
     this.tvHelpText = tvHelpText;
     this.tvStatus = tvStatus;
     this.tvTitle = tvTitle;
@@ -126,15 +171,15 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.btnDictExport;
-      Button btnDictExport = ViewBindings.findChildViewById(rootView, id);
-      if (btnDictExport == null) {
-        break missingId;
-      }
-
       id = R.id.btnDictManager;
       Button btnDictManager = ViewBindings.findChildViewById(rootView, id);
       if (btnDictManager == null) {
+        break missingId;
+      }
+
+      id = R.id.btnExportDict;
+      Button btnExportDict = ViewBindings.findChildViewById(rootView, id);
+      if (btnExportDict == null) {
         break missingId;
       }
 
@@ -144,15 +189,69 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.btnPrecompileDict;
-      Button btnPrecompileDict = ViewBindings.findChildViewById(rootView, id);
-      if (btnPrecompileDict == null) {
+      id = R.id.btnMergeDictionaries;
+      Button btnMergeDictionaries = ViewBindings.findChildViewById(rootView, id);
+      if (btnMergeDictionaries == null) {
+        break missingId;
+      }
+
+      id = R.id.btnProcessBase1;
+      Button btnProcessBase1 = ViewBindings.findChildViewById(rootView, id);
+      if (btnProcessBase1 == null) {
+        break missingId;
+      }
+
+      id = R.id.btnProcessBase2;
+      Button btnProcessBase2 = ViewBindings.findChildViewById(rootView, id);
+      if (btnProcessBase2 == null) {
+        break missingId;
+      }
+
+      id = R.id.btnProcessBase3;
+      Button btnProcessBase3 = ViewBindings.findChildViewById(rootView, id);
+      if (btnProcessBase3 == null) {
+        break missingId;
+      }
+
+      id = R.id.btnProcessBase4;
+      Button btnProcessBase4 = ViewBindings.findChildViewById(rootView, id);
+      if (btnProcessBase4 == null) {
+        break missingId;
+      }
+
+      id = R.id.btnProcessBase5;
+      Button btnProcessBase5 = ViewBindings.findChildViewById(rootView, id);
+      if (btnProcessBase5 == null) {
+        break missingId;
+      }
+
+      id = R.id.btnProcessBase6;
+      Button btnProcessBase6 = ViewBindings.findChildViewById(rootView, id);
+      if (btnProcessBase6 == null) {
+        break missingId;
+      }
+
+      id = R.id.btnProcessBase7;
+      Button btnProcessBase7 = ViewBindings.findChildViewById(rootView, id);
+      if (btnProcessBase7 == null) {
+        break missingId;
+      }
+
+      id = R.id.btnProcessChars;
+      Button btnProcessChars = ViewBindings.findChildViewById(rootView, id);
+      if (btnProcessChars == null) {
         break missingId;
       }
 
       id = R.id.btnSettings;
       Button btnSettings = ViewBindings.findChildViewById(rootView, id);
       if (btnSettings == null) {
+        break missingId;
+      }
+
+      id = R.id.dictProcessContainer;
+      LinearLayout dictProcessContainer = ViewBindings.findChildViewById(rootView, id);
+      if (dictProcessContainer == null) {
         break missingId;
       }
 
@@ -170,21 +269,27 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.progressDict;
-      ProgressBar progressDict = ViewBindings.findChildViewById(rootView, id);
-      if (progressDict == null) {
-        break missingId;
-      }
-
       id = R.id.toolbar;
       Toolbar toolbar = ViewBindings.findChildViewById(rootView, id);
       if (toolbar == null) {
         break missingId;
       }
 
+      id = R.id.tvDictProcessTitle;
+      TextView tvDictProcessTitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvDictProcessTitle == null) {
+        break missingId;
+      }
+
       id = R.id.tvDictStatus;
       TextView tvDictStatus = ViewBindings.findChildViewById(rootView, id);
       if (tvDictStatus == null) {
+        break missingId;
+      }
+
+      id = R.id.tvExportSection;
+      TextView tvExportSection = ViewBindings.findChildViewById(rootView, id);
+      if (tvExportSection == null) {
         break missingId;
       }
 
@@ -206,10 +311,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((ConstraintLayout) rootView, btnCancelExport, btnDictExport,
-          btnDictManager, btnLogs, btnPrecompileDict, btnSettings, mainButtonContainer,
-          mainContainer, pbDictExport, progressDict, toolbar, tvDictStatus, tvHelpText, tvStatus,
-          tvTitle);
+      return new ActivityMainBinding((ConstraintLayout) rootView, btnCancelExport, btnDictManager,
+          btnExportDict, btnLogs, btnMergeDictionaries, btnProcessBase1, btnProcessBase2,
+          btnProcessBase3, btnProcessBase4, btnProcessBase5, btnProcessBase6, btnProcessBase7,
+          btnProcessChars, btnSettings, dictProcessContainer, mainButtonContainer, mainContainer,
+          pbDictExport, toolbar, tvDictProcessTitle, tvDictStatus, tvExportSection, tvHelpText,
+          tvStatus, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
