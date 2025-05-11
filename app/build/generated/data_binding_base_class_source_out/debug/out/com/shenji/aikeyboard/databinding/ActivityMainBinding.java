@@ -23,13 +23,13 @@ public final class ActivityMainBinding implements ViewBinding {
   private final ConstraintLayout rootView;
 
   @NonNull
-  public final Button btnConvertDict;
-
-  @NonNull
   public final Button btnDictManager;
 
   @NonNull
   public final Button btnLogs;
+
+  @NonNull
+  public final Button btnPrecompileDict;
 
   @NonNull
   public final Button btnSettings;
@@ -52,14 +52,14 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final TextView tvTitle;
 
-  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnConvertDict,
-      @NonNull Button btnDictManager, @NonNull Button btnLogs, @NonNull Button btnSettings,
+  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnDictManager,
+      @NonNull Button btnLogs, @NonNull Button btnPrecompileDict, @NonNull Button btnSettings,
       @NonNull ProgressBar progressDict, @NonNull Toolbar toolbar, @NonNull TextView tvDictStatus,
       @NonNull TextView tvHelpText, @NonNull TextView tvStatus, @NonNull TextView tvTitle) {
     this.rootView = rootView;
-    this.btnConvertDict = btnConvertDict;
     this.btnDictManager = btnDictManager;
     this.btnLogs = btnLogs;
+    this.btnPrecompileDict = btnPrecompileDict;
     this.btnSettings = btnSettings;
     this.progressDict = progressDict;
     this.toolbar = toolbar;
@@ -96,12 +96,6 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.btnConvertDict;
-      Button btnConvertDict = ViewBindings.findChildViewById(rootView, id);
-      if (btnConvertDict == null) {
-        break missingId;
-      }
-
       id = R.id.btnDictManager;
       Button btnDictManager = ViewBindings.findChildViewById(rootView, id);
       if (btnDictManager == null) {
@@ -111,6 +105,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnLogs;
       Button btnLogs = ViewBindings.findChildViewById(rootView, id);
       if (btnLogs == null) {
+        break missingId;
+      }
+
+      id = R.id.btnPrecompileDict;
+      Button btnPrecompileDict = ViewBindings.findChildViewById(rootView, id);
+      if (btnPrecompileDict == null) {
         break missingId;
       }
 
@@ -156,8 +156,9 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((ConstraintLayout) rootView, btnConvertDict, btnDictManager,
-          btnLogs, btnSettings, progressDict, toolbar, tvDictStatus, tvHelpText, tvStatus, tvTitle);
+      return new ActivityMainBinding((ConstraintLayout) rootView, btnDictManager, btnLogs,
+          btnPrecompileDict, btnSettings, progressDict, toolbar, tvDictStatus, tvHelpText, tvStatus,
+          tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

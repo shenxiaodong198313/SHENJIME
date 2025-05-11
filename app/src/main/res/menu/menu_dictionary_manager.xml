@@ -8,4 +8,10 @@
         android:title="查看日志"
         app:showAsAction="always" />
     
+    <item
+        android:id="@+id/action_export_trie"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="导出预编译树"
+        app:showAsAction="never" />
+    
 </menu> 

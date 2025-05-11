@@ -1,8 +1,13 @@
 package com.shenji.aikeyboard.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -12,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
  * 词典日志查看Activity
@@ -31,6 +37,7 @@ class DictionaryLogsActivity : AppCompatActivity() {
         
         setupToolbar()
         setupRecyclerView()
+        setupButtons()
         loadLogs()
         
         // 启动自动刷新
@@ -50,6 +57,64 @@ class DictionaryLogsActivity : AppCompatActivity() {
             }
             adapter = logAdapter
         }
+    }
+    
+    /**
+     * 设置按钮点击事件
+     */
+    private fun setupButtons() {
+        // 复制日志按钮
+        binding.btnCopyLogs.setOnClickListener {
+            copyLogsToClipboard()
+        }
+        
+        // 清空日志按钮
+        binding.btnClearLogs.setOnClickListener {
+            showClearLogsConfirmDialog()
+        }
+    }
+    
+    /**
+     * 复制日志到剪贴板
+     */
+    private fun copyLogsToClipboard() {
+        val logs = DictionaryManager.instance.getLogs()
+        if (logs.isEmpty()) {
+            Toast.makeText(this, "暂无日志可复制", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val logText = logs.joinToString("\n")
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("词典日志", logText)
+        clipboard.setPrimaryClip(clip)
+        
+        Toast.makeText(this, "日志已复制到剪贴板", Toast.LENGTH_SHORT).show()
+        Timber.d("日志已复制到剪贴板")
+    }
+    
+    /**
+     * 显示清空日志确认对话框
+     */
+    private fun showClearLogsConfirmDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("清空日志")
+            .setMessage("确定要清空所有日志记录吗？此操作不可恢复。")
+            .setPositiveButton("确定") { _, _ ->
+                clearLogs()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+    
+    /**
+     * 清空日志
+     */
+    private fun clearLogs() {
+        DictionaryManager.instance.clearLogs()
+        loadLogs()
+        Toast.makeText(this, "日志已清空", Toast.LENGTH_SHORT).show()
+        Timber.d("日志已清空")
     }
     
     /**

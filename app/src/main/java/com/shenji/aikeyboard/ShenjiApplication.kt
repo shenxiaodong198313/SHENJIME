@@ -54,8 +54,7 @@ class ShenjiApplication : Application() {
             // 初始化Realm
             initRealm()
             
-            // 初始化词典管理器
-            DictionaryManager.init()
+            // 不再自动初始化词典管理器，改为按需初始化
             
             Timber.d("ShenjiApplication初始化完成")
         } catch (e: Exception) {
@@ -81,7 +80,7 @@ class ShenjiApplication : Application() {
             
             val dictFile = File(internalDir, "shenji_dict.realm")
             if (!dictFile.exists()) {
-                Timber.d("Dictionary file does not exist, copying from assets...")
+                Timber.d("词典文件不存在，从assets复制...")
                 
                 val inputStream = assets.open("shenji_dict.realm")
                 val outputStream = FileOutputStream(dictFile)
@@ -96,12 +95,12 @@ class ShenjiApplication : Application() {
                 inputStream.close()
                 outputStream.close()
                 
-                Timber.d("Dictionary file copied successfully")
+                Timber.d("词典文件复制成功")
             } else {
-                Timber.d("Dictionary file already exists")
+                Timber.d("词典文件已存在")
             }
         } catch (e: IOException) {
-            Timber.e(e, "Error copying dictionary file")
+            Timber.e(e, "复制词典文件出错")
         }
     }
     

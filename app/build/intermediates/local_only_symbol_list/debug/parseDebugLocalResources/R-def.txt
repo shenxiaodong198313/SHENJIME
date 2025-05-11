@@ -17,12 +17,16 @@ color teal_700
 color white
 drawable candidate_background
 drawable key_preview_background
+id action_export_trie
 id action_logs
-id btnConvertDict
+id btnClearLogs
 id btnCopyLog
+id btnCopyLogs
 id btnDictManager
 id btnLogs
+id btnPrecompileDict
 id btnSettings
+id buttonContainer
 id candidates_container
 id candidates_layout
 id cardStats

@@ -5,10 +5,17 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.databinding.ActivityMainBinding
+import com.shenji.aikeyboard.data.DictionaryManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,10 +55,85 @@ class MainActivity : AppCompatActivity() {
             openDictManager()
         }
         
-        // 隐藏词典转换相关UI
-        binding.btnConvertDict.visibility = android.view.View.GONE
+        // 添加预编译词典按钮的点击处理
+        binding.btnPrecompileDict.setOnClickListener {
+            startPrecompileDictionary()
+        }
+        
+        // 隐藏词典转换相关UI只保留预编译按钮
         binding.progressDict.visibility = android.view.View.GONE
         binding.tvDictStatus.visibility = android.view.View.GONE
+    }
+    
+    /**
+     * 开始预编译词典过程
+     */
+    private fun startPrecompileDictionary() {
+        // 显示进度UI
+        binding.progressDict.visibility = android.view.View.VISIBLE
+        binding.tvDictStatus.visibility = android.view.View.VISIBLE
+        binding.progressDict.isIndeterminate = true
+        binding.tvDictStatus.text = "正在准备导出词典信息..."
+        
+        // 在后台线程执行导出
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 获取DictionaryManager实例
+                val dictionaryManager = DictionaryManager.instance
+                
+                // 创建导出目录
+                withContext(Dispatchers.Main) {
+                    binding.tvDictStatus.text = "正在创建导出目录..."
+                }
+                
+                val exportDir = File(getExternalFilesDir(null), "export")
+                if (!exportDir.exists()) {
+                    exportDir.mkdirs()
+                }
+                
+                // 开始导出词典信息
+                withContext(Dispatchers.Main) {
+                    binding.tvDictStatus.text = "正在导出词典信息..."
+                }
+                
+                // 调用DictionaryManager中的导出方法
+                dictionaryManager.exportPrecompiledTrieForBuilding()
+                
+                // 获取导出的文件路径
+                val versionFile = File(exportDir, "dictionary_versions.bin")
+                val infoFile = File(exportDir, "dict_info.json")
+                
+                // 检查文件是否生成成功
+                if (!versionFile.exists() || !infoFile.exists()) {
+                    withContext(Dispatchers.Main) {
+                        binding.tvDictStatus.text = "词典信息导出失败，请查看日志"
+                        binding.progressDict.isIndeterminate = false
+                        binding.progressDict.progress = 0
+                    }
+                    return@launch
+                }
+                
+                // 显示成功信息
+                withContext(Dispatchers.Main) {
+                    binding.progressDict.isIndeterminate = false
+                    binding.progressDict.progress = 100
+                    binding.tvDictStatus.text = "词典信息导出成功！\n" +
+                            "存放路径: ${exportDir.absolutePath}\n\n" +
+                            "已导出以下文件:\n" +
+                            "- dictionary_versions.bin\n" +
+                            "- dict_info.json"
+                    
+                    Toast.makeText(this@MainActivity, "词典信息导出成功", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "导出词典信息失败")
+                withContext(Dispatchers.Main) {
+                    binding.progressDict.isIndeterminate = false
+                    binding.progressDict.progress = 0
+                    binding.tvDictStatus.text = "导出词典信息失败: ${e.message}"
+                }
+            }
+        }
     }
     
     /**

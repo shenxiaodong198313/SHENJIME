@@ -12,6 +12,10 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\item_dictionary_log.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/activity_main.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_main.xml"
+    },
+    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\key_preview.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\key_preview.xml"
     },
@@ -46,10 +50,6 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\candidate_item.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\candidate_item.xml"
-    },
-    {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/shimmer_dictionary_module.xml",
-        "source": "com.shenji.aikeyboard.app-main-6:/layout/shimmer_dictionary_module.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_log_detail.xml",

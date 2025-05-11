@@ -104,24 +104,19 @@ class DictionaryRepository {
      */
     fun getDictionaryModules(): List<DictionaryModule> {
         val types = getAllDictionaryTypes()
-        val dictionaryManager = DictionaryManager.instance
         
         return types.map { type ->
             val count = getEntryCountByType(type)
             val chineseName = getChineseNameForType(type)
             
-            // 判断是否是高频词库以及是否已加载到内存
+            // 所有词典都存储在数据库中，不再进行内存加载
             val isHighFrequencyDict = type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES
             
-            // 直接使用DictionaryManager的实时加载状态
-            val isInMemory = isHighFrequencyDict && dictionaryManager.isTypeLoaded(type)
+            // 所有词典都是从数据库加载，不再保存在内存中
+            val isInMemory = false
             
-            // 获取内存占用
-            val memoryUsage = if (isInMemory) {
-                dictionaryManager.getTypeMemoryUsage(type)
-            } else {
-                0L
-            }
+            // 所有词典不再占用额外内存
+            val memoryUsage = 0L
             
             DictionaryModule(type, chineseName, count, isInMemory, memoryUsage)
         }

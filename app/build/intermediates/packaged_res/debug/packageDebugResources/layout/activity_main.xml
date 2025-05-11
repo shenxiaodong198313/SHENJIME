@@ -77,13 +77,13 @@
         app:layout_constraintTop_toBottomOf="@+id/btnLogs" />
 
     <Button
-        android:id="@+id/btnConvertDict"
+        android:id="@+id/btnPrecompileDict"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="32dp"
-        android:text="@string/dict_convert"
+        android:text="导出词典信息"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnDictManager" />
@@ -99,7 +99,7 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnConvertDict" />
+        app:layout_constraintTop_toBottomOf="@+id/btnPrecompileDict" />
 
     <TextView
         android:id="@+id/tvDictStatus"
