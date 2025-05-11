@@ -15,4 +15,16 @@
     <string name="dict_completed">转换完成！</string>
     <string name="dict_error">转换出错</string>
     <string name="storage_permission_required">需要存储权限以保存数据库文件</string>
+    
+    <!-- 词典管理相关 -->
+    <string name="dict_manager">词典管理</string>
+    <string name="dict_manager_title">词典管理</string>
+    <string name="dict_total_entries">词条总数: %1$d</string>
+    <string name="dict_memory_usage">内存占用: %1$s</string>
+    <string name="dict_db_size">数据库大小: %1$s</string>
+    <string name="dict_module_count">词典模块: %1$d</string>
+    <string name="dict_detail_title">词典详情 - %1$s</string>
+    <string name="dict_load_more">加载更多...</string>
+    <string name="dict_loading">正在加载...</string>
+    <string name="dict_no_data">暂无数据</string>
 </resources> 

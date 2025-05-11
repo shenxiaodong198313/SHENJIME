@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.shenji.aikeyboard.ShenjiApplication
 import timber.log.Timber
+import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -15,7 +16,7 @@ import kotlin.system.exitProcess
 /**
  * 崩溃日志记录树，继承自Timber.Tree，用于捕获应用崩溃并记录日志
  */
-class CrashReportingTree(private val context: Context) : Timber.Tree() {
+class CrashReportingTree : Timber.Tree() {
 
     init {
         // 设置全局未捕获异常处理器
@@ -56,7 +57,7 @@ class CrashReportingTree(private val context: Context) : Timber.Tree() {
 
     private fun writeLogToFile(tag: String?, message: String, t: Throwable?) {
         try {
-            val app = context.applicationContext as ShenjiApplication
+            val app = ShenjiApplication.instance
             val logFile = app.getCrashLogFile()
             
             val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
@@ -72,6 +73,9 @@ class CrashReportingTree(private val context: Context) : Timber.Tree() {
             FileOutputStream(logFile, true).use { fos ->
                 fos.write(logEntry.toByteArray())
             }
+            
+            // 输出到Android日志，方便调试
+            Log.e("CrashReportingTree", "写入崩溃日志到: ${logFile.absolutePath}")
         } catch (e: Exception) {
             Log.e("CrashReportingTree", "写入日志文件失败", e)
         }

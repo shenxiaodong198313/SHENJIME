@@ -40,6 +40,16 @@
         <activity
             android:name=".ui.LogDetailActivity"
             android:exported="false" />
+            
+        <!-- 词典管理活动 -->
+        <activity
+            android:name=".ui.DictionaryManagerActivity"
+            android:exported="false" />
+            
+        <!-- 词典详情活动 -->
+        <activity
+            android:name=".ui.DictionaryDetailActivity"
+            android:exported="false" />
 
         <!-- 输入法服务 -->
         <service

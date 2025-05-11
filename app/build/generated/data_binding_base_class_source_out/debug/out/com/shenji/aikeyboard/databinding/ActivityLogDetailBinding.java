@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
@@ -24,17 +25,17 @@ public final class ActivityLogDetailBinding implements ViewBinding {
   public final Button btnCopyLog;
 
   @NonNull
-  public final TextView tvLogContent;
+  public final Toolbar toolbar;
 
   @NonNull
-  public final TextView tvLogTitle;
+  public final TextView tvLogContent;
 
   private ActivityLogDetailBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnCopyLog,
-      @NonNull TextView tvLogContent, @NonNull TextView tvLogTitle) {
+      @NonNull Toolbar toolbar, @NonNull TextView tvLogContent) {
     this.rootView = rootView;
     this.btnCopyLog = btnCopyLog;
+    this.toolbar = toolbar;
     this.tvLogContent = tvLogContent;
-    this.tvLogTitle = tvLogTitle;
   }
 
   @Override
@@ -70,20 +71,20 @@ public final class ActivityLogDetailBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.toolbar;
+      Toolbar toolbar = ViewBindings.findChildViewById(rootView, id);
+      if (toolbar == null) {
+        break missingId;
+      }
+
       id = R.id.tvLogContent;
       TextView tvLogContent = ViewBindings.findChildViewById(rootView, id);
       if (tvLogContent == null) {
         break missingId;
       }
 
-      id = R.id.tvLogTitle;
-      TextView tvLogTitle = ViewBindings.findChildViewById(rootView, id);
-      if (tvLogTitle == null) {
-        break missingId;
-      }
-
-      return new ActivityLogDetailBinding((ConstraintLayout) rootView, btnCopyLog, tvLogContent,
-          tvLogTitle);
+      return new ActivityLogDetailBinding((ConstraintLayout) rootView, btnCopyLog, toolbar,
+          tvLogContent);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -1,0 +1,4 @@
+app\build\intermediates\assets\debug\mergeDebugAssets\shenji_dict.realm
+app\build\intermediates\compressed_assets\debug\compress...shenji_dict.realm.jar
+app\build\outputs\apk\debug\app-debug.apk
+app\src\main\assets\shenji_dict.realm

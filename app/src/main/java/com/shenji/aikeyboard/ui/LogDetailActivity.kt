@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.shenji.aikeyboard.R
@@ -20,8 +21,15 @@ class LogDetailActivity : AppCompatActivity() {
         binding = ActivityLogDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
+        setupToolbar()
         setupUI()
         loadLogContent()
+    }
+    
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = getString(R.string.log_details)
     }
     
     private fun setupUI() {
@@ -59,5 +67,13 @@ class LogDetailActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.log_copied), Toast.LENGTH_SHORT).show()
             Timber.d("日志内容已复制到剪贴板")
         }
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            finish()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 } 

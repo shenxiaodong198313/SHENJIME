@@ -9,6 +9,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
@@ -25,6 +26,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnConvertDict;
 
   @NonNull
+  public final Button btnDictManager;
+
+  @NonNull
   public final Button btnLogs;
 
   @NonNull
@@ -32,6 +36,9 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final ProgressBar progressDict;
+
+  @NonNull
+  public final Toolbar toolbar;
 
   @NonNull
   public final TextView tvDictStatus;
@@ -46,14 +53,16 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvTitle;
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnConvertDict,
-      @NonNull Button btnLogs, @NonNull Button btnSettings, @NonNull ProgressBar progressDict,
-      @NonNull TextView tvDictStatus, @NonNull TextView tvHelpText, @NonNull TextView tvStatus,
-      @NonNull TextView tvTitle) {
+      @NonNull Button btnDictManager, @NonNull Button btnLogs, @NonNull Button btnSettings,
+      @NonNull ProgressBar progressDict, @NonNull Toolbar toolbar, @NonNull TextView tvDictStatus,
+      @NonNull TextView tvHelpText, @NonNull TextView tvStatus, @NonNull TextView tvTitle) {
     this.rootView = rootView;
     this.btnConvertDict = btnConvertDict;
+    this.btnDictManager = btnDictManager;
     this.btnLogs = btnLogs;
     this.btnSettings = btnSettings;
     this.progressDict = progressDict;
+    this.toolbar = toolbar;
     this.tvDictStatus = tvDictStatus;
     this.tvHelpText = tvHelpText;
     this.tvStatus = tvStatus;
@@ -93,6 +102,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnDictManager;
+      Button btnDictManager = ViewBindings.findChildViewById(rootView, id);
+      if (btnDictManager == null) {
+        break missingId;
+      }
+
       id = R.id.btnLogs;
       Button btnLogs = ViewBindings.findChildViewById(rootView, id);
       if (btnLogs == null) {
@@ -108,6 +123,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.progressDict;
       ProgressBar progressDict = ViewBindings.findChildViewById(rootView, id);
       if (progressDict == null) {
+        break missingId;
+      }
+
+      id = R.id.toolbar;
+      Toolbar toolbar = ViewBindings.findChildViewById(rootView, id);
+      if (toolbar == null) {
         break missingId;
       }
 
@@ -135,8 +156,8 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((ConstraintLayout) rootView, btnConvertDict, btnLogs,
-          btnSettings, progressDict, tvDictStatus, tvHelpText, tvStatus, tvTitle);
+      return new ActivityMainBinding((ConstraintLayout) rootView, btnConvertDict, btnDictManager,
+          btnLogs, btnSettings, progressDict, toolbar, tvDictStatus, tvHelpText, tvStatus, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
