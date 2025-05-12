@@ -27,4 +27,13 @@
     <string name="dict_load_more">加载更多...</string>
     <string name="dict_loading">正在加载...</string>
     <string name="dict_no_data">暂无数据</string>
+    
+    <!-- 输入测试相关 -->
+    <string name="input_test">输入测试</string>
+    <string name="input_test_title">输入测试</string>
+    <string name="realm_status">Realm词典连接状态: %1$s</string>
+    <string name="ime_log">输入法日志</string>
+    <string name="copy_logs">复制日志</string>
+    <string name="clear_logs">清除日志</string>
+    <string name="input_hint">点击此处输入文字</string>
 </resources> 

@@ -68,6 +68,10 @@ class MainActivity : AppCompatActivity() {
             openDictManager()
         }
         
+        binding.btnInputTest.setOnClickListener {
+            openInputTest()
+        }
+        
         // 隐藏进度相关元素和词典处理部分
         binding.tvDictProcessTitle.visibility = View.GONE
         binding.dictProcessContainer.visibility = View.GONE
@@ -140,6 +144,15 @@ class MainActivity : AppCompatActivity() {
     private fun openDictManager() {
         Timber.d("打开词典管理")
         val intent = Intent(this, DictionaryManagerActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * 打开输入测试界面
+     */
+    private fun openInputTest() {
+        Timber.d("打开输入测试")
+        val intent = Intent(this, InputTestActivity::class.java)
         startActivity(intent)
     }
 } 

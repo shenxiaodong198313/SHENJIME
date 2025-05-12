@@ -83,6 +83,13 @@
                     android:layout_marginTop="16dp"
                     android:text="@string/dict_manager" />
 
+                <Button
+                    android:id="@+id/btnInputTest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="输入测试" />
+
             </LinearLayout>
             
             <!-- 词典处理部分 -->

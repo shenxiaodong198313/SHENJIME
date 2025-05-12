@@ -30,6 +30,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnDictManager;
 
   @NonNull
+  public final Button btnInputTest;
+
+  @NonNull
   public final Button btnLogs;
 
   @NonNull
@@ -93,11 +96,12 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvTitle;
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnCancelExport,
-      @NonNull Button btnDictManager, @NonNull Button btnLogs, @NonNull Button btnMergeDictionaries,
-      @NonNull Button btnProcessBase1, @NonNull Button btnProcessBase2,
-      @NonNull Button btnProcessBase3, @NonNull Button btnProcessBase4,
-      @NonNull Button btnProcessBase5, @NonNull Button btnProcessBase6,
-      @NonNull Button btnProcessBase7, @NonNull Button btnProcessChars, @NonNull Button btnSettings,
+      @NonNull Button btnDictManager, @NonNull Button btnInputTest, @NonNull Button btnLogs,
+      @NonNull Button btnMergeDictionaries, @NonNull Button btnProcessBase1,
+      @NonNull Button btnProcessBase2, @NonNull Button btnProcessBase3,
+      @NonNull Button btnProcessBase4, @NonNull Button btnProcessBase5,
+      @NonNull Button btnProcessBase6, @NonNull Button btnProcessBase7,
+      @NonNull Button btnProcessChars, @NonNull Button btnSettings,
       @NonNull LinearLayout dictProcessContainer, @NonNull LinearLayout mainButtonContainer,
       @NonNull ConstraintLayout mainContainer, @NonNull ProgressBar pbDictExport,
       @NonNull Toolbar toolbar, @NonNull TextView tvDictProcessTitle,
@@ -106,6 +110,7 @@ public final class ActivityMainBinding implements ViewBinding {
     this.rootView = rootView;
     this.btnCancelExport = btnCancelExport;
     this.btnDictManager = btnDictManager;
+    this.btnInputTest = btnInputTest;
     this.btnLogs = btnLogs;
     this.btnMergeDictionaries = btnMergeDictionaries;
     this.btnProcessBase1 = btnProcessBase1;
@@ -165,6 +170,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnDictManager;
       Button btnDictManager = ViewBindings.findChildViewById(rootView, id);
       if (btnDictManager == null) {
+        break missingId;
+      }
+
+      id = R.id.btnInputTest;
+      Button btnInputTest = ViewBindings.findChildViewById(rootView, id);
+      if (btnInputTest == null) {
         break missingId;
       }
 
@@ -291,10 +302,10 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnCancelExport, btnDictManager,
-          btnLogs, btnMergeDictionaries, btnProcessBase1, btnProcessBase2, btnProcessBase3,
-          btnProcessBase4, btnProcessBase5, btnProcessBase6, btnProcessBase7, btnProcessChars,
-          btnSettings, dictProcessContainer, mainButtonContainer, mainContainer, pbDictExport,
-          toolbar, tvDictProcessTitle, tvDictStatus, tvHelpText, tvStatus, tvTitle);
+          btnInputTest, btnLogs, btnMergeDictionaries, btnProcessBase1, btnProcessBase2,
+          btnProcessBase3, btnProcessBase4, btnProcessBase5, btnProcessBase6, btnProcessBase7,
+          btnProcessChars, btnSettings, dictProcessContainer, mainButtonContainer, mainContainer,
+          pbDictExport, toolbar, tvDictProcessTitle, tvDictStatus, tvHelpText, tvStatus, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

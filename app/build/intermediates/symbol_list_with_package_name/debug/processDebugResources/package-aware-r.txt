@@ -3218,6 +3218,7 @@ id btnClearLogs
 id btnCopyLog
 id btnCopyLogs
 id btnDictManager
+id btnInputTest
 id btnLogs
 id btnMergeDictionaries
 id btnProcessBase1
@@ -3316,6 +3317,7 @@ id endToStart
 id enterAlways
 id enterAlwaysCollapsed
 id etBatchSize
+id etInput
 id etMaxNodesPerBatch
 id etNumWorkers
 id exitUntilCollapsed
@@ -3382,6 +3384,7 @@ id linear
 id listMode
 id list_item
 id loadMoreProgress
+id logButtonsContainer
 id m3_side_sheet
 id mainButtonContainer
 id mainContainer
@@ -3530,6 +3533,7 @@ id scroll
 id scrollIndicatorDown
 id scrollIndicatorUp
 id scrollView
+id scrollViewLogs
 id scrollable
 id search_badge
 id search_bar
@@ -3649,12 +3653,15 @@ id tvGroupCount
 id tvGroupTitle
 id tvHelpText
 id tvLogContent
+id tvLogs
+id tvLogsTitle
 id tvMemoryStatus
 id tvMemoryUsage
 id tvModuleCount
 id tvModuleListTitle
 id tvNoLogs
 id tvPinyin
+id tvRealmStatus
 id tvStatus
 id tvTitle
 id tvTotalEntries
@@ -3799,6 +3806,7 @@ layout abc_tooltip
 layout activity_dictionary_detail
 layout activity_dictionary_logs
 layout activity_dictionary_manager
+layout activity_input_test
 layout activity_log_detail
 layout activity_main
 layout candidate_item
@@ -3940,8 +3948,10 @@ string call_notification_screening_text
 string character_counter_content_description
 string character_counter_overflowed_content_description
 string character_counter_pattern
+string clear_logs
 string clear_text_end_icon_content_description
 string copy_log
+string copy_logs
 string dict_completed
 string dict_convert
 string dict_converting
@@ -3964,9 +3974,13 @@ string fab_transformation_sheet_behavior
 string help_text
 string hide_bottom_view_on_scroll_behavior
 string icon_content_description
+string ime_log
 string ime_name
 string ime_settings
 string ime_status
+string input_hint
+string input_test
+string input_test_title
 string item_view_role_description
 string log_copied
 string log_details
@@ -4076,6 +4090,7 @@ string path_password_eye
 string path_password_eye_mask_strike_through
 string path_password_eye_mask_visible
 string path_password_strike_through
+string realm_status
 string search_menu_title
 string searchbar_scrolling_view_behavior
 string searchview_clear_text_content_description
@@ -5358,3 +5373,4 @@ styleable ViewTransition android_id SharedValue SharedValueId clearsTag duration
 styleable include constraintSet
 xml keyboard_layout
 xml method
+xml pinyin_keyboard_layout

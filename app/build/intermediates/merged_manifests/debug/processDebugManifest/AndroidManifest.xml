@@ -74,6 +74,12 @@
             android:name="com.shenji.aikeyboard.ui.DictionaryLogsActivity"
             android:exported="false" />
 
+        <!-- 输入测试活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.InputTestActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
+
         <!-- 输入法服务 -->
         <service
             android:name="com.shenji.aikeyboard.ime.ShenjiInputMethodService"

@@ -36,6 +36,10 @@
         "source": "com.shenji.aikeyboard.app-main-37:/layout/candidate_item.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_input_test.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_input_test.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_dictionary_logs.xml",
         "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dictionary_logs.xml"
     },

@@ -2,6 +2,7 @@ package com.shenji.aikeyboard.data
 
 import android.content.Context
 import com.shenji.aikeyboard.ShenjiApplication
+import com.shenji.aikeyboard.data.WordFrequency
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.query.find
 import timber.log.Timber
@@ -279,6 +280,98 @@ class DictionaryRepository {
         } catch (e: Exception) {
             Timber.e(e, "获取词典类型 $type 的最后修改时间失败")
             return fileModTime
+        }
+    }
+    
+    /**
+     * 根据拼音前缀从数据库搜索词条
+     * @param prefix 拼音前缀
+     * @param limit 最大返回数量
+     * @param excludeTypes 要排除的词典类型（如高频词典，因为它们已经在内存中查询过）
+     * @return 匹配的词条列表
+     */
+    fun searchEntries(prefix: String, limit: Int, excludeTypes: List<String>): List<WordFrequency> {
+        if (prefix.isBlank()) return emptyList()
+        
+        return try {
+            Timber.d("从Realm数据库中搜索拼音前缀: '$prefix'，字符数：${prefix.length}")
+            Timber.d("排除的词典类型: ${excludeTypes.joinToString()}")
+            
+            // 先测试是否有任何匹配的词条，不考虑类型
+            val testEntries = realm.query<Entry>("pinyin BEGINSWITH $0", prefix)
+                .limit(5)
+                .find()
+            
+            if (testEntries.isEmpty()) {
+                Timber.d("数据库中没有任何拼音以'$prefix'开头的词条")
+                return emptyList()
+            } else {
+                Timber.d("初步测试发现匹配'$prefix'的词条: ${
+                    testEntries.joinToString { 
+                        "${it.word}[${it.pinyin}](${it.type})" 
+                    }
+                }")
+            }
+            
+            // 构建查询条件：pinyin以prefix开头，且type不在excludeTypes中
+            val entries = realm.query<Entry>("pinyin BEGINSWITH $0", prefix)
+                .find()
+                .filter { it.type !in excludeTypes } // 过滤掉高频词典类型
+                .sortedByDescending { it.frequency } // 按词频降序排序
+                .take(limit) // 限制结果数量
+            
+            // 记录每个词典类型的匹配结果
+            val typeCount = entries.groupBy { it.type }
+                .mapValues { it.value.size }
+            
+            Timber.d("从数据库找到${entries.size}个匹配的词条，按类型统计: $typeCount")
+            
+            // 记录部分匹配词条的详情
+            if (entries.isNotEmpty()) {
+                val samples = entries.take(3)
+                Timber.d("样本词条: ${
+                    samples.joinToString { 
+                        "${it.word}[${it.pinyin}](类型:${it.type},频率:${it.frequency})" 
+                    }
+                }")
+            }
+            
+            // 转换为WordFrequency对象
+            entries.map { WordFrequency(it.word, it.frequency) }
+        } catch (e: Exception) {
+            Timber.e(e, "搜索词条失败: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
+     * 获取指定类型的词典样本条目
+     * @param type 词典类型
+     * @param count 样本数量
+     * @return 样本条目列表
+     */
+    fun getSampleEntries(type: String, count: Int): List<Entry> {
+        try {
+            Timber.d("获取类型'$type'的词典样本，数量$count")
+            
+            // 查询指定类型的所有条目
+            val entries = realm.query<Entry>("type == $0", type)
+                .find()
+                .take(count)
+                .toList()
+                
+            Timber.d("获取到${entries.size}个样本条目")
+            
+            if (entries.isNotEmpty()) {
+                // 打印部分样本信息进行调试
+                val firstSample = entries.first()
+                Timber.d("第一个样本: 词='${firstSample.word}', 拼音='${firstSample.pinyin}', 频率=${firstSample.frequency}")
+            }
+            
+            return entries
+        } catch (e: Exception) {
+            Timber.e(e, "获取词典样本失败: ${e.message}")
+            return emptyList()
         }
     }
 }

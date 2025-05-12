@@ -56,6 +56,12 @@
         <activity
             android:name=".ui.DictionaryLogsActivity"
             android:exported="false" />
+            
+        <!-- 输入测试活动 -->
+        <activity
+            android:name=".ui.InputTestActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
 
         <!-- 输入法服务 -->
         <service

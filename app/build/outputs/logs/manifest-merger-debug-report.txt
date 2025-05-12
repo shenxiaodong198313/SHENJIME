@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:2:1-76:12
-INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:2:1-76:12
-INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:2:1-76:12
-INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:2:1-76:12
+ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:2:1-82:12
+INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:2:1-82:12
+INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:2:1-82:12
+INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:2:1-82:12
 MERGED from [androidx.databinding:viewbinding:8.3.0] C:\Users\shenxiaodong\.gradle\caches\8.13\transforms\04aa97af57cd6c319482d0e39cab2bb3\transformed\viewbinding-8.3.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\shenxiaodong\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\shenxiaodong\.gradle\caches\8.13\transforms\3eb54cf68f6e6cdcf07521e573239344\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -96,8 +96,8 @@ ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidM
 	android:name
 		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:17:22-79
 application
-ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:20:5-74:19
-INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:20:5-74:19
+ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:20:5-80:19
+INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:20:5-80:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\shenxiaodong\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\shenxiaodong\.gradle\caches\8.13\transforms\53c03f792a4cec5f3c5e94e171a808e1\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\shenxiaodong\.gradle\caches\8.13\transforms\3eb54cf68f6e6cdcf07521e573239344\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -178,28 +178,36 @@ ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidM
 		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:58:13-37
 	android:name
 		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:57:13-54
-service#com.shenji.aikeyboard.ime.ShenjiInputMethodService
-ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:61:9-72:19
-	android:label
-		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:63:13-45
+activity#com.shenji.aikeyboard.ui.InputTestActivity
+ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:61:9-64:71
+	android:windowSoftInputMode
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:64:13-68
 	android:exported
-		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:65:13-36
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:63:13-37
+	android:name
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:62:13-49
+service#com.shenji.aikeyboard.ime.ShenjiInputMethodService
+ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:67:9-78:19
+	android:label
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:69:13-45
+	android:exported
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:71:13-36
 	android:permission
-		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:64:13-70
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:70:13-70
 	android:name
-		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:62:13-57
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:68:13-57
 intent-filter#action:name:android.view.InputMethod
-ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:66:13-68:29
+ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:72:13-74:29
 action#android.view.InputMethod
-ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:67:17-67
+ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:73:17-67
 	android:name
-		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:67:25-64
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:73:25-64
 meta-data#android.view.im
-ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:69:13-71:50
+ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:75:13-77:50
 	android:resource
-		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:71:17-47
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:77:17-47
 	android:name
-		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:70:17-47
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:76:17-47
 uses-sdk
 INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml
