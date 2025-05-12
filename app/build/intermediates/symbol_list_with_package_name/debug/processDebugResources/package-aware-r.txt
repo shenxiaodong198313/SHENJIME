@@ -1391,6 +1391,7 @@ color cardview_shadow_end_color
 color cardview_shadow_start_color
 color colorAccent
 color colorPrecompiledBackground
+color colorPrecompiledLoading
 color colorPrimary
 color colorPrimaryDark
 color design_bottom_navigation_shadow_color
@@ -3173,7 +3174,6 @@ id action_bar_title
 id action_container
 id action_context_bar
 id action_divider
-id action_export_trie
 id action_image
 id action_logs
 id action_menu_divider
@@ -3218,7 +3218,6 @@ id btnClearLogs
 id btnCopyLog
 id btnCopyLogs
 id btnDictManager
-id btnExportDict
 id btnLogs
 id btnMergeDictionaries
 id btnProcessBase1
@@ -3645,7 +3644,6 @@ id tvDictStatus
 id tvDictType
 id tvEmpty
 id tvEntryCount
-id tvExportSection
 id tvFrequency
 id tvGroupCount
 id tvGroupTitle

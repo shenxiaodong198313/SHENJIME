@@ -122,13 +122,13 @@ class DictionaryRepository {
     
     /**
      * 构建词典模块列表
-     * 返回两类词典：1.预编译词典模块 2.持久化词典模块
+     * 返回所有词典模块的平级列表，没有分类标题
      */
     fun getDictionaryModules(): List<DictionaryModule> {
         val modules = mutableListOf<DictionaryModule>()
         
         try {
-            // 1. 添加预编译词典模块 (内存加载的高频词典)
+            // 获取预编译词典加载状态
             val dictManager = DictionaryManager.instance
             val isPrecompiledDictLoaded = dictManager.isLoaded()
             
@@ -142,85 +142,57 @@ class DictionaryRepository {
             // 获取预编译词典加载的词条数
             val charsCount = dictManager.typeLoadedCountMap["chars"] ?: 0
             val baseCount = dictManager.typeLoadedCountMap["base"] ?: 0
-            val totalPrecompiledWords = charsCount + baseCount
-            
-            // 添加预编译词典模块
-            if (isPrecompiledDictLoaded && totalPrecompiledWords > 0) {
-                modules.add(
-                    DictionaryModule(
-                        type = "precompiled",
-                        chineseName = "预编译高频词典",
-                        entryCount = totalPrecompiledWords,
-                        isInMemory = true,
-                        memoryUsage = precompiledMemoryUsage,
-                        isGroupHeader = true
-                    )
-                )
-                
-                // 添加各个预编译词典子类型
-                if (charsCount > 0) {
-                    modules.add(
-                        DictionaryModule(
-                            type = "chars",
-                            chineseName = "单字词典",
-                            entryCount = charsCount,
-                            isInMemory = true,
-                            memoryUsage = 0, // 不单独计算内存
-                            isPrecompiled = true
-                        )
-                    )
-                }
-                
-                if (baseCount > 0) {
-                    modules.add(
-                        DictionaryModule(
-                            type = "base",
-                            chineseName = "基础词典",
-                            entryCount = baseCount,
-                            isInMemory = true,
-                            memoryUsage = 0, // 不单独计算内存
-                            isPrecompiled = true
-                        )
-                    )
-                }
-            }
-            
-            // 2. 添加持久化词典模块 (从Realm数据库加载)
-            // 添加持久化词典组标题
-            modules.add(
-                DictionaryModule(
-                    type = "realm",
-                    chineseName = "持久化词典",
-                    entryCount = getTotalEntryCount(),
-                    isInMemory = false,
-                    memoryUsage = 0,
-                    isGroupHeader = true
-                )
-            )
             
             // 获取所有词典类型
             val types = getAllDictionaryTypes()
             Timber.d("获取到词典类型列表: ${types.joinToString()}")
             
-            // 添加各个持久化词典类型
+            // 添加各个词典类型，无论是否预编译
             for (type in types) {
-                // 跳过已在预编译中的高频词典类型
-                if (type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES && isPrecompiledDictLoaded) {
-                    continue
-                }
-                
                 val count = getEntryCountByType(type)
                 val chineseName = getChineseNameForType(type)
                 
-                modules.add(
-                    DictionaryModule(
-                        type = type,
-                        chineseName = chineseName,
-                        entryCount = count,
-                        isInMemory = false,
-                        memoryUsage = 0L
+                // 判断是否为高频词典类型
+                val isHighFrequencyType = type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES
+                
+                // 对于高频词典类型
+                if (isHighFrequencyType) {
+                    // 如果预编译已加载完成，使用内存中的词条数，否则使用数据库中的词条数
+                    val entryCount = if (isPrecompiledDictLoaded) {
+                        when (type) {
+                            "chars" -> charsCount
+                            "base" -> baseCount
+                            else -> count
+                        }
+                    } else {
+                        count
+                    }
+                    
+                    // 始终添加高频词典，但根据加载状态设置不同的属性
+                    modules.add(
+                        DictionaryModule(
+                            type = type,
+                            chineseName = if (isPrecompiledDictLoaded) "$chineseName (已加载到内存)" else chineseName,
+                            entryCount = entryCount,
+                            isInMemory = isPrecompiledDictLoaded,
+                            memoryUsage = 0, // 不单独计算内存
+                            isPrecompiled = true,
+                            isMemoryLoaded = isPrecompiledDictLoaded
+                        )
                     )
-                )
+                } else {
+                    // 对于非高频词典类型，始终添加
+                    modules.add(
+                        DictionaryModule(
+                            type = type,
+                            chineseName = chineseName,
+                            entryCount = count,
+                            isInMemory = false,
+                            memoryUsage = 0L,
+                            isMemoryLoaded = false
+                        )
+                    )
+                }
             }
         } catch (e: Exception) {
             Timber.e(e, "构建词典模块列表失败，使用测试数据")
@@ -228,81 +200,31 @@ class DictionaryRepository {
             // 出错时使用测试数据，确保至少能显示一些内容
             modules.clear()
             
-            // 添加分组标题 - 预编译词典
-            modules.add(
-                DictionaryModule(
-                    type = "precompiled",
-                    chineseName = "预编译高频词典",
-                    entryCount = 873490,
-                    isInMemory = true,
-                    memoryUsage = 365 * 1024 * 1024, // 约365MB
-                    isGroupHeader = true
-                )
-            )
-            
-            // 添加预编译词典子类型
-            modules.add(
-                DictionaryModule(
-                    type = "chars",
-                    chineseName = "单字词典",
-                    entryCount = 100000,
-                    isInMemory = true,
-                    memoryUsage = 0,
-                    isPrecompiled = true
-                )
-            )
-            
-            modules.add(
-                DictionaryModule(
-                    type = "base",
-                    chineseName = "基础词典",
-                    entryCount = 773490,
-                    isInMemory = true,
-                    memoryUsage = 0,
-                    isPrecompiled = true
-                )
-            )
-            
-            // 添加分组标题 - 持久化词典
-            modules.add(
-                DictionaryModule(
-                    type = "realm",
-                    chineseName = "持久化词典",
-                    entryCount = 1211900,
-                    isInMemory = false,
-                    memoryUsage = 0,
-                    isGroupHeader = true
-                )
-            )
-            
-            // 添加持久化词典子类型
+            // 测试数据 - 添加所有词典类型，无分组
             val testTypes = listOf(
-                Pair("correlation", "关联词典"),
-                Pair("associational", "联想词典"),
-                Pair("compatible", "兼容词典"),
-                Pair("corrections", "纠错词典"),
-                Pair("place", "地名词典"),
-                Pair("people", "人名词典"),
-                Pair("poetry", "诗词词典")
+                Triple("chars", "单字词典", 100000),
+                Triple("base", "基础词典", 773490),
+                Triple("correlation", "关联词典", 570000),
+                Triple("associational", "联想词典", 340000),
+                Triple("compatible", "兼容词典", 5000),
+                Triple("corrections", "纠错词典", 137),
+                Triple("place", "地名词典", 45000),
+                Triple("people", "人名词典", 40000),
+                Triple("poetry", "诗词词典", 320000)
             )
             
-            for ((type, name) in testTypes) {
+            for ((type, name, count) in testTypes) {
+                val isHighFrequencyType = type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES
+                
                 modules.add(
                     DictionaryModule(
                         type = type,
-                        chineseName = name,
-                        entryCount = when (type) {
-                            "correlation" -> 570000
-                            "associational" -> 340000
-                            "place" -> 45000
-                            "people" -> 40000
-                            "poetry" -> 320000
-                            "compatible" -> 5000
-                            "corrections" -> 137
-                            else -> 1000
-                        },
-                        isInMemory = false,
-                        memoryUsage = 0
+                        chineseName = if (isHighFrequencyType) "$name (已加载到内存)" else name,
+                        entryCount = count,
+                        isInMemory = isHighFrequencyType,
+                        memoryUsage = 0,
+                        isPrecompiled = isHighFrequencyType,
+                        isMemoryLoaded = isHighFrequencyType
                     )
                 )
             }
@@ -371,5 +293,6 @@ data class DictionaryModule(
     val isInMemory: Boolean = false, // 是否已加载到内存
     val memoryUsage: Long = 0L,       // 内存占用大小(字节)
     val isGroupHeader: Boolean = false, // 是否为组标题
-    val isPrecompiled: Boolean = false  // 是否为预编译词典
+    val isPrecompiled: Boolean = false,  // 是否为预编译词典
+    val isMemoryLoaded: Boolean = false  // 是否已完成预编译加载到内存
 ) 

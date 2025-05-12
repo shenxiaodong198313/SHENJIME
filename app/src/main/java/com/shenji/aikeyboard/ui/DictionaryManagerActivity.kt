@@ -36,15 +36,8 @@ class DictionaryManagerActivity : AppCompatActivity() {
         }
     }
     
-    // 静态缓存
-    companion object {
-        // 缓存词典模块数据
-        private var cachedModules: List<DictionaryModule>? = null
-        private var cachedTotalEntries: Int = 0
-        private var cachedDbSize: Long = 0
-        private var cachedMemoryUsage: Long = 0
-        private var isDataLoaded = false
-    }
+    // 词典加载状态监控任务
+    private var dictionaryMonitoringJob: kotlinx.coroutines.Job? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,14 +51,11 @@ class DictionaryManagerActivity : AppCompatActivity() {
         // 确保词典管理器初始化完毕
         DictionaryManager.init()
         
-        // 判断是否已有缓存数据
-        if (isDataLoaded && cachedModules != null) {
-            // 使用缓存数据直接更新UI
-            updateUIWithCachedData()
-        } else {
-            // 首次加载或缓存失效时加载数据
-            loadDictionaryStats()
-        }
+        // 加载数据
+        loadDictionaryStats()
+        
+        // 启动高频词典状态监控
+        startDictionaryMonitoring()
     }
     
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -81,10 +71,6 @@ class DictionaryManagerActivity : AppCompatActivity() {
             }
             R.id.action_logs -> {
                 openDictionaryLogs()
-                true
-            }
-            R.id.action_export_trie -> {
-                exportPrecompiledTrie()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -123,22 +109,6 @@ class DictionaryManagerActivity : AppCompatActivity() {
         // 禁用闪烁动画
         binding.shimmerStatCard.stopShimmer()
         binding.shimmerModuleList.stopShimmer()
-    }
-    
-    /**
-     * 使用缓存数据更新UI
-     */
-    private fun updateUIWithCachedData() {
-        binding.tvTotalEntries.text = getString(R.string.dict_total_entries, cachedTotalEntries)
-        binding.tvDatabaseSize.text = getString(R.string.dict_db_size, dictionaryRepository.formatFileSize(cachedDbSize))
-        binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, dictionaryRepository.formatFileSize(cachedMemoryUsage))
-        binding.tvModuleCount.text = getString(R.string.dict_module_count, cachedModules?.size ?: 0)
-        
-        // 更新列表
-        moduleAdapter.submitList(cachedModules)
-        
-        // 隐藏骨架屏，显示实际内容
-        showShimmerEffect(false)
     }
     
     /**
@@ -187,13 +157,6 @@ class DictionaryManagerActivity : AppCompatActivity() {
                     Timber.d("预编译词典未加载")
                 }
                 
-                // 更新缓存
-                cachedTotalEntries = totalEntries
-                cachedDbSize = dbSize
-                cachedMemoryUsage = memoryUsage
-                cachedModules = modules
-                isDataLoaded = true
-                
                 withContext(Dispatchers.Main) {
                     // 更新UI
                     binding.tvTotalEntries.text = getString(R.string.dict_total_entries, totalEntries)
@@ -240,9 +203,93 @@ class DictionaryManagerActivity : AppCompatActivity() {
                         entryCount = 0,
                         isInMemory = false,
                         memoryUsage = 0,
-                        isGroupHeader = true
+                        isGroupHeader = true,
+                        isMemoryLoaded = false
                     )
                     moduleAdapter.submitList(listOf(errorModule))
+                }
+            }
+        }
+    }
+    
+    /**
+     * 启动高频词典加载状态监控
+     */
+    private fun startDictionaryMonitoring() {
+        // 取消之前的监控任务（如果有）
+        dictionaryMonitoringJob?.cancel()
+        
+        // 创建新的监控任务
+        dictionaryMonitoringJob = lifecycleScope.launch(Dispatchers.Default) {
+            var lastLoadedState = DictionaryManager.instance.isLoaded()
+            
+            // 立即执行一次更新（无需等待状态变化）
+            updateDictionaryModulesUI()
+            
+            // 每秒检查一次高频词典加载状态
+            while (true) {
+                try {
+                    val currentLoadedState = DictionaryManager.instance.isLoaded()
+                    
+                    // 如果加载状态发生了变化或每5秒强制更新一次
+                    if (currentLoadedState != lastLoadedState) {
+                        Timber.d("高频词典加载状态变化: $lastLoadedState -> $currentLoadedState")
+                        
+                        // 更新UI
+                        updateDictionaryModulesUI()
+                        
+                        // 更新状态
+                        lastLoadedState = currentLoadedState
+                    }
+                    
+                    // 等待1秒
+                    delay(1000)
+                } catch (e: Exception) {
+                    Timber.e(e, "监控高频词典状态时出错")
+                    delay(5000) // 发生错误时，等待较长时间再重试
+                }
+            }
+        }
+    }
+    
+    /**
+     * 更新词典模块UI
+     */
+    private suspend fun updateDictionaryModulesUI() {
+        // 异步更新高频词典数据
+        withContext(Dispatchers.IO) {
+            val dictManager = DictionaryManager.instance
+            val currentLoadedState = dictManager.isLoaded()
+            
+            if (currentLoadedState) {
+                // 词典已加载完成，获取加载的词条数
+                val charsCount = dictManager.typeLoadedCountMap["chars"] ?: 0
+                val baseCount = dictManager.typeLoadedCountMap["base"] ?: 0
+                val totalPrecompiledWords = charsCount + baseCount
+                
+                if (totalPrecompiledWords > 0) {
+                    // 重新获取所有模块，确保高频词典状态正确
+                    val newModules = dictionaryRepository.getDictionaryModules()
+                    
+                    // 在主线程更新UI
+                    withContext(Dispatchers.Main) {
+                        // 更新内存使用情况
+                        val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+                        val memoryUsageFormatted = dictionaryRepository.formatFileSize(memoryUsage)
+                        binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, memoryUsageFormatted) + 
+                                " (已加载${totalPrecompiledWords}个高频词条)"
+                                
+                        // 更新模块列表
+                        moduleAdapter.submitList(newModules)
+                        Timber.d("更新UI，高频词典已加载: $totalPrecompiledWords 个词条")
+                    }
+                }
+            } else {
+                // 如果词典没有加载，也应该刷新UI确保状态一致
+                val newModules = dictionaryRepository.getDictionaryModules()
+                withContext(Dispatchers.Main) {
+                    moduleAdapter.submitList(newModules)
+                    Timber.d("更新UI，高频词典未加载完成")
                 }
             }
         }
@@ -293,55 +340,22 @@ class DictionaryManagerActivity : AppCompatActivity() {
         startActivity(intent)
     }
     
-    /**
-     * 导出词典信息
-     */
-    private fun exportPrecompiledTrie() {
-        // 显示确认对话框
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("导出词典信息")
-            .setMessage("确定要导出词典信息吗？\n\n导出的文件将保存到应用外部存储目录，仅用于分析和调试。")
-            .setPositiveButton("确定") { _, _ ->
-                // 在后台线程执行导出操作
-                lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        // 执行导出
-                        DictionaryManager.instance.exportPrecompiledTrieForBuilding()
-                        
-                        // 在主线程显示结果
-                        withContext(Dispatchers.Main) {
-                            showExportMessage("导出成功\n\n词典信息文件已保存到应用外部存储目录下的export文件夹中")
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "导出词典信息失败")
-                        withContext(Dispatchers.Main) {
-                            showExportMessage("导出失败: ${e.message}")
-                        }
-                    }
-                }
-            }
-            .setNegativeButton("取消", null)
-            .show()
-    }
-    
-    /**
-     * 显示导出操作的结果消息
-     */
-    private fun showExportMessage(message: String) {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("导出结果")
-            .setMessage(message)
-            .setPositiveButton("确定", null)
-            .show()
-    }
-    
     override fun onResume() {
         super.onResume()
-        // 不再需要更新加载进度
+        
+        // 页面恢复时强制刷新一次词典状态
+        lifecycleScope.launch {
+            updateDictionaryModulesUI()
+        }
+    }
+    
+    override fun onPause() {
+        super.onPause()
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        // 不再需要移除加载进度监听器
+        // 取消监控任务
+        dictionaryMonitoringJob?.cancel()
     }
 } 

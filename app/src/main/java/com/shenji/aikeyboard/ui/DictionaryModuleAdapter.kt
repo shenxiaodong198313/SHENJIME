@@ -148,13 +148,25 @@ class DictionaryModuleAdapter(
                     )
                 }
             } else {
-                binding.tvMemoryStatus.visibility = View.GONE
-                binding.tvMemoryUsage.visibility = View.GONE
-                
-                // 重置背景色
-                binding.root.setCardBackgroundColor(
-                    binding.root.context.getColor(android.R.color.white)
-                )
+                // 对于高频词典，如果未加载到内存，显示特殊提示
+                if (module.isPrecompiled) {
+                    binding.tvMemoryStatus.text = "预编译加载中..."
+                    binding.tvMemoryStatus.visibility = View.VISIBLE
+                    binding.tvMemoryUsage.visibility = View.GONE
+                    
+                    // 设置浅色背景表示尚未加载
+                    binding.root.setCardBackgroundColor(
+                        binding.root.context.getColor(R.color.colorPrecompiledLoading)
+                    )
+                } else {
+                    binding.tvMemoryStatus.visibility = View.GONE
+                    binding.tvMemoryUsage.visibility = View.GONE
+                    
+                    // 重置背景色
+                    binding.root.setCardBackgroundColor(
+                        binding.root.context.getColor(android.R.color.white)
+                    )
+                }
             }
             
             // 显示加载进度条（如果有）

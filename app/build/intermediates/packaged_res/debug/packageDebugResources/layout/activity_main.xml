@@ -235,28 +235,8 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp"
                 android:background="#CCCCCC"
+                android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@+id/tvDictStatus" />
-
-            <TextView
-                android:id="@+id/tvExportSection"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="导出预编译词典:"
-                android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@+id/tvDictStatus"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="32dp" />
-
-            <Button
-                android:id="@+id/btnExportDict"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="导出预编译Trie树"
-                app:layout_constraintTop_toBottomOf="@+id/tvExportSection"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
 
             <TextView
                 android:id="@+id/tvHelpText"
@@ -270,7 +250,7 @@
                 android:textAlignment="center"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvDictStatus"
+                app:layout_constraintTop_toBottomOf="@+id/mainButtonContainer"
                 app:layout_constraintBottom_toBottomOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

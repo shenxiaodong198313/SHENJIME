@@ -30,9 +30,6 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnDictManager;
 
   @NonNull
-  public final Button btnExportDict;
-
-  @NonNull
   public final Button btnLogs;
 
   @NonNull
@@ -87,9 +84,6 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvDictStatus;
 
   @NonNull
-  public final TextView tvExportSection;
-
-  @NonNull
   public final TextView tvHelpText;
 
   @NonNull
@@ -99,21 +93,19 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvTitle;
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnCancelExport,
-      @NonNull Button btnDictManager, @NonNull Button btnExportDict, @NonNull Button btnLogs,
-      @NonNull Button btnMergeDictionaries, @NonNull Button btnProcessBase1,
-      @NonNull Button btnProcessBase2, @NonNull Button btnProcessBase3,
-      @NonNull Button btnProcessBase4, @NonNull Button btnProcessBase5,
-      @NonNull Button btnProcessBase6, @NonNull Button btnProcessBase7,
-      @NonNull Button btnProcessChars, @NonNull Button btnSettings,
+      @NonNull Button btnDictManager, @NonNull Button btnLogs, @NonNull Button btnMergeDictionaries,
+      @NonNull Button btnProcessBase1, @NonNull Button btnProcessBase2,
+      @NonNull Button btnProcessBase3, @NonNull Button btnProcessBase4,
+      @NonNull Button btnProcessBase5, @NonNull Button btnProcessBase6,
+      @NonNull Button btnProcessBase7, @NonNull Button btnProcessChars, @NonNull Button btnSettings,
       @NonNull LinearLayout dictProcessContainer, @NonNull LinearLayout mainButtonContainer,
       @NonNull ConstraintLayout mainContainer, @NonNull ProgressBar pbDictExport,
       @NonNull Toolbar toolbar, @NonNull TextView tvDictProcessTitle,
-      @NonNull TextView tvDictStatus, @NonNull TextView tvExportSection,
-      @NonNull TextView tvHelpText, @NonNull TextView tvStatus, @NonNull TextView tvTitle) {
+      @NonNull TextView tvDictStatus, @NonNull TextView tvHelpText, @NonNull TextView tvStatus,
+      @NonNull TextView tvTitle) {
     this.rootView = rootView;
     this.btnCancelExport = btnCancelExport;
     this.btnDictManager = btnDictManager;
-    this.btnExportDict = btnExportDict;
     this.btnLogs = btnLogs;
     this.btnMergeDictionaries = btnMergeDictionaries;
     this.btnProcessBase1 = btnProcessBase1;
@@ -132,7 +124,6 @@ public final class ActivityMainBinding implements ViewBinding {
     this.toolbar = toolbar;
     this.tvDictProcessTitle = tvDictProcessTitle;
     this.tvDictStatus = tvDictStatus;
-    this.tvExportSection = tvExportSection;
     this.tvHelpText = tvHelpText;
     this.tvStatus = tvStatus;
     this.tvTitle = tvTitle;
@@ -174,12 +165,6 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnDictManager;
       Button btnDictManager = ViewBindings.findChildViewById(rootView, id);
       if (btnDictManager == null) {
-        break missingId;
-      }
-
-      id = R.id.btnExportDict;
-      Button btnExportDict = ViewBindings.findChildViewById(rootView, id);
-      if (btnExportDict == null) {
         break missingId;
       }
 
@@ -287,12 +272,6 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.tvExportSection;
-      TextView tvExportSection = ViewBindings.findChildViewById(rootView, id);
-      if (tvExportSection == null) {
-        break missingId;
-      }
-
       id = R.id.tvHelpText;
       TextView tvHelpText = ViewBindings.findChildViewById(rootView, id);
       if (tvHelpText == null) {
@@ -312,11 +291,10 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnCancelExport, btnDictManager,
-          btnExportDict, btnLogs, btnMergeDictionaries, btnProcessBase1, btnProcessBase2,
-          btnProcessBase3, btnProcessBase4, btnProcessBase5, btnProcessBase6, btnProcessBase7,
-          btnProcessChars, btnSettings, dictProcessContainer, mainButtonContainer, mainContainer,
-          pbDictExport, toolbar, tvDictProcessTitle, tvDictStatus, tvExportSection, tvHelpText,
-          tvStatus, tvTitle);
+          btnLogs, btnMergeDictionaries, btnProcessBase1, btnProcessBase2, btnProcessBase3,
+          btnProcessBase4, btnProcessBase5, btnProcessBase6, btnProcessBase7, btnProcessChars,
+          btnSettings, dictProcessContainer, mainButtonContainer, mainContainer, pbDictExport,
+          toolbar, tvDictProcessTitle, tvDictStatus, tvHelpText, tvStatus, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

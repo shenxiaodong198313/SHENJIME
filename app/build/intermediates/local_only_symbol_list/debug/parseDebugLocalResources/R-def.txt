@@ -3,6 +3,7 @@ local
 color black
 color colorAccent
 color colorPrecompiledBackground
+color colorPrecompiledLoading
 color colorPrimary
 color colorPrimaryDark
 color key_text
@@ -18,14 +19,12 @@ color teal_700
 color white
 drawable candidate_background
 drawable key_preview_background
-id action_export_trie
 id action_logs
 id btnCancelExport
 id btnClearLogs
 id btnCopyLog
 id btnCopyLogs
 id btnDictManager
-id btnExportDict
 id btnLogs
 id btnMergeDictionaries
 id btnProcessBase1
@@ -71,7 +70,6 @@ id tvDictStatus
 id tvDictType
 id tvEmpty
 id tvEntryCount
-id tvExportSection
 id tvFrequency
 id tvGroupCount
 id tvGroupTitle
