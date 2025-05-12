@@ -148,13 +148,18 @@ class DictionaryManagerActivity : AppCompatActivity() {
                 var loadedWordCount = 0
                 
                 if (isPrecompiledDictLoaded) {
-                    // 如果预编译词典已加载，获取其内存使用情况
+                    // 如果高频词典已加载，获取其内存使用情况
                     memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-                    loadedWordCount = dictManager.typeLoadedCountMap["chars"] ?: 0
-                    loadedWordCount += dictManager.typeLoadedCountMap["base"] ?: 0
-                    Timber.d("预编译词典已加载，内存占用: ${dictionaryRepository.formatFileSize(memoryUsage)}, 加载词条数: $loadedWordCount")
+                    
+                    // 获取chars词库和base词库的加载数量
+                    val charsCount = dictManager.typeLoadedCountMap["chars"] ?: 0
+                    val baseCount = dictManager.typeLoadedCountMap["base"] ?: 0
+                    loadedWordCount = charsCount + baseCount
+                    
+                    Timber.d("内存词典已加载，内存占用: ${dictionaryRepository.formatFileSize(memoryUsage)}")
+                    Timber.d("chars词库: ${charsCount}个词条, base词库: ${baseCount}个词条")
                 } else {
-                    Timber.d("预编译词典未加载")
+                    Timber.d("内存词典未加载")
                 }
                 
                 withContext(Dispatchers.Main) {
@@ -162,7 +167,7 @@ class DictionaryManagerActivity : AppCompatActivity() {
                     binding.tvTotalEntries.text = getString(R.string.dict_total_entries, totalEntries)
                     binding.tvDatabaseSize.text = getString(R.string.dict_db_size, formattedDbSize)
                     
-                    // 根据预编译词典是否加载，显示对应内存使用情况
+                    // 根据内存词典是否加载，显示对应内存使用情况
                     val memoryUsageFormatted = if (isPrecompiledDictLoaded) {
                         dictionaryRepository.formatFileSize(memoryUsage)
                     } else {
@@ -172,8 +177,22 @@ class DictionaryManagerActivity : AppCompatActivity() {
                     
                     // 添加高频词典加载状态提示
                     if (isPrecompiledDictLoaded && loadedWordCount > 0) {
+                        // 获取具体的词库加载情况
+                        val charsCount = dictManager.typeLoadedCountMap["chars"] ?: 0
+                        val baseCount = dictManager.typeLoadedCountMap["base"] ?: 0
+                        
+                        // 拼接显示加载的词条数详情
+                        val loadDetails = StringBuilder()
+                        if (charsCount > 0) {
+                            loadDetails.append("chars词库: ${charsCount}个")
+                        }
+                        if (baseCount > 0) {
+                            if (loadDetails.isNotEmpty()) loadDetails.append(", ")
+                            loadDetails.append("base词库: ${baseCount}个")
+                        }
+                        
                         binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, memoryUsageFormatted) + 
-                                " (已加载${loadedWordCount}个高频词条)"
+                                " (已加载: $loadDetails)"
                     }
                     
                     binding.tvModuleCount.text = getString(R.string.dict_module_count, modules.size)

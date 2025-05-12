@@ -46,8 +46,8 @@ class ShenjiApplication : Application() {
         // 初始化词典管理器
         DictionaryManager.init()
         
-        // 加载预编译的高频词典
-        loadPrecompiledDictionary()
+        // 从Realm加载chars词库到Trie树
+        loadCharsFromRealm()
         
         Timber.d("应用初始化完成")
     }
@@ -170,53 +170,18 @@ class ShenjiApplication : Application() {
     }
     
     /**
-     * 加载预编译的高频词典
-     * 检查并加载从assets目录中的预编译Trie树文件
+     * 从Realm数据库加载chars词库到Trie树
      */
-    private fun loadPrecompiledDictionary() {
-        try {
-            // 检查内部存储目录中是否已存在预编译Trie树文件
-            val internalDir = File(filesDir, "precompiled_dict")
-            if (!internalDir.exists()) {
-                internalDir.mkdirs()
+    private fun loadCharsFromRealm() {
+        // 在后台线程中加载chars词库
+        Thread {
+            try {
+                Timber.d("开始从Realm加载chars词库到Trie树")
+                DictionaryManager.instance.loadCharsFromRealm()
+                Timber.d("从Realm加载chars词库到Trie树完成")
+            } catch (e: Exception) {
+                Timber.e(e, "从Realm加载chars词库失败: ${e.message}")
             }
-            
-            val trieFile = File(internalDir, "shenji_dict_trie.bin")
-            
-            // 如果文件不存在或需要更新，从assets目录复制
-            if (!trieFile.exists()) {
-                Timber.d("预编译高频词典不存在，开始从assets目录复制...")
-                
-                // 从assets目录复制文件
-                trieFile.parentFile?.mkdirs()
-                val inputStream = assets.open("shenji_dict_trie.bin")
-                val outputStream = FileOutputStream(trieFile)
-                
-                try {
-                    val buffer = ByteArray(8192)
-                    var bytesRead: Int
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                    }
-                    Timber.d("预编译高频词典已成功复制到内部存储")
-                } finally {
-                    inputStream.close()
-                    outputStream.close()
-                }
-            }
-            
-            // 在后台线程中加载预编译词典
-            Thread {
-                try {
-                    DictionaryManager.instance.loadPrecompiledDictionary(trieFile)
-                    Timber.d("预编译高频词典成功加载到内存")
-                } catch (e: Exception) {
-                    Timber.e(e, "加载预编译高频词典失败: ${e.message}")
-                }
-            }.start()
-            
-        } catch (e: Exception) {
-            Timber.e(e, "准备预编译高频词典失败: ${e.message}")
-        }
+        }.start()
     }
 }

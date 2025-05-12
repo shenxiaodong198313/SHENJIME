@@ -4,6 +4,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -16,6 +18,8 @@ import com.shenji.aikeyboard.data.WordFrequency
 import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.databinding.ActivityInputTestBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -25,6 +29,7 @@ class InputTestActivity : AppCompatActivity() {
     private lateinit var binding: ActivityInputTestBinding
     private val imeLogBuilder = StringBuilder()
     private val repository = DictionaryRepository()  // 添加仓库实例
+    private var searchJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +40,7 @@ class InputTestActivity : AppCompatActivity() {
         setupUI()
         checkRealmStatus()
         setupLoggers()
+        setupInputListener()
     }
     
     private fun setupToolbar() {
@@ -63,6 +69,91 @@ class InputTestActivity : AppCompatActivity() {
         }
     }
     
+    /**
+     * 设置输入监听器，实现输入测试功能
+     */
+    private fun setupInputListener() {
+        binding.etInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                // 不需要实现
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                // 取消之前的搜索任务
+                searchJob?.cancel()
+                
+                // 获取当前输入文本
+                val input = s?.toString() ?: ""
+                
+                // 如果输入为空，不进行搜索
+                if (input.isBlank()) return
+                
+                // 创建新的搜索任务，添加轻微延迟避免频繁搜索
+                searchJob = lifecycleScope.launch {
+                    delay(200) // 200毫秒延迟
+                    searchCandidates(input)
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                // 不需要实现
+            }
+        })
+    }
+    
+    /**
+     * 搜索候选词
+     */
+    private suspend fun searchCandidates(input: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                logMessage("搜索: '$input'")
+                
+                // 先在高频词典中查找
+                val trieResults = if (DictionaryManager.instance.isLoaded()) {
+                    DictionaryManager.instance.trieTree.search(input, 5)
+                } else {
+                    emptyList()
+                }
+                
+                if (trieResults.isNotEmpty()) {
+                    logMessage("---- 从高频词典中找到${trieResults.size}个候选词 ----")
+                    trieResults.forEachIndexed { index, word ->
+                        logMessage("  ${index + 1}. ${word.word} [频率:${word.frequency}]")
+                    }
+                } else {
+                    logMessage("高频词典中未找到匹配'$input'的候选词")
+                    
+                    // 如果高频词典中没找到，则从Realm词库中查找
+                    val realmResults = repository.searchEntries(input, 5, emptyList())
+                    
+                    if (realmResults.isNotEmpty()) {
+                        logMessage("---- 从Realm词库中找到${realmResults.size}个候选词 ----")
+                        realmResults.forEachIndexed { index, word ->
+                            logMessage("  ${index + 1}. ${word.word} [频率:${word.frequency}]")
+                        }
+                    } else {
+                        logMessage("Realm词库中也未找到匹配'$input'的候选词")
+                    }
+                }
+                
+                // 使用DictionaryManager的searchWords方法，它会自动先查高频词典，再查Realm
+                val combinedResults = DictionaryManager.instance.searchWords(input, 10)
+                
+                if (combinedResults.isNotEmpty()) {
+                    logMessage("---- DictionaryManager搜索结果(${combinedResults.size}个) ----")
+                    combinedResults.forEachIndexed { index, word ->
+                        logMessage("  ${index + 1}. ${word.word} [频率:${word.frequency}]")
+                    }
+                }
+                
+            } catch (e: Exception) {
+                logMessage("搜索候选词时出错: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
+    
     private fun checkRealmStatus() {
         lifecycleScope.launch {
             val isRealmConnected = withContext(Dispatchers.IO) {
@@ -73,6 +164,19 @@ class InputTestActivity : AppCompatActivity() {
                     // 检查高频词典Trie内存加载状态
                     val isTrieLoaded = DictionaryManager.instance.trieTree.isLoaded()
                     logMessage("高频词典Trie内存加载状态: $isTrieLoaded")
+                    
+                    // 获取chars词库加载数量
+                    val charsCount = DictionaryManager.instance.typeLoadedCountMap["chars"] ?: 0
+                    logMessage("chars词库已加载: $charsCount 个词条")
+                    
+                    // 获取base词库加载数量
+                    val baseCount = DictionaryManager.instance.typeLoadedCountMap["base"] ?: 0
+                    logMessage("base词库已加载: $baseCount 个词条")
+                    
+                    // 显示内存使用情况
+                    val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+                    val formattedMemory = repository.formatFileSize(memoryUsage)
+                    logMessage("当前内存占用: $formattedMemory")
                     
                     // 如果高频词典已加载，显示前5个词条
                     if (isTrieLoaded) {
@@ -192,8 +296,18 @@ class InputTestActivity : AppCompatActivity() {
     
     private fun logMessage(message: String) {
         lifecycleScope.launch(Dispatchers.Main) {
-            imeLogBuilder.append("${message}\n")
+            val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                .format(java.util.Date())
+            val logEntry = "[$timestamp] $message"
+            
+            // 添加到日志列表开头
+            imeLogBuilder.insert(0, logEntry + "\n")
             binding.tvLogs.text = imeLogBuilder.toString()
+            
+            // 保持日志不超过100条
+            if (imeLogBuilder.length > 100 * 1024) {
+                imeLogBuilder.delete(100 * 1024, imeLogBuilder.length)
+            }
             
             // 滚动到底部
             binding.scrollViewLogs.post {

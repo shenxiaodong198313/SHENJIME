@@ -156,44 +156,39 @@ class DictionaryRepository {
                 // 判断是否为高频词典类型
                 val isHighFrequencyType = type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES
                 
-                // 对于高频词典类型
-                if (isHighFrequencyType) {
-                    // 如果预编译已加载完成，使用内存中的词条数，否则使用数据库中的词条数
-                    val entryCount = if (isPrecompiledDictLoaded) {
-                        when (type) {
-                            "chars" -> charsCount
-                            "base" -> baseCount
-                            else -> count
-                        }
-                    } else {
-                        count
-                    }
-                    
-                    // 始终添加高频词典，但根据加载状态设置不同的属性
-                    modules.add(
-                        DictionaryModule(
-                            type = type,
-                            chineseName = if (isPrecompiledDictLoaded) "$chineseName (已加载到内存)" else chineseName,
-                            entryCount = entryCount,
-                            isInMemory = isPrecompiledDictLoaded,
-                            memoryUsage = 0, // 不单独计算内存
-                            isPrecompiled = true,
-                            isMemoryLoaded = isPrecompiledDictLoaded
-                        )
-                    )
-                } else {
-                    // 对于非高频词典类型，始终添加
-                    modules.add(
-                        DictionaryModule(
-                            type = type,
-                            chineseName = chineseName,
-                            entryCount = count,
-                            isInMemory = false,
-                            memoryUsage = 0L,
-                            isMemoryLoaded = false
-                        )
-                    )
+                // 检查是否已加载到内存
+                val isMemoryLoaded = when (type) {
+                    "chars" -> charsCount > 0
+                    "base" -> baseCount > 0
+                    else -> false
                 }
+                
+                // 构建模块名称
+                val displayName = if (isMemoryLoaded) {
+                    "$chineseName (已加载到内存)"
+                } else {
+                    chineseName
+                }
+                
+                // 获取实际词条数量
+                val actualCount = when (type) {
+                    "chars" -> if (isMemoryLoaded) charsCount else count
+                    "base" -> if (isMemoryLoaded) baseCount else count
+                    else -> count
+                }
+                
+                // 添加词典模块
+                modules.add(
+                    DictionaryModule(
+                        type = type,
+                        chineseName = displayName,
+                        entryCount = actualCount,
+                        isInMemory = isMemoryLoaded,
+                        memoryUsage = 0, // 不单独计算内存
+                        isPrecompiled = isHighFrequencyType,
+                        isMemoryLoaded = isMemoryLoaded
+                    )
+                )
             }
         } catch (e: Exception) {
             Timber.e(e, "构建词典模块列表失败，使用测试数据")

@@ -102,6 +102,18 @@ class TrieTree {
         // 增加诊断信息：分析前缀字符
         Timber.d("前缀字符分析：${prefix.toCharArray().joinToString(" ") { "0x${it.code.toString(16)}(${it})" }}")
         
+        // 检查根节点是否有子节点
+        if (root.children.isEmpty()) {
+            Timber.d("Trie树的根节点没有子节点，返回空列表")
+            return emptyList()
+        }
+        
+        // 记录根节点的所有子节点的键
+        val rootKeys = root.children.keys.joinToString(", ") { 
+            "$it (0x${it.code.toString(16)})" 
+        }
+        Timber.d("Trie树根节点的所有子节点键: $rootKeys")
+        
         val result = mutableListOf<WordFrequency>()
         
         // 定位到前缀的最后一个节点

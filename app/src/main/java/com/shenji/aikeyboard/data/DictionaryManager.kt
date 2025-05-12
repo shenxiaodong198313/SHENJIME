@@ -88,10 +88,20 @@ class DictionaryManager private constructor() {
      * @return 匹配的词条列表
      */
     fun searchWords(prefix: String, limit: Int = 10): List<WordFrequency> {
+        Timber.d("开始搜索前缀: '$prefix', 限制数量: $limit")
+        
         // 优先从内存Trie树中查询
+        Timber.d("第一步: 尝试从高频词典(内存Trie树)中查询")
         val memoryResults = if (_trieTree.isLoaded()) {
-            _trieTree.search(prefix, limit)
+            val results = _trieTree.search(prefix, limit)
+            if (results.isNotEmpty()) {
+                Timber.d("从高频词典中找到${results.size}个匹配'$prefix'的候选词")
+            } else {
+                Timber.d("在高频词典中没有找到匹配'$prefix'的候选词")
+            }
+            results
         } else {
+            Timber.d("高频词典未加载或为空")
             emptyList()
         }
         
@@ -99,6 +109,7 @@ class DictionaryManager private constructor() {
         if (memoryResults.size < limit) {
             // 计算还需要多少个结果
             val needMore = limit - memoryResults.size
+            Timber.d("第二步: 从高频词典中只找到${memoryResults.size}个结果，需要从Realm数据库中再查询${needMore}个结果")
             
             // 从Realm数据库中搜索
             try {
@@ -112,13 +123,20 @@ class DictionaryManager private constructor() {
                     val combinedResults = memoryResults.toMutableList()
                     combinedResults.addAll(realmResults)
                     // 按词频排序
-                    return combinedResults.sortedByDescending { it.frequency }
+                    val sortedResults = combinedResults.sortedByDescending { it.frequency }
+                    Timber.d("合并后共有${sortedResults.size}个结果")
+                    return sortedResults
+                } else {
+                    Timber.d("Realm数据库中没有找到额外的候选词")
                 }
             } catch (e: Exception) {
                 Timber.e(e, "从Realm数据库查询候选词失败")
             }
+        } else {
+            Timber.d("从高频词典中已找到足够的结果(${memoryResults.size}个)，不需要查询Realm数据库")
         }
         
+        Timber.d("返回${memoryResults.size}个查询结果")
         return memoryResults
     }
     
@@ -1379,178 +1397,131 @@ class DictionaryManager private constructor() {
         addLog("- 词条总数: $wordCount")
         addLog("- 根节点子节点: $rootKeys")
         
-        // 1. 测试常用拼音首字母
-        val initialLetters = listOf("b", "p", "m", "f", "d", "t", "n", "l", "g", "k", "h", "j", "q", "x", "z", "c", "s", "r", "y", "w")
-        addLog("测试常用拼音首字母:")
+        // 查看原始数据库中的词条是什么样的
+        addLog("检查原始词典样本（从Realm数据库）:")
         
-        var hasPinyinSearchResults = false
-        val resultsMap = mutableMapOf<String, Int>()
-        
-        initialLetters.forEach { letter ->
-            val results = _trieTree.search(letter, 5)
-            resultsMap[letter] = results.size
-            if (results.isNotEmpty()) {
-                hasPinyinSearchResults = true
-                addLog("首字母'$letter': 找到${results.size}个词条，前2个: ${
-                    results.take(2).joinToString { "${it.word}(${it.frequency})" }
-                }")
-            } else {
-                addLog("首字母'$letter': 无匹配")
+        try {
+            val sampleEntries = repository.getSampleEntries("chars", 10)
+            sampleEntries.forEachIndexed { index, entry ->
+                addLog("样本${index+1}: 词='${entry.word}', 拼音='${entry.pinyin}', 频率=${entry.frequency}")
             }
-        }
-        
-        // 2. 测试常用完整拼音
-        val commonPinyins = listOf(
-            "bei", "jing", "zhong", "guo", "ren", "min", "da", "xue", "shang", "hai",
-            "tian", "an", "men", "guang", "zhou", "cheng", "shi", "gong", "zuo", "xue"
-        )
-        
-        addLog("测试常用完整拼音:")
-        commonPinyins.forEach { pinyin ->
-            val results = _trieTree.search(pinyin, 5)
-            resultsMap[pinyin] = results.size
-            if (results.isNotEmpty()) {
-                hasPinyinSearchResults = true
-                addLog("拼音'$pinyin': 找到${results.size}个词条，前2个: ${
-                    results.take(2).joinToString { "${it.word}(${it.frequency})" }
-                }")
-            } else {
-                addLog("拼音'$pinyin': 无匹配")
-            }
-        }
-        
-        // 3. 测试完整词语拼音（多音节）
-        val multiPinyins = listOf(
-            "bei jing", "zhong guo", "ren min", "shang hai", "guang zhou", 
-            "tian an men", "ji suan ji", "shou ji", "ping guo", "xiao mi",
-            "ke xue", "ji shu", "ying yong", "shu ju", "wang luo"
-        )
-        
-        addLog("测试多音节拼音:")
-        multiPinyins.forEach { pinyin ->
-            val results = _trieTree.search(pinyin, 5)
-            resultsMap[pinyin] = results.size
-            if (results.isNotEmpty()) {
-                hasPinyinSearchResults = true
-                addLog("拼音'$pinyin': 找到${results.size}个词条，前2个: ${
-                    results.take(2).joinToString { "${it.word}(${it.frequency})" }
-                }")
-            } else {
-                addLog("拼音'$pinyin': 无匹配")
-            }
-        }
-        
-        // 4. 测试不同的拼音格式
-        val formatTests = listOf(
-            "beijing" to "北京",
-            "bei jing" to "北京",
-            "běijīng" to "北京",
-            "běi jīng" to "北京",
-            "zhongguo" to "中国",
-            "zhong guo" to "中国",
-            "zhōngguó" to "中国",
-            "zhōng guó" to "中国"
-        )
-        
-        addLog("测试不同拼音格式:")
-        formatTests.forEach { (pinyin, expected) ->
-            val results = _trieTree.search(pinyin, 5)
-            if (results.isNotEmpty()) {
-                hasPinyinSearchResults = true
-                val foundExpected = results.any { it.word.contains(expected) }
-                addLog("拼音'$pinyin': 找到${results.size}个词条，期望'$expected'：${if (foundExpected) "已找到" else "未找到"}")
-                addLog("  前2个结果: ${results.take(2).joinToString { "${it.word}(${it.frequency})" }}")
-            } else {
-                addLog("拼音'$pinyin': 无匹配，期望'$expected'")
-            }
-        }
-        
-        // 诊断输出
-        if (!hasPinyinSearchResults) {
-            addLog("警告：所有拼音测试均无匹配结果！")
-            
-            // 分析Trie树结构
-            val wordEntries = _trieTree.getAllWordEntries()
-            val totalWords = wordEntries.size
-            
-            addLog("Trie树中共有${totalWords}个词条，检查前10个词条样本:")
-            
-            wordEntries.take(10).forEachIndexed { index, entry ->
-                addLog("词条${index+1}: 拼音='${entry.pinyin}', 汉字='${entry.chinese}', 频率=${entry.frequency}")
-                addLog("- 拼音长度=${entry.pinyin.length}, 汉字长度=${entry.chinese.length}")
-                addLog("- 拼音字符分析: ${entry.pinyin.toCharArray().joinToString(" ") { "0x${it.code.toString(16)}" }}")
-            }
-            
-            // 5. 查看原始数据库中的词条是什么样的
-            addLog("检查原始词典样本（从Realm数据库）:")
-            
-            try {
-                val sampleEntries = repository.getSampleEntries("base", 10)
-                sampleEntries.forEachIndexed { index, entry ->
-                    addLog("样本${index+1}: 词='${entry.word}', 拼音='${entry.pinyin}', 频率=${entry.frequency}")
-                    
-                    // 使用这些样本词条做测试
-                    if (entry.pinyin.isNotBlank()) {
-                        // 对原始拼音做不同变体的搜索测试
-                        val pinyinTests = listOf(
-                            entry.pinyin,  // 原始拼音
-                            entry.pinyin.replace(" ", ""),  // 无空格版
-                            entry.pinyin.replace("[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]".toRegex()) { 
-                                when(it.value[0]) {
-                                    in "āáǎà" -> "a"
-                                    in "ēéěè" -> "e"
-                                    in "īíǐì" -> "i"
-                                    in "ōóǒò" -> "o"
-                                    in "ūúǔù" -> "u"
-                                    in "ǖǘǚǜü" -> "v"
-                                    else -> it.value
-                                }
-                            },  // 无声调版
-                            entry.pinyin.replace(" ", "").replace("[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]".toRegex()) { 
-                                when(it.value[0]) {
-                                    in "āáǎà" -> "a"
-                                    in "ēéěè" -> "e"
-                                    in "īíǐì" -> "i"
-                                    in "ōóǒò" -> "o"
-                                    in "ūúǔù" -> "u"
-                                    in "ǖǘǚǜü" -> "v"
-                                    else -> it.value
-                                }
-                            }  // 无声调无空格版
-                        )
-                        
-                        addLog("对样本${index+1}的拼音进行不同变体搜索测试:")
-                        pinyinTests.forEachIndexed { vIndex, testPinyin ->
-                            val results = _trieTree.search(testPinyin, 1)
-                            addLog("  变体${vIndex+1} '$testPinyin': ${if(results.isNotEmpty()) "找到匹配" else "无匹配"}")
-                        }
-                    }
-                }
-                
-                // 6. 测试数据库中的拼音搜索是否能工作
-                addLog("直接在数据库中测试拼音搜索:")
-                val dbPinyinTests = listOf("bei", "zhong", "guo", "ren")
-                dbPinyinTests.forEach { pinyin ->
-                    val dbResults = repository.searchEntries(pinyin, 5, emptyList())
-                    if (dbResults.isNotEmpty()) {
-                        addLog("数据库搜索拼音'$pinyin': 找到${dbResults.size}个词条")
-                        addLog("  前2个结果: ${dbResults.take(2).joinToString { it.word }}")
-                    } else {
-                        addLog("数据库搜索拼音'$pinyin': 无匹配")
-                    }
-                }
-                
-            } catch (e: Exception) {
-                addLog("获取原始词典样本失败: ${e.message}")
-            }
-        } else {
-            // 打印结果统计
-            addLog("拼音搜索结果统计:")
-            val successCount = resultsMap.values.count { it > 0 }
-            val totalTests = resultsMap.size
-            addLog("测试${totalTests}个拼音，成功匹配${successCount}个 (${(successCount * 100 / totalTests)}%)")
+        } catch (e: Exception) {
+            addLog("获取原始词典样本失败: ${e.message}")
         }
         
         addLog("--- 高级词典测试完成 ---")
+    }
+
+    /**
+     * 从Realm数据库加载chars词库到Trie树
+     * 只加载chars类型的词库，不处理base词库
+     */
+    fun loadCharsFromRealm() {
+        try {
+            addLog("开始从Realm数据库加载chars词库到Trie树...")
+            
+            // 记录开始时间
+            val startTime = System.currentTimeMillis()
+            
+            // 清空当前Trie树，确保释放内存
+            _trieTree.clear()
+            System.gc()
+            
+            // 获取chars词库的词条总数
+            val charsCount = repository.getEntryCountByType("chars")
+            addLog("chars词库共有${charsCount}个词条")
+            
+            // 如果没有词条，直接返回
+            if (charsCount <= 0) {
+                addLog("chars词库为空，加载终止")
+                return
+            }
+            
+            // 批量加载词条
+            val batchSize = 2000
+            var loadedCount = 0
+            
+            // 循环加载所有chars词条
+            while (loadedCount < charsCount) {
+                // 计算当前批次大小
+                val currentBatchSize = minOf(batchSize, charsCount - loadedCount)
+                
+                // 从数据库加载一批词条
+                val entries = repository.getEntriesByType("chars", loadedCount, currentBatchSize)
+                
+                // 将词条添加到Trie树
+                entries.forEach { entry ->
+                    // 统一将拼音转为无声调版本
+                    val normalizedPinyin = normalizePinyin(entry.pinyin)
+                    
+                    // 插入条目到Trie树，使用标准化后的拼音
+                    _trieTree.insert(normalizedPinyin, entry.frequency, entry.word)
+                }
+                
+                // 更新已加载计数
+                loadedCount += entries.size
+                
+                // 更新进度日志
+                val progress = (loadedCount * 100.0 / charsCount).toInt()
+                if (loadedCount % 5000 == 0 || loadedCount == charsCount) {
+                    addLog("已加载${loadedCount}/${charsCount}个词条 (${progress}%)")
+                }
+                
+                // 记录内存使用情况
+                if (loadedCount % 10000 == 0 || loadedCount == charsCount) {
+                    val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+                    addLog("当前内存占用: ${formatFileSize(memoryUsage)}")
+                }
+            }
+            
+            // 设置已加载标志
+            _trieTree.setLoaded(true)
+            
+            // 更新加载计数
+            typeLoadedCount["chars"] = loadedCount
+            typeLoadedCount["base"] = 0  // base词库不加载
+            
+            // 记录加载完成时间和内存使用
+            val endTime = System.currentTimeMillis()
+            val loadTime = endTime - startTime
+            val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+            
+            // 记录加载完成信息
+            addLog("从Realm加载chars词库完成!")
+            addLog("加载耗时: ${loadTime/1000}秒")
+            addLog("内存占用: ${formatFileSize(memoryUsage)}")
+            addLog("共加载${loadedCount}个chars词条")
+            
+            // 运行基本的Trie树测试
+            runAdvancedDictionaryTests()
+            
+            Timber.i("从Realm加载chars词库完成，加载耗时: ${loadTime/1000}秒，内存占用: ${formatFileSize(memoryUsage)}")
+            
+        } catch (e: Exception) {
+            addLog("从Realm加载chars词库失败: ${e.message}")
+            Timber.e(e, "从Realm加载chars词库失败: ${e.message}")
+            
+            // 确保在出错时也重置Trie树状态
+            _trieTree.setLoaded(false)
+            typeLoadedCount["chars"] = 0
+        }
+    }
+    
+    /**
+     * 将拼音标准化为无声调版本
+     */
+    private fun normalizePinyin(pinyin: String): String {
+        if (pinyin.isBlank()) return pinyin
+        
+        // 去除可能包含的方括号
+        val cleanPinyin = pinyin.replace("[\\[\\]]".toRegex(), "")
+        
+        // 替换所有声调字符为无声调版本
+        return cleanPinyin.replace("[āáǎà]".toRegex(), "a")
+            .replace("[ēéěè]".toRegex(), "e")
+            .replace("[īíǐì]".toRegex(), "i")
+            .replace("[ōóǒò]".toRegex(), "o")
+            .replace("[ūúǔù]".toRegex(), "u")
+            .replace("[ǖǘǚǜü]".toRegex(), "v")
     }
 } 
