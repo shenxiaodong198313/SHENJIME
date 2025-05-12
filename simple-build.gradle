@@ -1,6 +1,0 @@
-task buildApk {
-    doLast {
-        println "Building APK..."
-        // 这里只是一个占位符，实际构建会使用Android Gradle插件
-    }
-} 
