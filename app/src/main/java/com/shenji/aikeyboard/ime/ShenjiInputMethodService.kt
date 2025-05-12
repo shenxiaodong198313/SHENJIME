@@ -10,6 +10,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.HorizontalScrollView
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.data.DictionaryManager
 import com.shenji.aikeyboard.data.WordFrequency
@@ -29,6 +30,8 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
     private lateinit var keyboard: Keyboard
     private lateinit var pinyinKeyboard: Keyboard
     private lateinit var candidatesLayout: LinearLayout
+    private lateinit var candidatesContainer: LinearLayout
+    private lateinit var candidatesScrollView: HorizontalScrollView
     
     // 是否是大写模式
     private var isCapsOn = false
@@ -61,20 +64,30 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
     }
 
     override fun onCreateInputView(): View {
-        // 加载键盘视图
+        Timber.d("创建输入视图")
         val inputView = layoutInflater.inflate(R.layout.keyboard_view, null)
-        keyboardView = inputView.findViewById(R.id.keyboard_view)
-        candidatesLayout = inputView.findViewById(R.id.candidates_layout)
         
-        // 初始化键盘
+        // 初始化键盘视图
+        keyboardView = inputView.findViewById(R.id.keyboard_view)
         keyboard = Keyboard(this, R.xml.keyboard_layout)
         pinyinKeyboard = Keyboard(this, R.xml.pinyin_keyboard_layout)
         
-        // 默认使用拼音键盘
+        // 设置键盘适配器
         keyboardView.keyboard = if (usePinyinKeyboard) pinyinKeyboard else keyboard
         keyboardView.setOnKeyboardActionListener(this)
         
-        Timber.d("输入法视图已创建")
+        // 初始化候选词布局
+        candidatesLayout = inputView.findViewById(R.id.candidates_layout)
+        candidatesContainer = inputView.findViewById(R.id.candidates_container)
+        
+        // 获取水平滚动视图 - 它是candidatesLayout的第一个子视图
+        val scrollView = candidatesLayout.getChildAt(0)
+        if (scrollView is HorizontalScrollView) {
+            candidatesScrollView = scrollView
+            Timber.d("成功初始化候选词滚动区域")
+        } else {
+            Timber.e("候选词布局结构不符合预期，无法获取HorizontalScrollView")
+        }
         
         return inputView
     }
@@ -322,13 +335,13 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
      */
     private fun showCandidates(candidates: List<WordFrequency>) {
         // 防止空指针异常
-        if (!::candidatesLayout.isInitialized) {
-            Timber.w("candidatesLayout尚未初始化，无法显示候选词")
+        if (!::candidatesContainer.isInitialized) {
+            Timber.w("candidatesContainer尚未初始化，无法显示候选词")
             return
         }
         
         Timber.d("开始显示候选词，清空当前候选区")
-        candidatesLayout.removeAllViews()
+        candidatesContainer.removeAllViews()
         
         if (candidates.isEmpty()) {
             // 如果没有候选词，显示当前输入的文本
@@ -352,8 +365,8 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
      */
     private fun addCandidate(word: String, frequency: Int, index: Int) {
         // 防止空指针异常
-        if (!::candidatesLayout.isInitialized) {
-            Timber.w("candidatesLayout尚未初始化，无法添加候选词")
+        if (!::candidatesContainer.isInitialized) {
+            Timber.w("candidatesContainer尚未初始化，无法添加候选词")
             return
         }
         
@@ -378,7 +391,7 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
             submitCandidate(index)
         }
         
-        candidatesLayout.addView(textView)
+        candidatesContainer.addView(textView)
         Timber.d("添加候选词: $word, 频率: $frequency, 索引: $index")
     }
     
@@ -389,8 +402,8 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         val inputConnection = currentInputConnection ?: return
         
         // 防止空指针异常
-        if (!::candidatesLayout.isInitialized) {
-            Timber.w("candidatesLayout尚未初始化，无法提交候选词")
+        if (!::candidatesContainer.isInitialized) {
+            Timber.w("candidatesContainer尚未初始化，无法提交候选词")
             // 直接提交当前输入
             if (currentComposing.isNotEmpty()) {
                 inputConnection.commitText(currentComposing.toString(), 1)
@@ -399,8 +412,8 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
             return
         }
         
-        if (candidatesLayout.childCount > index) {
-            val selectedView = candidatesLayout.getChildAt(index) as? TextView
+        if (candidatesContainer.childCount > index) {
+            val selectedView = candidatesContainer.getChildAt(index) as? TextView
             val selectedText = selectedView?.text?.toString() ?: currentComposing.toString()
             
             inputConnection.commitText(selectedText, 1)
@@ -423,22 +436,35 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
      */
     private fun clearCandidates() {
         // 防止空指针异常
-        if (::candidatesLayout.isInitialized) {
-            candidatesLayout.removeAllViews()
+        if (::candidatesContainer.isInitialized) {
+            candidatesContainer.removeAllViews()
         } else {
-            Timber.w("candidatesLayout尚未初始化，无法清除候选词")
+            Timber.w("candidatesContainer尚未初始化，无法清除候选词")
         }
     }
 
-    // 滑动处理 - 必须实现接口方法
+    // 滑动处理 - 左右滑动候选词区域
     override fun swipeLeft() {
-        // 向左滑动处理
-        Timber.d("向左滑动")
+        // 向左滑动处理 - 向右滚动候选词
+        if (::candidatesScrollView.isInitialized && candidatesContainer.childCount > 0) {
+            Timber.d("向左滑动，滚动候选词区域")
+            // 获取当前滚动位置
+            val currentX = candidatesScrollView.scrollX
+            // 滚动一段距离（可以根据需要调整）
+            candidatesScrollView.smoothScrollTo(currentX + 200, 0)
+        }
     }
 
     override fun swipeRight() {
-        // 向右滑动处理
-        Timber.d("向右滑动")
+        // 向右滑动处理 - 向左滚动候选词
+        if (::candidatesScrollView.isInitialized && candidatesContainer.childCount > 0) {
+            Timber.d("向右滑动，滚动候选词区域")
+            // 获取当前滚动位置
+            val currentX = candidatesScrollView.scrollX
+            // 滚动一段距离（可以根据需要调整）
+            val newX = Math.max(0, currentX - 200)
+            candidatesScrollView.smoothScrollTo(newX, 0)
+        }
     }
 
     override fun swipeDown() {

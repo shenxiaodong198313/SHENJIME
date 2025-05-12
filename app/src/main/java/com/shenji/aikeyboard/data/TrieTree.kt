@@ -84,7 +84,7 @@ class TrieTree {
     }
     
     /**
-     * 根据前缀查找匹配的词条列表，按词频排序
+     * 根据前缀查找匹配的词条列表，按照特定规则排序
      */
     fun search(prefix: String, limit: Int): List<WordFrequency> {
         if (prefix.isBlank()) {
@@ -153,8 +153,8 @@ class TrieTree {
                     }
                     
                     if (result.isNotEmpty()) {
-                        // 如果通过替代字符找到了结果，就按频率排序返回
-                        return result.sortedByDescending { it.frequency }
+                        // 如果通过替代字符找到了结果，根据输入规则排序
+                        return sortResults(result, prefix, limit)
                     }
                 }
                 
@@ -196,8 +196,31 @@ class TrieTree {
             }
         }
         
-        // 按词频排序
-        return result.sortedByDescending { it.frequency }
+        // 根据输入规则排序
+        return sortResults(result, prefix, limit)
+    }
+    
+    /**
+     * 根据输入规则排序候选词结果
+     * 如果是单字拼音输入，优先显示单字，并按照字数和词频排序
+     * 如果是多字拼音输入，按照词频排序
+     */
+    private fun sortResults(results: List<WordFrequency>, prefix: String, limit: Int): List<WordFrequency> {
+        // 判断是否为单字拼音输入（不含空格，只有字母）
+        val isSinglePinyinInput = prefix.all { it.isLetter() } && !prefix.contains(" ")
+        
+        return if (isSinglePinyinInput) {
+            Timber.d("单字拼音输入，优先显示单字候选词")
+            // 优先按字数排序（单字优先），然后按词频排序
+            results.sortedWith(
+                compareBy<WordFrequency> { it.word.length }  // 首先按字数排序（短的优先）
+                    .thenByDescending { it.frequency }       // 然后按词频降序排序
+            ).take(limit)
+        } else {
+            Timber.d("多字拼音输入，按词频排序候选词")
+            // 多字拼音输入，仅按词频排序
+            results.sortedByDescending { it.frequency }.take(limit)
+        }
     }
     
     /**

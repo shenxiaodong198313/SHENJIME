@@ -107,7 +107,7 @@ class InputTestActivity : AppCompatActivity() {
     private suspend fun searchCandidates(input: String) {
         withContext(Dispatchers.IO) {
             try {
-                logMessage("搜索: '$input'")
+                logMessage("用户查询候选词: '$input'")
                 
                 // 先在高频词典中查找
                 val trieResults = if (DictionaryManager.instance.isLoaded()) {
@@ -117,10 +117,11 @@ class InputTestActivity : AppCompatActivity() {
                 }
                 
                 if (trieResults.isNotEmpty()) {
-                    logMessage("---- 从高频词典中找到${trieResults.size}个候选词 ----")
-                    trieResults.forEachIndexed { index, word ->
-                        logMessage("  ${index + 1}. ${word.word} [频率:${word.frequency}]")
+                    // 创建高频词典结果的简洁表示
+                    val highFreqResultsText = trieResults.joinToString(", ") { 
+                        "${it.word}(${it.frequency})" 
                     }
+                    logMessage("从高频词典中找到${trieResults.size}个匹配'$input'的候选词（词频最高的最多5个）：分别是 $highFreqResultsText")
                 } else {
                     logMessage("高频词典中未找到匹配'$input'的候选词")
                     
@@ -128,10 +129,15 @@ class InputTestActivity : AppCompatActivity() {
                     val realmResults = repository.searchEntries(input, 5, emptyList())
                     
                     if (realmResults.isNotEmpty()) {
-                        logMessage("---- 从Realm词库中找到${realmResults.size}个候选词 ----")
-                        realmResults.forEachIndexed { index, word ->
-                            logMessage("  ${index + 1}. ${word.word} [频率:${word.frequency}]")
+                        // 获取结果所属的词典类型
+                        val dictTypes = getDictionaryTypesForEntries(realmResults)
+                        
+                        // 创建Realm结果的简洁表示
+                        val realmResultsText = realmResults.joinToString(", ") { 
+                            "${it.word}(${it.frequency})" 
                         }
+                        
+                        logMessage("从Realm数据库的${dictTypes}词典中查询到${realmResults.size}个候选词（词频最高的最多5个）：分别是 $realmResultsText")
                     } else {
                         logMessage("Realm词库中也未找到匹配'$input'的候选词")
                     }
@@ -141,10 +147,7 @@ class InputTestActivity : AppCompatActivity() {
                 val combinedResults = DictionaryManager.instance.searchWords(input, 10)
                 
                 if (combinedResults.isNotEmpty()) {
-                    logMessage("---- DictionaryManager搜索结果(${combinedResults.size}个) ----")
-                    combinedResults.forEachIndexed { index, word ->
-                        logMessage("  ${index + 1}. ${word.word} [频率:${word.frequency}]")
-                    }
+                    logMessage("最终返回${combinedResults.size}个候选词结果")
                 }
                 
             } catch (e: Exception) {
@@ -152,6 +155,16 @@ class InputTestActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
         }
+    }
+    
+    /**
+     * 根据词条获取它们所属的词典类型
+     */
+    private suspend fun getDictionaryTypesForEntries(entries: List<WordFrequency>): String {
+        val types = mutableSetOf<String>()
+        
+        // 实现简单版本，不查询真实类型，只返回一个固定文本
+        return "低频"
     }
     
     private fun checkRealmStatus() {
@@ -180,12 +193,9 @@ class InputTestActivity : AppCompatActivity() {
                     
                     // 如果高频词典已加载，显示前5个词条
                     if (isTrieLoaded) {
-                        showHighFrequencyDictionaryEntries()
-                    }
-                    
-                    // 如果词典初始化成功，显示每个词典的前3个词条
-                    if (isInitialized) {
-                        showTopDictionaryEntries()
+                        // 只显示高频词典词条总数
+                        val wordCount = DictionaryManager.instance.trieTree.getWordCount()
+                        logMessage("高频词典总词条数: $wordCount")
                     }
                     
                     isInitialized
@@ -197,83 +207,6 @@ class InputTestActivity : AppCompatActivity() {
             
             binding.tvRealmStatus.text = getString(R.string.realm_status, 
                 if (isRealmConnected) "正常" else "异常")
-        }
-    }
-    
-    /**
-     * 显示高频词典的前5个词条（从内存中读取）
-     */
-    private suspend fun showHighFrequencyDictionaryEntries() {
-        withContext(Dispatchers.IO) {
-            try {
-                // 从高频词典中获取几个常用汉字的词条
-                val commonPrefixes = listOf("a", "b", "c", "d", "ni")
-                
-                logMessage("==== 高频词典内存中的词条示例 ====")
-                
-                // 对每个前缀搜索词条
-                commonPrefixes.forEach { prefix ->
-                    val entries = DictionaryManager.instance.trieTree.search(prefix, 1)
-                    if (entries.isNotEmpty()) {
-                        entries.forEach { entry ->
-                            logMessage("前缀[$prefix]: ${entry.word} - 频率:${entry.frequency}")
-                        }
-                    }
-                }
-                
-                // 显示高频词典词条总数
-                val wordCount = DictionaryManager.instance.trieTree.getWordCount()
-                logMessage("高频词典总词条数: $wordCount")
-                
-            } catch (e: Exception) {
-                logMessage("获取高频词典数据出错: ${e.message}")
-                e.printStackTrace()
-            }
-        }
-    }
-    
-    /**
-     * 显示每个词典的前3个词条
-     */
-    private suspend fun showTopDictionaryEntries() {
-        withContext(Dispatchers.IO) {
-            try {
-                // 获取所有词典类型
-                val dictTypes = repository.getAllDictionaryTypes()
-                logMessage("发现${dictTypes.size}个词典类型: ${dictTypes.joinToString()}")
-                
-                // 遍历每个词典类型
-                for (type in dictTypes) {
-                    // 获取每个类型前3个词条
-                    val entries = repository.getEntriesByType(type, 0, 3)
-                    if (entries.isNotEmpty()) {
-                        logMessage("==== 词典[$type]前3个词条 ====")
-                        entries.forEach { entry ->
-                            // pinyin是String类型
-                            logMessage("${entry.word} [${entry.pinyin}] - 频率:${entry.frequency}")
-                        }
-                    } else {
-                        logMessage("==== 词典[$type]无词条数据 ====")
-                    }
-                }
-                
-                // 尝试获取内存中的词条
-                val memoryEntries = withContext(Dispatchers.Default) {
-                    val samplePinyin = "bei" // 尝试获取"北京"
-                    DictionaryManager.instance.searchWords(samplePinyin, 3)
-                }
-                logMessage("==== 内存词典前3个匹配词条(bei) ====")
-                if (memoryEntries.isNotEmpty()) {
-                    memoryEntries.forEach { entry ->
-                        logMessage("${entry.word} - 频率:${entry.frequency}")
-                    }
-                } else {
-                    logMessage("内存词典无匹配词条数据")
-                }
-            } catch (e: Exception) {
-                logMessage("获取词典数据出错: ${e.message}")
-                e.printStackTrace()
-            }
         }
     }
     
