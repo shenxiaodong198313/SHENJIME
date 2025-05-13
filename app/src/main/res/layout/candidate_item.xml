@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
-    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
     android:textSize="16sp"
     android:textColor="#333333"
-    android:background="@drawable/candidate_background" /> 
+    android:background="@drawable/candidate_item_background"
+    android:singleLine="true"
+    android:ellipsize="end"
+    android:layout_marginBottom="1dp" /> 

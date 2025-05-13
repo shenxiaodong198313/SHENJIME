@@ -2,20 +2,35 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#E0E0E0">
+    android:background="@color/keyboard_background">
+    
+    <!-- 拼音显示区域 -->
+    <TextView
+        android:id="@+id/pinyin_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:textSize="16sp"
+        android:textColor="@color/pinyin_text"
+        android:gravity="start|center_vertical"
+        android:minHeight="30dp"
+        android:background="@color/white"
+        android:hint="点击此处输入文字" />
     
     <!-- 候选词区域 -->
     <LinearLayout
         android:id="@+id/candidates_layout"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="48dp"
         android:orientation="horizontal"
-        android:background="#F5F5F5"
-        android:gravity="center_vertical">
+        android:background="@color/white"
+        android:layout_below="@id/pinyin_text">
         
         <HorizontalScrollView
-            android:layout_width="match_parent"
+            android:id="@+id/candidates_horizontal_scroll"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_weight="1"
             android:scrollbars="none">
             
             <LinearLayout
@@ -23,7 +38,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:orientation="horizontal"
-                android:padding="5dp">
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp">
                 
                 <!-- 候选词将动态添加 -->
                 
@@ -31,17 +48,54 @@
             
         </HorizontalScrollView>
         
+        <!-- 向下箭头按钮，点击展开更多候选词 -->
+        <ImageButton
+            android:id="@+id/expand_candidates_button"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:src="@android:drawable/arrow_down_float"
+            android:background="@color/white"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:contentDescription="展开更多候选词" />
+        
     </LinearLayout>
     
+    <!-- 扩展候选词区域，初始隐藏 -->
+    <ScrollView
+        android:id="@+id/expanded_candidates_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/candidates_layout"
+        android:visibility="gone"
+        android:background="@color/white"
+        android:elevation="10dp"
+        android:maxHeight="180dp">
+        
+        <LinearLayout
+            android:id="@+id/expanded_candidates_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+            
+            <!-- 扩展候选词将动态添加 -->
+            
+        </LinearLayout>
+        
+    </ScrollView>
+
     <!-- 键盘视图 -->
     <android.inputmethodservice.KeyboardView
         android:id="@+id/keyboard_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/candidates_layout"
-        android:background="#CFCFCF"
+        android:background="@color/keyboard_background"
         android:keyPreviewLayout="@layout/key_preview"
         android:keyPreviewOffset="0dp"
-        android:keyPreviewHeight="80dp" />
+        android:keyPreviewHeight="80dp"
+        android:keyTextColor="@color/keyboard_text"
+        android:keyBackground="@drawable/key_background" />
 
 </RelativeLayout> 

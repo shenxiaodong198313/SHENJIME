@@ -5,8 +5,12 @@ import android.inputmethodservice.KeyboardView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
@@ -24,18 +28,42 @@ public final class KeyboardViewBinding implements ViewBinding {
   public final LinearLayout candidatesContainer;
 
   @NonNull
+  public final HorizontalScrollView candidatesHorizontalScroll;
+
+  @NonNull
   public final LinearLayout candidatesLayout;
+
+  @NonNull
+  public final ImageButton expandCandidatesButton;
+
+  @NonNull
+  public final LinearLayout expandedCandidatesContainer;
+
+  @NonNull
+  public final ScrollView expandedCandidatesScroll;
 
   @NonNull
   public final KeyboardView keyboardView;
 
+  @NonNull
+  public final TextView pinyinText;
+
   private KeyboardViewBinding(@NonNull RelativeLayout rootView,
-      @NonNull LinearLayout candidatesContainer, @NonNull LinearLayout candidatesLayout,
-      @NonNull KeyboardView keyboardView) {
+      @NonNull LinearLayout candidatesContainer,
+      @NonNull HorizontalScrollView candidatesHorizontalScroll,
+      @NonNull LinearLayout candidatesLayout, @NonNull ImageButton expandCandidatesButton,
+      @NonNull LinearLayout expandedCandidatesContainer,
+      @NonNull ScrollView expandedCandidatesScroll, @NonNull KeyboardView keyboardView,
+      @NonNull TextView pinyinText) {
     this.rootView = rootView;
     this.candidatesContainer = candidatesContainer;
+    this.candidatesHorizontalScroll = candidatesHorizontalScroll;
     this.candidatesLayout = candidatesLayout;
+    this.expandCandidatesButton = expandCandidatesButton;
+    this.expandedCandidatesContainer = expandedCandidatesContainer;
+    this.expandedCandidatesScroll = expandedCandidatesScroll;
     this.keyboardView = keyboardView;
+    this.pinyinText = pinyinText;
   }
 
   @Override
@@ -71,9 +99,33 @@ public final class KeyboardViewBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.candidates_horizontal_scroll;
+      HorizontalScrollView candidatesHorizontalScroll = ViewBindings.findChildViewById(rootView, id);
+      if (candidatesHorizontalScroll == null) {
+        break missingId;
+      }
+
       id = R.id.candidates_layout;
       LinearLayout candidatesLayout = ViewBindings.findChildViewById(rootView, id);
       if (candidatesLayout == null) {
+        break missingId;
+      }
+
+      id = R.id.expand_candidates_button;
+      ImageButton expandCandidatesButton = ViewBindings.findChildViewById(rootView, id);
+      if (expandCandidatesButton == null) {
+        break missingId;
+      }
+
+      id = R.id.expanded_candidates_container;
+      LinearLayout expandedCandidatesContainer = ViewBindings.findChildViewById(rootView, id);
+      if (expandedCandidatesContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.expanded_candidates_scroll;
+      ScrollView expandedCandidatesScroll = ViewBindings.findChildViewById(rootView, id);
+      if (expandedCandidatesScroll == null) {
         break missingId;
       }
 
@@ -83,8 +135,15 @@ public final class KeyboardViewBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.pinyin_text;
+      TextView pinyinText = ViewBindings.findChildViewById(rootView, id);
+      if (pinyinText == null) {
+        break missingId;
+      }
+
       return new KeyboardViewBinding((RelativeLayout) rootView, candidatesContainer,
-          candidatesLayout, keyboardView);
+          candidatesHorizontalScroll, candidatesLayout, expandCandidatesButton,
+          expandedCandidatesContainer, expandedCandidatesScroll, keyboardView, pinyinText);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

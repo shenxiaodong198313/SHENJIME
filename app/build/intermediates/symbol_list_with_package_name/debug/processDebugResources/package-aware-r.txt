@@ -1385,6 +1385,8 @@ color button_material_dark
 color button_material_light
 color call_notification_answer_color
 color call_notification_decline_color
+color candidate_text
+color candidate_text_selected
 color cardview_dark_background
 color cardview_light_background
 color cardview_shadow_end_color
@@ -1436,6 +1438,7 @@ color dim_foreground_disabled_material_dark
 color dim_foreground_disabled_material_light
 color dim_foreground_material_dark
 color dim_foreground_material_light
+color divider
 color error_color_material_dark
 color error_color_material_light
 color foreground_material_dark
@@ -1446,6 +1449,7 @@ color key_text
 color keyboard_background
 color keyboard_key_normal
 color keyboard_key_pressed
+color keyboard_text
 color m3_appbar_overlay_color
 color m3_assist_chip_icon_tint_color
 color m3_assist_chip_stroke_color
@@ -2099,6 +2103,7 @@ color mtrl_textinput_focused_box_stroke_color
 color mtrl_textinput_hovered_box_stroke_color
 color notification_action_color_filter
 color notification_icon_bg_color
+color pinyin_text
 color primary_dark_material_dark
 color primary_dark_material_light
 color primary_material_dark
@@ -3014,6 +3019,7 @@ drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
 drawable candidate_background
+drawable candidate_item_background
 drawable design_fab_background
 drawable design_ic_visibility
 drawable design_ic_visibility_off
@@ -3037,6 +3043,7 @@ drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
 drawable ic_mtrl_chip_close_circle
 drawable ic_search_black_24
+drawable key_background
 drawable key_preview_background
 drawable m3_avd_hide_password
 drawable m3_avd_show_password
@@ -3236,6 +3243,7 @@ id cache_measures
 id callMeasure
 id cancel_button
 id candidates_container
+id candidates_horizontal_scroll
 id candidates_layout
 id cardStats
 id carryVelocity
@@ -3322,6 +3330,9 @@ id etMaxNodesPerBatch
 id etNumWorkers
 id exitUntilCollapsed
 id expand_activities_button
+id expand_candidates_button
+id expanded_candidates_container
+id expanded_candidates_scroll
 id expanded_menu
 id fade
 id fill
@@ -3498,6 +3509,7 @@ id pbDictExport
 id peekHeight
 id percent
 id pin
+id pinyin_text
 id position
 id postLayout
 id pressed
@@ -3810,6 +3822,7 @@ layout activity_input_test
 layout activity_log_detail
 layout activity_main
 layout candidate_item
+layout candidate_item_horizontal
 layout custom_dialog
 layout design_bottom_navigation_item
 layout design_bottom_sheet_dialog

@@ -1,15 +1,20 @@
 R_DEF: Internal format may change without notice
 local
 color black
+color candidate_text
+color candidate_text_selected
 color colorAccent
 color colorPrecompiledBackground
 color colorPrecompiledLoading
 color colorPrimary
 color colorPrimaryDark
+color divider
 color key_text
 color keyboard_background
 color keyboard_key_normal
 color keyboard_key_pressed
+color keyboard_text
+color pinyin_text
 color purple_200
 color purple_500
 color purple_700
@@ -18,6 +23,8 @@ color teal_200
 color teal_700
 color white
 drawable candidate_background
+drawable candidate_item_background
+drawable key_background
 drawable key_preview_background
 id action_logs
 id btnCancelExport
@@ -39,6 +46,7 @@ id btnProcessChars
 id btnSettings
 id buttonContainer
 id candidates_container
+id candidates_horizontal_scroll
 id candidates_layout
 id cardStats
 id dictProcessContainer
@@ -46,12 +54,16 @@ id etBatchSize
 id etInput
 id etMaxNodesPerBatch
 id etNumWorkers
+id expand_candidates_button
+id expanded_candidates_container
+id expanded_candidates_scroll
 id keyboard_view
 id loadMoreProgress
 id logButtonsContainer
 id mainButtonContainer
 id mainContainer
 id pbDictExport
+id pinyin_text
 id progressBar
 id progressBarLoading
 id rvDictionaryModules
@@ -99,6 +111,7 @@ layout activity_input_test
 layout activity_log_detail
 layout activity_main
 layout candidate_item
+layout candidate_item_horizontal
 layout dialog_export_settings
 layout item_dictionary_entry
 layout item_dictionary_group_header

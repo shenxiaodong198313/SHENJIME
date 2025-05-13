@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#FF000000</color>
+    <color name="candidate_text">#000000</color>
+    <color name="candidate_text_selected">#4285F4</color>
     <color name="colorAccent">#FF4081</color>
     <color name="colorPrecompiledBackground">#E8F5E9</color>
     <color name="colorPrecompiledLoading">#F5F5F5</color>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
+    <color name="divider">#E0E0E0</color>
     <color name="key_text">#333333</color>
-    <color name="keyboard_background">#E0E0E0</color>
+    <color name="keyboard_background">#F2F2F2</color>
     <color name="keyboard_key_normal">#FFFFFF</color>
-    <color name="keyboard_key_pressed">#BBBBBB</color>
+    <color name="keyboard_key_pressed">#E0E0E0</color>
+    <color name="keyboard_text">#333333</color>
+    <color name="pinyin_text">#757575</color>
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
