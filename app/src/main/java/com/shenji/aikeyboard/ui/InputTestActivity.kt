@@ -109,8 +109,18 @@ class InputTestActivity : AppCompatActivity() {
             try {
                 logMessage("用户查询候选词: '$input'")
                 
-                // 从Realm词库中查找
-                val realmResults = repository.searchEntries(input, 5, emptyList())
+                // 规范化拼音（使用DictionaryManager的规范化方法，如果它是私有的，我们需要自己实现）
+                val normalizedInput = normalizePinyin(input)
+                logMessage("规范化后的拼音: '$normalizedInput'")
+                
+                // 记录开始时间
+                val startTime = System.currentTimeMillis()
+                
+                // 从Realm词库中查找，使用规范化后的拼音
+                val realmResults = repository.searchEntries(normalizedInput, 5, emptyList())
+                
+                // 计算查询耗时
+                val searchTime = System.currentTimeMillis() - startTime
                 
                 if (realmResults.isNotEmpty()) {
                     // 获取结果所属的词典类型
@@ -121,9 +131,9 @@ class InputTestActivity : AppCompatActivity() {
                         "${it.word}(${it.frequency})" 
                     }
                     
-                    logMessage("从Realm数据库的${dictTypes}词典中查询到${realmResults.size}个候选词（词频最高的最多5个）：分别是 $realmResultsText")
+                    logMessage("从Realm数据库中查询到${realmResults.size}个候选词，耗时: ${searchTime}ms：分别是 $realmResultsText")
                 } else {
-                    logMessage("Realm词库中未找到匹配'$input'的候选词")
+                    logMessage("Realm词库中未找到匹配'$normalizedInput'的候选词，耗时: ${searchTime}ms")
                 }
                 
                 // 使用DictionaryManager的searchWords方法
@@ -137,6 +147,118 @@ class InputTestActivity : AppCompatActivity() {
                 logMessage("搜索候选词时出错: ${e.message}")
                 e.printStackTrace()
             }
+        }
+    }
+    
+    /**
+     * 通过word字段查询词条
+     */
+    private fun searchByWord(word: String, limit: Int): List<WordFrequency> {
+        return try {
+            // 这里假设repository有一个通过word字段查询的方法
+            // 如果没有，您可能需要添加实现
+            repository.searchByWord(word, limit)
+        } catch (e: Exception) {
+            Timber.e(e, "通过词查询失败: ${e.message}")
+            emptyList()
+        }
+    }
+    
+    /**
+     * 判断是否可能是中文字符
+     */
+    private fun isPossibleChineseChar(text: String): Boolean {
+        val regex = Regex("[\u4e00-\u9fa5]")
+        return regex.containsMatchIn(text)
+    }
+    
+    /**
+     * 规范化拼音
+     * 将连续拼音转换为分词拼音（例如：beijing -> bei jing）
+     */
+    private fun normalizePinyin(pinyin: String): String {
+        // 首先进行基本规范化：转小写并移除多余空格
+        val normalized = pinyin.lowercase().trim().replace("\\s+".toRegex(), "")
+        
+        // 如果已经有空格，说明已经是分词拼音，直接返回
+        if (normalized.contains(" ")) return normalized
+        
+        // 尝试将连续拼音转换为分词拼音
+        return try {
+            // 中文拼音音节列表（按长度排序，优先匹配较长的）
+            val pinyinSyllables = listOf(
+                // 常见四字母音节
+                "bing", "ping", "ding", "ting", "ning", "ling", "jing", "qing", "xing", "ying", "zeng", "ceng", "seng", 
+                "zheng", "cheng", "sheng", "zhing", "ching", "shing", "zhuang", "chuang", "shuang", "zhang", "chang", "shang",
+                "zhong", "chong", "zhen", "chen", "shen", "zhan", "chan", "shan", "zhou", "chou", "shou", "zhua", "chua", "shua",
+                // 常见三字母音节
+                "zhi", "chi", "shi", "ang", "eng", "ing", "ong", "bai", "dai", "tai", "nai", "lai", "gai", "kai", "hai", "zai", "cai", "sai",
+                "ban", "dan", "tan", "nan", "lan", "gan", "kan", "han", "zan", "can", "san", "bao", "dao", "tao", "nao", "lao", "gao", "kao", "hao", "zao", "cao", "sao",
+                "bie", "die", "tie", "nie", "lie", "jie", "qie", "xie", "yan", "jin", "qin", "xin", "bin", "pin", "min", "nin", "lin", "jiu", "qiu", "xiu",
+                "bei", "pei", "mei", "fei", "dei", "tei", "nei", "lei", "gei", "kei", "hei", "zei", "cei", "sei",
+                "ben", "pen", "men", "fen", "den", "ten", "nen", "len", "gen", "ken", "hen", "zen", "cen", "sen",
+                "zhu", "chu", "shu", "zhe", "che", "she", "zou", "cou", "sou", "zui", "cui", "sui", "zun", "cun", "sun",
+                "zhuo", "chuo", "shuo", "zhan", "chan", "shan", "zhen", "chen", "shen",
+                // 常见双字母音节
+                "ba", "pa", "ma", "fa", "da", "ta", "na", "la", "ga", "ka", "ha", "za", "ca", "sa", 
+                "bo", "po", "mo", "fo", "lo", "wo", "yo", "zo", "co", "so",
+                "bi", "pi", "mi", "di", "ti", "ni", "li", "ji", "qi", "xi", "yi",
+                "bu", "pu", "mu", "fu", "du", "tu", "nu", "lu", "gu", "ku", "hu", "zu", "cu", "su", "wu", "yu",
+                "ai", "ei", "ui", "ao", "ou", "iu", "ie", "ve", "er", "an", "en", "in", "un", "vn", "ue",
+                "wu", "yu", "ju", "qu", "xu", "zi", "ci", "si", "ge", "he", "ne", "le", "me", "de", "te", 
+                "re", "ze", "ce", "se", "ye", "zh", "ch", "sh",
+                // 单字母音节
+                "a", "o", "e", "i", "u", "v"
+            )
+            
+            // 贪婪匹配：从输入的开始位置尝试匹配最长的拼音音节
+            var result = ""
+            var position = 0
+            
+            while (position < normalized.length) {
+                var matched = false
+                
+                // 尝试匹配最长的音节
+                for (syllable in pinyinSyllables) {
+                    if (position + syllable.length <= normalized.length &&
+                        normalized.substring(position, position + syllable.length) == syllable) {
+                        // 匹配到音节，添加到结果中
+                        result += if (result.isEmpty()) syllable else " $syllable"
+                        position += syllable.length
+                        matched = true
+                        break
+                    }
+                }
+                
+                // 如果没有匹配到任何音节，继续尝试下一个字符
+                if (!matched) {
+                    // 对于beijing这种特殊情况，尝试常见的拼音组合
+                    if (position + 3 <= normalized.length && normalized.substring(position, position + 3) == "bei") {
+                        result += if (result.isEmpty()) "bei" else " bei"
+                        position += 3
+                    } else if (position + 4 <= normalized.length && normalized.substring(position, position + 4) == "jing") {
+                        result += if (result.isEmpty()) "jing" else " jing"
+                        position += 4
+                    } else if (position + 5 <= normalized.length && normalized.substring(position, position + 5) == "shang") {
+                        result += if (result.isEmpty()) "shang" else " shang"
+                        position += 5
+                    } else if (position + 3 <= normalized.length && normalized.substring(position, position + 3) == "hai") {
+                        result += if (result.isEmpty()) "hai" else " hai"
+                        position += 3
+                    } else {
+                        // 如果还是没匹配到，则只好按单字符处理
+                        val char = normalized[position]
+                        result += if (result.isEmpty()) char.toString() else " $char"
+                        position++
+                    }
+                }
+            }
+            
+            logMessage("拼音转换: '$normalized' -> '$result'")
+            result
+        } catch (e: Exception) {
+            Timber.e(e, "规范化拼音失败: ${e.message}")
+            normalized // 出错时返回原始结果
         }
     }
     

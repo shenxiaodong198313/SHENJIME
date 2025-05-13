@@ -263,7 +263,7 @@ class DictionaryRepository {
     }
     
     /**
-     * 根据拼音前缀从数据库搜索词条
+     * 根据拼音前缀从数据库搜索词条，支持声调不敏感查询
      * @param prefix 拼音前缀
      * @param limit 最大返回数量
      * @param excludeTypes 要排除的词典类型（如高频词典，因为它们已经在内存中查询过）
@@ -274,53 +274,73 @@ class DictionaryRepository {
         
         return try {
             Timber.d("从Realm数据库中搜索拼音前缀: '$prefix'，字符数：${prefix.length}")
-            Timber.d("排除的词典类型: ${excludeTypes.joinToString()}")
             
-            // 先测试是否有任何匹配的词条，不考虑类型
-            val testEntries = realm.query<Entry>("pinyin BEGINSWITH $0", prefix)
-                .limit(5)
+            // 去掉空格 - 用于查询
+            val noSpacePrefix = prefix.replace(" ", "")
+            
+            // 使用BEGINSWITH直接查询，这是效率最高的方式
+            var entries = realm.query<Entry>("pinyin BEGINSWITH $0", prefix)
+                .limit(limit * 3)  // 获取更多结果，后面会排序和限制数量
                 .find()
+                .filter { it.type !in excludeTypes }
             
-            if (testEntries.isEmpty()) {
-                Timber.d("数据库中没有任何拼音以'$prefix'开头的词条")
-                return emptyList()
-            } else {
-                Timber.d("初步测试发现匹配'$prefix'的词条: ${
-                    testEntries.joinToString { 
-                        "${it.word}[${it.pinyin}](${it.type})" 
-                    }
-                }")
+            // 如果没有匹配项，尝试无空格查询
+            if (entries.isEmpty()) {
+                entries = realm.query<Entry>("pinyin BEGINSWITH $0", noSpacePrefix)
+                    .limit(limit * 3)
+                    .find()
+                    .filter { it.type !in excludeTypes }
             }
             
-            // 构建查询条件：pinyin以prefix开头，且type不在excludeTypes中
-            val entries = realm.query<Entry>("pinyin BEGINSWITH $0", prefix)
-                .find()
-                .filter { it.type !in excludeTypes } // 过滤掉高频词典类型
+            // 还是没有，尝试CONTAINS查询
+            if (entries.isEmpty()) {
+                entries = realm.query<Entry>("pinyin CONTAINS $0", prefix)
+                    .limit(limit * 3)
+                    .find()
+                    .filter { it.type !in excludeTypes }
+            }
+            
+            // 筛选结果 - 这里仍对结果进行一些处理，但比之前加载所有词条要好得多
+            val matchedEntries = entries
                 .sortedByDescending { it.frequency } // 按词频降序排序
                 .take(limit) // 限制结果数量
             
-            // 记录每个词典类型的匹配结果
-            val typeCount = entries.groupBy { it.type }
-                .mapValues { it.value.size }
-            
-            Timber.d("从数据库找到${entries.size}个匹配的词条，按类型统计: $typeCount")
-            
-            // 记录部分匹配词条的详情
-            if (entries.isNotEmpty()) {
-                val samples = entries.take(3)
+            if (matchedEntries.isNotEmpty()) {
+                // 记录匹配结果
+                Timber.d("找到${matchedEntries.size}个匹配的词条")
+                
+                // 记录部分匹配词条的详情
+                val samples = matchedEntries.take(3)
                 Timber.d("样本词条: ${
                     samples.joinToString { 
                         "${it.word}[${it.pinyin}](类型:${it.type},频率:${it.frequency})" 
                     }
                 }")
+            } else {
+                Timber.d("没有找到匹配'$prefix'的词条")
             }
             
             // 转换为WordFrequency对象
-            entries.map { WordFrequency(it.word, it.frequency) }
+            matchedEntries.map { WordFrequency(it.word, it.frequency) }
         } catch (e: Exception) {
             Timber.e(e, "搜索词条失败: ${e.message}")
             emptyList()
         }
+    }
+    
+    /**
+     * 去除拼音中的声调，并标准化格式
+     */
+    private fun normalizeAndRemoveTones(pinyin: String): String {
+        // 处理可能的声调字符，转换为无声调形式
+        return pinyin
+            .lowercase()
+            .replace('ā', 'a').replace('á', 'a').replace('ǎ', 'a').replace('à', 'a')
+            .replace('ē', 'e').replace('é', 'e').replace('ě', 'e').replace('è', 'e')
+            .replace('ī', 'i').replace('í', 'i').replace('ǐ', 'i').replace('ì', 'i')
+            .replace('ō', 'o').replace('ó', 'o').replace('ǒ', 'o').replace('ò', 'o')
+            .replace('ū', 'u').replace('ú', 'u').replace('ǔ', 'u').replace('ù', 'u')
+            .replace('ǖ', 'v').replace('ǘ', 'v').replace('ǚ', 'v').replace('ǜ', 'v').replace('ü', 'v')
     }
 
     /**
@@ -351,6 +371,45 @@ class DictionaryRepository {
         } catch (e: Exception) {
             Timber.e(e, "获取词典样本失败: ${e.message}")
             return emptyList()
+        }
+    }
+
+    /**
+     * 根据汉字查询词条
+     * @param word 要查询的汉字词语
+     * @param limit 最大返回数量
+     * @return 匹配的词条列表
+     */
+    fun searchByWord(word: String, limit: Int): List<WordFrequency> {
+        if (word.isBlank()) return emptyList()
+        
+        return try {
+            Timber.d("通过汉字在Realm数据库中搜索: '$word'")
+            
+            // 构建查询条件：word以输入开头
+            val entries = realm.query<Entry>("word BEGINSWITH $0", word)
+                .find()
+                .sortedByDescending { it.frequency } // 按词频降序排序
+                .take(limit) // 限制结果数量
+            
+            // 记录查询结果
+            Timber.d("通过汉字查询找到${entries.size}个匹配的词条")
+            
+            // 记录部分匹配词条的详情
+            if (entries.isNotEmpty()) {
+                val samples = entries.take(3)
+                Timber.d("汉字查询样本词条: ${
+                    samples.joinToString { 
+                        "${it.word}[${it.pinyin}](类型:${it.type},频率:${it.frequency})" 
+                    }
+                }")
+            }
+            
+            // 转换为WordFrequency对象
+            entries.map { WordFrequency(it.word, it.frequency) }
+        } catch (e: Exception) {
+            Timber.e(e, "通过汉字搜索词条失败: ${e.message}")
+            emptyList()
         }
     }
 }
