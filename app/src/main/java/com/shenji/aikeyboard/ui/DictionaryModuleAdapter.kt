@@ -95,9 +95,7 @@ class DictionaryModuleAdapter(
             
             when (module.type) {
                 "precompiled" -> {
-                    // 计算预编译词典的子类型数量
-                    val childCount = DictionaryManager.HIGH_FREQUENCY_DICT_TYPES.size
-                    binding.tvGroupCount.text = "共 ${childCount} 类 ${formatter.format(module.entryCount)} 条"
+                    binding.tvGroupCount.text = "${formatter.format(module.entryCount)} 条"
                 }
                 "realm" -> {
                     // 从后面的列表项计算持久化词典数量
@@ -127,69 +125,19 @@ class DictionaryModuleAdapter(
             val formatter = NumberFormat.getNumberInstance(Locale.getDefault())
             binding.tvEntryCount.text = "${formatter.format(module.entryCount)} 词条"
             
-            // 设置内存加载状态
-            if (module.isInMemory && module.type != "chars" && module.type != "base") {
-                // 对于Trie加载的非chars和base词典，显示"已加载到内存"状态
-                binding.tvMemoryStatus.text = "已加载到内存"
-                binding.tvMemoryStatus.visibility = View.VISIBLE
-                
-                // 如果有内存使用数据，显示内存使用
-                if (module.memoryUsage > 0) {
-                    val formattedSize = formatSize(module.memoryUsage)
-                    binding.tvMemoryUsage.text = "内存占用: $formattedSize"
-                    binding.tvMemoryUsage.visibility = View.VISIBLE
-                } else {
-                    binding.tvMemoryUsage.visibility = View.GONE
-                }
-                
-                // 设置预编译词典的背景色
-                if (module.isPrecompiled) {
-                    binding.root.setCardBackgroundColor(
-                        binding.root.context.getColor(R.color.colorPrecompiledBackground)
-                    )
-                }
-            } else {
-                // 不显示chars和base词典的加载状态，在Trie构建状态中显示
-                if (module.type == "chars" || module.type == "base") {
-                    binding.tvMemoryStatus.visibility = View.GONE
-                    binding.tvMemoryUsage.visibility = View.GONE
-                    
-                    // 重置背景色
-                    binding.root.setCardBackgroundColor(
-                        binding.root.context.getColor(android.R.color.white)
-                    )
-                } 
-                // 对于高频词典，如果未加载到内存，显示特殊提示
-                else if (module.isPrecompiled) {
-                    binding.tvMemoryStatus.text = "预编译加载中..."
-                    binding.tvMemoryStatus.visibility = View.VISIBLE
-                    binding.tvMemoryUsage.visibility = View.GONE
-                    
-                    // 设置浅色背景表示尚未加载
-                    binding.root.setCardBackgroundColor(
-                        binding.root.context.getColor(R.color.colorPrecompiledLoading)
-                    )
-                } else {
-                    binding.tvMemoryStatus.visibility = View.GONE
-                    binding.tvMemoryUsage.visibility = View.GONE
-                    
-                    // 重置背景色
-                    binding.root.setCardBackgroundColor(
-                        binding.root.context.getColor(android.R.color.white)
-                    )
-                }
-            }
+            // 隐藏内存加载状态
+            binding.tvMemoryStatus.visibility = View.GONE
+            binding.tvMemoryUsage.visibility = View.GONE
             
-            // 显示加载进度条（如果有）
-            val progress = loadingProgress[module.type]
-            if (progress != null && progress > 0 && progress < 100) {
-                binding.progressBarLoading.visibility = View.VISIBLE
-                binding.progressBarLoading.progress = progress.toInt()
-            } else {
-                binding.progressBarLoading.visibility = View.GONE
-            }
+            // 重置背景色
+            binding.root.setCardBackgroundColor(
+                binding.root.context.getColor(android.R.color.white)
+            )
             
-            // 设置点击事件（只有非组标题的项才能点击）
+            // 隐藏加载进度条
+            binding.progressBarLoading.visibility = View.GONE
+            
+            // 设置点击事件
             binding.root.setOnClickListener {
                 onModuleClicked(module)
             }

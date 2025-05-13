@@ -27,9 +27,6 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
   public final CardView cardStats;
 
   @NonNull
-  public final ViewTrieBuildStatusBinding cardTrieStatus;
-
-  @NonNull
   public final RecyclerView rvDictionaryModules;
 
   @NonNull
@@ -40,9 +37,6 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
 
   @NonNull
   public final ShimmerFrameLayout shimmerStatCard;
-
-  @NonNull
-  public final ShimmerFrameLayout shimmerTrieStatus;
 
   @NonNull
   public final Toolbar toolbar;
@@ -63,21 +57,18 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
   public final TextView tvTotalEntries;
 
   private ActivityDictionaryManagerBinding(@NonNull ConstraintLayout rootView,
-      @NonNull CardView cardStats, @NonNull ViewTrieBuildStatusBinding cardTrieStatus,
-      @NonNull RecyclerView rvDictionaryModules, @NonNull RecyclerView rvShimmerModules,
-      @NonNull ShimmerFrameLayout shimmerModuleList, @NonNull ShimmerFrameLayout shimmerStatCard,
-      @NonNull ShimmerFrameLayout shimmerTrieStatus, @NonNull Toolbar toolbar,
+      @NonNull CardView cardStats, @NonNull RecyclerView rvDictionaryModules,
+      @NonNull RecyclerView rvShimmerModules, @NonNull ShimmerFrameLayout shimmerModuleList,
+      @NonNull ShimmerFrameLayout shimmerStatCard, @NonNull Toolbar toolbar,
       @NonNull TextView tvDatabaseSize, @NonNull TextView tvMemoryUsage,
       @NonNull TextView tvModuleCount, @NonNull TextView tvModuleListTitle,
       @NonNull TextView tvTotalEntries) {
     this.rootView = rootView;
     this.cardStats = cardStats;
-    this.cardTrieStatus = cardTrieStatus;
     this.rvDictionaryModules = rvDictionaryModules;
     this.rvShimmerModules = rvShimmerModules;
     this.shimmerModuleList = shimmerModuleList;
     this.shimmerStatCard = shimmerStatCard;
-    this.shimmerTrieStatus = shimmerTrieStatus;
     this.toolbar = toolbar;
     this.tvDatabaseSize = tvDatabaseSize;
     this.tvMemoryUsage = tvMemoryUsage;
@@ -119,13 +110,6 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.cardTrieStatus;
-      View cardTrieStatus = ViewBindings.findChildViewById(rootView, id);
-      if (cardTrieStatus == null) {
-        break missingId;
-      }
-      ViewTrieBuildStatusBinding binding_cardTrieStatus = ViewTrieBuildStatusBinding.bind(cardTrieStatus);
-
       id = R.id.rvDictionaryModules;
       RecyclerView rvDictionaryModules = ViewBindings.findChildViewById(rootView, id);
       if (rvDictionaryModules == null) {
@@ -147,12 +131,6 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
       id = R.id.shimmerStatCard;
       ShimmerFrameLayout shimmerStatCard = ViewBindings.findChildViewById(rootView, id);
       if (shimmerStatCard == null) {
-        break missingId;
-      }
-
-      id = R.id.shimmerTrieStatus;
-      ShimmerFrameLayout shimmerTrieStatus = ViewBindings.findChildViewById(rootView, id);
-      if (shimmerTrieStatus == null) {
         break missingId;
       }
 
@@ -193,9 +171,8 @@ public final class ActivityDictionaryManagerBinding implements ViewBinding {
       }
 
       return new ActivityDictionaryManagerBinding((ConstraintLayout) rootView, cardStats,
-          binding_cardTrieStatus, rvDictionaryModules, rvShimmerModules, shimmerModuleList,
-          shimmerStatCard, shimmerTrieStatus, toolbar, tvDatabaseSize, tvMemoryUsage, tvModuleCount,
-          tvModuleListTitle, tvTotalEntries);
+          rvDictionaryModules, rvShimmerModules, shimmerModuleList, shimmerStatCard, toolbar,
+          tvDatabaseSize, tvMemoryUsage, tvModuleCount, tvModuleListTitle, tvTotalEntries);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

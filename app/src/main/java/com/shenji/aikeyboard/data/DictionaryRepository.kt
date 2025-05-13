@@ -154,17 +154,6 @@ class DictionaryRepository {
             val dictManager = DictionaryManager.instance
             val isPrecompiledDictLoaded = dictManager.isLoaded()
             
-            // 计算预编译词典占用的内存
-            val precompiledMemoryUsage = if (isPrecompiledDictLoaded) {
-                Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-            } else {
-                0L
-            }
-            
-            // 获取预编译词典加载的词条数
-            val charsCount = dictManager.typeLoadedCountMap["chars"] ?: 0
-            val baseCount = dictManager.typeLoadedCountMap["base"] ?: 0
-            
             // 获取所有词典类型
             val types = getAllDictionaryTypes()
             Timber.d("获取到词典类型列表: ${types.joinToString()}")
@@ -174,39 +163,16 @@ class DictionaryRepository {
                 val count = getEntryCountByType(type)
                 val chineseName = getChineseNameForType(type)
                 
-                // 判断是否为高频词典类型
-                val isHighFrequencyType = type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES
-                
-                // 检查是否已加载到内存（但对于chars和base词典，通过Trie状态单独显示，这里不标记为已加载到内存）
-                val isMemoryLoaded = when (type) {
-                    "chars", "base" -> false // 不再显示为已加载到内存
-                    in DictionaryManager.TRIE_DICT_TYPES -> dictManager.typeLoadedCountMap[type]?.let { it > 0 } ?: false
-                    else -> false
-                }
-                
-                // 构建模块名称 (对于chars和base不再显示"已加载到内存")
-                val displayName = when (type) {
-                    "chars", "base" -> chineseName
-                    else -> if (isMemoryLoaded) "$chineseName (已加载到内存)" else chineseName
-                }
-                
-                // 获取实际词条数量
-                val actualCount = if (type in DictionaryManager.TRIE_DICT_TYPES && isMemoryLoaded) {
-                    dictManager.typeLoadedCountMap[type] ?: count
-                } else {
-                    count
-                }
-                
-                // 添加词典模块
+                // 添加词典模块，所有词典都不再显示为已加载到内存
                 modules.add(
                     DictionaryModule(
                         type = type,
-                        chineseName = displayName,
-                        entryCount = actualCount,
-                        isInMemory = isMemoryLoaded,
+                        chineseName = chineseName,
+                        entryCount = count,
+                        isInMemory = false,
                         memoryUsage = 0, // 不单独计算内存
-                        isPrecompiled = isHighFrequencyType,
-                        isMemoryLoaded = isMemoryLoaded
+                        isPrecompiled = false,
+                        isMemoryLoaded = false
                     )
                 )
             }
@@ -230,17 +196,15 @@ class DictionaryRepository {
             )
             
             for ((type, name, count) in testTypes) {
-                val isHighFrequencyType = type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES
-                
                 modules.add(
                     DictionaryModule(
                         type = type,
-                        chineseName = if (isHighFrequencyType) "$name (已加载到内存)" else name,
+                        chineseName = name,
                         entryCount = count,
-                        isInMemory = isHighFrequencyType,
+                        isInMemory = false,
                         memoryUsage = 0,
-                        isPrecompiled = isHighFrequencyType,
-                        isMemoryLoaded = isHighFrequencyType
+                        isPrecompiled = false,
+                        isMemoryLoaded = false
                     )
                 )
             }

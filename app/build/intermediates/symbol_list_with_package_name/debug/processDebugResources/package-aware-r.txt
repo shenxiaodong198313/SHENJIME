@@ -3238,7 +3238,6 @@ id cancel_button
 id candidates_container
 id candidates_layout
 id cardStats
-id cardTrieStatus
 id carryVelocity
 id center
 id centerCrop
@@ -3558,7 +3557,6 @@ id shimmerMemoryStatus
 id shimmerMemoryUsage
 id shimmerModuleList
 id shimmerStatCard
-id shimmerTrieStatus
 id shortcut
 id showCustom
 id showHome
@@ -3643,10 +3641,6 @@ id transition_position
 id transition_scene_layoutid_cache
 id transition_transform
 id triangle
-id tvBaseStatus
-id tvCompatibleStatus
-id tvCorrectionsStatus
-id tvCorrelationStatus
 id tvDatabaseSize
 id tvDictName
 id tvDictProcessTitle
@@ -3666,13 +3660,11 @@ id tvMemoryUsage
 id tvModuleCount
 id tvModuleListTitle
 id tvNoLogs
-id tvPeopleStatus
 id tvPinyin
 id tvRealmStatus
 id tvStatus
 id tvTitle
 id tvTotalEntries
-id tvTotalTrieStatus
 id tvWord
 id unchecked
 id uniform
@@ -3906,7 +3898,6 @@ layout select_dialog_singlechoice_material
 layout shimmer_dictionary_module
 layout shimmer_dictionary_stat_card
 layout support_simple_spinner_dropdown_item
-layout view_trie_build_status
 menu menu_dictionary_manager
 mipmap ic_launcher
 mipmap ic_launcher_round

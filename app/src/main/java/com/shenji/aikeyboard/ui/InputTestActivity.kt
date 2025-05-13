@@ -109,41 +109,24 @@ class InputTestActivity : AppCompatActivity() {
             try {
                 logMessage("用户查询候选词: '$input'")
                 
-                // 先在Trie树中查找
-                val trieResults = if (DictionaryManager.instance.isLoaded()) {
-                    DictionaryManager.instance.trieTree.search(input, 5)
-                } else {
-                    emptyList()
-                }
+                // 从Realm词库中查找
+                val realmResults = repository.searchEntries(input, 5, emptyList())
                 
-                if (trieResults.isNotEmpty()) {
-                    // 创建Trie树结果的简洁表示
-                    val trieResultsText = trieResults.joinToString(", ") { 
+                if (realmResults.isNotEmpty()) {
+                    // 获取结果所属的词典类型
+                    val dictTypes = getDictionaryTypesForEntries(realmResults)
+                    
+                    // 创建Realm结果的简洁表示
+                    val realmResultsText = realmResults.joinToString(", ") { 
                         "${it.word}(${it.frequency})" 
                     }
-                    logMessage("从Trie树中找到${trieResults.size}个匹配'$input'的候选词（词频最高的最多5个）：分别是 $trieResultsText")
+                    
+                    logMessage("从Realm数据库的${dictTypes}词典中查询到${realmResults.size}个候选词（词频最高的最多5个）：分别是 $realmResultsText")
                 } else {
-                    logMessage("Trie树中未找到匹配'$input'的候选词")
-                    
-                    // 如果Trie树中没找到，则从Realm词库中查找
-                    val realmResults = repository.searchEntries(input, 5, emptyList())
-                    
-                    if (realmResults.isNotEmpty()) {
-                        // 获取结果所属的词典类型
-                        val dictTypes = getDictionaryTypesForEntries(realmResults)
-                        
-                        // 创建Realm结果的简洁表示
-                        val realmResultsText = realmResults.joinToString(", ") { 
-                            "${it.word}(${it.frequency})" 
-                        }
-                        
-                        logMessage("从Realm数据库的${dictTypes}词典中查询到${realmResults.size}个候选词（词频最高的最多5个）：分别是 $realmResultsText")
-                    } else {
-                        logMessage("Realm词库中也未找到匹配'$input'的候选词")
-                    }
+                    logMessage("Realm词库中未找到匹配'$input'的候选词")
                 }
                 
-                // 使用DictionaryManager的searchWords方法，它会自动先查Trie树，再查Realm
+                // 使用DictionaryManager的searchWords方法
                 val combinedResults = DictionaryManager.instance.searchWords(input, 10)
                 
                 if (combinedResults.isNotEmpty()) {
@@ -173,128 +156,92 @@ class InputTestActivity : AppCompatActivity() {
                 try {
                     val isInitialized = DictionaryManager.instance.isLoaded()
                     logMessage("Realm词典初始化状态: $isInitialized")
-                    
-                    // 检查Trie树加载状态
-                    val isTrieLoaded = DictionaryManager.instance.trieTree.isLoaded()
-                    logMessage("Trie树内存加载状态: $isTrieLoaded")
-                    
-                    if (isTrieLoaded) {
-                        // 获取总词条数
-                        val totalWordCount = DictionaryManager.instance.getTotalLoadedCount()
-                        logMessage("Trie树词条总数: $totalWordCount")
-                        
-                        // 显示各个词典的加载状态
-                        val typeLoadedCounts = DictionaryManager.instance.typeLoadedCountMap
-                        logMessage("按条件加载的词典状态:")
-                        
-                        // 遍历所有需要加载到Trie树的词典类型
-                        for (type in DictionaryManager.TRIE_DICT_TYPES) {
-                            val count = typeLoadedCounts[type] ?: 0
-                            val typeName = when(type) {
-                                "base" -> "基础词库"
-                                "correlation" -> "关联词库" 
-                                "people" -> "人名词库"
-                                "corrections" -> "错音词库"
-                                "compatible" -> "兼容词库"
-                                else -> "${type}词库"
-                            }
-                            
-                            if (count > 0) {
-                                logMessage("· $typeName：已加载 $count 条")
-                            } else {
-                                logMessage("· $typeName：未加载")
-                            }
-                        }
-                    }
-                    
-                    // 显示内存使用情况
-                    val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-                    val formattedMemory = repository.formatFileSize(memoryUsage)
-                    logMessage("当前内存占用: $formattedMemory")
-                    
-                    isInitialized
+                    return@withContext isInitialized
                 } catch (e: Exception) {
-                    logMessage("Realm词典初始化错误: ${e.message}")
-                    false
+                    logMessage("检查Realm状态出错: ${e.message}")
+                    e.printStackTrace()
+                    return@withContext false
                 }
             }
             
-            binding.tvRealmStatus.text = getString(R.string.realm_status, 
-                if (isRealmConnected) "正常" else "异常")
+            // 更新UI显示
+            withContext(Dispatchers.Main) {
+                binding.tvRealmStatus.text = "Realm词典状态: " + if (isRealmConnected) "已连接" else "未连接"
+            }
         }
     }
     
     private fun setupLoggers() {
-        // 添加Timber树，捕获日志
-        Timber.plant(object : Timber.Tree() {
-            override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-                if (tag?.contains("ShenjiInputMethod") == true || 
-                    message.contains("input") || 
-                    message.contains("keyboard") ||
-                    message.contains("候选词")) {
-                    logMessage("[$tag] $message")
-                }
-            }
-        })
-        
-        // 初始日志
-        logMessage("输入测试开始")
+        // 设置展示日志的文本视图
+        binding.tvLogs.setOnClickListener {
+            // 允许日志滚动查看
+            binding.tvLogs.isVerticalScrollBarEnabled = true
+        }
     }
     
+    /**
+     * 记录日志消息
+     */
     private fun logMessage(message: String) {
-        lifecycleScope.launch(Dispatchers.Main) {
-            val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-                .format(java.util.Date())
-            val logEntry = "[$timestamp] $message"
-            
-            // 添加到日志列表开头
-            imeLogBuilder.insert(0, logEntry + "\n")
-            binding.tvLogs.text = imeLogBuilder.toString()
-            
-            // 保持日志不超过100条
-            if (imeLogBuilder.length > 100 * 1024) {
-                imeLogBuilder.delete(100 * 1024, imeLogBuilder.length)
-            }
+        val timestamp = java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.getDefault()).format(System.currentTimeMillis())
+        val logEntry = "[$timestamp] $message\n"
+        
+        Timber.d(message)
+        
+        // 添加到日志构建器
+        imeLogBuilder.append(logEntry)
+        
+        // 在UI线程更新日志显示
+        runOnUiThread {
+            binding.tvLogs.append(logEntry)
             
             // 滚动到底部
-            binding.scrollViewLogs.post {
-                binding.scrollViewLogs.fullScroll(View.FOCUS_DOWN)
+            val scrollAmount = binding.tvLogs.layout.getLineTop(binding.tvLogs.lineCount) - binding.tvLogs.height
+            if (scrollAmount > 0) {
+                binding.tvLogs.scrollTo(0, scrollAmount)
+            } else {
+                binding.tvLogs.scrollTo(0, 0)
             }
         }
     }
     
-    private fun copyLogsToClipboard() {
-        val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clipData = ClipData.newPlainText("输入法日志", binding.tvLogs.text)
-        clipboardManager.setPrimaryClip(clipData)
-        Toast.makeText(this, R.string.log_copied, Toast.LENGTH_SHORT).show()
-    }
-    
-    private fun clearLogs() {
-        imeLogBuilder.clear()
-        binding.tvLogs.text = ""
-        logMessage("日志已清除")
-    }
-    
+    /**
+     * 显示键盘
+     */
     private fun showKeyboard(view: View) {
         view.requestFocus()
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
     }
     
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressed()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
+    /**
+     * 复制日志到剪贴板
+     */
+    private fun copyLogsToClipboard() {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("输入法日志", imeLogBuilder.toString())
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(this, "日志已复制到剪贴板", Toast.LENGTH_SHORT).show()
     }
     
-    override fun onDestroy() {
-        super.onDestroy()
-        // 移除添加的Timber树
-        Timber.uprootAll()
+    /**
+     * 清除日志
+     */
+    private fun clearLogs() {
+        imeLogBuilder.clear()
+        binding.tvLogs.text = ""
+        Toast.makeText(this, "日志已清除", Toast.LENGTH_SHORT).show()
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            onBackPressed()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+    
+    override fun onBackPressed() {
+        super.onBackPressed()
     }
 } 
