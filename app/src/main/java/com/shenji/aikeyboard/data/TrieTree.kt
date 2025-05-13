@@ -9,15 +9,13 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class TrieNode {
     // 使用HashMap存储子节点，节省内存
-    val children = HashMap<Char, TrieNode>(4) // 使用更小的初始容量
+    val children = HashMap<Char, TrieNode>(2) // 减小初始容量到2，大部分节点分支数较少
     // 标记是否为单词结尾
     var isEnd = false
     // 词频，用于排序候选词
     var frequency = 0
-    // 仅在叶子节点存储完整单词，减少内存冗余
-    // 节点存储的拼音
+    // 仅在isEnd=true的节点存储完整信息，减少内存冗余
     var word: String? = null
-    // 节点存储的汉字，与拼音对应
     var chinese: String? = null
     
     // 清空节点引用，帮助GC
@@ -41,6 +39,12 @@ class TrieTree {
     // 词条数量估计
     private var estimatedWordCount = 0
     
+    // 节点计数
+    private var nodeCount = 0
+    
+    // 内存紧张时用于缓存的常用结果
+    private val commonSearchCache = ConcurrentHashMap<String, List<WordFrequency>>(100)
+    
     /**
      * 拼音条目数据类，用于存储拼音、汉字和频率信息
      */
@@ -59,6 +63,9 @@ class TrieTree {
     fun insert(key: String, frequency: Int, chinese: String? = null) {
         if (key.isBlank()) return
         
+        // 插入新词条时清空缓存
+        commonSearchCache.clear()
+        
         var current = root
         for (char in key) {
             val next = current.children[char]
@@ -68,6 +75,7 @@ class TrieTree {
                 val newNode = TrieNode()
                 current.children[char] = newNode
                 current = newNode
+                nodeCount++ // 增加节点计数
             }
         }
         
@@ -97,22 +105,20 @@ class TrieTree {
             return emptyList()
         }
         
-        Timber.d("在Trie树中搜索前缀: '$prefix'，字符数：${prefix.length}")
+        // 先检查缓存
+        val cacheKey = "$prefix:$limit"
+        commonSearchCache[cacheKey]?.let { cached ->
+            Timber.d("从缓存中获取'$prefix'的搜索结果，共${cached.size}个匹配项")
+            return cached
+        }
         
-        // 增加诊断信息：分析前缀字符
-        Timber.d("前缀字符分析：${prefix.toCharArray().joinToString(" ") { "0x${it.code.toString(16)}(${it})" }}")
+        Timber.d("在Trie树中搜索前缀: '$prefix'，字符数：${prefix.length}")
         
         // 检查根节点是否有子节点
         if (root.children.isEmpty()) {
             Timber.d("Trie树的根节点没有子节点，返回空列表")
             return emptyList()
         }
-        
-        // 记录根节点的所有子节点的键
-        val rootKeys = root.children.keys.joinToString(", ") { 
-            "$it (0x${it.code.toString(16)})" 
-        }
-        Timber.d("Trie树根节点的所有子节点键: $rootKeys")
         
         val result = mutableListOf<WordFrequency>()
         
@@ -121,31 +127,16 @@ class TrieTree {
         for ((index, char) in prefix.withIndex()) {
             val node = current.children[char]
             if (node == null) {
-                // 详细记录搜索路径
-                val path = prefix.substring(0, index)
-                Timber.d("在Trie树中未找到字符'$char'(0x${char.code.toString(16)})，搜索路径：'$path'，搜索失败")
-                
-                // 打印当前节点的所有子节点，帮助排查
-                val childChars = current.children.keys.joinToString(", ") { 
-                    "$it (0x${it.code.toString(16)})" 
-                }
-                Timber.d("当前节点的子节点字符：[$childChars]")
-                
                 // 尝试替代检索：检查是否是拼音声调问题
-                // 例如，用户输入的是没有声调的拼音，但词典存储的是带声调的
                 val alternativeChars = findAlternativeChars(char)
                 if (alternativeChars.isNotEmpty()) {
-                    Timber.d("尝试查找字符'$char'的替代字符: $alternativeChars")
-                    
                     for (altChar in alternativeChars) {
                         val altNode = current.children[altChar]
                         if (altNode != null) {
-                            Timber.d("找到替代字符'$altChar'的匹配节点")
                             // 继续从替代字符节点搜索剩余前缀
                             val remainingPrefix = prefix.substring(index + 1)
                             val altResult = continueSearch(altNode, remainingPrefix, limit)
                             if (altResult.isNotEmpty()) {
-                                Timber.d("使用替代字符'$altChar'找到${altResult.size}个匹配结果")
                                 result.addAll(altResult)
                                 break
                             }
@@ -154,50 +145,32 @@ class TrieTree {
                     
                     if (result.isNotEmpty()) {
                         // 如果通过替代字符找到了结果，根据输入规则排序
-                        return sortResults(result, prefix, limit)
+                        val sortedResult = sortResults(result, prefix, limit)
+                        // 存入缓存
+                        if (sortedResult.isNotEmpty()) {
+                            commonSearchCache[cacheKey] = sortedResult
+                        }
+                        return sortedResult
                     }
                 }
                 
                 return emptyList()
             }
             current = node
-            Timber.d("搜索路径匹配字符'$char'成功，当前已匹配：'${prefix.substring(0, index+1)}'")
         }
-        
-        Timber.d("前缀'$prefix'完全匹配，开始收集词条")
         
         // 从当前节点开始搜集所有词
         collectWords(current, result, limit)
         
-        if (result.isEmpty()) {
-            Timber.d("虽然前缀'$prefix'完全匹配，但未找到任何词条")
-            
-            // 检查当前节点是否有子节点
-            if (current.children.isNotEmpty()) {
-                Timber.d("当前节点有${current.children.size}个子节点，但未标记为词条结尾")
-                val childChars = current.children.keys.joinToString(", ") { 
-                    "$it (0x${it.code.toString(16)})" 
-                }
-                Timber.d("子节点字符：[$childChars]")
-            } else {
-                Timber.d("当前节点没有子节点，是叶子节点但未标记为词条结尾")
-            }
-            
-            // 检查当前节点属性
-            Timber.d("当前节点属性: isEnd=${current.isEnd}, word=${current.word}, chinese=${current.chinese}, frequency=${current.frequency}")
-        } else {
-            Timber.d("在Trie树中找到${result.size}个匹配'$prefix'的词条")
-            
-            // 打印前几个匹配的词条
-            val sampleSize = minOf(3, result.size)
-            val samples = result.take(sampleSize)
-            samples.forEachIndexed { index, wf ->
-                Timber.d("匹配词条${index+1}: 词='${wf.word}', 频率=${wf.frequency}")
-            }
+        // 根据输入规则排序
+        val sortedResult = sortResults(result, prefix, limit)
+        
+        // 存入缓存
+        if (sortedResult.isNotEmpty()) {
+            commonSearchCache[cacheKey] = sortedResult
         }
         
-        // 根据输入规则排序
-        return sortResults(result, prefix, limit)
+        return sortedResult
     }
     
     /**
@@ -302,22 +275,59 @@ class TrieTree {
     }
     
     /**
-     * 清空Trie树
+     * 获取当前Trie树的节点数量
      */
-    fun clear() {
-        // 递归清空所有节点
-        clearNode(root)
-        root.children.clear()
-        isLoaded = false
-        estimatedWordCount = 0
+    fun getNodeCount(): Int {
+        return nodeCount
     }
     
     /**
-     * 递归清空节点
+     * 获取当前Trie树的词条数量
+     */
+    fun getWordCount(): Int {
+        return estimatedWordCount
+    }
+    
+    /**
+     * 检查Trie树是否已加载
+     */
+    fun isLoaded(): Boolean {
+        return isLoaded
+    }
+    
+    /**
+     * 设置Trie树的加载状态
+     */
+    fun setLoaded(loaded: Boolean) {
+        isLoaded = loaded
+    }
+    
+    /**
+     * 清空Trie树
+     */
+    fun clear() {
+        clearNode(root)
+        root.children.clear()
+        estimatedWordCount = 0
+        nodeCount = 0
+        isLoaded = false
+        clearCache()
+        System.gc()
+    }
+    
+    /**
+     * 清空缓存
+     */
+    fun clearCache() {
+        commonSearchCache.clear()
+    }
+    
+    /**
+     * 递归清空节点以释放内存
      */
     private fun clearNode(node: TrieNode) {
-        // 先清空所有子节点
-        node.children.values.forEach { child ->
+        // 递归清空所有子节点
+        for (child in node.children.values) {
             clearNode(child)
         }
         // 清空当前节点
@@ -325,37 +335,15 @@ class TrieTree {
     }
     
     /**
-     * 设置加载状态
+     * 管理缓存大小，防止缓存占用过多内存
      */
-    fun setLoaded(loaded: Boolean) {
-        isLoaded = loaded
-    }
-    
-    /**
-     * 检查是否已加载完成
-     */
-    fun isLoaded(): Boolean = isLoaded
-    
-    /**
-     * 获取已加载词条数量的估算值
-     */
-    fun getEstimatedWordCount(): Int {
-        // 如果已缓存估计值则直接返回
-        if (estimatedWordCount > 0) return estimatedWordCount
-        
-        // 否则递归计算
-        var count = 0
-        
-        fun countWords(node: TrieNode) {
-            if (node.isEnd) count++
-            for (child in node.children.values) {
-                countWords(child)
-            }
+    fun manageCacheSize() {
+        // 如果缓存大小超过阈值，清除一半的缓存
+        if (commonSearchCache.size > 200) {
+            val keysToRemove = commonSearchCache.keys.toList().subList(0, commonSearchCache.size / 2)
+            keysToRemove.forEach { commonSearchCache.remove(it) }
+            Timber.d("清除了${keysToRemove.size}个搜索结果缓存，当前缓存大小：${commonSearchCache.size}")
         }
-        
-        countWords(root)
-        estimatedWordCount = count
-        return count
     }
     
     /**
@@ -419,7 +407,7 @@ class TrieTree {
      */
     fun estimateMemoryUsage(): Long {
         val nodeCount = countNodes(root)
-        val wordCount = getEstimatedWordCount()
+        val wordCount = getWordCount()
         
         // 每个节点基本结构约 32 字节
         // 每个字符约 2 字节
@@ -440,43 +428,6 @@ class TrieTree {
         // 递归计算子节点
         for (child in node.children.values) {
             count += countNodes(child)
-        }
-        
-        return count
-    }
-
-    /**
-     * 获取树中的节点总数
-     */
-    fun getNodeCount(): Int {
-        return countNodes(root)
-    }
-
-    /**
-     * 检查树是否为空
-     */
-    fun isEmpty(): Boolean {
-        return root.children.isEmpty()
-    }
-
-    /**
-     * 获取树中存储的词条总数
-     */
-    fun getWordCount(): Int {
-        return countWords(root)
-    }
-    
-    /**
-     * 递归计算从给定节点开始的词条数量
-     */
-    private fun countWords(node: TrieNode): Int {
-        var count = 0
-        if (node.isEnd) {
-            count = 1
-        }
-        
-        for (child in node.children.values) {
-            count += countWords(child)
         }
         
         return count

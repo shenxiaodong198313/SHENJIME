@@ -41,6 +41,7 @@ id buttonContainer
 id candidates_container
 id candidates_layout
 id cardStats
+id cardTrieStatus
 id dictProcessContainer
 id etBatchSize
 id etInput
@@ -66,7 +67,12 @@ id shimmerMemoryStatus
 id shimmerMemoryUsage
 id shimmerModuleList
 id shimmerStatCard
+id shimmerTrieStatus
 id toolbar
+id tvBaseStatus
+id tvCompatibleStatus
+id tvCorrectionsStatus
+id tvCorrelationStatus
 id tvDatabaseSize
 id tvDictName
 id tvDictProcessTitle
@@ -86,11 +92,13 @@ id tvMemoryUsage
 id tvModuleCount
 id tvModuleListTitle
 id tvNoLogs
+id tvPeopleStatus
 id tvPinyin
 id tvRealmStatus
 id tvStatus
 id tvTitle
 id tvTotalEntries
+id tvTotalTrieStatus
 id tvWord
 layout activity_dictionary_detail
 layout activity_dictionary_logs
@@ -108,6 +116,7 @@ layout key_preview
 layout keyboard_view
 layout shimmer_dictionary_module
 layout shimmer_dictionary_stat_card
+layout view_trie_build_status
 menu menu_dictionary_manager
 mipmap ic_launcher
 mipmap ic_launcher_round

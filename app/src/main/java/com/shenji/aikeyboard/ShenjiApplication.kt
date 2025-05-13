@@ -2,6 +2,8 @@ package com.shenji.aikeyboard
 
 import android.app.Application
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.shenji.aikeyboard.data.DictionaryManager
 import com.shenji.aikeyboard.data.Entry
@@ -43,11 +45,22 @@ class ShenjiApplication : Application() {
         // 初始化数据库和词典
         initRealm()
         
-        // 初始化词典管理器
+        // 初始化词典管理器，但延迟加载词典
         DictionaryManager.init()
         
-        // 从Realm加载chars词库到Trie树
-        loadCharsFromRealm()
+        // 延迟2秒后在后台线程启动词典加载，避免启动卡顿
+        Handler(Looper.getMainLooper()).postDelayed({
+            Thread {
+                try {
+                    // 让应用界面先完全显示，再开始加载词典
+                    Thread.sleep(2000)
+                    Timber.d("开始延迟加载词典数据")
+                    // 不再需要显式调用loadCharsFromRealm，在init()中已处理词典加载
+                } catch (e: Exception) {
+                    Timber.e(e, "延迟加载词典失败: ${e.message}")
+                }
+            }.start()
+        }, 3000)
         
         Timber.d("应用初始化完成")
     }
@@ -169,19 +182,5 @@ class ShenjiApplication : Application() {
         return File(logDir, "crash_log.txt")
     }
     
-    /**
-     * 从Realm数据库加载chars词库到Trie树
-     */
-    private fun loadCharsFromRealm() {
-        // 在后台线程中加载chars词库
-        Thread {
-            try {
-                Timber.d("开始从Realm加载chars词库到Trie树")
-                DictionaryManager.instance.loadCharsFromRealm()
-                Timber.d("从Realm加载chars词库到Trie树完成")
-            } catch (e: Exception) {
-                Timber.e(e, "从Realm加载chars词库失败: ${e.message}")
-            }
-        }.start()
-    }
+
 }

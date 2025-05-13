@@ -128,7 +128,8 @@ class DictionaryModuleAdapter(
             binding.tvEntryCount.text = "${formatter.format(module.entryCount)} 词条"
             
             // 设置内存加载状态
-            if (module.isInMemory) {
+            if (module.isInMemory && module.type != "chars" && module.type != "base") {
+                // 对于Trie加载的非chars和base词典，显示"已加载到内存"状态
                 binding.tvMemoryStatus.text = "已加载到内存"
                 binding.tvMemoryStatus.visibility = View.VISIBLE
                 
@@ -148,8 +149,18 @@ class DictionaryModuleAdapter(
                     )
                 }
             } else {
+                // 不显示chars和base词典的加载状态，在Trie构建状态中显示
+                if (module.type == "chars" || module.type == "base") {
+                    binding.tvMemoryStatus.visibility = View.GONE
+                    binding.tvMemoryUsage.visibility = View.GONE
+                    
+                    // 重置背景色
+                    binding.root.setCardBackgroundColor(
+                        binding.root.context.getColor(android.R.color.white)
+                    )
+                } 
                 // 对于高频词典，如果未加载到内存，显示特殊提示
-                if (module.isPrecompiled) {
+                else if (module.isPrecompiled) {
                     binding.tvMemoryStatus.text = "预编译加载中..."
                     binding.tvMemoryStatus.visibility = View.VISIBLE
                     binding.tvMemoryUsage.visibility = View.GONE

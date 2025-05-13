@@ -109,7 +109,7 @@ class InputTestActivity : AppCompatActivity() {
             try {
                 logMessage("用户查询候选词: '$input'")
                 
-                // 先在高频词典中查找
+                // 先在Trie树中查找
                 val trieResults = if (DictionaryManager.instance.isLoaded()) {
                     DictionaryManager.instance.trieTree.search(input, 5)
                 } else {
@@ -117,15 +117,15 @@ class InputTestActivity : AppCompatActivity() {
                 }
                 
                 if (trieResults.isNotEmpty()) {
-                    // 创建高频词典结果的简洁表示
-                    val highFreqResultsText = trieResults.joinToString(", ") { 
+                    // 创建Trie树结果的简洁表示
+                    val trieResultsText = trieResults.joinToString(", ") { 
                         "${it.word}(${it.frequency})" 
                     }
-                    logMessage("从高频词典中找到${trieResults.size}个匹配'$input'的候选词（词频最高的最多5个）：分别是 $highFreqResultsText")
+                    logMessage("从Trie树中找到${trieResults.size}个匹配'$input'的候选词（词频最高的最多5个）：分别是 $trieResultsText")
                 } else {
-                    logMessage("高频词典中未找到匹配'$input'的候选词")
+                    logMessage("Trie树中未找到匹配'$input'的候选词")
                     
-                    // 如果高频词典中没找到，则从Realm词库中查找
+                    // 如果Trie树中没找到，则从Realm词库中查找
                     val realmResults = repository.searchEntries(input, 5, emptyList())
                     
                     if (realmResults.isNotEmpty()) {
@@ -143,7 +143,7 @@ class InputTestActivity : AppCompatActivity() {
                     }
                 }
                 
-                // 使用DictionaryManager的searchWords方法，它会自动先查高频词典，再查Realm
+                // 使用DictionaryManager的searchWords方法，它会自动先查Trie树，再查Realm
                 val combinedResults = DictionaryManager.instance.searchWords(input, 10)
                 
                 if (combinedResults.isNotEmpty()) {
@@ -174,29 +174,43 @@ class InputTestActivity : AppCompatActivity() {
                     val isInitialized = DictionaryManager.instance.isLoaded()
                     logMessage("Realm词典初始化状态: $isInitialized")
                     
-                    // 检查高频词典Trie内存加载状态
+                    // 检查Trie树加载状态
                     val isTrieLoaded = DictionaryManager.instance.trieTree.isLoaded()
-                    logMessage("高频词典Trie内存加载状态: $isTrieLoaded")
+                    logMessage("Trie树内存加载状态: $isTrieLoaded")
                     
-                    // 获取chars词库加载数量
-                    val charsCount = DictionaryManager.instance.typeLoadedCountMap["chars"] ?: 0
-                    logMessage("chars词库已加载: $charsCount 个词条")
-                    
-                    // 获取base词库加载数量
-                    val baseCount = DictionaryManager.instance.typeLoadedCountMap["base"] ?: 0
-                    logMessage("base词库已加载: $baseCount 个词条")
+                    if (isTrieLoaded) {
+                        // 获取总词条数
+                        val totalWordCount = DictionaryManager.instance.getTotalLoadedCount()
+                        logMessage("Trie树词条总数: $totalWordCount")
+                        
+                        // 显示各个词典的加载状态
+                        val typeLoadedCounts = DictionaryManager.instance.typeLoadedCountMap
+                        logMessage("按条件加载的词典状态:")
+                        
+                        // 遍历所有需要加载到Trie树的词典类型
+                        for (type in DictionaryManager.TRIE_DICT_TYPES) {
+                            val count = typeLoadedCounts[type] ?: 0
+                            val typeName = when(type) {
+                                "base" -> "基础词库"
+                                "correlation" -> "关联词库" 
+                                "people" -> "人名词库"
+                                "corrections" -> "错音词库"
+                                "compatible" -> "兼容词库"
+                                else -> "${type}词库"
+                            }
+                            
+                            if (count > 0) {
+                                logMessage("· $typeName：已加载 $count 条")
+                            } else {
+                                logMessage("· $typeName：未加载")
+                            }
+                        }
+                    }
                     
                     // 显示内存使用情况
                     val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
                     val formattedMemory = repository.formatFileSize(memoryUsage)
                     logMessage("当前内存占用: $formattedMemory")
-                    
-                    // 如果高频词典已加载，显示前5个词条
-                    if (isTrieLoaded) {
-                        // 只显示高频词典词条总数
-                        val wordCount = DictionaryManager.instance.trieTree.getWordCount()
-                        logMessage("高频词典总词条数: $wordCount")
-                    }
                     
                     isInitialized
                 } catch (e: Exception) {

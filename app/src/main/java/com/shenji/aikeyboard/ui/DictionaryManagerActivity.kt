@@ -5,6 +5,9 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.View.VISIBLE
+import android.view.View.GONE
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.text.NumberFormat
 
 /**
  * 词典管理Activity
@@ -39,6 +43,14 @@ class DictionaryManagerActivity : AppCompatActivity() {
     // 词典加载状态监控任务
     private var dictionaryMonitoringJob: kotlinx.coroutines.Job? = null
     
+    // Trie构建状态视图引用
+    private var tvBaseStatus: TextView? = null
+    private var tvCorrelationStatus: TextView? = null
+    private var tvPeopleStatus: TextView? = null
+    private var tvCorrectionsStatus: TextView? = null
+    private var tvCompatibleStatus: TextView? = null
+    private var tvTotalTrieStatus: TextView? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDictionaryManagerBinding.inflate(layoutInflater)
@@ -47,6 +59,7 @@ class DictionaryManagerActivity : AppCompatActivity() {
         setupToolbar()
         setupRecyclerView()
         setupShimmerEffect()
+        initTrieStatusViews()
         
         // 确保词典管理器初始化完毕
         DictionaryManager.init()
@@ -112,6 +125,19 @@ class DictionaryManagerActivity : AppCompatActivity() {
     }
     
     /**
+     * 初始化Trie树构建状态视图引用
+     */
+    private fun initTrieStatusViews() {
+        // 直接从binding中获取视图引用
+        tvBaseStatus = binding.cardTrieStatus.tvBaseStatus
+        tvCorrelationStatus = binding.cardTrieStatus.tvCorrelationStatus
+        tvPeopleStatus = binding.cardTrieStatus.tvPeopleStatus
+        tvCorrectionsStatus = binding.cardTrieStatus.tvCorrectionsStatus
+        tvCompatibleStatus = binding.cardTrieStatus.tvCompatibleStatus
+        tvTotalTrieStatus = binding.cardTrieStatus.tvTotalTrieStatus
+    }
+    
+    /**
      * 加载词典统计信息和模块列表
      */
     private fun loadDictionaryStats() {
@@ -141,25 +167,17 @@ class DictionaryManagerActivity : AppCompatActivity() {
                     Timber.d("词典模块: ${module.type} - ${module.chineseName} (${module.entryCount}条)")
                 }
                 
-                // 获取预编译词典内存使用情况和已加载词条数
+                // 获取预编译词典内存使用情况
                 val dictManager = DictionaryManager.instance
                 val isPrecompiledDictLoaded = dictManager.isLoaded()
                 var memoryUsage = 0L
-                var loadedWordCount = 0
                 
                 if (isPrecompiledDictLoaded) {
-                    // 如果高频词典已加载，获取其内存使用情况
+                    // 如果Trie树已加载，获取其内存使用情况
                     memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-                    
-                    // 获取chars词库和base词库的加载数量
-                    val charsCount = dictManager.typeLoadedCountMap["chars"] ?: 0
-                    val baseCount = dictManager.typeLoadedCountMap["base"] ?: 0
-                    loadedWordCount = charsCount + baseCount
-                    
-                    Timber.d("内存词典已加载，内存占用: ${dictionaryRepository.formatFileSize(memoryUsage)}")
-                    Timber.d("chars词库: ${charsCount}个词条, base词库: ${baseCount}个词条")
+                    Timber.d("Trie树已加载，内存占用: ${dictionaryRepository.formatFileSize(memoryUsage)}")
                 } else {
-                    Timber.d("内存词典未加载")
+                    Timber.d("Trie树未加载")
                 }
                 
                 withContext(Dispatchers.Main) {
@@ -167,39 +185,22 @@ class DictionaryManagerActivity : AppCompatActivity() {
                     binding.tvTotalEntries.text = getString(R.string.dict_total_entries, totalEntries)
                     binding.tvDatabaseSize.text = getString(R.string.dict_db_size, formattedDbSize)
                     
-                    // 根据内存词典是否加载，显示对应内存使用情况
-                    val memoryUsageFormatted = if (isPrecompiledDictLoaded) {
+                    // 显示内存使用情况
+                    val memoryUsageFormatted = if (memoryUsage > 0) {
                         dictionaryRepository.formatFileSize(memoryUsage)
                     } else {
-                        "0 B" // 未加载内存词典
+                        "0 B" // 未加载Trie树
                     }
                     binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, memoryUsageFormatted)
-                    
-                    // 添加高频词典加载状态提示
-                    if (isPrecompiledDictLoaded && loadedWordCount > 0) {
-                        // 获取具体的词库加载情况
-                        val charsCount = dictManager.typeLoadedCountMap["chars"] ?: 0
-                        val baseCount = dictManager.typeLoadedCountMap["base"] ?: 0
-                        
-                        // 拼接显示加载的词条数详情
-                        val loadDetails = StringBuilder()
-                        if (charsCount > 0) {
-                            loadDetails.append("chars词库: ${charsCount}个")
-                        }
-                        if (baseCount > 0) {
-                            if (loadDetails.isNotEmpty()) loadDetails.append(", ")
-                            loadDetails.append("base词库: ${baseCount}个")
-                        }
-                        
-                        binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, memoryUsageFormatted) + 
-                                " (已加载: $loadDetails)"
-                    }
                     
                     binding.tvModuleCount.text = getString(R.string.dict_module_count, modules.size)
                     
                     // 更新列表
                     moduleAdapter.submitList(modules)
                     Timber.d("更新UI完成，提交了${modules.size}个模块到适配器")
+                    
+                    // 更新Trie树构建状态
+                    updateTrieStatus()
                     
                     // 隐藏骨架屏，显示实际内容
                     showShimmerEffect(false)
@@ -275,40 +276,41 @@ class DictionaryManagerActivity : AppCompatActivity() {
      * 更新词典模块UI
      */
     private suspend fun updateDictionaryModulesUI() {
-        // 异步更新高频词典数据
+        // 异步更新Trie树数据
         withContext(Dispatchers.IO) {
             val dictManager = DictionaryManager.instance
-            val currentLoadedState = dictManager.isLoaded()
+            val isLoaded = dictManager.isLoaded()
             
-            if (currentLoadedState) {
-                // 词典已加载完成，获取加载的词条数
-                val charsCount = dictManager.typeLoadedCountMap["chars"] ?: 0
-                val baseCount = dictManager.typeLoadedCountMap["base"] ?: 0
-                val totalPrecompiledWords = charsCount + baseCount
+            if (isLoaded) {
+                // Trie树已加载完成，重新获取所有模块，确保状态正确
+                val newModules = dictionaryRepository.getDictionaryModules()
                 
-                if (totalPrecompiledWords > 0) {
-                    // 重新获取所有模块，确保高频词典状态正确
-                    val newModules = dictionaryRepository.getDictionaryModules()
+                // 在主线程更新UI
+                withContext(Dispatchers.Main) {
+                    // 更新内存使用情况
+                    val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+                    val memoryUsageFormatted = dictionaryRepository.formatFileSize(memoryUsage)
                     
-                    // 在主线程更新UI
-                    withContext(Dispatchers.Main) {
-                        // 更新内存使用情况
-                        val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-                        val memoryUsageFormatted = dictionaryRepository.formatFileSize(memoryUsage)
-                        binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, memoryUsageFormatted) + 
-                                " (已加载${totalPrecompiledWords}个高频词条)"
-                                
-                        // 更新模块列表
-                        moduleAdapter.submitList(newModules)
-                        Timber.d("更新UI，高频词典已加载: $totalPrecompiledWords 个词条")
-                    }
+                    // 显示总体内存占用，不显示具体的chars和base词库信息
+                    binding.tvMemoryUsage.text = getString(R.string.dict_memory_usage, memoryUsageFormatted)
+                    
+                    // 更新Trie树构建状态
+                    updateTrieStatus()
+                    
+                    // 更新模块列表
+                    moduleAdapter.submitList(newModules)
+                    Timber.d("更新UI，Trie树已加载")
                 }
             } else {
                 // 如果词典没有加载，也应该刷新UI确保状态一致
                 val newModules = dictionaryRepository.getDictionaryModules()
                 withContext(Dispatchers.Main) {
                     moduleAdapter.submitList(newModules)
-                    Timber.d("更新UI，高频词典未加载完成")
+                    
+                    // 更新Trie树构建状态
+                    updateTrieStatus()
+                    
+                    Timber.d("更新UI，Trie树未加载完成")
                 }
             }
         }
@@ -321,21 +323,27 @@ class DictionaryManagerActivity : AppCompatActivity() {
         if (show) {
             // 显示骨架屏，隐藏真实内容
             binding.shimmerStatCard.visibility = View.VISIBLE
+            binding.shimmerTrieStatus.visibility = View.VISIBLE
             binding.shimmerModuleList.visibility = View.VISIBLE
             // 不启动闪烁
             binding.shimmerStatCard.stopShimmer()
+            binding.shimmerTrieStatus.stopShimmer()
             binding.shimmerModuleList.stopShimmer()
             
             binding.cardStats.visibility = View.GONE
+            binding.cardTrieStatus.root.visibility = View.GONE
             binding.rvDictionaryModules.visibility = View.GONE
         } else {
             // 隐藏骨架屏，显示真实内容
             binding.shimmerStatCard.stopShimmer()
+            binding.shimmerTrieStatus.stopShimmer()
             binding.shimmerModuleList.stopShimmer()
             binding.shimmerStatCard.visibility = View.GONE
+            binding.shimmerTrieStatus.visibility = View.GONE
             binding.shimmerModuleList.visibility = View.GONE
             
             binding.cardStats.visibility = View.VISIBLE
+            binding.cardTrieStatus.root.visibility = View.VISIBLE
             binding.rvDictionaryModules.visibility = View.VISIBLE
         }
     }
@@ -357,6 +365,81 @@ class DictionaryManagerActivity : AppCompatActivity() {
     private fun openDictionaryLogs() {
         val intent = Intent(this, DictionaryLogsActivity::class.java)
         startActivity(intent)
+    }
+    
+    /**
+     * 更新Trie树构建状态
+     */
+    private fun updateTrieStatus() {
+        val dictManager = DictionaryManager.instance
+        val typeLoadedCount = dictManager.typeLoadedCountMap
+        val totalLoadedCount = dictManager.getTotalLoadedCount()
+        
+        // 更新base词库状态
+        val baseCount = typeLoadedCount["base"] ?: 0
+        if (baseCount > 0) {
+            tvBaseStatus?.text = "已加载 (${formatNumber(baseCount)}条)"
+            tvBaseStatus?.setTextColor(getColor(android.R.color.holo_green_dark))
+        } else {
+            tvBaseStatus?.text = "未加载"
+            tvBaseStatus?.setTextColor(getColor(android.R.color.darker_gray))
+        }
+        
+        // 更新correlation词库状态
+        val correlationCount = typeLoadedCount["correlation"] ?: 0
+        if (correlationCount > 0) {
+            tvCorrelationStatus?.text = "已加载 (${formatNumber(correlationCount)}条)"
+            tvCorrelationStatus?.setTextColor(getColor(android.R.color.holo_green_dark))
+        } else {
+            tvCorrelationStatus?.text = "未加载"
+            tvCorrelationStatus?.setTextColor(getColor(android.R.color.darker_gray))
+        }
+        
+        // 更新people词库状态
+        val peopleCount = typeLoadedCount["people"] ?: 0
+        if (peopleCount > 0) {
+            tvPeopleStatus?.text = "已加载 (${formatNumber(peopleCount)}条)"
+            tvPeopleStatus?.setTextColor(getColor(android.R.color.holo_green_dark))
+        } else {
+            tvPeopleStatus?.text = "未加载"
+            tvPeopleStatus?.setTextColor(getColor(android.R.color.darker_gray))
+        }
+        
+        // 更新corrections词库状态
+        val correctionsCount = typeLoadedCount["corrections"] ?: 0
+        if (correctionsCount > 0) {
+            tvCorrectionsStatus?.text = "已加载 (${formatNumber(correctionsCount)}条)"
+            tvCorrectionsStatus?.setTextColor(getColor(android.R.color.holo_green_dark))
+        } else {
+            tvCorrectionsStatus?.text = "未加载"
+            tvCorrectionsStatus?.setTextColor(getColor(android.R.color.darker_gray))
+        }
+        
+        // 更新compatible词库状态
+        val compatibleCount = typeLoadedCount["compatible"] ?: 0
+        if (compatibleCount > 0) {
+            tvCompatibleStatus?.text = "已加载 (${formatNumber(compatibleCount)}条)"
+            tvCompatibleStatus?.setTextColor(getColor(android.R.color.holo_green_dark))
+        } else {
+            tvCompatibleStatus?.text = "未加载"
+            tvCompatibleStatus?.setTextColor(getColor(android.R.color.darker_gray))
+        }
+        
+        // 更新总体状态
+        if (totalLoadedCount > 0) {
+            tvTotalTrieStatus?.text = "已加载 ${formatNumber(totalLoadedCount)}条"
+            tvTotalTrieStatus?.setTextColor(getColor(android.R.color.holo_blue_dark))
+        } else {
+            tvTotalTrieStatus?.text = "未加载任何词条"
+            tvTotalTrieStatus?.setTextColor(getColor(android.R.color.darker_gray))
+        }
+    }
+    
+    /**
+     * 格式化数字为带千位分隔符的字符串
+     */
+    private fun formatNumber(number: Int): String {
+        return NumberFormat.getNumberInstance().format(number)
     }
     
     override fun onResume() {

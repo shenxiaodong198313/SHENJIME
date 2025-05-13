@@ -21,8 +21,17 @@ class DictionaryManager private constructor() {
         // 单例实例
         val instance: DictionaryManager by lazy { DictionaryManager() }
         
-        // 高频词库类型列表
-        val HIGH_FREQUENCY_DICT_TYPES = listOf("chars", "base")
+        // 高频词库类型列表 - 移除chars，只保留base
+        val HIGH_FREQUENCY_DICT_TYPES = listOf("base")
+        
+        // 需要加载到Trie树的词典类型
+        val TRIE_DICT_TYPES = listOf(
+            "base",          // 基础词库，加载高频词
+            "correlation",   // 关联词库，加载高频词
+            "people",        // 人名表，全部加载
+            "corrections",   // 错音错字，全部加载
+            "compatible"     // 兼容词库，全部加载
+        )
         
         // Trie树插入批次大小
         private const val TREE_INSERT_BATCH_SIZE = 2000
@@ -72,13 +81,291 @@ class DictionaryManager private constructor() {
     // 是否已加载标志
     private var initialized = false
     
+    // 加载标志，防止重复加载
+    @Volatile
+    private var isLoadingInProgress = false
+    
     /**
      * 初始化词典管理器
      */
     fun initialize() {
-        // 仅设置初始化标志，不执行任何加载操作
+        // 仅设置初始化标志
         initialized = true
+        
+        // 在后台线程中加载词典到Trie树
+        Thread {
+            try {
+                Timber.d("开始加载词典到Trie树")
+                loadDictionariesToTrie()
+                Timber.d("词典加载到Trie树完成")
+            } catch (e: Exception) {
+                Timber.e(e, "加载词典到Trie树失败: ${e.message}")
+                addLog("加载词典到Trie树失败: ${e.message}")
+            }
+        }.start()
+        
         Timber.d("词典管理器初始化完成")
+    }
+    
+    /**
+     * 将词典按条件加载到Trie树
+     * 实现新的加载策略:
+     * - base词库：加载词频前20%的高频词
+     * - correlation词库：加载词频前5-8万高频词
+     * - people、corrections、compatible词库：全部加载
+     */
+    private fun loadDictionariesToTrie() {
+        // 如果已经有加载任务在进行，直接返回避免重复加载
+        if (isLoadingInProgress) {
+            Timber.d("词典加载已在进行中，忽略重复请求")
+            return
+        }
+        
+        isLoadingInProgress = true
+        
+        try {
+            addLog("开始按条件加载词典到Trie树...")
+            
+            // 记录开始时间
+            val startTime = System.currentTimeMillis()
+            
+            // 清空当前Trie树，确保释放内存
+            _trieTree.clear()
+            System.gc()
+            
+            // 记录各词典类型的总词条数
+            for (type in TRIE_DICT_TYPES) {
+                val count = repository.getEntryCountByType(type)
+                typeEntryCount[type] = count
+                addLog(type + "词库共有" + count + "个词条")
+            }
+            
+            // 批量加载词条
+            val batchSize = 1000  // 减小批次大小，降低内存压力
+            var totalLoadedCount = 0
+            
+            // 启动后台线程加载词典，防止阻塞UI线程
+            Thread {
+                try {
+                    // 1. 加载base词库(词频前20%，但使用批量处理)
+                    val baseCount = typeEntryCount["base"] ?: 0
+                    if (baseCount > 0) {
+                        val loadCount = (baseCount * 0.2).toInt() // 加载前20%
+                        addLog("加载base词库的前${loadCount}个高频词(总共${baseCount}个)")
+                        
+                        // 分批加载以降低内存压力
+                        var loadedCount = 0
+                        while (loadedCount < loadCount) {
+                            // 检查可用内存，如果过低则主动GC
+                            checkMemory()
+                            
+                            val currentBatchSize = minOf(batchSize, loadCount - loadedCount)
+                            val baseEntries = repository.getEntriesByTypeOrderedByFrequency("base", loadedCount, currentBatchSize)
+                            
+                            // 逐条添加词条到Trie树
+                            baseEntries.forEach { entry ->
+                                val normalizedPinyin = normalizePinyin(entry.pinyin)
+                                _trieTree.insert(normalizedPinyin, entry.frequency, entry.word)
+                            }
+                            
+                            loadedCount += baseEntries.size
+                            
+                            // 更新已加载计数和日志
+                            if (loadedCount % 10000 == 0 || loadedCount == loadCount) {
+                                val progress = (loadedCount * 100) / loadCount
+                                addLog("已加载${loadedCount}/${loadCount}个base词条 (${progress}%)")
+                            }
+                            
+                            // 短暂睡眠，让出CPU时间给其他线程
+                            Thread.sleep(5)
+                        }
+                        
+                        // 更新已加载计数
+                        typeLoadedCount["base"] = loadedCount
+                        totalLoadedCount += loadedCount
+                        addLog("base词库加载完成，共加载${loadedCount}个词条到Trie树")
+                    }
+                    
+                    // 2. 加载correlation词库(词频前5万，也使用批量处理)
+                    val correlationCount = typeEntryCount["correlation"] ?: 0
+                    if (correlationCount > 0) {
+                        val loadCount = minOf(50000, correlationCount) // 减少为5万个
+                        addLog("加载correlation词库的前${loadCount}个高频词(总共${correlationCount}个)")
+                        
+                        // 分批加载
+                        var loadedCount = 0
+                        while (loadedCount < loadCount) {
+                            // 检查可用内存，如果过低则主动GC
+                            checkMemory()
+                            
+                            val currentBatchSize = minOf(batchSize, loadCount - loadedCount)
+                            val correlationEntries = repository.getEntriesByTypeOrderedByFrequency("correlation", loadedCount, currentBatchSize)
+                            
+                            correlationEntries.forEach { entry ->
+                                val normalizedPinyin = normalizePinyin(entry.pinyin)
+                                _trieTree.insert(normalizedPinyin, entry.frequency, entry.word)
+                            }
+                            
+                            loadedCount += correlationEntries.size
+                            
+                            // 更新已加载计数和日志
+                            if (loadedCount % 10000 == 0 || loadedCount == loadCount) {
+                                val progress = (loadedCount * 100) / loadCount
+                                addLog("已加载${loadedCount}/${loadCount}个correlation词条 (${progress}%)")
+                            }
+                            
+                            // 短暂睡眠，让出CPU时间
+                            Thread.sleep(5)
+                        }
+                        
+                        // 更新已加载计数
+                        typeLoadedCount["correlation"] = loadedCount
+                        totalLoadedCount += loadedCount
+                        addLog("correlation词库加载完成，共加载${loadedCount}个词条到Trie树")
+                    }
+                    
+                    // 3. 加载小型词库 - corrections(全部)
+                    val correctionsCount = typeEntryCount["corrections"] ?: 0
+                    if (correctionsCount > 0) {
+                        addLog("加载corrections词库的全部${correctionsCount}个词条")
+                        
+                        val correctionsEntries = repository.getEntriesByType("corrections", 0, correctionsCount)
+                        correctionsEntries.forEach { entry ->
+                            val normalizedPinyin = normalizePinyin(entry.pinyin)
+                            _trieTree.insert(normalizedPinyin, entry.frequency, entry.word)
+                        }
+                        
+                        // 更新已加载计数
+                        typeLoadedCount["corrections"] = correctionsEntries.size
+                        totalLoadedCount += correctionsEntries.size
+                        addLog("corrections词库加载完成，共加载${correctionsEntries.size}个词条到Trie树")
+                    }
+                    
+                    // 4. 加载compatible词库(全部)
+                    val compatibleCount = typeEntryCount["compatible"] ?: 0
+                    if (compatibleCount > 0) {
+                        addLog("加载compatible词库的全部${compatibleCount}个词条")
+                        
+                        var loadedCount = 0
+                        while (loadedCount < compatibleCount) {
+                            // 检查可用内存
+                            checkMemory()
+                            
+                            val currentBatchSize = minOf(batchSize, compatibleCount - loadedCount)
+                            val compatibleEntries = repository.getEntriesByType("compatible", loadedCount, currentBatchSize)
+                            
+                            compatibleEntries.forEach { entry ->
+                                val normalizedPinyin = normalizePinyin(entry.pinyin)
+                                _trieTree.insert(normalizedPinyin, entry.frequency, entry.word)
+                            }
+                            
+                            loadedCount += compatibleEntries.size
+                        }
+                        
+                        // 更新已加载计数
+                        typeLoadedCount["compatible"] = loadedCount
+                        totalLoadedCount += loadedCount
+                        addLog("compatible词库加载完成，共加载${loadedCount}个词条到Trie树")
+                    }
+                    
+                    // 5. people词库暂时不加载，太大了，可能会影响性能
+                    val peopleCount = typeEntryCount["people"] ?: 0
+                    if (peopleCount > 0) {
+                        addLog("people词库暂时不全部加载，仅加载前5000个高频词条")
+                        
+                        val maxToLoad = minOf(5000, peopleCount)
+                        val peopleEntries = repository.getEntriesByTypeOrderedByFrequency("people", 0, maxToLoad)
+                        
+                        peopleEntries.forEach { entry ->
+                            val normalizedPinyin = normalizePinyin(entry.pinyin)
+                            _trieTree.insert(normalizedPinyin, entry.frequency, entry.word)
+                        }
+                        
+                        // 更新已加载计数
+                        typeLoadedCount["people"] = peopleEntries.size
+                        totalLoadedCount += peopleEntries.size
+                        addLog("people词库加载完成，共加载${peopleEntries.size}个高频词条到Trie树")
+                    }
+                    
+                    // 设置已加载标志
+                    _trieTree.setLoaded(true)
+                    
+                    // 记录加载完成时间和内存使用
+                    val endTime = System.currentTimeMillis()
+                    val loadTime = endTime - startTime
+                    val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+                    
+                    // 记录加载完成信息
+                    addLog("词典加载到Trie树完成!")
+                    addLog("加载耗时: ${loadTime/1000}秒")
+                    addLog("内存占用: ${formatFileSize(memoryUsage)}")
+                    addLog("共加载${totalLoadedCount}个词条到Trie树")
+                    
+                    // 添加Trie树结构信息
+                    addLog("Trie树节点数: ${_trieTree.getNodeCount()}")
+                    addLog("Trie树词条数: ${_trieTree.getWordCount()}")
+                    
+                    Timber.i("词典加载到Trie树完成，加载耗时: ${loadTime/1000}秒，内存占用: ${formatFileSize(memoryUsage)}")
+                } catch (e: Exception) {
+                    addLog("加载词典到Trie树失败: ${e.message}")
+                    Timber.e(e, "加载词典到Trie树失败: ${e.message}")
+                    
+                    // 确保在出错时也重置Trie树状态
+                    _trieTree.setLoaded(false)
+                    typeLoadedCount.clear()
+                } finally {
+                    // 无论成功还是失败，都将加载状态重置为false
+                    isLoadingInProgress = false
+                }
+            }.apply {
+                // 设置为守护线程，不阻止应用退出
+                isDaemon = true
+                // 设置线程优先级为低，减少对主线程的影响
+                priority = Thread.MIN_PRIORITY
+                // 启动线程
+                start()
+            }
+        } catch (e: Exception) {
+            addLog("初始化词典加载失败: ${e.message}")
+            Timber.e(e, "初始化词典加载失败: ${e.message}")
+            isLoadingInProgress = false
+        }
+    }
+    
+    /**
+     * 检查可用内存，如果内存不足则触发GC
+     * 当可用内存低于阈值时主动触发GC
+     */
+    private fun checkMemory() {
+        val runtime = Runtime.getRuntime()
+        val usedMemory = runtime.totalMemory() - runtime.freeMemory()
+        val maxMemory = runtime.maxMemory()
+        val usedPercentage = usedMemory.toDouble() / maxMemory.toDouble() * 100
+        
+        // 当内存使用超过70%时，主动触发GC
+        if (usedPercentage > 70) {
+            Timber.d("内存使用率达到${usedPercentage.toInt()}%，触发GC")
+            System.gc()
+            Thread.sleep(100) // 给GC一点时间
+        }
+    }
+    
+    /**
+     * 将拼音标准化为无声调版本
+     */
+    private fun normalizePinyin(pinyin: String): String {
+        if (pinyin.isBlank()) return pinyin
+        
+        // 去除可能包含的方括号
+        val cleanPinyin = pinyin.replace("[\\[\\]]".toRegex(), "")
+        
+        // 替换所有声调字符为无声调版本
+        return cleanPinyin.replace("[āáǎà]".toRegex(), "a")
+            .replace("[ēéěè]".toRegex(), "e")
+            .replace("[īíǐì]".toRegex(), "i")
+            .replace("[ōóǒò]".toRegex(), "o")
+            .replace("[ūúǔù]".toRegex(), "u")
+            .replace("[ǖǘǚǜü]".toRegex(), "v")
     }
     
     /**
@@ -91,30 +378,30 @@ class DictionaryManager private constructor() {
         Timber.d("开始搜索前缀: '$prefix', 限制数量: $limit")
         
         // 优先从内存Trie树中查询
-        Timber.d("第一步: 尝试从高频词典(内存Trie树)中查询")
+        Timber.d("第一步: 尝试从Trie树中查询")
         val memoryResults = if (_trieTree.isLoaded()) {
             val results = _trieTree.search(prefix, limit)
             if (results.isNotEmpty()) {
-                Timber.d("从高频词典中找到${results.size}个匹配'$prefix'的候选词")
+                Timber.d("从Trie树中找到${results.size}个匹配'$prefix'的候选词")
             } else {
-                Timber.d("在高频词典中没有找到匹配'$prefix'的候选词")
+                Timber.d("在Trie树中没有找到匹配'$prefix'的候选词")
             }
             results
         } else {
-            Timber.d("高频词典未加载或为空")
+            Timber.d("Trie树未加载或为空")
             emptyList()
         }
         
-        // 如果内存中没有找到结果或结果数量少于限制，从Realm数据库中查询低频词典
+        // 如果内存中没有找到结果或结果数量少于限制，从Realm数据库中查询
         if (memoryResults.size < limit) {
             // 计算还需要多少个结果
             val needMore = limit - memoryResults.size
-            Timber.d("第二步: 从高频词典中只找到${memoryResults.size}个结果，需要从Realm数据库中再查询${needMore}个结果")
+            Timber.d("第二步: 从Trie树中只找到${memoryResults.size}个结果，需要从Realm数据库中再查询${needMore}个结果")
             
             // 从Realm数据库中搜索
             try {
-                // 排除高频词典类型（已在内存中查询过）
-                val realmResults = repository.searchEntries(prefix, needMore, HIGH_FREQUENCY_DICT_TYPES)
+                // 排除已加载到Trie树的词典类型
+                val realmResults = repository.searchEntries(prefix, needMore, TRIE_DICT_TYPES)
                 
                 // 如果从数据库查到了结果，合并结果
                 if (realmResults.isNotEmpty()) {
@@ -133,7 +420,7 @@ class DictionaryManager private constructor() {
                 Timber.e(e, "从Realm数据库查询候选词失败")
             }
         } else {
-            Timber.d("从高频词典中已找到足够的结果(${memoryResults.size}个)，不需要查询Realm数据库")
+            Timber.d("从Trie树中已找到足够的结果(${memoryResults.size}个)，不需要查询Realm数据库")
         }
         
         Timber.d("返回${memoryResults.size}个查询结果")
@@ -144,6 +431,14 @@ class DictionaryManager private constructor() {
      * 检查是否已加载完成
      */
     fun isLoaded(): Boolean = _trieTree.isLoaded()
+    
+    /**
+     * 获取所有已加载到Trie中的词条总数
+     */
+    fun getTotalLoadedCount(): Int {
+        if (!isLoaded()) return 0
+        return _trieTree.getWordCount()
+    }
     
     /**
      * 重置词典管理器，清空内存词库
@@ -537,7 +832,7 @@ class DictionaryManager private constructor() {
             }
             
             // 保存最后的临时树（如果不为空）
-            if (!tempTree.isEmpty()) {
+            if (tempTree.getWordCount() > 0) {
                 val tempFile = File(tempDir, "${type}_batch_${processedCount}_part_${tempFiles.size}.bin")
                 saveTreeToFile(tempTree, tempFile)
                 tempFiles.add(tempFile)
@@ -1411,117 +1706,13 @@ class DictionaryManager private constructor() {
         
         addLog("--- 高级词典测试完成 ---")
     }
-
-    /**
-     * 从Realm数据库加载chars词库到Trie树
-     * 只加载chars类型的词库，不处理base词库
-     */
-    fun loadCharsFromRealm() {
-        try {
-            addLog("开始从Realm数据库加载chars词库到Trie树...")
-            
-            // 记录开始时间
-            val startTime = System.currentTimeMillis()
-            
-            // 清空当前Trie树，确保释放内存
-            _trieTree.clear()
-            System.gc()
-            
-            // 获取chars词库的词条总数
-            val charsCount = repository.getEntryCountByType("chars")
-            addLog("chars词库共有${charsCount}个词条")
-            
-            // 如果没有词条，直接返回
-            if (charsCount <= 0) {
-                addLog("chars词库为空，加载终止")
-                return
-            }
-            
-            // 批量加载词条
-            val batchSize = 2000
-            var loadedCount = 0
-            
-            // 循环加载所有chars词条
-            while (loadedCount < charsCount) {
-                // 计算当前批次大小
-                val currentBatchSize = minOf(batchSize, charsCount - loadedCount)
-                
-                // 从数据库加载一批词条
-                val entries = repository.getEntriesByType("chars", loadedCount, currentBatchSize)
-                
-                // 将词条添加到Trie树
-                entries.forEach { entry ->
-                    // 统一将拼音转为无声调版本
-                    val normalizedPinyin = normalizePinyin(entry.pinyin)
-                    
-                    // 插入条目到Trie树，使用标准化后的拼音
-                    _trieTree.insert(normalizedPinyin, entry.frequency, entry.word)
-                }
-                
-                // 更新已加载计数
-                loadedCount += entries.size
-                
-                // 更新进度日志
-                val progress = (loadedCount * 100.0 / charsCount).toInt()
-                if (loadedCount % 5000 == 0 || loadedCount == charsCount) {
-                    addLog("已加载${loadedCount}/${charsCount}个词条 (${progress}%)")
-                }
-                
-                // 记录内存使用情况
-                if (loadedCount % 10000 == 0 || loadedCount == charsCount) {
-                    val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-                    addLog("当前内存占用: ${formatFileSize(memoryUsage)}")
-                }
-            }
-            
-            // 设置已加载标志
-            _trieTree.setLoaded(true)
-            
-            // 更新加载计数
-            typeLoadedCount["chars"] = loadedCount
-            typeLoadedCount["base"] = 0  // base词库不加载
-            
-            // 记录加载完成时间和内存使用
-            val endTime = System.currentTimeMillis()
-            val loadTime = endTime - startTime
-            val memoryUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-            
-            // 记录加载完成信息
-            addLog("从Realm加载chars词库完成!")
-            addLog("加载耗时: ${loadTime/1000}秒")
-            addLog("内存占用: ${formatFileSize(memoryUsage)}")
-            addLog("共加载${loadedCount}个chars词条")
-            
-            // 运行基本的Trie树测试
-            runAdvancedDictionaryTests()
-            
-            Timber.i("从Realm加载chars词库完成，加载耗时: ${loadTime/1000}秒，内存占用: ${formatFileSize(memoryUsage)}")
-            
-        } catch (e: Exception) {
-            addLog("从Realm加载chars词库失败: ${e.message}")
-            Timber.e(e, "从Realm加载chars词库失败: ${e.message}")
-            
-            // 确保在出错时也重置Trie树状态
-            _trieTree.setLoaded(false)
-            typeLoadedCount["chars"] = 0
-        }
-    }
     
     /**
-     * 将拼音标准化为无声调版本
+     * 检查Trie树是否为空
      */
-    private fun normalizePinyin(pinyin: String): String {
-        if (pinyin.isBlank()) return pinyin
-        
-        // 去除可能包含的方括号
-        val cleanPinyin = pinyin.replace("[\\[\\]]".toRegex(), "")
-        
-        // 替换所有声调字符为无声调版本
-        return cleanPinyin.replace("[āáǎà]".toRegex(), "a")
-            .replace("[ēéěè]".toRegex(), "e")
-            .replace("[īíǐì]".toRegex(), "i")
-            .replace("[ōóǒò]".toRegex(), "o")
-            .replace("[ūúǔù]".toRegex(), "u")
-            .replace("[ǖǘǚǜü]".toRegex(), "v")
+    fun isTrieEmpty(): Boolean {
+        return _trieTree.getWordCount() == 0
     }
+
+
 } 

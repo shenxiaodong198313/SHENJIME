@@ -127,15 +127,38 @@ class DictionaryLogsActivity : AppCompatActivity() {
             binding.tvNoLogs.visibility = View.VISIBLE
             binding.rvLogs.visibility = View.GONE
             
-            // 如果日志为空但预编译词典已加载，显示加载状态信息
+            // 如果日志为空但Trie树已加载，显示加载状态信息
             if (DictionaryManager.instance.isLoaded()) {
-                val loadedWordCount = (DictionaryManager.instance.typeLoadedCountMap["chars"] ?: 0) +
-                        (DictionaryManager.instance.typeLoadedCountMap["base"] ?: 0)
-                        
-                if (loadedWordCount > 0) {
-                    binding.tvNoLogs.text = "预编译高频词典已加载到内存，包含${loadedWordCount}个词条。\n\n目前没有其他日志记录。"
-                    binding.tvNoLogs.visibility = View.VISIBLE
+                // 获取各词典的加载信息
+                val loadedCounts = DictionaryManager.instance.typeLoadedCountMap
+                val totalLoadedCount = DictionaryManager.instance.getTotalLoadedCount()
+                val trieStatusText = StringBuilder()
+                
+                trieStatusText.append("Trie树已加载，共包含${totalLoadedCount}个词条。\n\n")
+                trieStatusText.append("词典加载情况：\n")
+                
+                // 依次添加各个词典的加载状态
+                for (type in DictionaryManager.TRIE_DICT_TYPES) {
+                    val count = loadedCounts[type] ?: 0
+                    val typeName = when(type) {
+                        "base" -> "基础词库"
+                        "correlation" -> "关联词库" 
+                        "people" -> "人名词库"
+                        "corrections" -> "错音词库"
+                        "compatible" -> "兼容词库"
+                        else -> "${type}词库"
+                    }
+                    
+                    if (count > 0) {
+                        trieStatusText.append("· $typeName：已加载 $count 条\n")
+                    } else {
+                        trieStatusText.append("· $typeName：未加载\n")
+                    }
                 }
+                
+                trieStatusText.append("\n目前没有其他日志记录。")
+                binding.tvNoLogs.text = trieStatusText.toString()
+                binding.tvNoLogs.visibility = View.VISIBLE
             }
         } else {
             binding.tvNoLogs.visibility = View.GONE

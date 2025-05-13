@@ -94,6 +94,27 @@ class DictionaryRepository {
     }
     
     /**
+     * 分页获取特定类型的词条，按词频降序排列
+     * @param type 词典类型
+     * @param offset 起始偏移量
+     * @param limit 获取数量
+     */
+    fun getEntriesByTypeOrderedByFrequency(type: String, offset: Int, limit: Int): List<Entry> {
+        return try {
+            realm.query<Entry>("type == $0", type)
+                .find()
+                .asSequence()
+                .sortedByDescending { it.frequency }  // 按词频降序排列
+                .drop(offset)
+                .take(limit)
+                .toList()
+        } catch (e: Exception) {
+            Timber.e(e, "按词频获取${type}词条列表失败")
+            emptyList()
+        }
+    }
+    
+    /**
      * 获取词典文件大小
      */
     fun getDictionaryFileSize(): Long {
@@ -156,25 +177,24 @@ class DictionaryRepository {
                 // 判断是否为高频词典类型
                 val isHighFrequencyType = type in DictionaryManager.HIGH_FREQUENCY_DICT_TYPES
                 
-                // 检查是否已加载到内存
+                // 检查是否已加载到内存（但对于chars和base词典，通过Trie状态单独显示，这里不标记为已加载到内存）
                 val isMemoryLoaded = when (type) {
-                    "chars" -> charsCount > 0
-                    "base" -> baseCount > 0
+                    "chars", "base" -> false // 不再显示为已加载到内存
+                    in DictionaryManager.TRIE_DICT_TYPES -> dictManager.typeLoadedCountMap[type]?.let { it > 0 } ?: false
                     else -> false
                 }
                 
-                // 构建模块名称
-                val displayName = if (isMemoryLoaded) {
-                    "$chineseName (已加载到内存)"
-                } else {
-                    chineseName
+                // 构建模块名称 (对于chars和base不再显示"已加载到内存")
+                val displayName = when (type) {
+                    "chars", "base" -> chineseName
+                    else -> if (isMemoryLoaded) "$chineseName (已加载到内存)" else chineseName
                 }
                 
                 // 获取实际词条数量
-                val actualCount = when (type) {
-                    "chars" -> if (isMemoryLoaded) charsCount else count
-                    "base" -> if (isMemoryLoaded) baseCount else count
-                    else -> count
+                val actualCount = if (type in DictionaryManager.TRIE_DICT_TYPES && isMemoryLoaded) {
+                    dictManager.typeLoadedCountMap[type] ?: count
+                } else {
+                    count
                 }
                 
                 // 添加词典模块
