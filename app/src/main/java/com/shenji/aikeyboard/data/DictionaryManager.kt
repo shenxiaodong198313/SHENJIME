@@ -100,11 +100,17 @@ class DictionaryManager private constructor() {
     
     /**
      * 规范化拼音
-     * 将拼音转换为小写，移除声调和特殊字符
+     * 将拼音转换为带空格分词且带声调的格式，以匹配词库中的拼音
      */
     private fun normalizePinyin(pinyin: String): String {
-        // 转小写并移除空格
-        return pinyin.lowercase().trim().replace("\\s+".toRegex(), "")
+        // 调用repository的normalizeWithTones方法，获取带空格和声调的拼音
+        return try {
+            repository.normalizeWithTones(pinyin)
+        } catch (e: Exception) {
+            Timber.e(e, "拼音规范化失败: ${e.message}")
+            // 出错时返回原始拼音（至少确保小写）
+            pinyin.lowercase().trim()
+        }
     }
     
     /**

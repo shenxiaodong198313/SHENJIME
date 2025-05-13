@@ -174,91 +174,17 @@ class InputTestActivity : AppCompatActivity() {
     
     /**
      * 规范化拼音
-     * 将连续拼音转换为分词拼音（例如：beijing -> bei jing）
+     * 将连续拼音转换为带空格带声调的分词拼音（例如：beijing -> běi jīng）
      */
     private fun normalizePinyin(pinyin: String): String {
-        // 首先进行基本规范化：转小写并移除多余空格
-        val normalized = pinyin.lowercase().trim().replace("\\s+".toRegex(), "")
-        
-        // 如果已经有空格，说明已经是分词拼音，直接返回
-        if (normalized.contains(" ")) return normalized
-        
-        // 尝试将连续拼音转换为分词拼音
         return try {
-            // 中文拼音音节列表（按长度排序，优先匹配较长的）
-            val pinyinSyllables = listOf(
-                // 常见四字母音节
-                "bing", "ping", "ding", "ting", "ning", "ling", "jing", "qing", "xing", "ying", "zeng", "ceng", "seng", 
-                "zheng", "cheng", "sheng", "zhing", "ching", "shing", "zhuang", "chuang", "shuang", "zhang", "chang", "shang",
-                "zhong", "chong", "zhen", "chen", "shen", "zhan", "chan", "shan", "zhou", "chou", "shou", "zhua", "chua", "shua",
-                // 常见三字母音节
-                "zhi", "chi", "shi", "ang", "eng", "ing", "ong", "bai", "dai", "tai", "nai", "lai", "gai", "kai", "hai", "zai", "cai", "sai",
-                "ban", "dan", "tan", "nan", "lan", "gan", "kan", "han", "zan", "can", "san", "bao", "dao", "tao", "nao", "lao", "gao", "kao", "hao", "zao", "cao", "sao",
-                "bie", "die", "tie", "nie", "lie", "jie", "qie", "xie", "yan", "jin", "qin", "xin", "bin", "pin", "min", "nin", "lin", "jiu", "qiu", "xiu",
-                "bei", "pei", "mei", "fei", "dei", "tei", "nei", "lei", "gei", "kei", "hei", "zei", "cei", "sei",
-                "ben", "pen", "men", "fen", "den", "ten", "nen", "len", "gen", "ken", "hen", "zen", "cen", "sen",
-                "zhu", "chu", "shu", "zhe", "che", "she", "zou", "cou", "sou", "zui", "cui", "sui", "zun", "cun", "sun",
-                "zhuo", "chuo", "shuo", "zhan", "chan", "shan", "zhen", "chen", "shen",
-                // 常见双字母音节
-                "ba", "pa", "ma", "fa", "da", "ta", "na", "la", "ga", "ka", "ha", "za", "ca", "sa", 
-                "bo", "po", "mo", "fo", "lo", "wo", "yo", "zo", "co", "so",
-                "bi", "pi", "mi", "di", "ti", "ni", "li", "ji", "qi", "xi", "yi",
-                "bu", "pu", "mu", "fu", "du", "tu", "nu", "lu", "gu", "ku", "hu", "zu", "cu", "su", "wu", "yu",
-                "ai", "ei", "ui", "ao", "ou", "iu", "ie", "ve", "er", "an", "en", "in", "un", "vn", "ue",
-                "wu", "yu", "ju", "qu", "xu", "zi", "ci", "si", "ge", "he", "ne", "le", "me", "de", "te", 
-                "re", "ze", "ce", "se", "ye", "zh", "ch", "sh",
-                // 单字母音节
-                "a", "o", "e", "i", "u", "v"
-            )
-            
-            // 贪婪匹配：从输入的开始位置尝试匹配最长的拼音音节
-            var result = ""
-            var position = 0
-            
-            while (position < normalized.length) {
-                var matched = false
-                
-                // 尝试匹配最长的音节
-                for (syllable in pinyinSyllables) {
-                    if (position + syllable.length <= normalized.length &&
-                        normalized.substring(position, position + syllable.length) == syllable) {
-                        // 匹配到音节，添加到结果中
-                        result += if (result.isEmpty()) syllable else " $syllable"
-                        position += syllable.length
-                        matched = true
-                        break
-                    }
-                }
-                
-                // 如果没有匹配到任何音节，继续尝试下一个字符
-                if (!matched) {
-                    // 对于beijing这种特殊情况，尝试常见的拼音组合
-                    if (position + 3 <= normalized.length && normalized.substring(position, position + 3) == "bei") {
-                        result += if (result.isEmpty()) "bei" else " bei"
-                        position += 3
-                    } else if (position + 4 <= normalized.length && normalized.substring(position, position + 4) == "jing") {
-                        result += if (result.isEmpty()) "jing" else " jing"
-                        position += 4
-                    } else if (position + 5 <= normalized.length && normalized.substring(position, position + 5) == "shang") {
-                        result += if (result.isEmpty()) "shang" else " shang"
-                        position += 5
-                    } else if (position + 3 <= normalized.length && normalized.substring(position, position + 3) == "hai") {
-                        result += if (result.isEmpty()) "hai" else " hai"
-                        position += 3
-                    } else {
-                        // 如果还是没匹配到，则只好按单字符处理
-                        val char = normalized[position]
-                        result += if (result.isEmpty()) char.toString() else " $char"
-                        position++
-                    }
-                }
-            }
-            
-            logMessage("拼音转换: '$normalized' -> '$result'")
-            result
+            // 使用repository的规范化方法，包含分词和声调恢复
+            val normalizedPinyin = repository.normalizeWithTones(pinyin)
+            logMessage("拼音转换: '$pinyin' -> '$normalizedPinyin'")
+            normalizedPinyin
         } catch (e: Exception) {
             Timber.e(e, "规范化拼音失败: ${e.message}")
-            normalized // 出错时返回原始结果
+            pinyin // 出错时返回原始拼音
         }
     }
     
