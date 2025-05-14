@@ -124,6 +124,14 @@ class DictionaryRepository {
     }
     
     /**
+     * 获取词典数据库文件
+     */
+    fun getDictionaryFile(): File {
+        val context = com.shenji.aikeyboard.ShenjiApplication.appContext
+        return File(context.filesDir, "dictionaries/shenji_dict.realm")
+    }
+    
+    /**
      * 获取Realm数据库占用内存
      * 注意：这是一个估算值
      */

@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-33:/values-ldltr-v21/values-ldltr-v21.xml",
+            "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-2:/values-ldltr-v21/values-ldltr-v21.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\6d92bc2e36cc681e55a1883b037e34fb\\transformed\\appcompat-1.6.1\\res\\values-ldltr-v21\\values-ldltr-v21.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\6d92bc2e36cc681e55a1883b037e34fb\\transformed\\appcompat-1.6.1\\res\\values-ldltr-v21\\values-ldltr-v21.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

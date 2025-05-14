@@ -26,6 +26,7 @@ drawable candidate_background
 drawable candidate_item_background
 drawable key_background
 drawable key_preview_background
+id action_db_info
 id action_logs
 id btnBuildRealmDb
 id btnCancelExport
@@ -33,6 +34,7 @@ id btnClearLogs
 id btnCopyLog
 id btnCopyLogs
 id btnDictManager
+id btnExportDb
 id btnInputTest
 id btnLogs
 id btnMergeDictionaries
@@ -80,9 +82,15 @@ id shimmerMemoryStatus
 id shimmerMemoryUsage
 id shimmerModuleList
 id shimmerStatCard
+id tableModules
 id toolbar
 id tvDatabaseSize
+id tvDbEntryCount
+id tvDbFileName
+id tvDbFileSize
+id tvDbIndexes
 id tvDbPath
+id tvDbSchema
 id tvDictName
 id tvDictProcessTitle
 id tvDictStatus
@@ -115,6 +123,7 @@ layout activity_log_detail
 layout activity_main
 layout candidate_item
 layout candidate_item_horizontal
+layout dialog_database_info
 layout dialog_export_settings
 layout item_dictionary_entry
 layout item_dictionary_group_header

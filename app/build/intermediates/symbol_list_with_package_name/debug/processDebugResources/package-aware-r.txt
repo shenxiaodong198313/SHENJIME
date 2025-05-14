@@ -3180,6 +3180,7 @@ id action_bar_subtitle
 id action_bar_title
 id action_container
 id action_context_bar
+id action_db_info
 id action_divider
 id action_image
 id action_logs
@@ -3226,6 +3227,7 @@ id btnClearLogs
 id btnCopyLog
 id btnCopyLogs
 id btnDictManager
+id btnExportDb
 id btnInputTest
 id btnLogs
 id btnMergeDictionaries
@@ -3608,6 +3610,7 @@ id submenuarrow
 id submit_area
 id supportScrollUp
 id tabMode
+id tableModules
 id tag_accessibility_actions
 id tag_accessibility_clickable_spans
 id tag_accessibility_heading
@@ -3656,7 +3659,12 @@ id transition_scene_layoutid_cache
 id transition_transform
 id triangle
 id tvDatabaseSize
+id tvDbEntryCount
+id tvDbFileName
+id tvDbFileSize
+id tvDbIndexes
 id tvDbPath
+id tvDbSchema
 id tvDictName
 id tvDictProcessTitle
 id tvDictStatus
@@ -3842,6 +3850,7 @@ layout design_navigation_menu
 layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
+layout dialog_database_info
 layout dialog_export_settings
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity

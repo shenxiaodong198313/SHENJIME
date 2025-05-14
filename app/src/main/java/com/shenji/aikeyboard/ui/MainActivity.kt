@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
@@ -15,6 +16,8 @@ import com.shenji.aikeyboard.data.Entry
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -81,6 +84,11 @@ class MainActivity : AppCompatActivity() {
                 startBuildRealmDatabase()
             }
         }
+
+        // 添加导出数据库按钮点击事件
+        binding.btnExportDb.setOnClickListener {
+            exportRealmDatabase()
+        }
         
         // 隐藏进度相关元素和词典处理部分
         binding.tvDictProcessTitle.visibility = View.GONE
@@ -111,12 +119,11 @@ class MainActivity : AppCompatActivity() {
                 val startTime = System.currentTimeMillis()
                 
                 // 获取新数据库路径
-                val dbName = "shenji_dict_indexed_${System.currentTimeMillis()}.realm"
                 val dbDir = File(filesDir, "dictionaries")
                 if (!dbDir.exists()) {
                     dbDir.mkdirs()
                 }
-                val dbFile = File(dbDir, dbName)
+                val dbFile = File(dbDir, "shenji_dict.realm")
                 
                 // 更新状态
                 updateUI("创建数据库目录...", 5)
@@ -124,7 +131,8 @@ class MainActivity : AppCompatActivity() {
                 // 配置Realm
                 val config = RealmConfiguration.Builder(schema = setOf(Entry::class))
                     .directory(dbDir.absolutePath)
-                    .name(dbName)
+                    .name("shenji_dict.realm")
+                    .deleteRealmIfMigrationNeeded() // 如果需要迁移就删除旧数据库
                     .build()
                     
                 // 创建新的Realm实例
@@ -140,92 +148,26 @@ class MainActivity : AppCompatActivity() {
                     val totalEntries = countTotalEntries(dictFiles)
                     updateUI("总计 ${totalFiles} 个词典文件，约 ${totalEntries} 个词条", 15)
                     
-                    var processedEntries = 0
+                    // 并行处理的核心数量
+                    val availableProcessors = Runtime.getRuntime().availableProcessors()
+                    val coreCount = minOf(8, availableProcessors) // 最多使用8个核心
                     
                     // 打开Realm数据库
                     val realm = Realm.open(config)
                     try {
-                        // 处理每个词典文件
-                        for ((fileIndex, dictFile) in dictFiles.withIndex()) {
-                            val dictType = dictFile.substringBefore(".dict.yaml")
-                            
-                            // 基础进度：15% + 文件进度占85%
-                            val baseProgress = 15 + (fileIndex.toFloat() / totalFiles * 85).toInt()
-                            updateUI("正在处理 $dictType 词典 (${fileIndex + 1}/$totalFiles)", baseProgress)
-                            
-                            // 读取并处理词典文件
-                            val inputStream = assets.open("cn_dicts/$dictFile")
-                            try {
-                                val reader = BufferedReader(InputStreamReader(inputStream))
-                                try {
-                                    var line: String? = null
-                                    var lineCount = 0
-                                    var needsUIUpdate = false
-                                    
-                                    while (true) {
-                                        // 每次处理一批数据，避免事务太大
-                                        val batchSize = 1000
-                                        var batchCount = 0
-                                        
-                                        // 开始事务
-                                        realm.writeBlocking {
-                                            while (batchCount < batchSize && reader.readLine().also { line = it } != null) {
-                                                line?.let { l ->
-                                                    // 使用制表符分割行
-                                                    val parts = l.split("\t")
-                                                    if (parts.size >= 3) {
-                                                        val word = parts[0]
-                                                        val pinyin = removeTones(parts[1])  // 去掉声调
-                                                        val frequency = parts[2].toIntOrNull() ?: 0
-                                                        
-                                                        // 创建并添加词条
-                                                        val entry = Entry().apply {
-                                                            id = UUID.randomUUID().toString()
-                                                            this.word = word
-                                                            this.pinyin = pinyin
-                                                            this.frequency = frequency
-                                                            this.type = dictType
-                                                        }
-                                                        
-                                                        copyToRealm(entry)
-                                                        
-                                                        // 更新处理进度
-                                                        lineCount++
-                                                        processedEntries++
-                                                        batchCount++
-                                                        
-                                                        if (lineCount % 1000 == 0) {
-                                                            needsUIUpdate = true
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        
-                                        // 在事务块外更新UI
-                                        if (needsUIUpdate) {
-                                            val fileProgress = min(baseProgress + 3, 99) // 每个文件处理进度上限+3%
-                                            updateUI("正在处理 $dictType 词典: $lineCount 条 (总共处理了 $processedEntries/${totalEntries})", fileProgress)
-                                            needsUIUpdate = false
-                                        }
-                                        
-                                        // 如果没有读到数据，说明文件已处理完成
-                                        if (batchCount < batchSize) {
-                                            break
-                                        }
-                                    }
-                                    
-                                    // 文件处理完成
-                                    val fileEntries = lineCount
-                                    updateUI("完成处理 $dictType 词典: $fileEntries 条", baseProgress)
-                                    Timber.d("完成处理词典: $dictType, 条目数: $fileEntries")
-                                } finally {
-                                    reader.close()
-                                }
-                            } finally {
-                                inputStream.close()
+                        // 分组处理词典文件（每个线程处理一部分文件）
+                        val dictGroups = dictFiles.chunked((dictFiles.size + coreCount - 1) / coreCount)
+                        
+                        // 创建工作线程
+                        val jobs = dictGroups.mapIndexed { groupIndex, group ->
+                            lifecycleScope.async(Dispatchers.IO) {
+                                processDictionaryGroup(realm, group, groupIndex, dictGroups.size, totalFiles, totalEntries)
                             }
                         }
+                        
+                        // 等待所有工作线程完成
+                        jobs.awaitAll()
+                        
                     } finally {
                         realm.close()
                     }
@@ -264,6 +206,101 @@ class MainActivity : AppCompatActivity() {
                 }
             } finally {
                 isBuilding = false
+            }
+        }
+    }
+    
+    /**
+     * 处理一组词典文件
+     */
+    private suspend fun processDictionaryGroup(
+        realm: Realm,
+        dictFiles: List<String>,
+        groupIndex: Int,
+        totalGroups: Int,
+        totalFiles: Int,
+        totalEntries: Int
+    ) {
+        var processedEntries = 0
+        
+        for (dictFile in dictFiles) {
+            val dictType = dictFile.substringBefore(".dict.yaml")
+            
+            // 基础进度：15% + 组进度占比
+            val baseProgress = 15 + ((groupIndex.toFloat() / totalGroups) * 85).toInt()
+            updateUI("线程${groupIndex + 1}正在处理 $dictType 词典", baseProgress)
+            
+            // 读取并处理词典文件
+            val inputStream = assets.open("cn_dicts/$dictFile")
+            try {
+                val reader = BufferedReader(InputStreamReader(inputStream))
+                try {
+                    var line: String? = null
+                    var lineCount = 0
+                    var needsUIUpdate = false
+                    
+                    while (true) {
+                        // 每次处理一批数据，避免事务太大
+                        val batchSize = 1000
+                        var batchCount = 0
+                        
+                        // 开始事务
+                        realm.writeBlocking {
+                            while (batchCount < batchSize && reader.readLine().also { line = it } != null) {
+                                line?.let { l ->
+                                    // 使用制表符分割行
+                                    val parts = l.split("\t")
+                                    if (parts.size >= 3) {
+                                        val word = parts[0]
+                                        val pinyin = removeTones(parts[1])  // 去掉声调
+                                        val frequency = parts[2].toIntOrNull() ?: 0
+                                        
+                                        // 创建并添加词条
+                                        val entry = Entry().apply {
+                                            id = UUID.randomUUID().toString()
+                                            this.word = word
+                                            this.pinyin = pinyin
+                                            this.frequency = frequency
+                                            this.type = dictType
+                                        }
+                                        
+                                        copyToRealm(entry)
+                                        
+                                        // 更新处理进度
+                                        lineCount++
+                                        processedEntries++
+                                        batchCount++
+                                        
+                                        if (lineCount % 1000 == 0) {
+                                            needsUIUpdate = true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 在事务块外更新UI
+                        if (needsUIUpdate) {
+                            val fileProgress = min(baseProgress + 3, 99) // 每个文件处理进度上限+3%
+                            updateUI("线程${groupIndex + 1}处理 $dictType 词典: $lineCount 条", fileProgress)
+                            needsUIUpdate = false
+                        }
+                        
+                        // 如果没有读到数据，说明文件已处理完成
+                        if (batchCount < batchSize) {
+                            break
+                        }
+                    }
+                    
+                    // 文件处理完成
+                    val fileEntries = lineCount
+                    updateUI("线程${groupIndex + 1}完成处理 $dictType 词典: $fileEntries 条", baseProgress)
+                    Timber.d("线程${groupIndex + 1}完成处理词典: $dictType, 条目数: $fileEntries")
+                } finally {
+                    reader.close()
+                }
+            } finally {
+                inputStream.close()
             }
         }
     }
@@ -458,6 +495,63 @@ class MainActivity : AppCompatActivity() {
             putString(KEY_DB_PATH, dbPath)
             putBoolean(KEY_BUILD_COMPLETED, buildCompleted)
             apply()
+        }
+    }
+
+    /**
+     * 导出Realm数据库文件到外部存储
+     */
+    private fun exportRealmDatabase() {
+        lifecycleScope.launch {
+            try {
+                binding.tvDictStatus.visibility = View.VISIBLE
+                binding.tvDictStatus.text = "正在导出数据库文件..."
+                
+                withContext(Dispatchers.IO) {
+                    // 找到最新的数据库文件
+                    val dbDir = File(filesDir, "dictionaries")
+                    val realmFiles = dbDir.listFiles { file -> file.name.endsWith(".realm") }
+                    val latestRealmFile = realmFiles?.maxByOrNull { it.lastModified() }
+                    
+                    latestRealmFile?.let { sourceFile ->
+                        // 创建外部存储目录
+                        val externalDir = getExternalFilesDir(null)
+                        val targetFile = File(externalDir, sourceFile.name)
+                        
+                        // 复制文件
+                        sourceFile.inputStream().use { input ->
+                            targetFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        
+                        // 更新UI
+                        withContext(Dispatchers.Main) {
+                            val exportPath = targetFile.absolutePath
+                            binding.tvDictStatus.text = "数据库导出成功"
+                            binding.tvDbPath.visibility = View.VISIBLE
+                            binding.tvDbPath.text = "导出路径：$exportPath"
+                            
+                            // 设置路径可复制
+                            binding.tvDbPath.setOnClickListener {
+                                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText("数据库路径", exportPath)
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(this@MainActivity, "路径已复制到剪贴板", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } ?: run {
+                        withContext(Dispatchers.Main) {
+                            binding.tvDictStatus.text = "未找到数据库文件"
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    binding.tvDictStatus.text = "导出失败: ${e.message}"
+                    Timber.e(e, "导出数据库失败")
+                }
+            }
         }
     }
 } 

@@ -33,6 +33,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnDictManager;
 
   @NonNull
+  public final Button btnExportDb;
+
+  @NonNull
   public final Button btnInputTest;
 
   @NonNull
@@ -105,8 +108,8 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvTitle;
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnBuildRealmDb,
-      @NonNull Button btnCancelExport, @NonNull Button btnDictManager, @NonNull Button btnInputTest,
-      @NonNull Button btnLogs, @NonNull Button btnMergeDictionaries,
+      @NonNull Button btnCancelExport, @NonNull Button btnDictManager, @NonNull Button btnExportDb,
+      @NonNull Button btnInputTest, @NonNull Button btnLogs, @NonNull Button btnMergeDictionaries,
       @NonNull Button btnProcessBase1, @NonNull Button btnProcessBase2,
       @NonNull Button btnProcessBase3, @NonNull Button btnProcessBase4,
       @NonNull Button btnProcessBase5, @NonNull Button btnProcessBase6,
@@ -121,6 +124,7 @@ public final class ActivityMainBinding implements ViewBinding {
     this.btnBuildRealmDb = btnBuildRealmDb;
     this.btnCancelExport = btnCancelExport;
     this.btnDictManager = btnDictManager;
+    this.btnExportDb = btnExportDb;
     this.btnInputTest = btnInputTest;
     this.btnLogs = btnLogs;
     this.btnMergeDictionaries = btnMergeDictionaries;
@@ -189,6 +193,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnDictManager;
       Button btnDictManager = ViewBindings.findChildViewById(rootView, id);
       if (btnDictManager == null) {
+        break missingId;
+      }
+
+      id = R.id.btnExportDb;
+      Button btnExportDb = ViewBindings.findChildViewById(rootView, id);
+      if (btnExportDb == null) {
         break missingId;
       }
 
@@ -333,7 +343,7 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnBuildRealmDb, btnCancelExport,
-          btnDictManager, btnInputTest, btnLogs, btnMergeDictionaries, btnProcessBase1,
+          btnDictManager, btnExportDb, btnInputTest, btnLogs, btnMergeDictionaries, btnProcessBase1,
           btnProcessBase2, btnProcessBase3, btnProcessBase4, btnProcessBase5, btnProcessBase6,
           btnProcessBase7, btnProcessChars, btnResetBuild, btnSettings, dictProcessContainer,
           mainButtonContainer, mainContainer, pbDictExport, toolbar, tvDbPath, tvDictProcessTitle,

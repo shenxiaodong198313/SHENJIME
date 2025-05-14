@@ -77,6 +77,10 @@ class DictionaryManagerActivity : AppCompatActivity() {
                 openDictionaryLogs()
                 true
             }
+            R.id.action_db_info -> {
+                showDatabaseInfo()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -328,5 +332,92 @@ class DictionaryManagerActivity : AppCompatActivity() {
         super.onDestroy()
         // 取消监控任务
         dictionaryMonitoringJob?.cancel()
+    }
+
+    /**
+     * 显示数据库详情对话框
+     */
+    private fun showDatabaseInfo() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_database_info, null)
+        
+        // 创建对话框
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setTitle("数据库详情")
+            .setPositiveButton("关闭") { d, _ -> d.dismiss() }
+            .create()
+        
+        // 在后台加载数据库信息
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 获取数据库文件信息
+                val dbFile = dictionaryRepository.getDictionaryFile()
+                val dbName = dbFile.name
+                val dbSize = dbFile.length()
+                val dbSizeFormatted = dictionaryRepository.formatFileSize(dbSize)
+                val dbPath = dbFile.absolutePath
+                
+                // 获取词条总数
+                val totalEntries = dictionaryRepository.getTotalEntryCount()
+                
+                // 获取所有模块
+                val modules = dictionaryRepository.getDictionaryModules()
+                
+                // 更新UI
+                withContext(Dispatchers.Main) {
+                    // 更新基本信息
+                    dialogView.findViewById<TextView>(R.id.tvDbFileName).text = "文件名称: $dbName"
+                    dialogView.findViewById<TextView>(R.id.tvDbFileSize).text = "文件大小: $dbSizeFormatted"
+                    dialogView.findViewById<TextView>(R.id.tvDbEntryCount).text = "词条总数: $totalEntries"
+                    dialogView.findViewById<TextView>(R.id.tvDbSchema).text = "数据模式: Entry(id, word, pinyin(索引), frequency, type)"
+                    dialogView.findViewById<TextView>(R.id.tvDbIndexes).text = "索引字段: pinyin"
+                    dialogView.findViewById<TextView>(R.id.tvDbPath).text = "路径: $dbPath"
+                    
+                    // 动态添加模块信息
+                    val tableLayout = dialogView.findViewById<android.widget.TableLayout>(R.id.tableModules)
+                    
+                    // 清除示例行
+                    if (tableLayout.childCount > 1) {
+                        tableLayout.removeViews(1, tableLayout.childCount - 1)
+                    }
+                    
+                    // 添加实际模块数据
+                    for (module in modules) {
+                        if (!module.isGroupHeader) {
+                            val row = android.widget.TableRow(this@DictionaryManagerActivity)
+                            row.setPadding(4, 4, 4, 4)
+                            
+                            // 模块名称
+                            val nameView = TextView(this@DictionaryManagerActivity)
+                            nameView.text = module.chineseName
+                            row.addView(nameView)
+                            
+                            // 词条数
+                            val countView = TextView(this@DictionaryManagerActivity)
+                            countView.text = module.entryCount.toString()
+                            countView.gravity = android.view.Gravity.CENTER
+                            row.addView(countView)
+                            
+                            // 内存状态
+                            val memoryStatusView = TextView(this@DictionaryManagerActivity)
+                            memoryStatusView.text = if (module.isInMemory) "已加载" else "未加载"
+                            memoryStatusView.gravity = android.view.Gravity.CENTER
+                            row.addView(memoryStatusView)
+                            
+                            tableLayout.addView(row)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "获取数据库信息失败")
+                withContext(Dispatchers.Main) {
+                    dialogView.findViewById<TextView>(R.id.tvDbFileName).text = "获取数据库信息失败"
+                    dialogView.findViewById<TextView>(R.id.tvDbFileSize).text = "错误: ${e.message}"
+                }
+            }
+        }
+        
+        // 显示对话框
+        dialog.show()
     }
 } 

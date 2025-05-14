@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-33:/values-large-v4/values-large-v4.xml",
+            "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-2:/values-large-v4/values-large-v4.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\6d92bc2e36cc681e55a1883b037e34fb\\transformed\\appcompat-1.6.1\\res\\values-large-v4\\values-large-v4.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\6d92bc2e36cc681e55a1883b037e34fb\\transformed\\appcompat-1.6.1\\res\\values-large-v4\\values-large-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10",
                         "startColumns": "4,4,4,4,4,4,4,4,4",
@@ -14,7 +14,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\53c03f792a4cec5f3c5e94e171a808e1\\transformed\\material-1.11.0\\res\\values-large-v4\\values-large-v4.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\53c03f792a4cec5f3c5e94e171a808e1\\transformed\\material-1.11.0\\res\\values-large-v4\\values-large-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5",
                         "startColumns": "4,4,4,4",

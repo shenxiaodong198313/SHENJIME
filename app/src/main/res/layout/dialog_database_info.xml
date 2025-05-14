@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="数据库概览"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tvDbFileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="文件名称: shenji_dict.realm"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvDbFileSize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="文件大小: 0MB"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvDbEntryCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="词条总数: 0"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvDbSchema"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="数据模式: Entry(id, word, pinyin, frequency, type)"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvDbIndexes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="索引: pinyin"
+            android:layout_marginBottom="8dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#CCCCCC"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="词典模块统计"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TableLayout
+            android:id="@+id/tableModules"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="*">
+
+            <TableRow
+                android:background="#EEEEEE"
+                android:padding="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="模块名称"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="词条数"
+                    android:gravity="center"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="内存状态"
+                    android:gravity="center"
+                    android:textStyle="bold" />
+            </TableRow>
+
+            <!-- 示例行，将在代码中动态生成 -->
+            <TableRow android:padding="4dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="chars" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="10万"
+                    android:gravity="center" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="已加载"
+                    android:gravity="center" />
+            </TableRow>
+        </TableLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#CCCCCC"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tvDbPath"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="路径: /data/data/com.shenji.aikeyboard/files/dictionaries/shenji_dict.realm"
+            android:textSize="12sp"
+            android:layout_marginBottom="16dp" />
+
+    </LinearLayout>
+</ScrollView> 
