@@ -154,6 +154,9 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
                 // 恢复键盘视图可见性
                 if (::keyboardView.isInitialized) {
                     keyboardView.visibility = View.VISIBLE
+                    Timber.d("已恢复键盘视图可见性")
+                } else {
+                    Timber.e("keyboardView未初始化，无法恢复键盘视图可见性")
                 }
                 
                 Timber.d("收起候选词区域")
@@ -173,6 +176,22 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         // 安全清除候选词，避免未初始化造成的崩溃
         if (::candidatesLayout.isInitialized) {
             clearCandidates()
+        }
+        
+        // 确保键盘视图是可见的
+        if (::keyboardView.isInitialized && ::expandedCandidatesScroll.isInitialized) {
+            if (isExpandedCandidatesVisible) {
+                // 如果扩展候选词区域可见，则隐藏它并显示键盘
+                isExpandedCandidatesVisible = false
+                expandedCandidatesScroll.visibility = View.GONE
+                if (::expandButton.isInitialized) {
+                    expandButton.setImageResource(android.R.drawable.arrow_down_float)
+                }
+            }
+            
+            // 确保键盘可见
+            keyboardView.visibility = View.VISIBLE
+            Timber.d("onStartInput时恢复键盘视图可见性")
         }
         
         // 根据输入类型调整键盘
@@ -668,6 +687,14 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         )
         returnButton.setOnClickListener {
             toggleExpandedCandidates() // 点击返回按钮收起候选词区域
+            
+            // 额外的检查，确保键盘状态正确设置
+            if (!isExpandedCandidatesVisible && ::keyboardView.isInitialized) {
+                keyboardView.post {
+                    keyboardView.visibility = View.VISIBLE
+                    Timber.d("返回按钮点击后确保键盘视图可见")
+                }
+            }
         }
         navigationBar.addView(returnButton)
         
@@ -717,6 +744,14 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
             isExpandedCandidatesVisible = false
             if (::expandButton.isInitialized) {
                 expandButton.setImageResource(android.R.drawable.arrow_down_float)
+            }
+            
+            // 确保键盘视图显示
+            if (::keyboardView.isInitialized) {
+                keyboardView.visibility = View.VISIBLE
+                Timber.d("提交候选词时恢复键盘视图可见性")
+            } else {
+                Timber.e("提交候选词时keyboardView未初始化，无法恢复键盘视图可见性")
             }
         }
         
@@ -792,5 +827,30 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
     override fun swipeUp() {
         // 向上滑动处理
         Timber.d("向上滑动")
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        // 处理返回键
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            // 如果扩展候选词区域可见，则先隐藏它
+            if (isExpandedCandidatesVisible && ::expandedCandidatesScroll.isInitialized) {
+                expandedCandidatesScroll.visibility = View.GONE
+                isExpandedCandidatesVisible = false
+                if (::expandButton.isInitialized) {
+                    expandButton.setImageResource(android.R.drawable.arrow_down_float)
+                }
+                
+                // 确保键盘视图显示
+                if (::keyboardView.isInitialized) {
+                    keyboardView.visibility = View.VISIBLE
+                    Timber.d("返回键：恢复键盘视图可见性")
+                }
+                
+                // 已处理返回键
+                return true
+            }
+        }
+        
+        return super.onKeyDown(keyCode, event)
     }
 } 
