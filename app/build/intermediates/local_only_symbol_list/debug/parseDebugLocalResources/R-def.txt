@@ -27,6 +27,7 @@ drawable candidate_item_background
 drawable key_background
 drawable key_preview_background
 id action_logs
+id btnBuildRealmDb
 id btnCancelExport
 id btnClearLogs
 id btnCopyLog
@@ -43,6 +44,7 @@ id btnProcessBase5
 id btnProcessBase6
 id btnProcessBase7
 id btnProcessChars
+id btnResetBuild
 id btnSettings
 id buttonContainer
 id candidates_container
@@ -80,6 +82,7 @@ id shimmerModuleList
 id shimmerStatCard
 id toolbar
 id tvDatabaseSize
+id tvDbPath
 id tvDictName
 id tvDictProcessTitle
 id tvDictStatus

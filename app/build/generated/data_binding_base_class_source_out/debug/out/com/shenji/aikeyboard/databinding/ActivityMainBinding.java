@@ -24,6 +24,9 @@ public final class ActivityMainBinding implements ViewBinding {
   private final ConstraintLayout rootView;
 
   @NonNull
+  public final Button btnBuildRealmDb;
+
+  @NonNull
   public final Button btnCancelExport;
 
   @NonNull
@@ -63,6 +66,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnProcessChars;
 
   @NonNull
+  public final Button btnResetBuild;
+
+  @NonNull
   public final Button btnSettings;
 
   @NonNull
@@ -81,6 +87,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Toolbar toolbar;
 
   @NonNull
+  public final TextView tvDbPath;
+
+  @NonNull
   public final TextView tvDictProcessTitle;
 
   @NonNull
@@ -95,19 +104,21 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final TextView tvTitle;
 
-  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnCancelExport,
-      @NonNull Button btnDictManager, @NonNull Button btnInputTest, @NonNull Button btnLogs,
-      @NonNull Button btnMergeDictionaries, @NonNull Button btnProcessBase1,
-      @NonNull Button btnProcessBase2, @NonNull Button btnProcessBase3,
-      @NonNull Button btnProcessBase4, @NonNull Button btnProcessBase5,
-      @NonNull Button btnProcessBase6, @NonNull Button btnProcessBase7,
-      @NonNull Button btnProcessChars, @NonNull Button btnSettings,
+  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnBuildRealmDb,
+      @NonNull Button btnCancelExport, @NonNull Button btnDictManager, @NonNull Button btnInputTest,
+      @NonNull Button btnLogs, @NonNull Button btnMergeDictionaries,
+      @NonNull Button btnProcessBase1, @NonNull Button btnProcessBase2,
+      @NonNull Button btnProcessBase3, @NonNull Button btnProcessBase4,
+      @NonNull Button btnProcessBase5, @NonNull Button btnProcessBase6,
+      @NonNull Button btnProcessBase7, @NonNull Button btnProcessChars,
+      @NonNull Button btnResetBuild, @NonNull Button btnSettings,
       @NonNull LinearLayout dictProcessContainer, @NonNull LinearLayout mainButtonContainer,
       @NonNull ConstraintLayout mainContainer, @NonNull ProgressBar pbDictExport,
-      @NonNull Toolbar toolbar, @NonNull TextView tvDictProcessTitle,
+      @NonNull Toolbar toolbar, @NonNull TextView tvDbPath, @NonNull TextView tvDictProcessTitle,
       @NonNull TextView tvDictStatus, @NonNull TextView tvHelpText, @NonNull TextView tvStatus,
       @NonNull TextView tvTitle) {
     this.rootView = rootView;
+    this.btnBuildRealmDb = btnBuildRealmDb;
     this.btnCancelExport = btnCancelExport;
     this.btnDictManager = btnDictManager;
     this.btnInputTest = btnInputTest;
@@ -121,12 +132,14 @@ public final class ActivityMainBinding implements ViewBinding {
     this.btnProcessBase6 = btnProcessBase6;
     this.btnProcessBase7 = btnProcessBase7;
     this.btnProcessChars = btnProcessChars;
+    this.btnResetBuild = btnResetBuild;
     this.btnSettings = btnSettings;
     this.dictProcessContainer = dictProcessContainer;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
     this.pbDictExport = pbDictExport;
     this.toolbar = toolbar;
+    this.tvDbPath = tvDbPath;
     this.tvDictProcessTitle = tvDictProcessTitle;
     this.tvDictStatus = tvDictStatus;
     this.tvHelpText = tvHelpText;
@@ -161,6 +174,12 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnBuildRealmDb;
+      Button btnBuildRealmDb = ViewBindings.findChildViewById(rootView, id);
+      if (btnBuildRealmDb == null) {
+        break missingId;
+      }
+
       id = R.id.btnCancelExport;
       Button btnCancelExport = ViewBindings.findChildViewById(rootView, id);
       if (btnCancelExport == null) {
@@ -239,6 +258,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnResetBuild;
+      Button btnResetBuild = ViewBindings.findChildViewById(rootView, id);
+      if (btnResetBuild == null) {
+        break missingId;
+      }
+
       id = R.id.btnSettings;
       Button btnSettings = ViewBindings.findChildViewById(rootView, id);
       if (btnSettings == null) {
@@ -268,6 +293,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.toolbar;
       Toolbar toolbar = ViewBindings.findChildViewById(rootView, id);
       if (toolbar == null) {
+        break missingId;
+      }
+
+      id = R.id.tvDbPath;
+      TextView tvDbPath = ViewBindings.findChildViewById(rootView, id);
+      if (tvDbPath == null) {
         break missingId;
       }
 
@@ -301,11 +332,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((ConstraintLayout) rootView, btnCancelExport, btnDictManager,
-          btnInputTest, btnLogs, btnMergeDictionaries, btnProcessBase1, btnProcessBase2,
-          btnProcessBase3, btnProcessBase4, btnProcessBase5, btnProcessBase6, btnProcessBase7,
-          btnProcessChars, btnSettings, dictProcessContainer, mainButtonContainer, mainContainer,
-          pbDictExport, toolbar, tvDictProcessTitle, tvDictStatus, tvHelpText, tvStatus, tvTitle);
+      return new ActivityMainBinding((ConstraintLayout) rootView, btnBuildRealmDb, btnCancelExport,
+          btnDictManager, btnInputTest, btnLogs, btnMergeDictionaries, btnProcessBase1,
+          btnProcessBase2, btnProcessBase3, btnProcessBase4, btnProcessBase5, btnProcessBase6,
+          btnProcessBase7, btnProcessChars, btnResetBuild, btnSettings, dictProcessContainer,
+          mainButtonContainer, mainContainer, pbDictExport, toolbar, tvDbPath, tvDictProcessTitle,
+          tvDictStatus, tvHelpText, tvStatus, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

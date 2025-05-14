@@ -90,6 +90,29 @@
                     android:layout_marginTop="16dp"
                     android:text="输入测试" />
 
+                <Button
+                    android:id="@+id/btnBuildRealmDb"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="构建Realm实例" />
+                    
+                <TextView
+                    android:id="@+id/tvDbPath"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+                
+                <Button
+                    android:id="@+id/btnResetBuild"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="重置并重新构建"
+                    android:visibility="gone" />
+
             </LinearLayout>
             
             <!-- 词典处理部分 -->

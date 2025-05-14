@@ -3220,6 +3220,7 @@ id bounce
 id bounceBoth
 id bounceEnd
 id bounceStart
+id btnBuildRealmDb
 id btnCancelExport
 id btnClearLogs
 id btnCopyLog
@@ -3236,6 +3237,7 @@ id btnProcessBase5
 id btnProcessBase6
 id btnProcessBase7
 id btnProcessChars
+id btnResetBuild
 id btnSettings
 id buttonContainer
 id buttonPanel
@@ -3654,6 +3656,7 @@ id transition_scene_layoutid_cache
 id transition_transform
 id triangle
 id tvDatabaseSize
+id tvDbPath
 id tvDictName
 id tvDictProcessTitle
 id tvDictStatus

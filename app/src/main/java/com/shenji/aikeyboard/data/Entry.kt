@@ -2,6 +2,7 @@ package com.shenji.aikeyboard.data
 
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.types.annotations.Index
 
 /**
  * 词条数据模型类
@@ -11,7 +12,10 @@ open class Entry : RealmObject {
     var id: String = ""
     
     var word: String = ""
+    
+    @Index  // 添加索引注解
     var pinyin: String = ""
+    
     var frequency: Int = 0
     var type: String = ""
     
