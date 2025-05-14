@@ -100,12 +100,12 @@ class DictionaryManager private constructor() {
     
     /**
      * 规范化拼音
-     * 将拼音转换为带空格分词且带声调的格式，以匹配词库中的拼音
+     * 将拼音转换为带空格分词的格式，以匹配词库中的拼音
      */
     private fun normalizePinyin(pinyin: String): String {
-        // 调用repository的normalizeWithTones方法，获取带空格和声调的拼音
+        // 调用repository的normalizePinyin方法，获取带空格的拼音
         return try {
-            repository.normalizeWithTones(pinyin)
+            repository.normalizePinyin(pinyin)
         } catch (e: Exception) {
             Timber.e(e, "拼音规范化失败: ${e.message}")
             // 出错时返回原始拼音（至少确保小写）

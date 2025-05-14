@@ -271,7 +271,7 @@ class DictionaryRepository {
     }
     
     /**
-     * 根据拼音前缀从数据库搜索词条，支持带声调和不带声调的拼音匹配
+     * 根据拼音前缀从数据库搜索词条，支持带空格和不带空格的拼音匹配
      * @param prefix 拼音前缀
      * @param limit 最大返回数量
      * @param excludeTypes 要排除的词典类型（如高频词典，因为它们已经在内存中查询过）
@@ -283,16 +283,13 @@ class DictionaryRepository {
         return try {
             Timber.d("从Realm数据库中搜索拼音前缀: '$prefix'，字符数：${prefix.length}")
             
-            // 分词但不恢复声调的格式，用于不区分声调的模糊匹配
+            // 带空格的规范化拼音格式
             val normalizedPrefix = splitPinyinIntoSyllables(prefix.lowercase().trim())
-            
-            // 携带声调的格式，用于精确匹配
-            val withTonesPrefix = restoreTones(normalizedPrefix)
             
             // 无空格格式，用于匹配没有空格的记录
             val noSpacePrefix = prefix.replace(" ", "").lowercase().trim()
             
-            Timber.d("规范化后的拼音格式: 带空格='$normalizedPrefix', 带声调='$withTonesPrefix', 无空格='$noSpacePrefix'")
+            Timber.d("规范化后的拼音格式: 带空格='$normalizedPrefix', 无空格='$noSpacePrefix'")
             
             // 存储所有匹配结果
             val allEntries = mutableSetOf<Entry>()
@@ -301,46 +298,26 @@ class DictionaryRepository {
             when {
                 // 1-2字母：优先查询单字词库，精准匹配
                 normalizedPrefix.length <= 2 -> {
-                    // 先尝试精确匹配（带声调）
-                    val exactMatches = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'chars'", withTonesPrefix)
+                    // 精确匹配
+                    val exactMatches = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'chars'", normalizedPrefix)
                         .limit(limit * 2)
                         .find()
                         .filter { it.type !in excludeTypes }
                     
                     allEntries.addAll(exactMatches)
-                    
-                    // 如果精确匹配不足，再尝试不区分声调的匹配
-                    if (allEntries.size < limit) {
-                        val fuzzyMatches = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'chars'", normalizedPrefix)
-                            .limit(limit * 2)
-                            .find()
-                            .filter { it.type !in excludeTypes && it !in allEntries }
-                        
-                        allEntries.addAll(fuzzyMatches)
-                    }
                 }
                 
                 // 3-4字母：基础词库，完全+前缀匹配
                 normalizedPrefix.length <= 4 -> {
-                    // 1. 精确匹配（带声调）
-                    val exactMatches = realm.query<Entry>("pinyin BEGINSWITH $0", withTonesPrefix)
+                    // 1. 精确匹配
+                    val exactMatches = realm.query<Entry>("pinyin BEGINSWITH $0", normalizedPrefix)
                         .limit(limit * 2)
                         .find()
                         .filter { it.type !in excludeTypes }
                     
                     allEntries.addAll(exactMatches)
                     
-                    // 2. 不区分声调的前缀匹配
-                    if (allEntries.size < limit) {
-                        val fuzzyMatches = realm.query<Entry>("pinyin BEGINSWITH $0", normalizedPrefix)
-                            .limit(limit * 2)
-                            .find()
-                            .filter { it.type !in excludeTypes && it !in allEntries }
-                        
-                        allEntries.addAll(fuzzyMatches)
-                    }
-                    
-                    // 3. 无空格匹配
+                    // 2. 无空格匹配
                     if (allEntries.size < limit) {
                         val noSpaceMatches = realm.query<Entry>("pinyin BEGINSWITH $0", noSpacePrefix)
                             .limit(limit)
@@ -353,25 +330,15 @@ class DictionaryRepository {
                 
                 // ≥5字母：联想词库，包含匹配
                 else -> {
-                    // 1. 精确前缀匹配（带声调）
-                    val exactMatches = realm.query<Entry>("pinyin BEGINSWITH $0", withTonesPrefix)
+                    // 1. 前缀匹配
+                    val exactMatches = realm.query<Entry>("pinyin BEGINSWITH $0", normalizedPrefix)
                         .limit(limit)
                         .find()
                         .filter { it.type !in excludeTypes }
                     
                     allEntries.addAll(exactMatches)
                     
-                    // 2. 不区分声调的前缀匹配
-                    if (allEntries.size < limit) {
-                        val fuzzyMatches = realm.query<Entry>("pinyin BEGINSWITH $0", normalizedPrefix)
-                            .limit(limit)
-                            .find()
-                            .filter { it.type !in excludeTypes && it !in allEntries }
-                        
-                        allEntries.addAll(fuzzyMatches)
-                    }
-                    
-                    // 3. 包含匹配（联想搜索）
+                    // 2. 包含匹配（联想搜索）
                     if (allEntries.size < limit) {
                         val containsMatches = realm.query<Entry>("pinyin CONTAINS $0", normalizedPrefix)
                             .limit(limit)
@@ -400,7 +367,7 @@ class DictionaryRepository {
                     }
                 }")
             } else {
-                Timber.d("没有找到匹配前缀的词条，尝试查询使用: '$normalizedPrefix', '$withTonesPrefix', '$noSpacePrefix'")
+                Timber.d("没有找到匹配前缀的词条，尝试查询使用: '$normalizedPrefix', '$noSpacePrefix'")
             }
             
             // 转换为WordFrequency对象
@@ -412,98 +379,27 @@ class DictionaryRepository {
     }
     
     /**
-     * 获取包含声调的拼音，用于与数据库中的拼音匹配
-     * 将无声调无空格拼音转换为带空格带声调的格式（如 beijing -> běi jīng）
+     * 获取标准化拼音，用于与数据库中的拼音匹配
+     * 将无空格拼音转换为带空格的格式（如 beijing -> bei jing）
      */
-    fun normalizeWithTones(pinyin: String): String {
+    fun normalizePinyin(pinyin: String): String {
         // 首先标准化格式：转小写并确保适当的分词
         val normalized = pinyin.lowercase().trim()
         
-        // 如果已经包含空格，可能已经是分词格式
+        // 如果已经包含空格，直接返回
         if (normalized.contains(" ")) {
-            // 尝试恢复声调
-            return restoreTones(normalized)
+            return normalized
         }
         
-        // 尝试将无空格拼音转换为有空格格式
+        // 将无空格拼音转换为有空格格式
         val withSpaces = splitPinyinIntoSyllables(normalized)
         
-        // 尝试恢复声调
-        val withTones = restoreTones(withSpaces)
+        Timber.d("拼音规范化：'$pinyin' -> '$withSpaces'")
         
-        // 记录拼音转换过程
-        Timber.d("拼音规范化：'$pinyin' -> '$withSpaces' -> '$withTones'")
-        
-        return withTones
+        return withSpaces
     }
     
-    /**
-     * 恢复拼音声调
-     * 将无声调拼音转换为带声调拼音（例如：bei jing -> bĕi jīng）
-     */
-    private fun restoreTones(pinyin: String): String {
-        if (pinyin.isBlank()) return pinyin
-        
-        // 拼音声调映射表，罗列常用拼音及其对应的带声调形式
-        val toneMap = mapOf(
-            // 基础音节常用声调
-            "a" to "ā", "ai" to "ài", "an" to "ān", "ang" to "āng", "ao" to "ào",
-            "ba" to "bā", "bai" to "bái", "ban" to "bān", "bang" to "bāng", "bao" to "bāo",
-            "bei" to "bèi", "ben" to "bēn", "beng" to "bēng", "bi" to "bǐ", "bian" to "biān",
-            "biao" to "biāo", "bie" to "bié", "bin" to "bīn", "bing" to "bìng", "bo" to "bō",
-            "bu" to "bù",
-            "ca" to "cà", "cai" to "cài", "can" to "cán", "cang" to "cāng", "cao" to "cǎo",
-            "ce" to "cè", "cen" to "cén", "ceng" to "cēng", "cha" to "chā", "chai" to "chái",
-            "chan" to "chán", "chang" to "cháng", "chao" to "cháo", "che" to "chē", "chen" to "chén",
-            "cheng" to "chéng", "chi" to "chī", "chong" to "chōng", "chou" to "chōu", "chu" to "chū",
-            "chuai" to "chuài", "chuan" to "chuān", "chuang" to "chuāng", "chui" to "chuī", "chun" to "chūn",
-            "chuo" to "chuō", "ci" to "cí", "cong" to "cōng", "cou" to "cōu", "cu" to "cū",
-            "cuan" to "cuān", "cui" to "cuī", "cun" to "cūn", "cuo" to "cuō",
-            "da" to "dā", "dai" to "dài", "dan" to "dān", "dang" to "dāng", "dao" to "dào",
-            "de" to "de", "dei" to "dĕi", "den" to "dèn", "deng" to "dēng", "di" to "dí",
-            "dian" to "diǎn", "diao" to "diào", "die" to "dié", "ding" to "dìng", "diu" to "diū",
-            "dong" to "dōng", "dou" to "dōu", "du" to "dū", "duan" to "duān", "dui" to "duì",
-            "dun" to "dūn", "duo" to "duō",
-            "e" to "è", "ei" to "èi", "en" to "ēn", "er" to "ér",
-            "fa" to "fā", "fan" to "fán", "fang" to "fāng", "fei" to "fēi", "fen" to "fén",
-            "feng" to "fēng", "fo" to "fó", "fou" to "fóu", "fu" to "fù",
-            
-            // 常用词语拼音带声调形式
-            "bei jing" to "běi jīng", // 北京
-            "shang hai" to "shàng hǎi", // 上海
-            "guang zhou" to "guǎng zhōu", // 广州
-            "shen zhen" to "shēn zhèn", // 深圳
-            "nan jing" to "nán jīng", // 南京
-            "hang zhou" to "háng zhōu", // 杭州
-            "cheng du" to "chéng dū", // 成都
-            "xi an" to "xī ān", // 西安
-            "wu han" to "wǔ hàn", // 武汉
-            "zhong guo" to "zhōng guó", // 中国
-            "mei guo" to "měi guó", // 美国
-            "ying guo" to "yīng guó", // 英国
-            "fa guo" to "fǎ guó", // 法国
-            "de guo" to "dé guó", // 德国
-            "ri ben" to "rì běn", // 日本
-            "ni hao" to "nǐ hǎo", // 你好
-            "xie xie" to "xiè xie" // 谢谢
-        )
-        
-        // 分割拼音音节
-        val syllables = pinyin.split(" ")
-        
-        // 如果是完整词组拼音，先尝试直接查找
-        val directMatch = toneMap[pinyin]
-        if (directMatch != null) {
-            return directMatch
-        }
-        
-        // 否则按音节查找并替换
-        val result = syllables.map { syllable ->
-            toneMap[syllable] ?: syllable
-        }.joinToString(" ")
-        
-        return result
-    }
+    // 声调相关功能已删除
     
     /**
      * 获取指定类型的词典样本条目
@@ -602,6 +498,8 @@ class DictionaryRepository {
                 "ben", "pen", "men", "fen", "den", "nen", "gen", "ken", "hen", "zen", "cen", "sen",
                 "zhu", "chu", "shu", "zhe", "che", "she", "zha", "cha", "sha", "zou", "cou", "sou", "zui", "cui", "sui", "zun", "cun", "sun",
                 "zhuo", "chuo", "shuo", "zhen", "chen", "shen",
+                // k开头音节补充
+                "kuai", "kuan", "kuang",
                 // 常见双字母音节
                 "ba", "pa", "ma", "fa", "da", "ta", "na", "la", "ga", "ka", "ha", "za", "ca", "sa",
                 "bo", "po", "mo", "fo", "lo", "wo", "yo", "zo", "co", "so",

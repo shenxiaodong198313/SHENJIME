@@ -174,12 +174,12 @@ class InputTestActivity : AppCompatActivity() {
     
     /**
      * 规范化拼音
-     * 将连续拼音转换为带空格带声调的分词拼音（例如：beijing -> běi jīng）
+     * 将连续拼音转换为带空格的分词拼音（例如：beijing -> bei jing）
      */
     private fun normalizePinyin(pinyin: String): String {
         return try {
-            // 使用repository的规范化方法，包含分词和声调恢复
-            val normalizedPinyin = repository.normalizeWithTones(pinyin)
+            // 使用repository的规范化方法，只包含分词
+            val normalizedPinyin = repository.normalizePinyin(pinyin)
             logMessage("拼音转换: '$pinyin' -> '$normalizedPinyin'")
             normalizedPinyin
         } catch (e: Exception) {
