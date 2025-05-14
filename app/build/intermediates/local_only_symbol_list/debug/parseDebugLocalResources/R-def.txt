@@ -50,6 +50,7 @@ id btnResetBuild
 id btnSettings
 id buttonContainer
 id candidates_container
+id candidates_grid
 id candidates_horizontal_scroll
 id candidates_layout
 id cardStats
@@ -61,6 +62,7 @@ id etNumWorkers
 id expand_candidates_button
 id expanded_candidates_container
 id expanded_candidates_scroll
+id expanded_pinyin_text
 id keyboard_view
 id loadMoreProgress
 id logButtonsContainer
@@ -70,6 +72,7 @@ id pbDictExport
 id pinyin_text
 id progressBar
 id progressBarLoading
+id return_button
 id rvDictionaryModules
 id rvEntries
 id rvLogs
@@ -83,6 +86,7 @@ id shimmerMemoryUsage
 id shimmerModuleList
 id shimmerStatCard
 id tableModules
+id toggle_full_single
 id toolbar
 id tvDatabaseSize
 id tvDbEntryCount
@@ -121,10 +125,12 @@ layout activity_dictionary_manager
 layout activity_input_test
 layout activity_log_detail
 layout activity_main
+layout candidate_grid_item
 layout candidate_item
 layout candidate_item_horizontal
 layout dialog_database_info
 layout dialog_export_settings
+layout expanded_candidates_grid
 layout item_dictionary_entry
 layout item_dictionary_group_header
 layout item_dictionary_log

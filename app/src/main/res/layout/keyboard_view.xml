@@ -69,15 +69,13 @@
         android:layout_below="@id/candidates_layout"
         android:visibility="gone"
         android:background="@color/white"
-        android:elevation="10dp"
-        android:maxHeight="180dp">
+        android:elevation="10dp">
         
         <LinearLayout
             android:id="@+id/expanded_candidates_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:orientation="vertical">
             
             <!-- 扩展候选词将动态添加 -->
             

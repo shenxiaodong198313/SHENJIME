@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/keyboard_background">
+
+    <!-- 顶部拼音显示区域 -->
+    <TextView
+        android:id="@+id/expanded_pinyin_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:textSize="16sp"
+        android:textColor="@color/pinyin_text"
+        android:gravity="start|center_vertical"
+        android:minHeight="20dp"
+        android:background="@color/white" />
+    
+    <!-- 候选词网格区域 -->
+    <GridLayout
+        android:id="@+id/candidates_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="4"
+        android:rowCount="5"
+        android:padding="4dp"
+        android:background="@color/white">
+        
+        <!-- 候选词将动态添加 -->
+        
+    </GridLayout>
+    
+    <!-- 底部功能按钮区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:background="@color/white">
+        
+        <!-- 全/单切换按钮 -->
+        <TextView
+            android:id="@+id/toggle_full_single"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="全/单"
+            android:textSize="16sp"
+            android:textColor="@color/keyboard_text"
+            android:gravity="center"
+            android:padding="8dp"
+            android:layout_marginStart="8dp" />
+        
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        
+        <!-- 返回按钮 -->
+        <TextView
+            android:id="@+id/return_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="返回"
+            android:textSize="16sp"
+            android:textColor="@color/candidate_text_selected"
+            android:background="@drawable/candidate_item_background"
+            android:gravity="center"
+            android:padding="8dp"
+            android:layout_marginEnd="8dp" />
+        
+    </LinearLayout>
+
+</LinearLayout> 

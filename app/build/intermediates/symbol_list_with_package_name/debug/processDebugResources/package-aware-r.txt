@@ -3247,6 +3247,7 @@ id cache_measures
 id callMeasure
 id cancel_button
 id candidates_container
+id candidates_grid
 id candidates_horizontal_scroll
 id candidates_layout
 id cardStats
@@ -3338,6 +3339,7 @@ id expand_candidates_button
 id expanded_candidates_container
 id expanded_candidates_scroll
 id expanded_menu
+id expanded_pinyin_text
 id fade
 id fill
 id fill_horizontal
@@ -3527,6 +3529,7 @@ id ratio
 id rectangles
 id report_drawn
 id restart
+id return_button
 id reverse
 id reverseSawtooth
 id right
@@ -3645,6 +3648,7 @@ id title
 id titleDividerNoCustom
 id title_template
 id toggle
+id toggle_full_single
 id toolbar
 id top
 id topPanel
@@ -3832,6 +3836,7 @@ layout activity_dictionary_manager
 layout activity_input_test
 layout activity_log_detail
 layout activity_main
+layout candidate_grid_item
 layout candidate_item
 layout candidate_item_horizontal
 layout custom_dialog
@@ -3852,6 +3857,7 @@ layout design_text_input_end_icon
 layout design_text_input_start_icon
 layout dialog_database_info
 layout dialog_export_settings
+layout expanded_candidates_grid
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_dictionary_entry

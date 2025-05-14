@@ -14,6 +14,7 @@ import android.widget.HorizontalScrollView
 import android.widget.ImageButton
 import android.widget.ScrollView
 import android.view.LayoutInflater
+import android.widget.GridLayout
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.data.DictionaryManager
 import com.shenji.aikeyboard.data.WordFrequency
@@ -45,7 +46,16 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
     private lateinit var expandButton: ImageButton
     private lateinit var expandedCandidatesScroll: ScrollView
     private lateinit var expandedCandidatesContainer: LinearLayout
+    private lateinit var candidatesGrid: GridLayout
     private var isExpandedCandidatesVisible = false
+    
+    // 全拼/单字切换相关
+    private var isSingleCharMode = false
+    private lateinit var toggleFullSingleButton: TextView
+    
+    // 用于单字模式的拼音分割
+    private var pinyinSyllables = listOf<String>()
+    private var currentSyllableIndex = 0
     
     // 是否是大写模式
     private var isCapsOn = false
@@ -131,6 +141,33 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         if (isExpandedCandidatesVisible) {
             // 显示扩展候选词
             if (::expandedCandidatesScroll.isInitialized) {
+                // 清空容器
+                expandedCandidatesContainer.removeAllViews()
+                
+                // 加载新的候选词网格布局
+                val expandedView = layoutInflater.inflate(R.layout.expanded_candidates_grid, expandedCandidatesContainer, false)
+                expandedCandidatesContainer.addView(expandedView)
+                
+                // 初始化网格布局和按钮
+                candidatesGrid = expandedView.findViewById(R.id.candidates_grid)
+                
+                // 初始化拼音显示
+                val expandedPinyinText = expandedView.findViewById<TextView>(R.id.expanded_pinyin_text)
+                expandedPinyinText.text = currentComposing.toString()
+                
+                // 初始化全/单切换按钮
+                toggleFullSingleButton = expandedView.findViewById(R.id.toggle_full_single)
+                toggleFullSingleButton.text = if (isSingleCharMode) "全/单" else "全·单"
+                toggleFullSingleButton.setOnClickListener {
+                    toggleSingleCharMode()
+                }
+                
+                // 初始化返回按钮
+                val returnButton = expandedView.findViewById<TextView>(R.id.return_button)
+                returnButton.setOnClickListener {
+                    toggleExpandedCandidates()
+                }
+                
                 expandedCandidatesScroll.visibility = View.VISIBLE
                 expandButton.setImageResource(android.R.drawable.arrow_up_float)
                 
@@ -140,7 +177,14 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
                 }
                 
                 // 填充扩展候选词
-                showExpandedCandidates(currentCandidates)
+                if (isSingleCharMode) {
+                    // 单字模式
+                    splitPinyinAndShowSingleChars()
+                } else {
+                    // 全拼模式
+                    showCandidatesInGrid(currentCandidates)
+                }
+                
                 Timber.d("展开候选词区域，显示${currentCandidates.size}个候选词")
             } else {
                 Timber.e("expandedCandidatesScroll未初始化，无法显示展开候选词")
@@ -163,6 +207,208 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
             } else {
                 Timber.e("expandedCandidatesScroll未初始化，无法隐藏展开候选词")
             }
+        }
+    }
+
+    /**
+     * 切换全拼/单字模式
+     */
+    private fun toggleSingleCharMode() {
+        isSingleCharMode = !isSingleCharMode
+        
+        // 更新切换按钮文本
+        if (::toggleFullSingleButton.isInitialized) {
+            toggleFullSingleButton.text = if (isSingleCharMode) "全/单" else "全·单"
+        }
+        
+        if (isSingleCharMode) {
+            // 切换到单字模式
+            splitPinyinAndShowSingleChars()
+        } else {
+            // 切换回全拼模式
+            showCandidatesInGrid(currentCandidates)
+        }
+    }
+    
+    /**
+     * 拆分拼音并显示单字候选
+     */
+    private fun splitPinyinAndShowSingleChars() {
+        val pinyin = currentComposing.toString().trim()
+        
+        if (pinyin.isEmpty()) return
+        
+        // 分割拼音
+        pinyinSyllables = splitPinyinIntoSyllables(pinyin).split(" ")
+        currentSyllableIndex = 0
+        
+        // 显示第一个音节的单字候选
+        showSingleCharCandidates(pinyinSyllables[currentSyllableIndex])
+    }
+    
+    /**
+     * 显示指定拼音的单字候选词
+     */
+    private fun showSingleCharCandidates(syllable: String) {
+        // 清空网格
+        if (::candidatesGrid.isInitialized) {
+            candidatesGrid.removeAllViews()
+        } else {
+            return
+        }
+        
+        coroutineScope.launch {
+            val singleChars = withContext(Dispatchers.IO) {
+                try {
+                    // 查询单字
+                    DictionaryManager.instance.searchWords(syllable, 20)
+                        .filter { it.word.length == 1 } // 只保留单字
+                } catch (e: Exception) {
+                    Timber.e(e, "查询单字候选词出错")
+                    emptyList()
+                }
+            }
+            
+            // 显示单字候选在网格中
+            showCandidatesInGrid(singleChars)
+        }
+    }
+    
+    /**
+     * 在网格中显示候选词
+     */
+    private fun showCandidatesInGrid(candidates: List<WordFrequency>) {
+        if (!::candidatesGrid.isInitialized) return
+        
+        // 清空网格
+        candidatesGrid.removeAllViews()
+        
+        if (candidates.isEmpty()) return
+        
+        // 添加候选词到网格
+        candidates.forEachIndexed { index, candidate ->
+            val candidateView = layoutInflater.inflate(R.layout.candidate_grid_item, candidatesGrid, false) as TextView
+            candidateView.text = candidate.word
+            
+            candidateView.setOnClickListener {
+                if (isSingleCharMode) {
+                    handleSingleCharSelection(candidate.word)
+                } else {
+                    submitCandidate(index)
+                }
+            }
+            
+            candidatesGrid.addView(candidateView)
+        }
+    }
+    
+    /**
+     * 处理单字候选词的选择
+     */
+    private fun handleSingleCharSelection(selectedChar: String) {
+        // 添加选定的字符到输入
+        val inputConnection = currentInputConnection ?: return
+        
+        // 如果还有下一个拼音音节
+        if (currentSyllableIndex < pinyinSyllables.size - 1) {
+            // 提交当前选择的字符
+            inputConnection.commitText(selectedChar, 1)
+            
+            // 前进到下一个拼音音节
+            currentSyllableIndex++
+            
+            // 显示下一个拼音音节的候选字
+            showSingleCharCandidates(pinyinSyllables[currentSyllableIndex])
+        } else {
+            // 已经是最后一个音节了，提交并清空
+            inputConnection.commitText(selectedChar, 1)
+            
+            // 清空状态
+            currentComposing.clear()
+            updatePinyinText()
+            clearCandidates()
+            currentCandidates = emptyList()
+            
+            // 关闭扩展候选词
+            toggleExpandedCandidates()
+        }
+    }
+    
+    /**
+     * 拆分拼音为音节
+     * 例如："nihao" -> "ni hao"
+     */
+    private fun splitPinyinIntoSyllables(pinyin: String): String {
+        if (pinyin.isBlank()) return pinyin
+        
+        // 如果已经包含空格，直接返回
+        if (pinyin.contains(" ")) return pinyin
+        
+        try {
+            // 中文拼音音节列表（按长度排序，优先匹配较长的）
+            val pinyinSyllables = listOf(
+                // 常见四字母及以上音节
+                "zhuang", "chuang", "shuang", "zhang", "chang", "shang", "zheng", "cheng", "sheng",
+                "zhong", "chong", "jiang", "qiang", "xiang", "zhou", "chou", "shou", "zhen", "chen", "shen",
+                "zhan", "chan", "shan", "bing", "ping", "ding", "ting", "ning", "ling", "jing", "qing", "xing", "ying",
+                "zeng", "ceng", "seng", "duan", "tuan", "nuan", "luan", "guan", "kuan", "huan", "quan", "xuan", "yuan",
+                // 常见三字母音节
+                "zhi", "chi", "shi", "ang", "eng", "ing", "ong", "bai", "pai", "mai", "dai", "tai", "nai", "lai", "gai", "kai", "hai", "zai", "cai", "sai",
+                "ban", "pan", "man", "fan", "dan", "tan", "nan", "lan", "gan", "kan", "han", "zan", "can", "san",
+                "bao", "pao", "mao", "dao", "tao", "nao", "lao", "gao", "kao", "hao", "zao", "cao", "sao",
+                "bie", "pie", "mie", "die", "tie", "nie", "lie", "jie", "qie", "xie", "yan", "jin", "qin", "xin",
+                "bin", "pin", "min", "nin", "lin", "jin", "qin", "xin", "yin", "jiu", "qiu", "xiu",
+                "bei", "pei", "mei", "fei", "dei", "tei", "nei", "lei", "gei", "kei", "hei", "zei", "cei", "sei",
+                "ben", "pen", "men", "fen", "den", "nen", "gen", "ken", "hen", "zen", "cen", "sen",
+                "zhu", "chu", "shu", "zhe", "che", "she", "zha", "cha", "sha", "zou", "cou", "sou", "zui", "cui", "sui", "zun", "cun", "sun",
+                "zhuo", "chuo", "shuo", "zhen", "chen", "shen",
+                // k开头音节补充
+                "kuai", "kuan", "kuang",
+                // 常见双字母音节
+                "ba", "pa", "ma", "fa", "da", "ta", "na", "la", "ga", "ka", "ha", "za", "ca", "sa",
+                "bo", "po", "mo", "fo", "lo", "wo", "yo", "zo", "co", "so",
+                "bi", "pi", "mi", "di", "ti", "ni", "li", "ji", "qi", "xi", "yi",
+                "bu", "pu", "mu", "fu", "du", "tu", "nu", "lu", "gu", "ku", "hu", "zu", "cu", "su", "wu", "yu",
+                "ai", "ei", "ui", "ao", "ou", "iu", "ie", "ue", "ve", "er", "an", "en", "in", "un", "vn",
+                "wu", "yu", "ju", "qu", "xu", "zi", "ci", "si", "ge", "he", "ne", "le", "me", "de", "te",
+                "re", "ze", "ce", "se", "ye", "zh", "ch", "sh",
+                // 单字母音节
+                "a", "o", "e", "i", "u", "v"
+            )
+            
+            // 贪婪匹配：从输入的开始位置尝试匹配最长的拼音音节
+            var result = ""
+            var position = 0
+            
+            while (position < pinyin.length) {
+                var matched = false
+                
+                // 尝试匹配最长的音节
+                for (syllable in pinyinSyllables) {
+                    if (position + syllable.length <= pinyin.length &&
+                        pinyin.substring(position, position + syllable.length) == syllable) {
+                        // 匹配到音节，添加到结果中
+                        result += if (result.isEmpty()) syllable else " $syllable"
+                        position += syllable.length
+                        matched = true
+                        break
+                    }
+                }
+                
+                // 如果没有匹配到任何音节，只好单字符处理
+                if (!matched) {
+                    val char = pinyin[position]
+                    result += if (result.isEmpty()) char.toString() else " $char"
+                    position++
+                }
+            }
+            
+            Timber.d("拼音分词转换: '$pinyin' -> '$result'")
+            return result
+            
+        } catch (e: Exception) {
+            Timber.e(e, "拼音分词失败: ${e.message}")
+            return pinyin // 出错返回原始拼音
         }
     }
 
@@ -456,11 +702,26 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
             
             Timber.d("候选词数量: ${candidates.size}, 显示候选词")
             currentCandidates = candidates
+            
+            // 显示候选词
             showCandidates(candidates)
             
             // 如果扩展候选词视图已显示，更新它
             if (isExpandedCandidatesVisible && ::expandedCandidatesContainer.isInitialized) {
-                showExpandedCandidates(candidates)
+                if (::candidatesGrid.isInitialized) {
+                    // 使用新的网格布局显示
+                    if (isSingleCharMode) {
+                        splitPinyinAndShowSingleChars()
+                    } else {
+                        showCandidatesInGrid(candidates)
+                    }
+                    
+                    // 更新拼音显示
+                    val expandedPinyinText = expandedCandidatesContainer.findViewById<TextView>(R.id.expanded_pinyin_text)
+                    if (expandedPinyinText != null) {
+                        expandedPinyinText.text = currentComposing.toString()
+                    }
+                }
             }
         }
     }
@@ -737,6 +998,14 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
      */
     private fun submitCandidate(index: Int) {
         val inputConnection = currentInputConnection ?: return
+        
+        // 如果是单字模式且扩展候选词可见，不要关闭面板
+        if (isExpandedCandidatesVisible && isSingleCharMode && index >= 0 && index < currentCandidates.size) {
+            // 在单字模式下选择候选词的特殊处理
+            val selectedText = currentCandidates[index].word
+            handleSingleCharSelection(selectedText)
+            return
+        }
         
         // 隐藏扩展候选词视图
         if (isExpandedCandidatesVisible && ::expandedCandidatesScroll.isInitialized) {
