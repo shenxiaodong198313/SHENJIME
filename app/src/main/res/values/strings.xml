@@ -36,4 +36,10 @@
     <string name="copy_logs">复制日志</string>
     <string name="clear_logs">清除日志</string>
     <string name="input_hint">点击此处输入文字</string>
+    
+    <!-- 拼音分词测试相关 -->
+    <string name="pinyin_test">拼音分词测试</string>
+    <string name="pinyin_test_title">拼音分词测试结果</string>
+    <string name="pinyin_test_running">正在测试拼音分词效果...</string>
+    <string name="pinyin_test_complete">拼音分词测试完成</string>
 </resources> 

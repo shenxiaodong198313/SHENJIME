@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#FF000000</color>
+    <color name="candidate_other">#9E9E9E</color>
     <color name="candidate_text">#000000</color>
     <color name="candidate_text_selected">#4285F4</color>
     <color name="colorAccent">#FF4081</color>
@@ -51,6 +52,10 @@
     <string name="log_copied">日志内容已复制到剪贴板</string>
     <string name="log_details">日志详情</string>
     <string name="no_logs">没有发现日志文件</string>
+    <string name="pinyin_test">拼音分词测试</string>
+    <string name="pinyin_test_complete">拼音分词测试完成</string>
+    <string name="pinyin_test_running">正在测试拼音分词效果...</string>
+    <string name="pinyin_test_title">拼音分词测试结果</string>
     <string name="realm_status">Realm词典连接状态: %1$s</string>
     <string name="storage_permission_required">需要存储权限以保存数据库文件</string>
     <string name="view_logs">查看日志</string>

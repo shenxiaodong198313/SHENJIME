@@ -75,6 +75,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnSettings;
 
   @NonNull
+  public final Button btnTestPinyin;
+
+  @NonNull
   public final LinearLayout dictProcessContainer;
 
   @NonNull
@@ -114,7 +117,7 @@ public final class ActivityMainBinding implements ViewBinding {
       @NonNull Button btnProcessBase3, @NonNull Button btnProcessBase4,
       @NonNull Button btnProcessBase5, @NonNull Button btnProcessBase6,
       @NonNull Button btnProcessBase7, @NonNull Button btnProcessChars,
-      @NonNull Button btnResetBuild, @NonNull Button btnSettings,
+      @NonNull Button btnResetBuild, @NonNull Button btnSettings, @NonNull Button btnTestPinyin,
       @NonNull LinearLayout dictProcessContainer, @NonNull LinearLayout mainButtonContainer,
       @NonNull ConstraintLayout mainContainer, @NonNull ProgressBar pbDictExport,
       @NonNull Toolbar toolbar, @NonNull TextView tvDbPath, @NonNull TextView tvDictProcessTitle,
@@ -138,6 +141,7 @@ public final class ActivityMainBinding implements ViewBinding {
     this.btnProcessChars = btnProcessChars;
     this.btnResetBuild = btnResetBuild;
     this.btnSettings = btnSettings;
+    this.btnTestPinyin = btnTestPinyin;
     this.dictProcessContainer = dictProcessContainer;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
@@ -280,6 +284,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnTestPinyin;
+      Button btnTestPinyin = ViewBindings.findChildViewById(rootView, id);
+      if (btnTestPinyin == null) {
+        break missingId;
+      }
+
       id = R.id.dictProcessContainer;
       LinearLayout dictProcessContainer = ViewBindings.findChildViewById(rootView, id);
       if (dictProcessContainer == null) {
@@ -345,9 +355,9 @@ public final class ActivityMainBinding implements ViewBinding {
       return new ActivityMainBinding((ConstraintLayout) rootView, btnBuildRealmDb, btnCancelExport,
           btnDictManager, btnExportDb, btnInputTest, btnLogs, btnMergeDictionaries, btnProcessBase1,
           btnProcessBase2, btnProcessBase3, btnProcessBase4, btnProcessBase5, btnProcessBase6,
-          btnProcessBase7, btnProcessChars, btnResetBuild, btnSettings, dictProcessContainer,
-          mainButtonContainer, mainContainer, pbDictExport, toolbar, tvDbPath, tvDictProcessTitle,
-          tvDictStatus, tvHelpText, tvStatus, tvTitle);
+          btnProcessBase7, btnProcessChars, btnResetBuild, btnSettings, btnTestPinyin,
+          dictProcessContainer, mainButtonContainer, mainContainer, pbDictExport, toolbar, tvDbPath,
+          tvDictProcessTitle, tvDictStatus, tvHelpText, tvStatus, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -60,7 +60,11 @@ class DictionaryManager private constructor() {
         // 记录开始时间
         val startTime = System.currentTimeMillis()
         
-        // 直接从Realm词库查询
+        // 使用新的候选词策略查询
+        val strategy = CandidateStrategyFactory.getStrategy(normalizedPrefix.length)
+        Timber.d("使用${strategy.getStrategyName()}搜索'$normalizedPrefix'(原始输入:'$prefix')")
+        
+        // 从Realm词库查询
         val realmResults = repository.searchEntries(normalizedPrefix, limit, excludeTypes)
         
         // 记录搜索时间
@@ -99,18 +103,16 @@ class DictionaryManager private constructor() {
     }
     
     /**
-     * 规范化拼音
-     * 将拼音转换为带空格分词的格式，以匹配词库中的拼音
+     * 规范化拼音，确保拼音音节之间有空格分隔
+     * @param pinyin 原始拼音输入
+     * @return 规范化后的拼音
      */
     private fun normalizePinyin(pinyin: String): String {
-        // 调用repository的normalizePinyin方法，获取带空格的拼音
-        return try {
-            repository.normalizePinyin(pinyin)
-        } catch (e: Exception) {
-            Timber.e(e, "拼音规范化失败: ${e.message}")
-            // 出错时返回原始拼音（至少确保小写）
-            pinyin.lowercase().trim()
-        }
+        val normalized = com.shenji.aikeyboard.utils.PinyinUtils.normalize(pinyin)
+        Timber.d("拼音转换: '$pinyin' -> '$normalized'")
+        Timber.d("规范化后的拼音: '$normalized'")
+        
+        return normalized
     }
     
     /**

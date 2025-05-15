@@ -24,6 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import com.shenji.aikeyboard.utils.PinyinUtils
 
 /**
  * 神迹输入法服务，继承自InputMethodService，实现基本的输入法功能
@@ -335,81 +336,12 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
     }
     
     /**
-     * 拆分拼音为音节
-     * 例如："nihao" -> "ni hao"
+     * 将无空格拼音转换为带空格的拼音音节（如beijing -> bei jing）
+     * @deprecated 使用 PinyinSplitter.split() 替代
      */
+    @Deprecated("使用PinyinSplitter.split()替代", ReplaceWith("com.shenji.aikeyboard.data.PinyinSplitter.split(pinyin)"))
     private fun splitPinyinIntoSyllables(pinyin: String): String {
-        if (pinyin.isBlank()) return pinyin
-        
-        // 如果已经包含空格，直接返回
-        if (pinyin.contains(" ")) return pinyin
-        
-        try {
-            // 中文拼音音节列表（按长度排序，优先匹配较长的）
-            val pinyinSyllables = listOf(
-                // 常见四字母及以上音节
-                "zhuang", "chuang", "shuang", "zhang", "chang", "shang", "zheng", "cheng", "sheng",
-                "zhong", "chong", "jiang", "qiang", "xiang", "zhou", "chou", "shou", "zhen", "chen", "shen",
-                "zhan", "chan", "shan", "bing", "ping", "ding", "ting", "ning", "ling", "jing", "qing", "xing", "ying",
-                "zeng", "ceng", "seng", "duan", "tuan", "nuan", "luan", "guan", "kuan", "huan", "quan", "xuan", "yuan",
-                // 常见三字母音节
-                "zhi", "chi", "shi", "ang", "eng", "ing", "ong", "bai", "pai", "mai", "dai", "tai", "nai", "lai", "gai", "kai", "hai", "zai", "cai", "sai",
-                "ban", "pan", "man", "fan", "dan", "tan", "nan", "lan", "gan", "kan", "han", "zan", "can", "san",
-                "bao", "pao", "mao", "dao", "tao", "nao", "lao", "gao", "kao", "hao", "zao", "cao", "sao",
-                "bie", "pie", "mie", "die", "tie", "nie", "lie", "jie", "qie", "xie", "yan", "jin", "qin", "xin",
-                "bin", "pin", "min", "nin", "lin", "jin", "qin", "xin", "yin", "jiu", "qiu", "xiu",
-                "bei", "pei", "mei", "fei", "dei", "tei", "nei", "lei", "gei", "kei", "hei", "zei", "cei", "sei",
-                "ben", "pen", "men", "fen", "den", "nen", "gen", "ken", "hen", "zen", "cen", "sen",
-                "zhu", "chu", "shu", "zhe", "che", "she", "zha", "cha", "sha", "zou", "cou", "sou", "zui", "cui", "sui", "zun", "cun", "sun",
-                "zhuo", "chuo", "shuo", "zhen", "chen", "shen",
-                // k开头音节补充
-                "kuai", "kuan", "kuang",
-                // 常见双字母音节
-                "ba", "pa", "ma", "fa", "da", "ta", "na", "la", "ga", "ka", "ha", "za", "ca", "sa",
-                "bo", "po", "mo", "fo", "lo", "wo", "yo", "zo", "co", "so",
-                "bi", "pi", "mi", "di", "ti", "ni", "li", "ji", "qi", "xi", "yi",
-                "bu", "pu", "mu", "fu", "du", "tu", "nu", "lu", "gu", "ku", "hu", "zu", "cu", "su", "wu", "yu",
-                "ai", "ei", "ui", "ao", "ou", "iu", "ie", "ue", "ve", "er", "an", "en", "in", "un", "vn",
-                "wu", "yu", "ju", "qu", "xu", "zi", "ci", "si", "ge", "he", "ne", "le", "me", "de", "te",
-                "re", "ze", "ce", "se", "ye", "zh", "ch", "sh",
-                // 单字母音节
-                "a", "o", "e", "i", "u", "v"
-            )
-            
-            // 贪婪匹配：从输入的开始位置尝试匹配最长的拼音音节
-            var result = ""
-            var position = 0
-            
-            while (position < pinyin.length) {
-                var matched = false
-                
-                // 尝试匹配最长的音节
-                for (syllable in pinyinSyllables) {
-                    if (position + syllable.length <= pinyin.length &&
-                        pinyin.substring(position, position + syllable.length) == syllable) {
-                        // 匹配到音节，添加到结果中
-                        result += if (result.isEmpty()) syllable else " $syllable"
-                        position += syllable.length
-                        matched = true
-                        break
-                    }
-                }
-                
-                // 如果没有匹配到任何音节，只好单字符处理
-                if (!matched) {
-                    val char = pinyin[position]
-                    result += if (result.isEmpty()) char.toString() else " $char"
-                    position++
-                }
-            }
-            
-            Timber.d("拼音分词转换: '$pinyin' -> '$result'")
-            return result
-            
-        } catch (e: Exception) {
-            Timber.e(e, "拼音分词失败: ${e.message}")
-            return pinyin // 出错返回原始拼音
-        }
+        return com.shenji.aikeyboard.data.PinyinSplitter.split(pinyin)
     }
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
@@ -748,218 +680,89 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
             return
         }
         
-        // 显示候选词（限制为前10个）
-        val displayCandidates = candidates.take(10)
-        Timber.d("显示 ${displayCandidates.size} 个候选词")
-        displayCandidates.forEachIndexed { index, candidate ->
+        // 根据输入长度调整候选词显示风格
+        val pinyin = currentComposing.toString().trim()
+        val pinyinLength = pinyin.replace(" ", "").length
+        
+        // 直接显示候选词，保持原始排序（数据层已经按照精确匹配、词频等规则排序）
+        Timber.d("显示${Math.min(candidates.size, 10)}个候选词，保持原排序")
+        displayCandidates(candidates.take(10))
+        
+        // 根据情况添加提示标记
+        when {
+            // 2-3字符输入
+            pinyinLength <= 3 -> {
+                // 检查是否有更多候选词
+                if (candidates.size > 10) {
+                    addSuggestionHint()
+                }
+            }
+            
+            // 4字符输入
+            pinyinLength == 4 -> {
+                // 检查是否有长词
+                val hasLongWords = candidates.any { it.word.length > 4 }
+                if (hasLongWords || candidates.size > 10) {
+                    addScrollHint()
+                }
+            }
+            
+            // 5字以上输入
+            else -> {
+                // 检查是否有额外候选词
+                if (candidates.size > 10) {
+                    addScrollHint()
+                }
+            }
+        }
+    }
+    
+    /**
+     * 显示候选词列表
+     */
+    private fun displayCandidates(candidates: List<WordFrequency>) {
+        candidates.forEachIndexed { index, candidate ->
             Timber.d("添加候选词 #$index: ${candidate.word}")
             addHorizontalCandidate(candidate.word, candidate.frequency, index)
         }
     }
     
     /**
-     * 显示扩展候选词视图
+     * 添加联想提示标记
      */
-    private fun showExpandedCandidates(candidates: List<WordFrequency>) {
-        // 防止空指针异常
-        if (!::expandedCandidatesContainer.isInitialized) {
-            Timber.w("expandedCandidatesContainer尚未初始化，无法显示扩展候选词")
-            return
+    private fun addSuggestionHint() {
+        // 添加一个提示箭头，表示有更多联想候选词
+        val hintView = TextView(this)
+        hintView.text = "···" // 三个点表示有更多
+        hintView.textSize = 16f
+        hintView.setTextColor(getColor(R.color.candidate_other))
+        hintView.setPadding(15, 10, 15, 10)
+        
+        // 点击展开更多候选词
+        hintView.setOnClickListener {
+            toggleExpandedCandidates()
         }
         
-        Timber.d("开始显示扩展候选词，清空当前扩展候选区")
-        expandedCandidatesContainer.removeAllViews()
+        candidatesContainer.addView(hintView)
+    }
+    
+    /**
+     * 添加滚动提示标记
+     */
+    private fun addScrollHint() {
+        // 添加一个提示箭头，表示可以滚动查看更多
+        val hintView = TextView(this)
+        hintView.text = "→" // 箭头表示可以滚动
+        hintView.textSize = 16f
+        hintView.setTextColor(getColor(R.color.candidate_other))
+        hintView.setPadding(15, 10, 15, 10)
         
-        // 添加拼音标签
-        val pinyinLabelView = TextView(this)
-        pinyinLabelView.text = currentComposing.toString()
-        pinyinLabelView.textSize = 14f
-        pinyinLabelView.setTextColor(getColor(R.color.pinyin_text))
-        pinyinLabelView.setPadding(20, 10, 10, 10)
-        expandedCandidatesContainer.addView(pinyinLabelView)
-        
-        if (candidates.isEmpty()) {
-            // 如果没有候选词，显示当前输入的文本
-            if (currentComposing.isNotEmpty()) {
-                Timber.d("没有扩展候选词，显示当前输入: ${currentComposing}")
-                val candidateView = layoutInflater.inflate(R.layout.candidate_item, expandedCandidatesContainer, false) as TextView
-                candidateView.text = currentComposing.toString()
-                candidateView.setOnClickListener {
-                    submitCandidate(0)
-                }
-                expandedCandidatesContainer.addView(candidateView)
-            }
-            return
+        // 点击展开网格候选词视图
+        hintView.setOnClickListener {
+            toggleExpandedCandidates()
         }
         
-        // 添加一个分类标题
-        val categoriesView = LinearLayout(this)
-        categoriesView.orientation = LinearLayout.HORIZONTAL
-        categoriesView.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        
-        // 添加分类选项卡
-        val categories = arrayOf("拼音", "笔画", "英文", "人名")
-        categories.forEachIndexed { index, category ->
-            val tabView = TextView(this)
-            tabView.text = category
-            tabView.textSize = 14f
-            tabView.gravity = android.view.Gravity.CENTER
-            tabView.setPadding(16, 12, 16, 12)
-            
-            // 第一个选项卡（拼音）高亮
-            if (index == 0) {
-                tabView.setTextColor(getColor(R.color.candidate_text_selected))
-                tabView.setBackgroundResource(R.drawable.candidate_item_background)
-            } else {
-                tabView.setTextColor(getColor(R.color.pinyin_text))
-            }
-            
-            // 设置宽度
-            val layoutParams = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1.0f
-            )
-            tabView.layoutParams = layoutParams
-            
-            categoriesView.addView(tabView)
-        }
-        
-        expandedCandidatesContainer.addView(categoriesView)
-        
-        // 添加分隔线
-        val dividerView = View(this)
-        dividerView.setBackgroundColor(getColor(R.color.divider))
-        val dividerParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            1
-        )
-        dividerView.layoutParams = dividerParams
-        expandedCandidatesContainer.addView(dividerView)
-        
-        // 分组显示，4个候选词一行
-        val displayRows = (candidates.size + 3) / 4
-        for (row in 0 until displayRows) {
-            val rowLayout = LinearLayout(this)
-            rowLayout.orientation = LinearLayout.HORIZONTAL
-            rowLayout.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            
-            // 添加一行中的候选词（最多4个）
-            for (col in 0 until 4) {
-                val index = row * 4 + col
-                if (index < candidates.size) {
-                    val candidate = candidates[index]
-                    val candidateView = TextView(this)
-                    candidateView.text = candidate.word
-                    candidateView.textSize = 16f
-                    candidateView.setTextColor(getColor(R.color.candidate_text))
-                    candidateView.gravity = android.view.Gravity.CENTER
-                    candidateView.setPadding(0, 16, 0, 16)
-                    
-                    // 设置宽度平均分配
-                    val layoutParams = LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1.0f
-                    )
-                    candidateView.layoutParams = layoutParams
-                    
-                    candidateView.setOnClickListener {
-                        submitCandidate(index)
-                    }
-                    
-                    rowLayout.addView(candidateView)
-                } else {
-                    // 添加空白占位
-                    val emptyView = View(this)
-                    val layoutParams = LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        1.0f
-                    )
-                    emptyView.layoutParams = layoutParams
-                    rowLayout.addView(emptyView)
-                }
-            }
-            
-            expandedCandidatesContainer.addView(rowLayout)
-            
-            // 添加行分隔线
-            if (row < displayRows - 1) {
-                val rowDivider = View(this)
-                rowDivider.setBackgroundColor(getColor(R.color.divider))
-                val dividerParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    1
-                )
-                rowDivider.layoutParams = dividerParams
-                expandedCandidatesContainer.addView(rowDivider)
-            }
-        }
-        
-        // 添加底部导航栏
-        val navigationBar = LinearLayout(this)
-        navigationBar.orientation = LinearLayout.HORIZONTAL
-        navigationBar.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        navigationBar.setPadding(0, 16, 0, 16)
-        
-        // 添加全/单按钮
-        val toggleButton = TextView(this)
-        toggleButton.text = "全·单"
-        toggleButton.textSize = 14f
-        toggleButton.setTextColor(getColor(R.color.pinyin_text))
-        toggleButton.gravity = android.view.Gravity.CENTER
-        toggleButton.setPadding(16, 8, 16, 8)
-        toggleButton.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        navigationBar.addView(toggleButton)
-        
-        // 添加中间的空白
-        val spaceView = View(this)
-        spaceView.layoutParams = LinearLayout.LayoutParams(
-            0,
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            1.0f
-        )
-        navigationBar.addView(spaceView)
-        
-        // 添加返回按钮
-        val returnButton = TextView(this)
-        returnButton.text = "返回"
-        returnButton.textSize = 16f
-        returnButton.setTextColor(getColor(R.color.candidate_text_selected))
-        returnButton.gravity = android.view.Gravity.CENTER
-        returnButton.setPadding(16, 8, 16, 8)
-        returnButton.setBackgroundResource(R.drawable.candidate_item_background)
-        returnButton.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        returnButton.setOnClickListener {
-            toggleExpandedCandidates() // 点击返回按钮收起候选词区域
-            
-            // 额外的检查，确保键盘状态正确设置
-            if (!isExpandedCandidatesVisible && ::keyboardView.isInitialized) {
-                keyboardView.post {
-                    keyboardView.visibility = View.VISIBLE
-                    Timber.d("返回按钮点击后确保键盘视图可见")
-                }
-            }
-        }
-        navigationBar.addView(returnButton)
-        
-        expandedCandidatesContainer.addView(navigationBar)
+        candidatesContainer.addView(hintView)
     }
     
     /**
@@ -1027,19 +830,12 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         // 如果索引在候选词列表范围内
         if (index >= 0 && index < currentCandidates.size) {
             val selectedText = currentCandidates[index].word
-            inputConnection.commitText(selectedText, 1)
-            Timber.d("提交候选词: $selectedText")
+            // 使用handleCandidateSelection处理候选词选择逻辑
+            handleCandidateSelection(selectedText)
         } else if (currentComposing.isNotEmpty()) {
             // 没有候选词或索引超出范围，提交当前输入
-            inputConnection.commitText(currentComposing.toString(), 1)
-            Timber.d("无候选词，直接提交: ${currentComposing.toString()}")
+            handleCandidateSelection(currentComposing.toString())
         }
-        
-        // 清空当前输入和候选词
-        currentComposing.clear()
-        updatePinyinText()
-        clearCandidates()
-        currentCandidates = emptyList()
     }
     
     /**
@@ -1121,5 +917,48 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         }
         
         return super.onKeyDown(keyCode, event)
+    }
+
+    /**
+     * 处理候选词选择
+     */
+    private fun handleCandidateSelection(word: String) {
+        val ic = currentInputConnection ?: return
+        
+        // 清除当前正在输入的拼音文本
+        Timber.d("选择候选词：'$word'，当前输入：'$currentComposing'")
+        
+        if (!currentComposing.isNullOrEmpty()) {
+            // 记录当前选择的词语和输入的拼音
+            val pinyin = currentComposing.toString()
+            Timber.d("用户查询候选词: '$pinyin'")
+            
+            val normalizedPinyin = PinyinUtils.normalize(pinyin)
+            Timber.d("拼音转换: '$pinyin' -> '$normalizedPinyin'")
+            
+            // 将正在输入的拼音分词
+            val pinyinSyllables = normalizedPinyin.split(" ")
+            
+            // 清空当前输入内容
+            currentComposing.clear()
+            updatePinyinText()
+        }
+        
+        // 将选中的候选词添加到输入框
+        ic.commitText(word, 1)
+        
+        // 清除候选词
+        clearCandidates()
+        
+        // 隐藏扩展的候选词区域
+        if (isExpandedCandidatesVisible) {
+            expandedCandidatesScroll.visibility = View.GONE
+            isExpandedCandidatesVisible = false
+            if (::expandButton.isInitialized) {
+                expandButton.setImageResource(android.R.drawable.arrow_down_float)
+            }
+        }
+        
+        Timber.d("候选词选择完成")
     }
 } 

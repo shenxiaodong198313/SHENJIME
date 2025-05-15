@@ -7,6 +7,7 @@ import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
@@ -26,6 +27,7 @@ import java.io.File
 import java.io.InputStreamReader
 import java.util.UUID
 import kotlin.math.min
+import com.shenji.aikeyboard.utils.PinyinUtils
 
 class MainActivity : AppCompatActivity() {
 
@@ -76,6 +78,11 @@ class MainActivity : AppCompatActivity() {
         
         binding.btnInputTest.setOnClickListener {
             openInputTest()
+        }
+        
+        // 添加测试拼音分词按钮点击事件
+        binding.btnTestPinyin.setOnClickListener {
+            testPinyinSplitter()
         }
         
         // 添加构建Realm实例按钮点击事件
@@ -444,6 +451,31 @@ class MainActivity : AppCompatActivity() {
         Timber.d("打开输入测试")
         val intent = Intent(this, InputTestActivity::class.java)
         startActivity(intent)
+    }
+    
+    /**
+     * 测试拼音分词器效果
+     */
+    private fun testPinyinSplitter() {
+        lifecycleScope.launch {
+            // 显示加载提示
+            Toast.makeText(this@MainActivity, getString(R.string.pinyin_test_running), Toast.LENGTH_SHORT).show()
+            
+            // 在IO线程中执行测试
+            val result = withContext(Dispatchers.IO) {
+                PinyinUtils.testPinyinSplitter()
+            }
+            
+            // 显示结果对话框
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle(getString(R.string.pinyin_test_title))
+                .setMessage(result)
+                .setPositiveButton("确定", null)
+                .show()
+                
+            // 记录日志
+            Timber.i(getString(R.string.pinyin_test_complete))
+        }
     }
     
     /**

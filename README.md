@@ -209,67 +209,58 @@
        .sortedByDescending { it.frequency } 
        .take(limit)
    ```
+## 完整汉语拼音音节表
 
-### 系统整合
-
-输入法通过Android的InputMethodService接口与系统集成，实现了完整的输入法生命周期管理和键盘事件处理。项目使用Timber日志框架记录详细日志，便于调试和用户问题排查。
-
-总之，神迹输入法是一个技术架构完善、功能实现充分的Android输入法应用，尤其在词典系统上实现了多层次、高性能的词条管理和查询功能，为用户提供了高效的中文输入体验。
-
-
-
-神迹输入法候选词规则整合方案
-一、拼音解析与分词策略
-1. 音节识别优先级
-完整音节匹配优先：优先识别标准拼音音节（如"ni"、"men"）
-贪婪匹配原则：长音节优先（如"chuan" > "chu"+"an"）
-多重分词尝试：对模糊情况尝试多种分词可能性（如"nimen"→"ni'men"/"ni'me'n"）
-2. 简拼与全拼混合支持
-声母简拼识别：支持"nm"→"n(i)m(en)"→"你们"
-混合输入模式：支持"nihaoma"与"nhm"等多种输入方式
-常用组合优化：预设高频简拼组合（如"dz"→"地址"、"sjsb"→"手机上班"）
-3. 容错机制
-音节边界识别：智能处理模糊音节边界（如"nian"可识别为"ni'an"或"n'ian"）
-拼音变体处理：处理常见拼音混淆（如"z/zh"、"c/ch"、"s/sh"）
-拼写错误纠正：自动纠正"ing/in"等常见输入错误
-二、候选词生成规则
-1. 多层级词典协同
-单字词典：输入单字母时（如"n"）展示所有该声母开头的常用汉字
-基础词典：主要提供2-3字常用词汇
-专业词典差异化查询：
-短输入(1-2字母)：主查单字词典
-中等输入(3-4字母)：主查基础词典
-长输入(5+字母)：扩展到联想词典
-2. 查询策略分级
-精确匹配：完全匹配输入拼音的词条（最高优先级）
-前缀匹配：以输入为开头的词条（次优先级）
-简拼匹配：匹配声母简拼组合（第三优先级）
-模糊匹配：处理拼音变体和常见错误（最低优先级）
-三、候选词排序机制
-1. 多维度权重模型
-基础词频(40%)：词条在语料库中的使用频率
-上下文关联(25%)：与前文内容的语义关联度
-用户习惯(25%)：用户历史选择频率
-输入场景(10%)：不同应用场景下的专业词汇调整
-2. 动态调整策略
-实时反馈：根据用户选择即时调整同类输入的排序
-场景识别：识别输入框类型（搜索框、聊天框等）调整候选词偏好
-时间衰减：随时间降低旧数据权重，保持排序与用户当前习惯一致
-四、特殊情况处理
-1. 输入长度边界处理
-单字母：显示该字母开头的所有常用汉字（按频率排序）
-双字母：优先匹配精确对应音节的单字和词组
-多字母无匹配：尝试拆分为有意义的子拼音组合
-2. 专业场景优化
-地址输入：地名词典权重提升
-人名输入：人名词典优先匹配
-数字/符号输入：智能融合到拼音匹配中
-五、实现架构建议
-1. 拼音处理流水线
-Apply to README.md
-2. 性能优化措施
-预编译词典：常用音节组合预先加载
-热词缓存：缓存高频查询结果
-异步查询：长输入时采用异步分批查询避免卡顿
-Realm索引优化：针对拼音字段增加不同类型索引
-此整合方案解决了当前候选词不准确的问题，同时提供了系统化、全面的输入法候选词规则设计。实施时可逐步实现各部分功能，优先解决用户反馈的具体问题。
+val PINYIN_SYLLABLES = setOf(
+    // 零声母
+    "a", "ai", "an", "ang", "ao",
+    "o", "ou",
+    "e", "en", "eng", "er",
+    "i", "ia", "ie", "iao", "iu", "iong", "in", "ing",
+    "u", "ua", "uo", "uai", "ui", "uan", "un", "uang", "ung",
+    "ü", "üe", "üan", "ün",
+    // 整体认读
+    "zhi", "chi", "shi", "ri", "zi", "ci", "si", "yi", "wu", "yu", "ye", "yue", "yuan", "yin", "yun", "ying",
+    // 声母 b
+    "ba", "bo", "bai", "bei", "bao", "ban", "ben", "bang", "beng", "bi", "bie", "biao", "bian", "bin", "bing", "bu",
+    // 声母 p
+    "pa", "po", "pai", "pao", "pou", "pan", "pen", "pei", "pang", "peng", "pi", "pie", "piao", "pian", "pin", "ping", "pu",
+    // 声母 m
+    "ma", "mo", "me", "mai", "mao", "mou", "man", "men", "mei", "mang", "meng", "mi", "mie", "miao", "miu", "mian", "min", "ming", "mu",
+    // 声母 f
+    "fa", "fo", "fei", "fou", "fan", "fen", "fang", "feng", "fu",
+    // 声母 d
+    "da", "de", "dai", "dai", "dan", "dang", "deng", "di", "die", "diao", "diu", "dian", "ding", "dong", "dou", "du", "duan", "dun", "duo",
+    // 声母 t
+    "ta", "te", "tai", "tao", "tou", "tan", "tang", "teng", "ti", "tie", "tiao", "tian", "ting", "tong", "tu", "tuan", "tun", "tuo",
+    // 声母 n
+    "na", "nai", "ne", "nao", "nou", "nan", "nen", "neng", "ni", "nie", "niao", "niu", "nian", "nin", "niang", "ning", "nong", "nu", "nuan", "nun", "nuo", "nü", "nüe",
+    // 声母 l
+    "la", "le", "lo", "lai", "lei", "lao", "lou", "lan", "lang", "leng", "li", "lie", "liao", "liu", "lian", "lin", "liang", "ling", "long", "lu", "luan", "lun", "luo", "lü", "lüe",
+    // 声母 g
+    "ga", "ge", "gai", "gei", "gao", "gou", "gan", "gen", "gang", "geng", "gong", "gu", "gua", "guai", "guan", "guang", "gui", "guo",
+    // 声母 k
+    "ka", "ke", "kai", "kao", "kou", "kan", "ken", "kang", "keng", "kong", "ku", "kua", "kuai", "kuan", "kuang", "kui", "kun", "kuo",
+    // 声母 h
+    "ha", "he", "hai", "hao", "hou", "han", "hen", "hang", "heng", "hong", "hu", "hua", "huai", "huan", "huang", "hui", "huo", "hun",
+    // 声母 j
+    "ji", "jia", "jie", "jiao", "jiu", "jian", "jin", "jiang", "jing", "jiong", "ju", "juan", "jun", "jue",
+    // 声母 q
+    "qi", "qia", "qie", "qiao", "qiu", "qian", "qin", "qiang", "qing", "qiong", "qu", "quan", "qun", "que",
+    // 声母 x
+    "xi", "xia", "xie", "xiao", "xiu", "xian", "xin", "xiang", "xing", "xiong", "xu", "xuan", "xun", "xue",
+    // 声母 zh
+    "zhi", "zha", "zhe", "zhi", "zhai", "zhao", "zhou", "zhan", "zhen", "zhang", "zheng", "zhong", "zhu", "zhua", "zhuai", "zhuan", "zhuang", "zhun", "zhui", "zhuo",
+    // 声母 ch
+    "chi", "cha", "che", "chi", "chai", "chao", "chou", "chan", "chen", "chang", "cheng", "chong", "chu", "chua", "chuai", "chuan", "chuang", "chun", "chui", "chuo",
+    // 声母 sh
+    "shi", "sha", "she", "shi", "shai", "shao", "shou", "shan", "shen", "shang", "sheng", "shu", "shua", "shuai", "shuan", "shuang", "shun", "shui", "shuo",
+    // 声母 r
+    "ri", "re", "rao", "rou", "ran", "ren", "rang", "reng", "rong", "ru", "rui", "ruan", "run", "ruo",
+    // 声母 z
+    "zi", "za", "ze", "zuo", "zan", "zou", "zang", "zen", "zeng", "zong", "zu", "zuan", "zun", "zui", "zuo",
+    // 声母 c
+    "ci", "ca", "ce", "cuo", "can", "cou", "cang", "cen", "ceng", "cong", "cu", "cuan", "cun", "cui", "cuo",
+    // 声母 s
+    "si", "sa", "se", "suo", "san", "sou", "sang", "sen", "seng", "song", "su", "suan", "sun", "sui", "suo"
+)

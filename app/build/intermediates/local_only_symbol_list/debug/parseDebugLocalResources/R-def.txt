@@ -1,6 +1,7 @@
 R_DEF: Internal format may change without notice
 local
 color black
+color candidate_other
 color candidate_text
 color candidate_text_selected
 color colorAccent
@@ -48,6 +49,7 @@ id btnProcessBase7
 id btnProcessChars
 id btnResetBuild
 id btnSettings
+id btnTestPinyin
 id buttonContainer
 id candidates_container
 id candidates_grid
@@ -171,6 +173,10 @@ string input_test_title
 string log_copied
 string log_details
 string no_logs
+string pinyin_test
+string pinyin_test_complete
+string pinyin_test_running
+string pinyin_test_title
 string realm_status
 string storage_permission_required
 string view_logs

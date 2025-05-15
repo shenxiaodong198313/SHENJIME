@@ -1385,6 +1385,7 @@ color button_material_dark
 color button_material_light
 color call_notification_answer_color
 color call_notification_decline_color
+color candidate_other
 color candidate_text
 color candidate_text_selected
 color cardview_dark_background
@@ -3241,6 +3242,7 @@ id btnProcessBase7
 id btnProcessChars
 id btnResetBuild
 id btnSettings
+id btnTestPinyin
 id buttonContainer
 id buttonPanel
 id cache_measures
@@ -4121,6 +4123,10 @@ string path_password_eye
 string path_password_eye_mask_strike_through
 string path_password_eye_mask_visible
 string path_password_strike_through
+string pinyin_test
+string pinyin_test_complete
+string pinyin_test_running
+string pinyin_test_title
 string realm_status
 string search_menu_title
 string searchbar_scrolling_view_behavior

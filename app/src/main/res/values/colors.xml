@@ -20,6 +20,7 @@
     <color name="colorPrecompiledLoading">#F5F5F5</color>
     <color name="candidate_text">#000000</color>
     <color name="candidate_text_selected">#4285F4</color>
+    <color name="candidate_other">#9E9E9E</color>
     <color name="pinyin_text">#757575</color>
     <color name="divider">#E0E0E0</color>
 </resources> 
