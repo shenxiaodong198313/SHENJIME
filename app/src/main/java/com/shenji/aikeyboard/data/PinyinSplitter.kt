@@ -46,6 +46,12 @@ object PinyinSplitter {
         // 如果已经包含空格，直接返回
         if (pinyin.contains(" ")) return pinyin
         
+        // 特殊处理：如果是可能的首字母缩写，直接返回原始输入
+        if (com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(pinyin)) {
+            Timber.d("检测到首字母缩写，跳过分词: '$pinyin'")
+            return pinyin
+        }
+        
         try {
             val input = pinyin.lowercase().trim()
             val result = mutableListOf<String>()

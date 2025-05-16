@@ -8,6 +8,7 @@ import io.realm.kotlin.query.find
 import timber.log.Timber
 import java.io.File
 import kotlin.math.min
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * 词典数据仓库类，用于提供词典相关的数据操作
@@ -288,18 +289,19 @@ class DictionaryRepository {
             val input = prefix.lowercase().trim()
             Timber.d("查询候选词: '$input'")
             
-            // 检查是否为可能的首字母输入
+            // 先检查是否为可能的首字母输入模式
             if (com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(input)) {
-                Timber.d("检测到可能的首字母输入: '$input'")
-                val strategy = CandidateStrategyFactory.getStrategy(0, input)
-                return strategy.queryCandidates(realm, input, limit, excludeTypes)
+                Timber.d("检测到首字母输入模式: '$input'")
+                // 对于首字母模式，使用专门的首字母查询策略，直接传入原始input，不进行拼音分词处理
+                return InitialsQueryStrategy().queryCandidates(realm, input, limit, excludeTypes)
             }
             
-            // 带空格的规范化拼音格式
+            // 非首字母模式，进行标准的拼音分词处理
             val normalizedPrefix = PinyinSplitter.split(input)
+            Timber.d("规范化后的拼音: '$normalizedPrefix'")
             
             // 选择合适的策略
-            val strategy = CandidateStrategyFactory.getStrategy(normalizedPrefix.length)
+            val strategy = CandidateStrategyFactory.getStrategy(normalizedPrefix.length, input)
             
             Timber.d("使用策略: ${strategy.getStrategyName()} 查询候选词")
             
@@ -411,6 +413,56 @@ class DictionaryRepository {
     @Deprecated("使用PinyinSplitter.split()替代", ReplaceWith("PinyinSplitter.split(pinyin)"))
     private fun splitPinyinIntoSyllables(pinyin: String): String {
         return PinyinSplitter.split(pinyin)
+    }
+
+    /**
+     * 检查并更新数据库中所有词条的initialLetters字段
+     * 对于没有initialLetters值的词条，根据拼音生成新的initialLetters
+     * @return 更新后的词条数量
+     */
+    fun checkAndUpdateInitialLetters(): Int {
+        val updateCount = AtomicInteger(0)
+        val batchSize = 1000 // 每次处理的词条数量
+        
+        try {
+            Timber.d("开始检查并更新initialLetters字段")
+            
+            // 查询所有没有initialLetters值的词条
+            val entries = realm.query<Entry>("initialLetters == '' OR initialLetters == null")
+                .find()
+            
+            val totalCount = entries.size
+            Timber.d("发现${totalCount}个需要更新initialLetters的词条")
+            
+            if (totalCount == 0) {
+                Timber.d("所有词条的initialLetters字段已全部正确设置")
+                return 0
+            }
+            
+            // 分批处理词条
+            val batches = entries.chunked(batchSize)
+            
+            for ((batchIndex, batch) in batches.withIndex()) {
+                Timber.d("正在处理第${batchIndex + 1}/${batches.size}批")
+                
+                realm.writeBlocking {
+                    for (entry in batch) {
+                        val initialLetters = com.shenji.aikeyboard.utils.PinyinInitialUtils.generateInitials(entry.pinyin)
+                        findLatest(entry)?.initialLetters = initialLetters
+                        updateCount.incrementAndGet()
+                    }
+                }
+                
+                Timber.d("完成第${batchIndex + 1}批更新，已更新${updateCount.get()}个词条")
+            }
+            
+            Timber.d("所有词条的initialLetters字段已全部更新完成，共更新${updateCount.get()}个词条")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "更新initialLetters字段时出错: ${e.message}")
+        }
+        
+        return updateCount.get()
     }
 }
 

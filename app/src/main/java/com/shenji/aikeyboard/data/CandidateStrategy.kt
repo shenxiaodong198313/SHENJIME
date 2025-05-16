@@ -432,6 +432,32 @@ class LongWordStrategy : CandidateStrategy {
  */
 class InitialsQueryStrategy : CandidateStrategy {
     
+    // 常见首字母缩写和对应单词映射
+    private val commonInitialsMap = mapOf(
+        "wx" to "微信",
+        "qq" to "QQ",
+        "tx" to "腾讯",
+        "bd" to "百度",
+        "yd" to "有道",
+        "dt" to "动态",
+        "pyq" to "朋友圈",
+        "xt" to "系统",
+        "sjsm" to "手机扫码",
+        "zfb" to "支付宝",
+        "rz" to "日志",
+        "hb" to "红包",
+        "zdl" to "知道了",
+        "xsz" to "心声扬",
+        "tql" to "太强了",
+        "yyds" to "永远的神",
+        "nh" to "你好",
+        "wq" to "晚安",
+        "zy" to "注意",
+        "zj" to "资金",
+        "zzy" to "正在写",
+        "gzs" to "工作室"
+    )
+    
     override fun queryCandidates(
         realm: Realm, 
         pinyin: String, 
@@ -441,38 +467,102 @@ class InitialsQueryStrategy : CandidateStrategy {
         if (pinyin.isBlank()) return emptyList()
         
         val initials = pinyin.lowercase().trim()
-        Timber.d("执行首字母查询策略, 首字母: '$initials'")
+        Timber.d("执行首字母查询策略: '$initials'")
         
-        val results = mutableListOf<Entry>()
+        val resultList = mutableListOf<Entry>()
         
         try {
             // 1. 精确匹配首字母
-            val exactMatches = realm.query<Entry>("initialLetters == $0", initials)
+            val matchList1 = realm.query<Entry>("initialLetters == $0", initials)
                 .find()
                 .filter { it.type !in excludeTypes }
                 .sortedByDescending { it.frequency }
-                .take(limit)
-                
-            results.addAll(exactMatches)
+                .toList()
             
-            // 2. 如果结果不足，尝试首字母前缀匹配
-            if (results.size < limit) {
-                val prefixMatches = realm.query<Entry>("initialLetters BEGINSWITH $0", initials)
-                    .find()
-                    .filter { it.type !in excludeTypes && it !in results }
-                    .sortedByDescending { it.frequency }
-                    .take(limit - results.size)
-                    
-                results.addAll(prefixMatches)
+            Timber.d("精确匹配首字母结果数: ${matchList1.size}")
+            
+            if (matchList1.isNotEmpty()) {
+                val samplesText = matchList1.take(3).joinToString { "${it.word}[${it.pinyin}]" }
+                Timber.d("精确匹配样本: $samplesText")
             }
             
-            Timber.d("首字母查询结果: ${results.size}个候选项")
+            resultList.addAll(matchList1)
+            
+            // 2. 如果结果不足，尝试首字母前缀匹配
+            if (resultList.size < limit) {
+                val matchList2 = realm.query<Entry>("initialLetters BEGINSWITH $0", initials)
+                    .find()
+                    .filter { it.type !in excludeTypes && it !in resultList }
+                    .sortedByDescending { it.frequency }
+                    .take(limit - resultList.size)
+                    .toList()
+                
+                Timber.d("前缀匹配结果数: ${matchList2.size}")
+                
+                if (matchList2.isNotEmpty()) {
+                    val samplesText = matchList2.take(3).joinToString { "${it.word}[${it.pinyin}]" }
+                    Timber.d("前缀匹配样本: $samplesText")
+                }
+                
+                resultList.addAll(matchList2)
+            }
+            
+            // 3. 如果结果仍然不足，尝试部分匹配
+            if (resultList.size < limit) {
+                val matchList3 = realm.query<Entry>("(type == 'base' OR type == 'correlation') AND LENGTH(word) <= 4")
+                    .limit(limit * 2)
+                    .find()
+                    .filter { 
+                        it.type !in excludeTypes && 
+                        it !in resultList && 
+                        it.initialLetters.contains(initials) // 包含匹配
+                    }
+                    .sortedByDescending { it.frequency }
+                    .take(limit - resultList.size)
+                    .toList()
+                
+                Timber.d("部分匹配结果数: ${matchList3.size}")
+                resultList.addAll(matchList3)
+            }
+            
+            // 4. 检查是否在常见首字母缩写列表中
+            if (resultList.isEmpty() && commonInitialsMap.containsKey(initials)) {
+                val commonWord = commonInitialsMap[initials]
+                Timber.d("使用内置缩写: $initials -> $commonWord")
+                
+                // 创建虚拟词条
+                val syntheticEntry = Entry().apply {
+                    id = "synthetic_${initials}"
+                    word = commonWord ?: ""
+                    initialLetters = initials
+                    frequency = 10000 
+                    type = "synthetic"
+                }
+                
+                resultList.add(syntheticEntry)
+            }
+            
+            Timber.d("首字母查询最终结果: ${resultList.size}个候选项")
+            
+            // 5. 如果空结果，返回高频词
+            if (resultList.isEmpty() && !commonInitialsMap.containsKey(initials)) {
+                Timber.w("首字母查询无结果，返回高频词")
+                val highFreqEntries = realm.query<Entry>("type == 'base'")
+                    .limit(limit)
+                    .find()
+                    .filter { it.type !in excludeTypes }
+                    .sortedByDescending { it.frequency }
+                    .take(limit)
+                    .toList()
+                
+                resultList.addAll(highFreqEntries)
+            }
             
         } catch (e: Exception) {
-            Timber.e(e, "首字母候选词查询失败: ${e.message}")
+            Timber.e(e, "首字母查询失败: ${e.message}")
         }
         
-        return results
+        return resultList
             .sortedByDescending { it.frequency }
             .take(limit)
             .map { WordFrequency(it.word, it.frequency) }
@@ -482,7 +572,7 @@ class InitialsQueryStrategy : CandidateStrategy {
 }
 
 /**
- * 候选词策略工厂，根据输入长度返回对应的策略
+ * 候选词策略工厂，根据输入拼音的长度和特征选择不同的查询策略
  */
 object CandidateStrategyFactory {
     
@@ -493,12 +583,15 @@ object CandidateStrategyFactory {
      * @return 对应的候选词策略
      */
     fun getStrategy(pinyinLength: Int, rawInput: String = ""): CandidateStrategy {
-        // 检查是否为首字母输入模式
-        if (rawInput.isNotEmpty() && com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(rawInput)) {
-            return InitialsQueryStrategy()
+        // 增强首字母模式检测：优先处理首字母输入模式
+        if (rawInput.isNotEmpty()) {
+            if (com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(rawInput)) {
+                Timber.d("策略工厂检测到首字母输入模式: '$rawInput'")
+                return InitialsQueryStrategy()
+            }
         }
         
-        // 原有的逻辑
+        // 根据拼音长度选择策略
         return when {
             pinyinLength <= 1 -> EmptyOrSingleCharStrategy()
             pinyinLength <= 3 -> TwoToThreeCharStrategy()

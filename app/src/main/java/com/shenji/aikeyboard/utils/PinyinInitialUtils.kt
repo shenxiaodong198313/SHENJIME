@@ -29,6 +29,10 @@ object PinyinInitialUtils {
      * (纯小写字母，无空格)
      */
     fun isPossibleInitials(input: String): Boolean {
-        return input.matches(Regex("[a-z]+")) && !input.contains(" ")
+        val isInitials = input.matches(Regex("[a-z]+")) && !input.contains(" ")
+        if (isInitials) {
+            Timber.d("检测到可能的首字母缩写: '$input'")
+        }
+        return isInitials
     }
 } 
