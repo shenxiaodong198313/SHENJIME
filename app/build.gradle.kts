@@ -59,7 +59,7 @@ dependencies {
     implementation("com.facebook.shimmer:shimmer:0.5.0")
     
     // Realm database
-    implementation("io.realm.kotlin:library-base:1.11.0")
+    implementation("io.realm.kotlin:library-base:2.3.0")
     
     // YAML解析
     implementation("org.yaml:snakeyaml:2.2")

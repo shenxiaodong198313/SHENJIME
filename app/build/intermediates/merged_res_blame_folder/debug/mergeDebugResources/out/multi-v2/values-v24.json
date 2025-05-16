@@ -4,7 +4,7 @@
             "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-33:/values-v24/values-v24.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\53c03f792a4cec5f3c5e94e171a808e1\\transformed\\material-1.11.0\\res\\values-v24\\values-v24.xml",
+                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\3c0aab35f342f58022d62742e26242f5\\transformed\\material-1.11.0\\res\\values-v24\\values-v24.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,9,12,15",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\6d92bc2e36cc681e55a1883b037e34fb\\transformed\\appcompat-1.6.1\\res\\values-v24\\values-v24.xml",
+                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\826298604426759a9862ede62f6943f0\\transformed\\appcompat-1.6.1\\res\\values-v24\\values-v24.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",

@@ -80,6 +80,11 @@
             android:exported="false"
             android:windowSoftInputMode="stateVisible|adjustResize" />
 
+        <!-- 开发工具活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.DevToolsActivity"
+            android:exported="false" />
+
         <!-- 输入法服务 -->
         <service
             android:name="com.shenji.aikeyboard.ime.ShenjiInputMethodService"

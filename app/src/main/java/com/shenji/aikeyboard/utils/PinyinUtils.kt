@@ -114,4 +114,24 @@ object PinyinUtils {
         
         return results.joinToString("\n")
     }
+
+    // 拼音首字母提取
+    fun generateInitials(pinyin: String): String {
+        if (pinyin.isBlank()) return ""
+        
+        return pinyin.split(" ")
+            .filter { it.isNotBlank() }
+            .map { it.first().toString() }
+            .joinToString("")
+    }
+
+    /**
+     * 分割连续的拼音字符串为音节 (带空格) - 已弃用
+     * @param pinyin 要分割的拼音字符串, 如"nihao"
+     * @return 分割后的拼音, 如"ni hao"
+     */
+    @Deprecated("使用PinyinSplitter.split()替代")
+    fun splitPinyinIntoSyllables(pinyin: String): String {
+        return PinyinSplitter.split(pinyin)
+    }
 } 

@@ -76,6 +76,10 @@
         "source": "com.shenji.aikeyboard.app-main-37:/layout/candidate_item_horizontal.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-35:/layout_activity_dev_tools.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dev_tools.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-35:/xml_keyboard_layout.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-37:/xml/keyboard_layout.xml"
     },
