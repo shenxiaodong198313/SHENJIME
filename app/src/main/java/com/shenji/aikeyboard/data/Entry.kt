@@ -16,6 +16,9 @@ open class Entry : RealmObject {
     @Index  // 添加索引注解
     var pinyin: String = ""
     
+    @Index  // 新增首字母索引字段
+    var initialLetters: String = ""
+    
     var frequency: Int = 0
     var type: String = ""
     
@@ -26,6 +29,14 @@ open class Entry : RealmObject {
         this.pinyin = pinyin
         this.frequency = frequency
         this.type = type
+        this.initialLetters = generateInitialLetters(pinyin)
+    }
+    
+    // 添加首字母生成方法
+    private fun generateInitialLetters(pinyin: String): String {
+        return pinyin.split(" ")
+            .filter { it.isNotEmpty() }
+            .joinToString("") { if (it.isNotEmpty()) it.first().toString() else "" }
     }
 }
 

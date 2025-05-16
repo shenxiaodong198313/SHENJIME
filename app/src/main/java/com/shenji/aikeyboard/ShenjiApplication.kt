@@ -139,6 +139,7 @@ class ShenjiApplication : Application() {
             ))
                 .directory(filesDir.path + "/dictionaries")
                 .name("shenji_dict.realm")
+                .deleteRealmIfMigrationNeeded()
                 .build()
                 
             // 打开数据库

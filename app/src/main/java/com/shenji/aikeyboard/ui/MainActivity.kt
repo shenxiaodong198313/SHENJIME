@@ -28,6 +28,7 @@ import java.io.InputStreamReader
 import java.util.UUID
 import kotlin.math.min
 import com.shenji.aikeyboard.utils.PinyinUtils
+import com.shenji.aikeyboard.utils.PinyinInitialUtils
 
 class MainActivity : AppCompatActivity() {
 
@@ -269,6 +270,8 @@ class MainActivity : AppCompatActivity() {
                                             this.pinyin = pinyin
                                             this.frequency = frequency
                                             this.type = dictType
+                                            // 设置首字母
+                                            this.initialLetters = PinyinInitialUtils.generateInitials(pinyin)
                                         }
                                         
                                         copyToRealm(entry)

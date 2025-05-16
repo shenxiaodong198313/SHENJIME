@@ -427,6 +427,61 @@ class LongWordStrategy : CandidateStrategy {
 }
 
 /**
+ * 拼音首字母查询策略
+ * 用于查询类似"wx"(微信),"zdl"(知道了)这样的首字母缩写
+ */
+class InitialsQueryStrategy : CandidateStrategy {
+    
+    override fun queryCandidates(
+        realm: Realm, 
+        pinyin: String, 
+        limit: Int, 
+        excludeTypes: List<String>
+    ): List<WordFrequency> {
+        if (pinyin.isBlank()) return emptyList()
+        
+        val initials = pinyin.lowercase().trim()
+        Timber.d("执行首字母查询策略, 首字母: '$initials'")
+        
+        val results = mutableListOf<Entry>()
+        
+        try {
+            // 1. 精确匹配首字母
+            val exactMatches = realm.query<Entry>("initialLetters == $0", initials)
+                .find()
+                .filter { it.type !in excludeTypes }
+                .sortedByDescending { it.frequency }
+                .take(limit)
+                
+            results.addAll(exactMatches)
+            
+            // 2. 如果结果不足，尝试首字母前缀匹配
+            if (results.size < limit) {
+                val prefixMatches = realm.query<Entry>("initialLetters BEGINSWITH $0", initials)
+                    .find()
+                    .filter { it.type !in excludeTypes && it !in results }
+                    .sortedByDescending { it.frequency }
+                    .take(limit - results.size)
+                    
+                results.addAll(prefixMatches)
+            }
+            
+            Timber.d("首字母查询结果: ${results.size}个候选项")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "首字母候选词查询失败: ${e.message}")
+        }
+        
+        return results
+            .sortedByDescending { it.frequency }
+            .take(limit)
+            .map { WordFrequency(it.word, it.frequency) }
+    }
+    
+    override fun getStrategyName(): String = "首字母查询策略"
+}
+
+/**
  * 候选词策略工厂，根据输入长度返回对应的策略
  */
 object CandidateStrategyFactory {
@@ -434,9 +489,16 @@ object CandidateStrategyFactory {
     /**
      * 根据输入拼音长度获取相应的候选词策略
      * @param pinyinLength 输入的拼音长度
+     * @param rawInput 原始输入，用于检测是否为首字母输入
      * @return 对应的候选词策略
      */
-    fun getStrategy(pinyinLength: Int): CandidateStrategy {
+    fun getStrategy(pinyinLength: Int, rawInput: String = ""): CandidateStrategy {
+        // 检查是否为首字母输入模式
+        if (rawInput.isNotEmpty() && com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(rawInput)) {
+            return InitialsQueryStrategy()
+        }
+        
+        // 原有的逻辑
         return when {
             pinyinLength <= 1 -> EmptyOrSingleCharStrategy()
             pinyinLength <= 3 -> TwoToThreeCharStrategy()

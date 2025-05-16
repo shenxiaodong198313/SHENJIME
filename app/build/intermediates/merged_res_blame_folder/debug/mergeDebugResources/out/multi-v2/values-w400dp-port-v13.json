@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-2:/values-w400dp-port-v13/values-w400dp-port-v13.xml",
+            "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-33:/values-w400dp-port-v13/values-w400dp-port-v13.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\53c03f792a4cec5f3c5e94e171a808e1\\transformed\\material-1.11.0\\res\\values-w400dp-port-v13\\values-w400dp-port-v13.xml",
+                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\53c03f792a4cec5f3c5e94e171a808e1\\transformed\\material-1.11.0\\res\\values-w400dp-port-v13\\values-w400dp-port-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",

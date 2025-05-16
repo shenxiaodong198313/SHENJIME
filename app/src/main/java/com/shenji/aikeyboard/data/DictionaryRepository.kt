@@ -285,10 +285,18 @@ class DictionaryRepository {
         }
         
         try {
-            Timber.d("根据拼音前缀搜索候选词: '$prefix'，字符数：${prefix.length}")
+            val input = prefix.lowercase().trim()
+            Timber.d("查询候选词: '$input'")
+            
+            // 检查是否为可能的首字母输入
+            if (com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(input)) {
+                Timber.d("检测到可能的首字母输入: '$input'")
+                val strategy = CandidateStrategyFactory.getStrategy(0, input)
+                return strategy.queryCandidates(realm, input, limit, excludeTypes)
+            }
             
             // 带空格的规范化拼音格式
-            val normalizedPrefix = PinyinSplitter.split(prefix.lowercase().trim())
+            val normalizedPrefix = PinyinSplitter.split(input)
             
             // 选择合适的策略
             val strategy = CandidateStrategyFactory.getStrategy(normalizedPrefix.length)

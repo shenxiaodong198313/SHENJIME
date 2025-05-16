@@ -369,8 +369,8 @@ class DictionaryManagerActivity : AppCompatActivity() {
                     dialogView.findViewById<TextView>(R.id.tvDbFileName).text = "文件名称: $dbName"
                     dialogView.findViewById<TextView>(R.id.tvDbFileSize).text = "文件大小: $dbSizeFormatted"
                     dialogView.findViewById<TextView>(R.id.tvDbEntryCount).text = "词条总数: $totalEntries"
-                    dialogView.findViewById<TextView>(R.id.tvDbSchema).text = "数据模式: Entry(id, word, pinyin(索引), frequency, type)"
-                    dialogView.findViewById<TextView>(R.id.tvDbIndexes).text = "索引字段: pinyin"
+                    dialogView.findViewById<TextView>(R.id.tvDbSchema).text = "数据模式: Entry(id, word, pinyin(索引), initialLetters(索引), frequency, type)"
+                    dialogView.findViewById<TextView>(R.id.tvDbIndexes).text = "索引字段: pinyin, initialLetters(首字母缩写)"
                     dialogView.findViewById<TextView>(R.id.tvDbPath).text = "路径: $dbPath"
                     
                     // 动态添加模块信息
