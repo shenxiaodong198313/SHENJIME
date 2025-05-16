@@ -448,7 +448,18 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
     override fun onKey(primaryCode: Int, keyCodes: IntArray?) {
         val inputConnection = currentInputConnection ?: return
         
-        Timber.d("按键点击: $primaryCode, 当前输入: $currentComposing")
+        // 记录用户点击的按键
+        val keyChar = when (primaryCode) {
+            Keyboard.KEYCODE_DELETE -> "删除键"
+            Keyboard.KEYCODE_SHIFT -> "Shift键"
+            Keyboard.KEYCODE_DONE -> "完成键"
+            -100 -> "切换输入法"
+            -101 -> "切换数字键盘"
+            32 -> "空格键"
+            else -> primaryCode.toChar().toString()
+        }
+        
+        Timber.d("用户点击按键: '$keyChar', 代码: $primaryCode, 当前输入: $currentComposing")
         
         when (primaryCode) {
             Keyboard.KEYCODE_DELETE -> {
@@ -460,9 +471,10 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
                         currentComposing.deleteCharAt(currentComposing.length - 1)
                         updatePinyinText()
                         updateCandidates()
-                        Timber.d("删除后当前输入: $currentComposing")
+                        Timber.d("触发规则: 删除拼音字符, 删除后当前输入: '$currentComposing'")
                     } else {
                         inputConnection.deleteSurroundingText(1, 0)
+                        Timber.d("触发规则: 删除已提交文本")
                     }
                 } else {
                     // 删除选中的文本
@@ -470,6 +482,7 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
                     currentComposing.clear()
                     updatePinyinText()
                     clearCandidates()
+                    Timber.d("触发规则: 删除选中文本")
                 }
             }
             Keyboard.KEYCODE_SHIFT -> {
@@ -478,7 +491,7 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
                 keyboard.isShifted = isCapsOn
                 pinyinKeyboard.isShifted = isCapsOn
                 keyboardView.invalidateAllKeys()
-                Timber.d("切换大小写: $isCapsOn")
+                Timber.d("触发规则: 切换大小写状态为: ${if (isCapsOn) "大写" else "小写"}")
             }
             Keyboard.KEYCODE_DONE -> {
                 // 完成键
@@ -487,30 +500,32 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
                     currentComposing.clear()
                     updatePinyinText()
                     clearCandidates()
-                    Timber.d("提交当前输入并完成")
+                    Timber.d("触发规则: 提交当前输入并完成")
                 }
                 inputConnection.performEditorAction(EditorInfo.IME_ACTION_DONE)
+                Timber.d("触发规则: 执行完成动作")
             }
             -100 -> {
                 // 自定义切换键
-                Timber.d("切换输入法")
+                Timber.d("触发规则: 切换到其他输入法")
                 switchToNextInputMethod(false)
             }
             -101 -> {
                 // 数字键盘切换
-                Timber.d("切换到数字键盘")
                 usePinyinKeyboard = !usePinyinKeyboard
                 keyboardView.keyboard = if (usePinyinKeyboard) pinyinKeyboard else keyboard
+                Timber.d("触发规则: 切换到${if (usePinyinKeyboard) "拼音" else "数字"}键盘")
             }
             32 -> {
                 // 空格键
                 if (currentComposing.isNotEmpty()) {
                     // 提交候选词中的第一个词（如果有）
+                    Timber.d("触发规则: 空格键提交首选候选词")
                     submitCandidate(0)
                 } else {
                     // 直接输入空格
                     inputConnection.commitText(" ", 1)
-                    Timber.d("输入空格")
+                    Timber.d("触发规则: 直接输入空格")
                 }
             }
             else -> {
@@ -523,7 +538,7 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
                 // 追加到当前输入
                 currentComposing.append(code)
                 updatePinyinText()
-                Timber.d("追加字符: $code, 当前输入: $currentComposing")
+                Timber.d("触发规则: 追加字符 '$code', 当前输入: '$currentComposing'")
                 
                 // 更新候选词
                 updateCandidates()
@@ -557,74 +572,76 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
             return
         }
         
+        // 详细日志记录
+        Timber.d("开始查询候选词: 输入='$prefix'")
+        
         // 取消之前的查询任务
         queryJob?.cancel()
         
         // 异步查询候选词
         queryJob = coroutineScope.launch {
-            Timber.d("查询候选词: $prefix")
-            
             val candidates = withContext(Dispatchers.IO) {
                 try {
-                    // 确保词典已加载
-                    if (!DictionaryManager.instance.isLoaded()) {
-                        Timber.d("词典未加载，尝试初始化")
-                        DictionaryManager.init()  // 尝试重新初始化
+                    // 将输入转为小写
+                    val normalizedPrefix = prefix.lowercase()
+                    val pinyinUtil = com.shenji.aikeyboard.utils.PinyinUtils
+                    
+                    // 使用DictionaryManager查询候选词
+                    Timber.d("查询策略: 根据输入'$normalizedPrefix'查询候选词")
+                    
+                    // 根据当前输入判断是否使用缩写模式查询
+                    val isAbbreviationMode = com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(normalizedPrefix)
+                    if (isAbbreviationMode) {
+                        Timber.d("检测到可能的首字母输入: '$normalizedPrefix', 使用缩写查询策略")
                     }
                     
-                    // 查询候选词 - 同时从内存和数据库搜索
-                    val result = DictionaryManager.instance.searchWords(prefix, 20)
-                    Timber.d("查询候选词结果: ${result.size}个 - ${result.joinToString { it.word }}")
+                    // 执行查询并获取结果
+                    val startTime = System.currentTimeMillis()
+                    val result = DictionaryManager.instance.searchWords(normalizedPrefix, 50)
+                    val endTime = System.currentTimeMillis()
+                    val queryTime = endTime - startTime
                     
-                    // 如果结果为空，尝试使用内置的特定缩写映射
+                    // 记录查询结果概要
                     if (result.isEmpty()) {
-                        Timber.d("尝试使用内置缩写匹配")
-                        // 创建一个基本的候选词列表（缩写映射）
-                        val abbreviationCandidates = when (prefix) {
-                            "bj" -> listOf(
-                                WordFrequency("北京", 1000),
-                                WordFrequency("宝鸡", 500),
-                                WordFrequency("边界", 300)
-                            )
-                            "sh" -> listOf(
-                                WordFrequency("上海", 1000),
-                                WordFrequency("深圳", 800),
-                                WordFrequency("社会", 500)
-                            )
-                            "zg" -> listOf(
-                                WordFrequency("中国", 1000),
-                                WordFrequency("总共", 500)
-                            )
-                            "gj" -> listOf(
-                                WordFrequency("国家", 1000),
-                                WordFrequency("工具", 600)
-                            )
-                            "ni" -> listOf(
-                                WordFrequency("你", 1000),
-                                WordFrequency("呢", 900),
-                                WordFrequency("泥", 800),
-                                WordFrequency("尼", 700),
-                                WordFrequency("腻", 600),
-                                WordFrequency("倪", 500)
-                            )
-                            "cuan" -> listOf( // 添加cuan的特殊映射用于测试
-                                WordFrequency("窜", 800),
-                                WordFrequency("篡", 700),
-                                WordFrequency("蹿", 600)
-                            )
-                            else -> emptyList()
-                        }
+                        Timber.d("Realm词库中未找到匹配'$normalizedPrefix'的候选词，耗时: ${queryTime}ms")
+                    } else {
+                        Timber.d("Realm词库查询结果: ${result.size}个候选词，耗时: ${queryTime}ms")
+                        // 记录前几个候选词的信息
+                        val previewCount = Math.min(5, result.size)
+                        val previewWords = result.take(previewCount).joinToString { it.word }
+                        Timber.d("候选词前${previewCount}个: $previewWords")
+                    }
+                    
+                    // 如果没有结果，尝试使用缩写匹配
+                    val abbreviationCandidates = if (result.isEmpty() && !isAbbreviationMode 
+                            && normalizedPrefix.all { it in 'a'..'z' } && normalizedPrefix.length in 2..10) {
                         
-                        if (abbreviationCandidates.isNotEmpty()) {
-                            Timber.d("缩写匹配结果: ${abbreviationCandidates.size}个 - ${abbreviationCandidates.joinToString { it.word }}")
+                        Timber.d("无结果，尝试作为缩写匹配: '$normalizedPrefix'")
+                        
+                        // 尝试使用缩写模式查询 - 使用searchWords，但应用首字母匹配逻辑
+                        val abbrResult = DictionaryManager.instance.searchWords(normalizedPrefix, 20)
+                        
+                        if (abbrResult.isNotEmpty()) {
+                            Timber.d("缩写匹配结果: ${abbrResult.size}个 - ${abbrResult.joinToString { it.word }}")
                         } else {
                             Timber.d("无内置缩写匹配")
                         }
                         
-                        abbreviationCandidates
+                        abbrResult
                     } else {
                         result
                     }
+                    
+                    // 详细记录最终结果
+                    if (abbreviationCandidates.isNotEmpty()) {
+                        Timber.d("最终候选词数量: ${abbreviationCandidates.size} (${if (isAbbreviationMode || result.isEmpty()) "缩写模式" else "标准模式"})")
+                    } else {
+                        Timber.d("无候选词结果，将显示输入本身")
+                        // 返回输入本身作为候选词
+                        return@withContext listOf(WordFrequency(prefix, 100))
+                    }
+                    
+                    abbreviationCandidates
                 } catch (e: Exception) {
                     Timber.e(e, "查询候选词出错")
                     // 返回输入本身作为候选词
@@ -632,7 +649,7 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
                 }
             }
             
-            Timber.d("候选词数量: ${candidates.size}, 显示候选词")
+            Timber.d("候选词查询完成，数量: ${candidates.size}")
             currentCandidates = candidates
             
             // 显示候选词
@@ -788,12 +805,12 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         
         // 点击候选词的处理
         textView.setOnClickListener {
-            Timber.d("点击候选词: $word")
+            Timber.d("用户点击候选词: '$word' (索引:$index, 词频:$frequency)")
             submitCandidate(index)
         }
         
         candidatesContainer.addView(textView)
-        Timber.d("添加候选词: $word, 频率: $frequency, 索引: $index")
+        Timber.d("显示候选词: '$word', 词频: $frequency, 索引: $index")
     }
     
     /**
@@ -926,12 +943,12 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         val ic = currentInputConnection ?: return
         
         // 清除当前正在输入的拼音文本
-        Timber.d("选择候选词：'$word'，当前输入：'$currentComposing'")
+        Timber.d("用户选择候选词: '$word'，当前输入：'$currentComposing'")
         
         if (!currentComposing.isNullOrEmpty()) {
             // 记录当前选择的词语和输入的拼音
             val pinyin = currentComposing.toString()
-            Timber.d("用户查询候选词: '$pinyin'")
+            Timber.d("用户决策: 输入拼音='$pinyin' -> 选择词语='$word'")
             
             val normalizedPinyin = PinyinUtils.normalize(pinyin)
             Timber.d("拼音转换: '$pinyin' -> '$normalizedPinyin'")
@@ -946,6 +963,7 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
         
         // 将选中的候选词添加到输入框
         ic.commitText(word, 1)
+        Timber.d("提交文本: '$word' 到输入框")
         
         // 清除候选词
         clearCandidates()
@@ -959,6 +977,6 @@ class ShenjiInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAc
             }
         }
         
-        Timber.d("候选词选择完成")
+        Timber.d("候选词选择完成: '$word'")
     }
 } 

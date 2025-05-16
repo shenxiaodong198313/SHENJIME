@@ -296,7 +296,71 @@ class DictionaryRepository {
                 return InitialsQueryStrategy().queryCandidates(realm, input, limit, excludeTypes)
             }
             
-            // 非首字母模式，进行标准的拼音分词处理
+            // 如果是短音节(2-3个字母，如"ba","wei"等)或完整音节，优先查询单字
+            val isSingleSyllable = !input.contains(" ") && 
+                (PinyinSplitter.isValidSyllable(input) || input.length <= 3)
+                
+            if (isSingleSyllable) {
+                Timber.d("检测到单个音节: '$input'，优先查询单字")
+                
+                // 存储查询结果
+                val results = mutableListOf<Entry>()
+                
+                // 1. 首先查询chars词典中的单字 - 精确匹配
+                val exactCharsEntries = realm.query<Entry>("pinyin == $0 AND type == 'chars'", input)
+                    .find()
+                    .filter { it.type !in excludeTypes }
+                    .sortedByDescending { it.frequency }
+                    .toList()
+                
+                Timber.d("精确匹配单字: ${exactCharsEntries.size}个")
+                results.addAll(exactCharsEntries)
+                
+                // 2. 如果精确匹配结果不足，查询前缀匹配的单字
+                if (results.size < limit / 2) {
+                    val prefixCharsEntries = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'chars'", input)
+                        .find()
+                        .filter { it.type !in excludeTypes && it !in results && it.word.length == 1 }
+                        .sortedByDescending { it.frequency }
+                        .toList()
+                    
+                    Timber.d("前缀匹配单字: ${prefixCharsEntries.size}个")
+                    results.addAll(prefixCharsEntries)
+                }
+                
+                // 3. 添加一些词组，但不超过结果总数的一半
+                val targetWordLimit = limit - min(results.size, limit / 2)
+                if (targetWordLimit > 0) {
+                    // 先找精确匹配的词组
+                    val exactWordEntries = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'base'", input)
+                        .find()
+                        .filter { it.type !in excludeTypes && it !in results && it.word.length > 1 }
+                        .sortedByDescending { it.frequency }
+                        .take(targetWordLimit)
+                        .toList()
+                        
+                    Timber.d("单音节词组: ${exactWordEntries.size}个")
+                    results.addAll(exactWordEntries)
+                }
+                
+                if (results.isNotEmpty()) {
+                    // 优先返回单字，然后是词组
+                    val sortedResults = results.sortedWith(
+                        compareBy<Entry> { it.word.length > 1 } // 单字优先
+                          .thenByDescending { it.frequency }    // 然后按词频排序
+                    )
+                    
+                    Timber.d("单音节查询最终结果: ${sortedResults.size}个，前3个: ${
+                        sortedResults.take(3).joinToString { it.word }
+                    }")
+                    
+                    return sortedResults.map { WordFrequency(it.word, it.frequency) }
+                }
+                
+                Timber.w("单音节'$input'查询无结果，继续使用默认逻辑")
+            }
+            
+            // 非单音节输入，进行标准的拼音分词处理
             val normalizedPrefix = PinyinSplitter.split(input)
             Timber.d("规范化后的拼音: '$normalizedPrefix'")
             

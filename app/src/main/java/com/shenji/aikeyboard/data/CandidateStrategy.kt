@@ -47,13 +47,21 @@ class EmptyOrSingleCharStrategy : CandidateStrategy {
         val results = mutableSetOf<Entry>()
         
         try {
+            // 检测是否为有效音节
+            val isValidSyllable = pinyin.isNotEmpty() && 
+                !pinyin.contains(" ") && 
+                com.shenji.aikeyboard.data.PinyinSplitter.isValidSyllable(pinyin.trim().lowercase())
+            
+            // 查询音节对应单字的数量占比
+            val charsLimit = if (isValidSyllable) limit / 2 else limit / 3
+            
             // 1. 首先从chars词典中获取高频单字
             val charsEntries = realm.query<Entry>("type == 'chars'")
                 .limit(limit)
                 .find()
                 .filter { it.type !in excludeTypes }
                 .sortedByDescending { it.frequency }
-                .take(limit / 2) // 单字占一半
+                .take(charsLimit) // 单字占比调整
             
             results.addAll(charsEntries)
             
@@ -72,8 +80,34 @@ class EmptyOrSingleCharStrategy : CandidateStrategy {
                 results.addAll(matchedChars)
             }
             
-            // 3. 如果结果不足，从base词典补充高频词
-            if (results.size < limit) {
+            // 3. 如果是有效音节，查询以该音节为前缀的词组
+            if (isValidSyllable) {
+                val normalizedPrefix = pinyin.lowercase().trim()
+                
+                // 查询以该音节为前缀的base词典词组
+                val baseEntries = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'base'", normalizedPrefix)
+                    .limit(limit)
+                    .find()
+                    .filter { it.type !in excludeTypes && it !in results && it.word.length > 1 } // 只要多字词
+                    .sortedByDescending { it.frequency }
+                    .take((limit - results.size) * 2 / 3) // 多字词占剩余结果的2/3
+                    
+                results.addAll(baseEntries)
+                
+                // 如果结果仍不足，从correlation词典查询
+                if (results.size < limit) {
+                    val correlationEntries = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'correlation'", normalizedPrefix)
+                        .limit(limit - results.size)
+                        .find()
+                        .filter { it.type !in excludeTypes && it !in results }
+                        .sortedByDescending { it.frequency }
+                        .take(limit - results.size)
+                        
+                    results.addAll(correlationEntries)
+                }
+            }
+            // 4. 如果结果不足，从base词典补充高频词
+            else if (results.size < limit) {
                 val baseEntries = realm.query<Entry>("type == 'base'")
                     .limit(limit - results.size)
                     .find()
@@ -92,7 +126,13 @@ class EmptyOrSingleCharStrategy : CandidateStrategy {
         
         // 按词频排序并转换为WordFrequency
         return results
-            .sortedByDescending { it.frequency }
+            .sortedWith(
+                compareBy<Entry> {
+                    // 单字优先于多字词
+                    if (it.type == "chars" || it.word.length == 1) 0 else 1 
+                }
+                .thenByDescending { it.frequency }  // 然后按词频降序
+            )
             .take(limit)
             .map { WordFrequency(it.word, it.frequency) }
     }
@@ -589,6 +629,14 @@ object CandidateStrategyFactory {
                 Timber.d("策略工厂检测到首字母输入模式: '$rawInput'")
                 return InitialsQueryStrategy()
             }
+            
+            // 新增：检测是否为完整的拼音音节，如"tai"、"xiu"等
+            val trimmedInput = rawInput.trim().lowercase()
+            if (trimmedInput.isNotEmpty() && !trimmedInput.contains(" ") && 
+                com.shenji.aikeyboard.data.PinyinSplitter.isValidSyllable(trimmedInput)) {
+                Timber.d("策略工厂检测到完整拼音音节: '$trimmedInput'，使用单字符策略")
+                return CompleteSyllableStrategy(trimmedInput)
+            }
         }
         
         // 根据拼音长度选择策略
@@ -599,4 +647,72 @@ object CandidateStrategyFactory {
             else -> LongWordStrategy()
         }
     }
+}
+
+/**
+ * 完整拼音音节策略 - 专门用于处理单个完整拼音音节输入
+ * 这是一个简单直接的策略类，优先从chars词典中获取对应的汉字
+ */
+class CompleteSyllableStrategy(private val syllable: String) : CandidateStrategy {
+    
+    override fun queryCandidates(
+        realm: Realm, 
+        pinyin: String, 
+        limit: Int, 
+        excludeTypes: List<String>
+    ): List<WordFrequency> {
+        Timber.d("执行完整音节查询策略, 音节: '$syllable'")
+        
+        val results = mutableListOf<Entry>()
+        
+        try {
+            // 1. 直接精确匹配拼音
+            val exactMatches = realm.query<Entry>("pinyin == $0 AND type == 'chars'", syllable)
+                .find()
+                .sortedByDescending { it.frequency }
+                .toList()
+                
+            Timber.d("完整音节精确匹配结果: ${exactMatches.size}个")
+            results.addAll(exactMatches)
+            
+            // 2. 如果结果太少，尝试前缀匹配
+            if (results.size < 5) {
+                val prefixMatches = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'chars'", syllable)
+                    .find()
+                    .filter { it !in results }
+                    .sortedByDescending { it.frequency }
+                    .take(limit - results.size)
+                    .toList()
+                
+                Timber.d("完整音节前缀匹配结果: ${prefixMatches.size}个")
+                results.addAll(prefixMatches)
+            }
+            
+            // 3. 如果需要，添加一些常用词组
+            if (results.size < limit) {
+                val wordMatches = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'base'", syllable)
+                    .find()
+                    .filter { it.word.length > 1 } // 只要多字词
+                    .sortedByDescending { it.frequency }
+                    .take(limit - results.size)
+                    .toList()
+                
+                Timber.d("添加以该音节开头的词组: ${wordMatches.size}个")
+                results.addAll(wordMatches)
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "完整音节查询失败: ${e.message}")
+        }
+        
+        // 如果结果为空，添加音节本身
+        if (results.isEmpty()) {
+            Timber.w("完整音节'$syllable'查询无结果，返回音节本身")
+            return listOf(WordFrequency(syllable, 100))
+        }
+        
+        return results.map { WordFrequency(it.word, it.frequency) }
+    }
+    
+    override fun getStrategyName(): String = "完整音节策略"
 } 
