@@ -79,12 +79,37 @@ class DictionaryManager private constructor() {
         val strategy = CandidateStrategyFactory.getStrategy(normalizedPrefix.length)
         Timber.d("使用${strategy.getStrategyName()}搜索'$normalizedPrefix'(原始输入:'$prefix')")
         
+        // 检查输入中是否包含中文字符
+        val containsChinese = prefix.any { it.code in 0x4E00..0x9FFF }
+        if (containsChinese) {
+            Timber.d("检测到中文输入'$prefix'，使用汉字直接查询")
+        } else {
+            // 输出参考拼音列表
+            val possiblePinyinChars = when (normalizedPrefix) {
+                "wei" -> "为(wéi),位(wèi),未(wèi),维(wéi),围(wéi),委(wěi),卫(wèi),微(wēi),尾(wěi)"
+                "wo" -> "我(wǒ),窝(wō),握(wò),卧(wò)"
+                "ta" -> "他(tā),她(tā),它(tā),塔(tǎ),踏(tà)"
+                "ni" -> "你(nǐ),尼(ní),拟(nǐ)"
+                "ba" -> "把(bǎ),吧(ba),爸(bà),巴(bā)"
+                else -> ""
+            }
+            if (possiblePinyinChars.isNotEmpty()) {
+                Timber.d("参考:拼音'$normalizedPrefix'对应的常用汉字: $possiblePinyinChars")
+            }
+        }
+        
         // 从Realm词库查询
         val realmResults = repository.searchEntries(normalizedPrefix, limit, excludeTypes)
         
         // 记录搜索时间
         val searchTime = System.currentTimeMillis() - startTime
         Timber.d("搜索'$normalizedPrefix'耗时: ${searchTime}ms, 返回${realmResults.size}个结果")
+        
+        // 输出一部分结果
+        if (realmResults.isNotEmpty()) {
+            val previewResults = realmResults.take(5).joinToString { "${it.word}(${it.frequency})" }
+            Timber.d("搜索结果前5项: $previewResults")
+        }
         
         return realmResults
     }

@@ -111,12 +111,13 @@ class InputTestActivity : AppCompatActivity() {
                 
                 // 规范化拼音（使用DictionaryManager的规范化方法，如果它是私有的，我们需要自己实现）
                 val normalizedInput = normalizePinyin(input)
-                logMessage("规范化后的拼音: '$normalizedInput'")
+                logMessage("拼音转换: '$input' -> '$normalizedInput'")
                 
                 // 记录开始时间
                 val startTime = System.currentTimeMillis()
                 
                 // 从Realm词库中查找，使用规范化后的拼音
+                logMessage("对Realm数据库Entry表执行查询: 条件'pinyin == $normalizedInput'")
                 val realmResults = repository.searchEntries(normalizedInput, 5, emptyList())
                 
                 // 计算查询耗时
@@ -133,7 +134,7 @@ class InputTestActivity : AppCompatActivity() {
                     
                     logMessage("从Realm数据库中查询到${realmResults.size}个候选词，耗时: ${searchTime}ms：分别是 $realmResultsText")
                 } else {
-                    logMessage("Realm词库中未找到匹配'$normalizedInput'的候选词，耗时: ${searchTime}ms")
+                    logMessage("Realm数据库表Entry中未找到pinyin字段值为'$normalizedInput'的候选词，耗时: ${searchTime}ms")
                 }
                 
                 // 使用DictionaryManager的searchWords方法
@@ -141,11 +142,11 @@ class InputTestActivity : AppCompatActivity() {
                 
                 if (combinedResults.isNotEmpty()) {
                     logMessage("最终返回${combinedResults.size}个候选词结果")
+                } else {
+                    logMessage("无可用候选词结果")
                 }
-                
             } catch (e: Exception) {
-                logMessage("搜索候选词时出错: ${e.message}")
-                e.printStackTrace()
+                logMessage("搜索候选词出错: ${e.message}")
             }
         }
     }

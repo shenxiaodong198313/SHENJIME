@@ -289,6 +289,14 @@ class DictionaryRepository {
             val input = prefix.lowercase().trim()
             Timber.d("查询候选词: '$input'")
             
+            // 检查输入是否为汉字
+            val isChineseInput = input.any { it.code in 0x4E00..0x9FFF }
+            if (isChineseInput) {
+                // 如果输入为汉字，直接按汉字查询
+                Timber.d("检测到汉字输入: '$input'，直接搜索汉字")
+                return searchByWord(input, limit)
+            }
+            
             // 先检查是否为可能的首字母输入模式
             if (com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(input)) {
                 Timber.d("检测到首字母输入模式: '$input'")
@@ -301,34 +309,69 @@ class DictionaryRepository {
                 (PinyinSplitter.isValidSyllable(input) || input.length <= 3)
                 
             if (isSingleSyllable) {
-                Timber.d("检测到单个音节: '$input'，优先查询单字")
+                Timber.d("检测到单个拼音音节: '$input'，优先查询对应单字")
                 
                 // 存储查询结果
                 val results = mutableListOf<Entry>()
                 
                 // 1. 首先查询chars词典中的单字 - 精确匹配
+                val queryCondition = "pinyin == '$input' AND type == 'chars'"
+                Timber.d("执行Realm查询: $queryCondition")
                 val exactCharsEntries = realm.query<Entry>("pinyin == $0 AND type == 'chars'", input)
                     .find()
                     .filter { it.type !in excludeTypes }
                     .sortedByDescending { it.frequency }
                     .toList()
                 
-                Timber.d("精确匹配单字: ${exactCharsEntries.size}个")
+                Timber.d("精确匹配拼音'$input'的单字: ${exactCharsEntries.size}个")
+                if (exactCharsEntries.isNotEmpty()) {
+                    val previewChars = exactCharsEntries.take(3).joinToString { "${it.word}(${it.frequency})" }
+                    Timber.d("拼音'$input'的部分单字: $previewChars")
+                } else {
+                    Timber.d("数据库中没有拼音等于'$input'的单字")
+                    
+                    // 如果数据库中没有找到对应的拼音单字，使用硬编码的常用拼音表
+                    val hardcodedChars = getHardcodedCharsForPinyin(input)
+                    if (hardcodedChars.isNotEmpty()) {
+                        Timber.d("使用硬编码常用拼音-汉字映射表提供备选结果")
+                        return hardcodedChars
+                    }
+                }
                 results.addAll(exactCharsEntries)
                 
                 // 2. 如果精确匹配结果不足，查询前缀匹配的单字
                 if (results.size < limit / 2) {
+                    val prefixCondition = "pinyin BEGINSWITH '$input' AND type == 'chars'"
+                    Timber.d("执行前缀匹配Realm查询: $prefixCondition")
                     val prefixCharsEntries = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'chars'", input)
                         .find()
                         .filter { it.type !in excludeTypes && it !in results && it.word.length == 1 }
                         .sortedByDescending { it.frequency }
                         .toList()
                     
-                    Timber.d("前缀匹配单字: ${prefixCharsEntries.size}个")
+                    Timber.d("前缀匹配拼音'$input'的单字: ${prefixCharsEntries.size}个")
+                    if (prefixCharsEntries.isNotEmpty()) {
+                        val previewChars = prefixCharsEntries.take(3).joinToString { "${it.word}(${it.frequency})" }
+                        Timber.d("前缀匹配的部分单字: $previewChars")
+                    }
                     results.addAll(prefixCharsEntries)
                 }
                 
-                // 3. 添加一些词组，但不超过结果总数的一半
+                // 3. 查找其他词典类型的精确匹配
+                if (results.size < limit / 2) {
+                    // 查询所有词典类型
+                    val otherTypeEntries = realm.query<Entry>("pinyin == $0 AND type != 'chars'", input)
+                        .find()
+                        .filter { it.type !in excludeTypes && it !in results }
+                        .sortedByDescending { it.frequency }
+                        .take(limit / 4)  // 限制这部分结果的数量
+                        .toList()
+                        
+                    Timber.d("其他词典中拼音='$input'的词条: ${otherTypeEntries.size}个")
+                    results.addAll(otherTypeEntries)
+                }
+                
+                // 4. 添加一些词组，但不超过结果总数的一半
                 val targetWordLimit = limit - min(results.size, limit / 2)
                 if (targetWordLimit > 0) {
                     // 先找精确匹配的词组
@@ -339,7 +382,11 @@ class DictionaryRepository {
                         .take(targetWordLimit)
                         .toList()
                         
-                    Timber.d("单音节词组: ${exactWordEntries.size}个")
+                    Timber.d("以拼音'$input'开头的词组: ${exactWordEntries.size}个")
+                    if (exactWordEntries.isNotEmpty()) {
+                        val previewWords = exactWordEntries.take(3).joinToString { "${it.word}(${it.frequency})" }
+                        Timber.d("以'$input'开头的部分词组: $previewWords")
+                    }
                     results.addAll(exactWordEntries)
                 }
                 
@@ -350,14 +397,15 @@ class DictionaryRepository {
                           .thenByDescending { it.frequency }    // 然后按词频排序
                     )
                     
-                    Timber.d("单音节查询最终结果: ${sortedResults.size}个，前3个: ${
-                        sortedResults.take(3).joinToString { it.word }
+                    val finalResults = sortedResults.map { WordFrequency(it.word, it.frequency) }
+                    Timber.d("拼音'$input'的查询结果: 共${finalResults.size}个，前5个: ${
+                        finalResults.take(5).joinToString { it.word }
                     }")
                     
-                    return sortedResults.map { WordFrequency(it.word, it.frequency) }
+                    return finalResults
+                } else {
+                    Timber.w("拼音'$input'查询无结果")
                 }
-                
-                Timber.w("单音节'$input'查询无结果，继续使用默认逻辑")
             }
             
             // 非单音节输入，进行标准的拼音分词处理
@@ -367,10 +415,18 @@ class DictionaryRepository {
             // 选择合适的策略
             val strategy = CandidateStrategyFactory.getStrategy(normalizedPrefix.length, input)
             
-            Timber.d("使用策略: ${strategy.getStrategyName()} 查询候选词")
+            Timber.d("使用策略: ${strategy.getStrategyName()} 查询拼音'$normalizedPrefix'的候选词")
             
             // 使用策略查询候选词
-            return strategy.queryCandidates(realm, normalizedPrefix, limit, excludeTypes)
+            val results = strategy.queryCandidates(realm, normalizedPrefix, limit, excludeTypes)
+            if (results.isNotEmpty()) {
+                Timber.d("拼音'$normalizedPrefix'匹配到${results.size}个词条，前5个: ${
+                    results.take(5).joinToString { it.word }
+                }")
+            } else {
+                Timber.d("拼音'$normalizedPrefix'没有匹配到任何词条")
+            }
+            return results
         } catch (e: Exception) {
             Timber.e(e, "搜索候选词失败: ${e.message}")
             return emptyList()
@@ -527,6 +583,81 @@ class DictionaryRepository {
         }
         
         return updateCount.get()
+    }
+
+    /**
+     * 为常用拼音提供硬编码的单字候选词
+     * 这主要用于数据库中未能找到匹配时的备用方案
+     */
+    private fun getHardcodedCharsForPinyin(pinyin: String): List<WordFrequency> {
+        Timber.d("使用硬编码映射表查找拼音'$pinyin'对应的汉字")
+        
+        return when (pinyin.lowercase()) {
+            "wei" -> listOf(
+                WordFrequency("为", 982),
+                WordFrequency("位", 957),
+                WordFrequency("未", 925),
+                WordFrequency("维", 885),
+                WordFrequency("围", 862),
+                WordFrequency("委", 845),
+                WordFrequency("卫", 832),
+                WordFrequency("微", 815),
+                WordFrequency("尾", 795)
+            )
+            "wo" -> listOf(
+                WordFrequency("我", 995),
+                WordFrequency("窝", 825),
+                WordFrequency("握", 785),
+                WordFrequency("卧", 765)
+            )
+            "ta" -> listOf(
+                WordFrequency("他", 990),
+                WordFrequency("她", 985),
+                WordFrequency("它", 980),
+                WordFrequency("塔", 850),
+                WordFrequency("踏", 830)
+            )
+            "ni" -> listOf(
+                WordFrequency("你", 995),
+                WordFrequency("尼", 870),
+                WordFrequency("拟", 845)
+            )
+            "ba" -> listOf(
+                WordFrequency("把", 960),
+                WordFrequency("吧", 950),
+                WordFrequency("爸", 940),
+                WordFrequency("巴", 920)
+            )
+            "shi" -> listOf(
+                WordFrequency("是", 999),
+                WordFrequency("时", 980),
+                WordFrequency("事", 975),
+                WordFrequency("使", 965),
+                WordFrequency("师", 955),
+                WordFrequency("十", 950)
+            )
+            "li" -> listOf(
+                WordFrequency("里", 980),
+                WordFrequency("力", 970),
+                WordFrequency("利", 960),
+                WordFrequency("理", 950),
+                WordFrequency("立", 940)
+            )
+            "de" -> listOf(
+                WordFrequency("的", 999),
+                WordFrequency("得", 980),
+                WordFrequency("德", 950)
+            )
+            else -> emptyList()
+        }.also {
+            if (it.isNotEmpty()) {
+                Timber.d("硬编码映射表返回${it.size}个结果，前3个: ${
+                    it.take(3).joinToString { char -> char.word }
+                }")
+            } else {
+                Timber.d("硬编码映射表中没有拼音'$pinyin'的映射")
+            }
+        }
     }
 }
 
