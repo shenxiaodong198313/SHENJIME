@@ -9,14 +9,32 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="数据库概览"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="数据库概览"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+
+            <Button
+                android:id="@+id/btnCopyInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="复制"
+                android:textSize="12sp"
+                android:minHeight="36dp"
+                android:padding="4dp"
+                style="@style/Widget.Material3.Button.TextButton" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvDbFileName"
@@ -68,57 +86,75 @@
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
-        <TableLayout
-            android:id="@+id/tableModules"
+        <HorizontalScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:stretchColumns="*">
+            android:layout_height="wrap_content">
 
-            <TableRow
-                android:background="#EEEEEE"
-                android:padding="4dp">
+            <TableLayout
+                android:id="@+id/tableModules"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:stretchColumns="*">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="模块名称"
-                    android:textStyle="bold" />
+                <TableRow
+                    android:background="#EEEEEE"
+                    android:padding="4dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="词条数"
-                    android:gravity="center"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="模块名称"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="内存状态"
-                    android:gravity="center"
-                    android:textStyle="bold" />
-            </TableRow>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="词条数"
+                        android:gravity="center"
+                        android:textStyle="bold" />
 
-            <!-- 示例行，将在代码中动态生成 -->
-            <TableRow android:padding="4dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="chars" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="内存状态"
+                        android:gravity="center"
+                        android:textStyle="bold" />
+                    
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="数据样例"
+                        android:gravity="center"
+                        android:textStyle="bold" />
+                </TableRow>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="10万"
-                    android:gravity="center" />
+                <!-- 示例行，将在代码中动态生成 -->
+                <TableRow android:padding="4dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="单字词典" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="已加载"
-                    android:gravity="center" />
-            </TableRow>
-        </TableLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="10万"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="已加载"
+                        android:gravity="center" />
+                    
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="我[wo](995)"
+                        android:gravity="center" />
+                </TableRow>
+            </TableLayout>
+        </HorizontalScrollView>
 
         <View
             android:layout_width="match_parent"

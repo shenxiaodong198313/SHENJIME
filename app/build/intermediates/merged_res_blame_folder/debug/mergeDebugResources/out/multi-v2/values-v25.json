@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-33:/values-v25/values-v25.xml",
+            "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-2:/values-v25/values-v25.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\shenxiaodong\\.gradle\\caches\\8.13\\transforms\\826298604426759a9862ede62f6943f0\\transformed\\appcompat-1.6.1\\res\\values-v25\\values-v25.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\826298604426759a9862ede62f6943f0\\transformed\\appcompat-1.6.1\\res\\values-v25\\values-v25.xml",
                     "from": {
                         "startLines": "2,3,4,6",
                         "startColumns": "4,4,4,4",

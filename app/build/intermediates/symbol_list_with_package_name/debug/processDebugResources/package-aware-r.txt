@@ -3226,6 +3226,7 @@ id btnBuildRealmDb
 id btnClearLogs
 id btnCopyDbInfo
 id btnCopyDbPath
+id btnCopyInfo
 id btnCopyLog
 id btnCopyLogs
 id btnDevTools

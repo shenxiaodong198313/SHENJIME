@@ -8,6 +8,7 @@ import android.view.View
 import android.view.View.VISIBLE
 import android.view.View.GONE
 import android.widget.TextView
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.text.NumberFormat
+import android.content.Context
 
 /**
  * 词典管理Activity
@@ -363,15 +365,23 @@ class DictionaryManagerActivity : AppCompatActivity() {
                 // 获取所有模块
                 val modules = dictionaryRepository.getDictionaryModules()
                 
+                // 创建Markdown格式文本
+                val markdownInfo = buildMarkdownInfo(dbName, dbSizeFormatted, totalEntries, dbPath, modules)
+                
                 // 更新UI
                 withContext(Dispatchers.Main) {
                     // 更新基本信息
                     dialogView.findViewById<TextView>(R.id.tvDbFileName).text = "文件名称: $dbName"
                     dialogView.findViewById<TextView>(R.id.tvDbFileSize).text = "文件大小: $dbSizeFormatted"
                     dialogView.findViewById<TextView>(R.id.tvDbEntryCount).text = "词条总数: $totalEntries"
-                    dialogView.findViewById<TextView>(R.id.tvDbSchema).text = "数据模式: Entry(id, word, pinyin(索引), initialLetters(索引), frequency, type)"
+                    dialogView.findViewById<TextView>(R.id.tvDbSchema).text = "数据模式: Entry(id: 唯一标识符, word: 汉字词语, pinyin: 拼音(索引), initialLetters: 首字母(索引), frequency: 词频, type: 词典类型)"
                     dialogView.findViewById<TextView>(R.id.tvDbIndexes).text = "索引字段: pinyin, initialLetters(首字母缩写)"
                     dialogView.findViewById<TextView>(R.id.tvDbPath).text = "路径: $dbPath"
+                    
+                    // 设置复制按钮点击事件
+                    dialogView.findViewById<Button>(R.id.btnCopyInfo).setOnClickListener {
+                        copyToClipboard(markdownInfo)
+                    }
                     
                     // 动态添加模块信息
                     val tableLayout = dialogView.findViewById<android.widget.TableLayout>(R.id.tableModules)
@@ -404,6 +414,18 @@ class DictionaryManagerActivity : AppCompatActivity() {
                             memoryStatusView.gravity = android.view.Gravity.CENTER
                             row.addView(memoryStatusView)
                             
+                            // 获取并显示数据样例
+                            val sampleView = TextView(this@DictionaryManagerActivity)
+                            val samples = dictionaryRepository.getSampleEntries(module.type, 1)
+                            if (samples.isNotEmpty()) {
+                                val sample = samples.first()
+                                sampleView.text = "${sample.word}[${sample.pinyin}](${sample.frequency})"
+                            } else {
+                                sampleView.text = "无样例"
+                            }
+                            sampleView.gravity = android.view.Gravity.CENTER
+                            row.addView(sampleView)
+                            
                             tableLayout.addView(row)
                         }
                     }
@@ -419,5 +441,81 @@ class DictionaryManagerActivity : AppCompatActivity() {
         
         // 显示对话框
         dialog.show()
+    }
+    
+    /**
+     * 构建Markdown格式的数据库信息
+     */
+    private suspend fun buildMarkdownInfo(
+        dbName: String,
+        dbSizeFormatted: String,
+        totalEntries: Int,
+        dbPath: String,
+        modules: List<DictionaryModule>
+    ): String {
+        val sb = StringBuilder()
+        
+        // 添加标题
+        sb.appendLine("# 神迹输入法数据库详情")
+        sb.appendLine()
+        
+        // 添加基本信息
+        sb.appendLine("## 数据库概览")
+        sb.appendLine()
+        sb.appendLine("- **文件名称**: $dbName")
+        sb.appendLine("- **文件大小**: $dbSizeFormatted")
+        sb.appendLine("- **词条总数**: $totalEntries")
+        sb.appendLine("- **存储路径**: $dbPath")
+        sb.appendLine()
+        
+        // 添加数据模型信息
+        sb.appendLine("## 数据模型")
+        sb.appendLine()
+        sb.appendLine("### Entry类")
+        sb.appendLine()
+        sb.appendLine("| 字段 | 类型 | 说明 | 索引 |")
+        sb.appendLine("|------|------|------|------|")
+        sb.appendLine("| id | String | 词条唯一标识符 | 主键 |")
+        sb.appendLine("| word | String | 汉字词语/单字 | - |")
+        sb.appendLine("| pinyin | String | 拼音，空格分隔 | 是 |")
+        sb.appendLine("| initialLetters | String | 拼音首字母缩写 | 是 |")
+        sb.appendLine("| frequency | Int | 词频，用于候选词排序 | - |")
+        sb.appendLine("| type | String | 词典类型 | - |")
+        sb.appendLine()
+        
+        // 添加词典模块信息
+        sb.appendLine("## 词典模块")
+        sb.appendLine()
+        sb.appendLine("| 模块名称 | 词条数 | 内存状态 | 数据样例 |")
+        sb.appendLine("|---------|--------|---------|---------|")
+        
+        for (module in modules) {
+            if (!module.isGroupHeader) {
+                // 获取样例数据
+                val samples = dictionaryRepository.getSampleEntries(module.type, 1)
+                val sampleText = if (samples.isNotEmpty()) {
+                    val sample = samples.first()
+                    "${sample.word}[${sample.pinyin}](${sample.frequency})"
+                } else {
+                    "无样例"
+                }
+                
+                sb.appendLine("| ${module.chineseName} | ${module.entryCount} | ${if (module.isInMemory) "已加载" else "未加载"} | $sampleText |")
+            }
+        }
+        
+        return sb.toString()
+    }
+    
+    /**
+     * 复制文本到剪贴板
+     */
+    private fun copyToClipboard(text: String) {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("数据库详情", text)
+        clipboard.setPrimaryClip(clip)
+        
+        // 提示用户
+        android.widget.Toast.makeText(this, "已复制到剪贴板", android.widget.Toast.LENGTH_SHORT).show()
     }
 } 
