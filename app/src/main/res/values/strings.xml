@@ -49,4 +49,10 @@
     <string name="keyboard_enter">确认</string>
     <string name="keyboard_delete">删除</string>
     <string name="no_candidates">无候选词</string>
+    
+    <!-- 候选词展开相关 -->
+    <string name="expand_candidates">展开候选词</string>
+    <string name="back">返回</string>
+    <string name="close">关闭</string>
+    <string name="toggle_mode">全/单</string>
 </resources> 

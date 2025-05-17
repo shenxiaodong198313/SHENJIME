@@ -78,6 +78,11 @@ class MainActivity : AppCompatActivity() {
             binding.mainButtonContainer?.findViewById<Button>(R.id.btn_ime_settings)?.setOnClickListener {
                 openInputMethodSettings()
             }
+            
+            // 跳转到音节测试界面
+            binding.mainButtonContainer?.findViewById<Button>(R.id.btnSyllableTest)?.setOnClickListener {
+                startActivity(Intent(this, SyllableTestActivity::class.java))
+            }
         } catch (e: Exception) {
             Log.e("MainActivity", "设置UI元素失败: ${e.message}", e)
             Toast.makeText(this, "界面初始化异常，部分功能可能不可用", Toast.LENGTH_LONG).show()

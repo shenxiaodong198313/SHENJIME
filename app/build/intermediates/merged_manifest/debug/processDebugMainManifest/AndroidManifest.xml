@@ -85,6 +85,13 @@
             android:name="com.shenji.aikeyboard.ui.DevToolsActivity"
             android:exported="false" />
 
+        <!-- 音节测试活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.SyllableTestActivity"
+            android:exported="false"
+            android:label="音节测试工具"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- 输入法服务 -->
         <service
             android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"

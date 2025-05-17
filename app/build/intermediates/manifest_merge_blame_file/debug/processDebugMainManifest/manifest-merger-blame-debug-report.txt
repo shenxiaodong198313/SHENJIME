@@ -50,7 +50,7 @@
 31-->[androidx.core:core:1.12.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\3db028da20e3e3151d8cc190e7e92a8b\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
 32
 33    <application
-33-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:21:5-96:19
+33-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:21:5-103:19
 34        android:name="com.shenji.aikeyboard.ShenjiApplication"
 34-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:22:9-42
 35        android:allowBackup="true"
@@ -141,120 +141,132 @@
 86            android:exported="false" />
 86-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:70:13-37
 87
-88        <!-- 输入法服务 -->
-89        <service
-89-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:73:9-84:19
-90            android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"
-90-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:74:13-62
-91            android:exported="true"
-91-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:77:13-36
-92            android:label="@string/ime_name"
-92-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:75:13-45
-93            android:permission="android.permission.BIND_INPUT_METHOD" >
-93-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:76:13-70
-94            <intent-filter>
-94-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:78:13-80:29
-95                <action android:name="android.view.InputMethod" />
-95-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:79:17-67
-95-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:79:25-64
-96            </intent-filter>
-97
-98            <meta-data
-98-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:81:13-83:50
-99                android:name="android.view.im"
-99-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:82:17-47
-100                android:resource="@xml/method" />
-100-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:83:17-47
-101        </service>
-102
-103        <!-- 输入法设置活动 -->
-104        <activity
-104-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:87:9-94:20
-105            android:name="com.shenji.aikeyboard.settings.InputMethodSettingsActivity"
-105-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:88:13-65
-106            android:exported="true"
-106-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:90:13-36
-107            android:label="@string/ime_settings" >
-107-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:89:13-49
-108            <intent-filter>
-108-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:91:13-93:29
-109                <action android:name="android.intent.action.MAIN" />
-109-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:36:17-69
-109-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:36:25-66
-110            </intent-filter>
-111        </activity>
-112
-113        <provider
-113-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
-114            android:name="androidx.startup.InitializationProvider"
-114-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:25:13-67
-115            android:authorities="com.shenji.aikeyboard.androidx-startup"
-115-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:26:13-68
-116            android:exported="false" >
-116-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:27:13-37
-117            <meta-data
-117-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
-118                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-118-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:30:17-75
-119                android:value="androidx.startup" />
-119-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:31:17-49
-120            <meta-data
-120-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\298e763492504a343b1cf0471ebf0015\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
-121                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-121-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\298e763492504a343b1cf0471ebf0015\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
-122                android:value="androidx.startup" />
-122-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\298e763492504a343b1cf0471ebf0015\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
-123            <meta-data
-123-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\7930dd1b557938e01340efb646797177\transformed\cinterop-release\AndroidManifest.xml:32:13-34:52
-124                android:name="io.realm.kotlin.internal.RealmInitializer"
-124-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\7930dd1b557938e01340efb646797177\transformed\cinterop-release\AndroidManifest.xml:33:17-73
-125                android:value="androidx.startup" />
-125-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\7930dd1b557938e01340efb646797177\transformed\cinterop-release\AndroidManifest.xml:34:17-49
-126            <meta-data
-126-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
-127                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-127-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
-128                android:value="androidx.startup" />
-128-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
-129        </provider>
-130
-131        <receiver
-131-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
-132            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-132-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
-133            android:directBootAware="false"
-133-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
-134            android:enabled="true"
-134-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
-135            android:exported="true"
-135-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
-136            android:permission="android.permission.DUMP" >
-136-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
-137            <intent-filter>
-137-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
-138                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-138-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
-138-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
-139            </intent-filter>
-140            <intent-filter>
-140-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
-141                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-141-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
-141-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
-142            </intent-filter>
-143            <intent-filter>
-143-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
-144                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-144-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
-144-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
-145            </intent-filter>
-146            <intent-filter>
-146-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
-147                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-147-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
-147-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
-148            </intent-filter>
-149        </receiver>
-150    </application>
-151
-152</manifest>
+88        <!-- 音节测试活动 -->
+89        <activity
+89-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:73:9-77:58
+90            android:name="com.shenji.aikeyboard.ui.SyllableTestActivity"
+90-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:74:13-52
+91            android:exported="false"
+91-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:75:13-37
+92            android:label="音节测试工具"
+92-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:76:13-35
+93            android:windowSoftInputMode="adjustResize" />
+93-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:77:13-55
+94
+95        <!-- 输入法服务 -->
+96        <service
+96-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:80:9-91:19
+97            android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"
+97-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:81:13-62
+98            android:exported="true"
+98-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:84:13-36
+99            android:label="@string/ime_name"
+99-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:82:13-45
+100            android:permission="android.permission.BIND_INPUT_METHOD" >
+100-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:83:13-70
+101            <intent-filter>
+101-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:85:13-87:29
+102                <action android:name="android.view.InputMethod" />
+102-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:86:17-67
+102-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:86:25-64
+103            </intent-filter>
+104
+105            <meta-data
+105-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:88:13-90:50
+106                android:name="android.view.im"
+106-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:89:17-47
+107                android:resource="@xml/method" />
+107-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:90:17-47
+108        </service>
+109
+110        <!-- 输入法设置活动 -->
+111        <activity
+111-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:94:9-101:20
+112            android:name="com.shenji.aikeyboard.settings.InputMethodSettingsActivity"
+112-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:95:13-65
+113            android:exported="true"
+113-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:97:13-36
+114            android:label="@string/ime_settings" >
+114-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:96:13-49
+115            <intent-filter>
+115-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:98:13-100:29
+116                <action android:name="android.intent.action.MAIN" />
+116-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:36:17-69
+116-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:36:25-66
+117            </intent-filter>
+118        </activity>
+119
+120        <provider
+120-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+121            android:name="androidx.startup.InitializationProvider"
+121-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:25:13-67
+122            android:authorities="com.shenji.aikeyboard.androidx-startup"
+122-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:26:13-68
+123            android:exported="false" >
+123-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:27:13-37
+124            <meta-data
+124-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+125                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+125-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:30:17-75
+126                android:value="androidx.startup" />
+126-->[androidx.emoji2:emoji2:1.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\a68b2da926d9d19224a6a94fcd2112b6\transformed\emoji2-1.2.0\AndroidManifest.xml:31:17-49
+127            <meta-data
+127-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\298e763492504a343b1cf0471ebf0015\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+128                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+128-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\298e763492504a343b1cf0471ebf0015\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+129                android:value="androidx.startup" />
+129-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\298e763492504a343b1cf0471ebf0015\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+130            <meta-data
+130-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\7930dd1b557938e01340efb646797177\transformed\cinterop-release\AndroidManifest.xml:32:13-34:52
+131                android:name="io.realm.kotlin.internal.RealmInitializer"
+131-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\7930dd1b557938e01340efb646797177\transformed\cinterop-release\AndroidManifest.xml:33:17-73
+132                android:value="androidx.startup" />
+132-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\7930dd1b557938e01340efb646797177\transformed\cinterop-release\AndroidManifest.xml:34:17-49
+133            <meta-data
+133-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+134                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+134-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+135                android:value="androidx.startup" />
+135-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+136        </provider>
+137
+138        <receiver
+138-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+139            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+139-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+140            android:directBootAware="false"
+140-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+141            android:enabled="true"
+141-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+142            android:exported="true"
+142-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+143            android:permission="android.permission.DUMP" >
+143-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+144            <intent-filter>
+144-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+145                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+145-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+145-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+146            </intent-filter>
+147            <intent-filter>
+147-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+148                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+148-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+148-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+149            </intent-filter>
+150            <intent-filter>
+150-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+151                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+151-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+151-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+152            </intent-filter>
+153            <intent-filter>
+153-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+154                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+154-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+154-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\8e0d612439a86acc7e02f9dad0972470\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+155            </intent-filter>
+156        </receiver>
+157    </application>
+158
+159</manifest>

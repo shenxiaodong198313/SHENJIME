@@ -3028,6 +3028,7 @@ drawable design_ic_visibility_off
 drawable design_password_eye
 drawable design_snackbar_background
 drawable ic_arrow_back_black_24
+drawable ic_arrow_down
 drawable ic_call_answer
 drawable ic_call_answer_low
 drawable ic_call_answer_video
@@ -3226,6 +3227,7 @@ id bounceBoth
 id bounceEnd
 id bounceStart
 id btnBuildRealmDb
+id btnClearLog
 id btnClearLogs
 id btnCopyDbInfo
 id btnCopyDbPath
@@ -3239,7 +3241,10 @@ id btnExportToPublic
 id btnInputTest
 id btnLogs
 id btnResetBuild
+id btnRunTestSuite
 id btnShowDbDetails
+id btnSyllableTest
+id btnTest
 id btnTestPinyin
 id btn_enable_ime
 id btn_ime_settings
@@ -3249,10 +3254,13 @@ id buttonPanel
 id cache_measures
 id callMeasure
 id cancel_button
+id candidate_text
 id candidates_container
 id candidates_view
 id cardDbInfo
+id cardInput
 id cardStats
+id cardTestSuite
 id carryVelocity
 id center
 id centerCrop
@@ -3293,6 +3301,7 @@ id decelerate
 id decelerateAndComplete
 id decor_content_parent
 id default_activity_button
+id default_candidates_view
 id deltaRelative
 id dependency_ordering
 id design_bottom_sheet
@@ -3335,8 +3344,10 @@ id etBatchSize
 id etInput
 id etMaxNodesPerBatch
 id etNumWorkers
+id etPinyinInput
 id exitUntilCollapsed
 id expand_activities_button
+id expand_candidates_button
 id expanded_menu
 id fade
 id fill
@@ -3671,6 +3682,7 @@ id textinput_helper_text
 id textinput_placeholder
 id textinput_prefix_text
 id textinput_suffix_text
+id tilPinyinInput
 id time
 id title
 id titleDividerNoCustom
@@ -3711,7 +3723,9 @@ id tvFrequency
 id tvGroupCount
 id tvGroupTitle
 id tvHelpText
+id tvLog
 id tvLogContent
+id tvLogTitle
 id tvLogs
 id tvLogsTitle
 id tvMemoryStatus
@@ -3721,6 +3735,8 @@ id tvModuleListTitle
 id tvNoLogs
 id tvPinyin
 id tvRealmStatus
+id tvTestResult
+id tvTestSuiteResult
 id tvTitle
 id tvTotalEntries
 id tvWord
@@ -3869,6 +3885,7 @@ layout activity_input_method_settings
 layout activity_input_test
 layout activity_log_detail
 layout activity_main
+layout activity_syllable_test
 layout custom_dialog
 layout design_bottom_navigation_item
 layout design_bottom_sheet_dialog
@@ -3889,6 +3906,7 @@ layout dialog_database_info
 layout dialog_export_settings
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
+layout item_candidate
 layout item_dictionary_entry
 layout item_dictionary_group_header
 layout item_dictionary_log
@@ -3991,6 +4009,7 @@ string abc_toolbar_collapse_description
 string androidx_startup
 string app_name
 string appbar_scrolling_view_behavior
+string back
 string bottom_sheet_behavior
 string bottomsheet_action_collapse
 string bottomsheet_action_expand
@@ -4009,6 +4028,7 @@ string character_counter_overflowed_content_description
 string character_counter_pattern
 string clear_logs
 string clear_text_end_icon_content_description
+string close
 string copy_log
 string copy_logs
 string dict_completed
@@ -4027,6 +4047,7 @@ string dict_no_data
 string dict_total_entries
 string error_a11y_label
 string error_icon_content_description
+string expand_candidates
 string exposed_dropdown_menu_content_description
 string fab_transformation_scrim_behavior
 string fab_transformation_sheet_behavior
@@ -4167,6 +4188,7 @@ string side_sheet_behavior
 string status_bar_notification_info_overflow
 string storage_permission_required
 string subtype_chinese
+string toggle_mode
 string view_logs
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light

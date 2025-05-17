@@ -14,20 +14,37 @@
         android:visibility="gone"
         android:background="#F5F5F5">
 
-        <HorizontalScrollView
+        <!-- 默认候选词水平布局 -->
+        <LinearLayout
+            android:id="@+id/default_candidates_view"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="none">
+            android:layout_height="40dp"
+            android:orientation="horizontal">
 
-            <LinearLayout
-                android:id="@+id/candidates_view"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:orientation="horizontal"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:gravity="center_vertical"/>
-        </HorizontalScrollView>
+            <HorizontalScrollView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/candidates_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:gravity="center_vertical"/>
+            </HorizontalScrollView>
+
+            <Button
+                android:id="@+id/expand_candidates_button"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:text="▼"
+                android:textSize="14sp"
+                style="@style/KeyboardFunctionButton"/>
+        </LinearLayout>
 
         <View
             android:layout_width="match_parent"

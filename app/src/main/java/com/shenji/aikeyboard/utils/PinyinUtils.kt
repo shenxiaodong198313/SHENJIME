@@ -18,8 +18,13 @@ object PinyinUtils {
         
         val trimmed = input.trim().lowercase()
         
-        // 简化版只返回输入本身，不做分词
-        return trimmed
+        // 如果已经包含空格，假设已经是规范化的拼音
+        if (trimmed.contains(" ")) {
+            return trimmed
+        }
+        
+        // 使用拼音分词器进行分词
+        return PinyinSplitter.normalize(trimmed)
     }
     
     /**
@@ -57,14 +62,35 @@ object PinyinUtils {
      * @return 测试结果信息
      */
     fun testPinyinSplitter(): String {
-        return "拼音分词功能已移除"
+        val testCases = listOf(
+            "zhangsan",     // 正常分割
+            "xianggang",    // 从右到左匹配避免失败
+            "xian",         // 优先匹配长音节
+            "zhang1",       // 包含非法字符
+            "zhx"           // 无法分割为合法音节
+        )
+        
+        val results = testCases.map { input ->
+            val syllables = PinyinSplitter.split(input)
+            val result = if (syllables.isNotEmpty()) {
+                PinyinSplitter.joinSyllables(syllables)
+            } else {
+                "无法分词"
+            }
+            "$input -> $result"
+        }
+        
+        return results.joinToString("\n")
     }
 
     // 拼音首字母提取
     fun generateInitials(pinyin: String): String {
         if (pinyin.isBlank()) return ""
         
-        return pinyin.split(" ")
+        // 先规范化拼音，确保有正确的音节分隔
+        val normalized = normalize(pinyin)
+        
+        return normalized.split(" ")
             .filter { it.isNotBlank() }
             .map { it.first().toString() }
             .joinToString("")
