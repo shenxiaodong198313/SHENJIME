@@ -3021,6 +3021,7 @@ drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
 drawable candidate_background
 drawable candidate_item_background
+drawable candidate_word_bg
 drawable design_fab_background
 drawable design_ic_visibility
 drawable design_ic_visibility_off
@@ -3046,6 +3047,8 @@ drawable ic_mtrl_chip_close_circle
 drawable ic_search_black_24
 drawable key_background
 drawable key_preview_background
+drawable keyboard_function_key_bg
+drawable keyboard_key_bg
 drawable m3_avd_hide_password
 drawable m3_avd_show_password
 drawable m3_bottom_sheet_drag_handle
@@ -3238,11 +3241,16 @@ id btnLogs
 id btnResetBuild
 id btnShowDbDetails
 id btnTestPinyin
+id btn_enable_ime
+id btn_ime_settings
+id btn_set_default_ime
 id buttonContainer
 id buttonPanel
 id cache_measures
 id callMeasure
 id cancel_button
+id candidates_container
+id candidates_view
 id cardDbInfo
 id cardStats
 id carryVelocity
@@ -3378,6 +3386,39 @@ id italic
 id item_touch_helper_previous_elevation
 id jumpToEnd
 id jumpToStart
+id key_a
+id key_b
+id key_c
+id key_comma
+id key_d
+id key_delete
+id key_e
+id key_enter
+id key_f
+id key_g
+id key_h
+id key_i
+id key_j
+id key_k
+id key_l
+id key_m
+id key_n
+id key_o
+id key_p
+id key_period
+id key_q
+id key_r
+id key_s
+id key_shift
+id key_space
+id key_symbol
+id key_t
+id key_u
+id key_v
+id key_w
+id key_x
+id key_y
+id key_z
 id labeled
 id layout
 id left
@@ -3824,6 +3865,7 @@ layout activity_dev_tools
 layout activity_dictionary_detail
 layout activity_dictionary_logs
 layout activity_dictionary_manager
+layout activity_input_method_settings
 layout activity_input_test
 layout activity_log_detail
 layout activity_main
@@ -3851,6 +3893,7 @@ layout item_dictionary_entry
 layout item_dictionary_group_header
 layout item_dictionary_log
 layout item_dictionary_module
+layout keyboard_layout
 layout m3_alert_dialog
 layout m3_alert_dialog_actions
 layout m3_alert_dialog_title
@@ -3998,6 +4041,9 @@ string input_hint
 string input_test
 string input_test_title
 string item_view_role_description
+string keyboard_delete
+string keyboard_enter
+string keyboard_space
 string log_copied
 string log_details
 string m3_exceed_max_badge_text_suffix
@@ -4100,6 +4146,7 @@ string mtrl_switch_track_decoration_path
 string mtrl_switch_track_path
 string mtrl_timepicker_cancel
 string mtrl_timepicker_confirm
+string no_candidates
 string no_logs
 string password_toggle_content_description
 string path_password_eye
@@ -4119,6 +4166,7 @@ string side_sheet_accessibility_pane_title
 string side_sheet_behavior
 string status_bar_notification_info_overflow
 string storage_permission_required
+string subtype_chinese
 string view_logs
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
@@ -4407,9 +4455,12 @@ style Base_Widget_MaterialComponents_Snackbar
 style Base_Widget_MaterialComponents_TextInputEditText
 style Base_Widget_MaterialComponents_TextInputLayout
 style Base_Widget_MaterialComponents_TextView
+style CandidateWord
 style CardView
 style CardView_Dark
 style CardView_Light
+style KeyboardButton
+style KeyboardFunctionButton
 style MaterialAlertDialog_Material3
 style MaterialAlertDialog_Material3_Animation
 style MaterialAlertDialog_Material3_Body_Text
@@ -5391,3 +5442,4 @@ styleable ViewPager2 android_orientation
 styleable ViewStubCompat android_id android_layout android_inflatedId
 styleable ViewTransition android_id SharedValue SharedValueId clearsTag duration ifTagNotSet ifTagSet motionInterpolator motionTarget onStateTransition pathMotionArc setsTag transitionDisable upDuration viewTransitionMode
 styleable include constraintSet
+xml method

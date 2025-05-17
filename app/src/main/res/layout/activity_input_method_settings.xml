@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="神迹输入法设置"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="使用神迹输入法需要完成以下两个步骤："
+        android:textSize="16sp"
+        android:layout_marginBottom="16dp"/>
+        
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1. "
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+            
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="在系统设置中启用神迹输入法"
+            android:textSize="16sp"/>
+            
+        <Button
+            android:id="@+id/btn_enable_ime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="启用输入法"/>
+    </LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2. "
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+            
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="将神迹输入法设为默认输入法"
+            android:textSize="16sp"/>
+            
+        <Button
+            android:id="@+id/btn_set_default_ime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="设为默认"/>
+    </LinearLayout>
+    
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_marginBottom="24dp"/>
+        
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="功能说明"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+        
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1. 标准QWERTY键盘布局\n2. 拼音输入支持\n3. 候选词条智能推荐\n4. 点击键盘才显示候选词区域"
+        android:textSize="14sp"
+        android:lineSpacingExtra="8dp"/>
+
+</LinearLayout> 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基础键盘按钮样式 -->
+    <style name="KeyboardButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/keyboard_key_bg</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">#333333</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- 功能键按钮样式 -->
+    <style name="KeyboardFunctionButton">
+        <item name="android:background">@drawable/keyboard_function_key_bg</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#333333</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- 候选词条样式 -->
+    <style name="CandidateWord">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#333333</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:background">@drawable/candidate_word_bg</item>
+        <item name="android:layout_marginEnd">8dp</item>
+    </style>
+</resources> 

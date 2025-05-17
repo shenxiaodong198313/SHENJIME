@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.shenji.aikeyboard">
 
     <!-- 写入外部存储权限（日志写入） -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -67,6 +68,30 @@
         <activity
             android:name=".ui.DevToolsActivity"
             android:exported="false" />
+
+        <!-- 输入法服务 -->
+        <service
+            android:name=".keyboard.ShenjiInputMethodService"
+            android:label="@string/ime_name"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+
+        <!-- 输入法设置活动 -->
+        <activity
+            android:name=".settings.InputMethodSettingsActivity"
+            android:label="@string/ime_settings"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
 
     </application>
 

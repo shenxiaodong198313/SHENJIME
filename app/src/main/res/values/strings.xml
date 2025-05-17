@@ -3,7 +3,7 @@
     <string name="app_name">神迹</string>
     <string name="ime_name">神迹输入法</string>
     <string name="ime_status">输入法状态: 未启用</string>
-    <string name="ime_settings">输入法设置</string>
+    <string name="ime_settings">神迹输入法设置</string>
     <string name="view_logs">查看日志</string>
     <string name="help_text">请在系统设置中启用"神迹输入法"，并选择作为默认输入法使用。</string>
     <string name="log_details">日志详情</string>
@@ -42,4 +42,11 @@
     <string name="pinyin_test_title">拼音分词测试结果</string>
     <string name="pinyin_test_running">正在测试拼音分词效果...</string>
     <string name="pinyin_test_complete">拼音分词测试完成</string>
+    
+    <!-- 输入法相关 -->
+    <string name="subtype_chinese">中文(拼音)</string>
+    <string name="keyboard_space">空格</string>
+    <string name="keyboard_enter">确认</string>
+    <string name="keyboard_delete">删除</string>
+    <string name="no_candidates">无候选词</string>
 </resources> 

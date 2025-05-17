@@ -85,6 +85,31 @@
             android:name="com.shenji.aikeyboard.ui.DevToolsActivity"
             android:exported="false" />
 
+        <!-- 输入法服务 -->
+        <service
+            android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"
+            android:exported="true"
+            android:label="@string/ime_name"
+            android:permission="android.permission.BIND_INPUT_METHOD" >
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+
+        <!-- 输入法设置活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.settings.InputMethodSettingsActivity"
+            android:exported="true"
+            android:label="@string/ime_settings" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.shenji.aikeyboard.androidx-startup"

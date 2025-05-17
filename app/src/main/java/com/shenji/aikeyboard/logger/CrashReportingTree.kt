@@ -1,6 +1,7 @@
 package com.shenji.aikeyboard.logger
 
 import android.content.Context
+import android.os.Environment
 import android.util.Log
 import com.shenji.aikeyboard.ShenjiApplication
 import timber.log.Timber
@@ -19,6 +20,17 @@ import kotlin.system.exitProcess
 class CrashReportingTree : Timber.Tree() {
 
     init {
+        // 确保日志目录存在
+        try {
+            val logDir = getSafeLogDirectory()
+            if (!logDir.exists()) {
+                logDir.mkdirs()
+            }
+            Log.i("CrashReportingTree", "日志目录初始化: ${logDir.absolutePath}")
+        } catch (e: Exception) {
+            Log.e("CrashReportingTree", "创建日志目录失败", e)
+        }
+        
         // 设置全局未捕获异常处理器
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
@@ -26,6 +38,9 @@ class CrashReportingTree : Timber.Tree() {
             // 调用默认处理器
             defaultHandler?.uncaughtException(thread, throwable)
         }
+        
+        // 写入启动日志
+        writeLogToFile("INIT", "应用启动，崩溃日志系统初始化完成", null)
     }
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
@@ -51,14 +66,14 @@ class CrashReportingTree : Timber.Tree() {
             |
         """.trimMargin()
         
-        // 写入崩溃日志
+        // 写入崩溃日志到多个可能的位置
         writeLogToFile("CRASH", crashLogEntry, throwable)
+        writeLogToBackupLocation(crashLogEntry)
     }
 
     private fun writeLogToFile(tag: String?, message: String, t: Throwable?) {
         try {
-            val app = ShenjiApplication.instance
-            val logFile = app.getCrashLogFile()
+            val logFile = getCrashLogFile()
             
             val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             val logTag = tag ?: "APP"
@@ -75,9 +90,28 @@ class CrashReportingTree : Timber.Tree() {
             }
             
             // 输出到Android日志，方便调试
-            Log.e("CrashReportingTree", "写入崩溃日志到: ${logFile.absolutePath}")
+            Log.i("CrashReportingTree", "写入日志到: ${logFile.absolutePath}")
         } catch (e: Exception) {
             Log.e("CrashReportingTree", "写入日志文件失败", e)
+            // 尝试写入到备用位置
+            writeLogToBackupLocation("写入主日志失败: ${e.message}\n原日志内容: $message")
+        }
+    }
+    
+    // 备用日志写入位置
+    private fun writeLogToBackupLocation(message: String) {
+        try {
+            // 尝试写入到外部存储的下载目录
+            val backupDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val backupFile = File(backupDir, "shenji_crash.log")
+            
+            FileOutputStream(backupFile, true).use { fos ->
+                fos.write(message.toByteArray())
+            }
+            
+            Log.i("CrashReportingTree", "写入备用日志到: ${backupFile.absolutePath}")
+        } catch (e: Exception) {
+            Log.e("CrashReportingTree", "写入备用日志失败", e)
         }
     }
 
@@ -87,5 +121,35 @@ class CrashReportingTree : Timber.Tree() {
         t.printStackTrace(pw)
         pw.flush()
         return sw.toString()
+    }
+    
+    // 获取安全的日志目录
+    private fun getSafeLogDirectory(): File {
+        try {
+            // 首选方案：使用应用的外部文件目录
+            val context = ShenjiApplication.appContext
+            val logDir = File(context.getExternalFilesDir(null), "logs")
+            return logDir
+        } catch (e: Exception) {
+            Log.e("CrashReportingTree", "无法获取应用外部文件目录", e)
+            
+            // 备选方案：使用内部存储
+            val context = ShenjiApplication.appContext
+            return File(context.filesDir, "logs")
+        }
+    }
+    
+    // 获取崩溃日志文件
+    private fun getCrashLogFile(): File {
+        val logDir = getSafeLogDirectory()
+        if (!logDir.exists()) {
+            logDir.mkdirs()
+        }
+        
+        // 使用当天日期作为文件名
+        val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+        val today = dateFormat.format(Date())
+        
+        return File(logDir, "crash_log_${today}.txt")
     }
 } 

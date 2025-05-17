@@ -14,6 +14,11 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ShenjiApplication : Application() {
     
@@ -31,38 +36,119 @@ class ShenjiApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        instance = this
-        appContext = applicationContext
+        // 初始化全局异常处理器 - 放在最前面确保崩溃能被记录
+        setupUncaughtExceptionHandler()
         
-        // 设置Timber日志框架
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-        } else {
-            // 生产环境使用自定义日志树，记录崩溃信息
-            Timber.plant(CrashReportingTree())
+        try {
+            // 初始化基本变量
+            instance = this
+            appContext = applicationContext
+            
+            // 写入基本日志
+            logStartupMessage("开始初始化应用")
+            
+            // 设置Timber日志框架
+            if (BuildConfig.DEBUG) {
+                Timber.plant(Timber.DebugTree())
+                logStartupMessage("DEBUG模式：使用DebugTree")
+            } else {
+                // 生产环境使用自定义日志树，记录崩溃信息
+                Timber.plant(CrashReportingTree())
+                logStartupMessage("RELEASE模式：使用CrashReportingTree")
+            }
+            
+            // 初始化数据库和词典 - 使用try-catch包装
+            try {
+                logStartupMessage("开始初始化Realm数据库")
+                initRealm()
+                logStartupMessage("Realm数据库初始化完成")
+            } catch (e: Exception) {
+                logStartupMessage("初始化Realm数据库失败: ${e.message}")
+                Timber.e(e, "初始化Realm数据库失败")
+            }
+            
+            // 初始化词典管理器，但延迟加载词典
+            try {
+                logStartupMessage("开始初始化词典管理器")
+                DictionaryManager.init()
+                logStartupMessage("词典管理器初始化完成")
+            } catch (e: Exception) {
+                logStartupMessage("初始化词典管理器失败: ${e.message}")
+                Timber.e(e, "初始化词典管理器失败")
+            }
+            
+            // 延迟2秒后在后台线程启动词典加载，避免启动卡顿
+            Handler(Looper.getMainLooper()).postDelayed({
+                Thread {
+                    try {
+                        // 让应用界面先完全显示，再开始加载词典
+                        Thread.sleep(2000)
+                        logStartupMessage("开始延迟加载词典数据")
+                        // 不再需要显式调用loadCharsFromRealm，在init()中已处理词典加载
+                    } catch (e: Exception) {
+                        logStartupMessage("延迟加载词典失败: ${e.message}")
+                        Timber.e(e, "延迟加载词典失败")
+                    }
+                }.start()
+            }, 3000)
+            
+            logStartupMessage("应用初始化完成")
+            Timber.d("应用初始化完成")
+        } catch (e: Exception) {
+            // 捕获应用初始化过程中的任何异常
+            logStartupMessage("应用初始化过程中发生致命错误: ${e.message}")
+            Timber.e(e, "应用初始化过程中发生致命错误")
         }
-        
-        // 初始化数据库和词典
-        initRealm()
-        
-        // 初始化词典管理器，但延迟加载词典
-        DictionaryManager.init()
-        
-        // 延迟2秒后在后台线程启动词典加载，避免启动卡顿
-        Handler(Looper.getMainLooper()).postDelayed({
-            Thread {
-                try {
-                    // 让应用界面先完全显示，再开始加载词典
-                    Thread.sleep(2000)
-                    Timber.d("开始延迟加载词典数据")
-                    // 不再需要显式调用loadCharsFromRealm，在init()中已处理词典加载
-                } catch (e: Exception) {
-                    Timber.e(e, "延迟加载词典失败: ${e.message}")
-                }
-            }.start()
-        }, 3000)
-        
-        Timber.d("应用初始化完成")
+    }
+    
+    private fun setupUncaughtExceptionHandler() {
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                // 记录崩溃信息到独立的启动日志
+                val stackTrace = getStackTraceAsString(throwable)
+                logStartupMessage("应用崩溃: ${throwable.message}\n$stackTrace")
+            } catch (e: Exception) {
+                // 忽略日志记录失败
+            }
+            // 调用默认的处理器
+            defaultHandler?.uncaughtException(thread, throwable)
+        }
+    }
+    
+    private fun logStartupMessage(message: String) {
+        try {
+            // 获取时间戳
+            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date())
+            
+            // 组合日志消息
+            val logMessage = "[$timestamp] $message\n"
+            
+            // 记录到Android系统日志
+            Log.i("ShenjiApp", message)
+            
+            // 写入到文件
+            val logDir = File(getExternalFilesDir(null), "logs")
+            if (!logDir.exists()) {
+                logDir.mkdirs()
+            }
+            
+            val startupLogFile = File(logDir, "startup_log.txt")
+            FileOutputStream(startupLogFile, true).use { fos ->
+                fos.write(logMessage.toByteArray())
+            }
+        } catch (e: Exception) {
+            // 如果日志记录失败，至少输出到系统日志
+            Log.e("ShenjiApp", "记录启动日志失败: ${e.message}")
+        }
+    }
+    
+    private fun getStackTraceAsString(throwable: Throwable): String {
+        val sw = StringWriter()
+        val pw = PrintWriter(sw)
+        throwable.printStackTrace(pw)
+        pw.flush()
+        return sw.toString()
     }
     
     private fun ensureDictionaryFileExists() {
@@ -74,7 +160,7 @@ class ShenjiApplication : Application() {
             
             val dictFile = File(internalDir, "shenji_dict.realm")
             if (!dictFile.exists()) {
-                Timber.d("词典文件不存在，从assets复制...")
+                logStartupMessage("词典文件不存在，从assets复制...")
                 
                 val inputStream = assets.open("shenji_dict.realm")
                 val outputStream = FileOutputStream(dictFile)
@@ -89,11 +175,12 @@ class ShenjiApplication : Application() {
                 inputStream.close()
                 outputStream.close()
                 
-                Timber.d("词典文件复制成功")
+                logStartupMessage("词典文件复制成功")
             } else {
-                Timber.d("词典文件已存在")
+                logStartupMessage("词典文件已存在")
             }
         } catch (e: IOException) {
+            logStartupMessage("复制词典文件出错: ${e.message}")
             Timber.e(e, "复制词典文件出错")
         }
     }
@@ -110,7 +197,7 @@ class ShenjiApplication : Application() {
             
             // 如果文件不存在或者内容有问题，从assets中复制预构建的数据库
             if (!dictFile.exists() || dictFile.length() < 1000) {
-                Timber.w("数据库文件不存在或无效，从assets中复制预构建的数据库")
+                logStartupMessage("数据库文件不存在或无效，从assets中复制预构建的数据库")
                 
                 try {
                     // 从assets复制预构建的数据库
@@ -127,8 +214,9 @@ class ShenjiApplication : Application() {
                     inputStream.close()
                     outputStream.close()
                     
-                    Timber.d("预构建数据库复制成功")
+                    logStartupMessage("预构建数据库复制成功")
                 } catch (e: IOException) {
+                    logStartupMessage("复制预构建数据库失败: ${e.message}")
                     Timber.e(e, "复制预构建数据库失败")
                 }
             }
@@ -144,8 +232,9 @@ class ShenjiApplication : Application() {
                 
             // 打开数据库
             realm = Realm.open(config)
-            Timber.d("Realm initialized successfully")
+            logStartupMessage("Realm初始化成功")
         } catch (e: Exception) {
+            logStartupMessage("初始化Realm数据库失败，尝试创建空数据库: ${e.message}")
             Timber.e(e, "Error initializing Realm database, creating empty one")
             
             try {
@@ -159,11 +248,11 @@ class ShenjiApplication : Application() {
                     .build()
                     
                 realm = Realm.open(config)
-                Timber.d("Empty Realm database created")
+                logStartupMessage("创建空Realm数据库成功")
             } catch (e2: Exception) {
-                // 如果还是失败，抛出异常
+                // 如果还是失败，记录日志但不抛出异常
+                logStartupMessage("创建空Realm数据库失败: ${e2.message}")
                 Timber.e(e2, "Failed to create Realm database")
-                throw e2
             }
         }
     }
@@ -181,6 +270,4 @@ class ShenjiApplication : Application() {
         }
         return File(logDir, "crash_log.txt")
     }
-    
-
 }
