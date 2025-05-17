@@ -223,7 +223,7 @@ class DictionaryRepository {
     }
     
     /**
-     * 根据词典类型获取中文名称
+     * 获取词典类型的中文名称
      */
     private fun getChineseNameForType(type: String): String {
         return when (type) {
@@ -236,21 +236,12 @@ class DictionaryRepository {
             "place" -> "地名词典"
             "people" -> "人名词典"
             "poetry" -> "诗词词典"
-            "BASIC" -> "基础词库"
-            "COMMON" -> "常用词库"
-            "SPECIAL" -> "专业词库"
-            "PERSON" -> "人名词库"
-            "PLACE" -> "地名词库"
-            "ORG" -> "机构词库"
-            "NETWORK" -> "网络词库"
-            "EMOJI" -> "表情词库"
-            "USER" -> "用户词库"
-            else -> "${type}词库"
+            else -> type
         }
     }
     
     /**
-     * 获取特定类型词典的最后修改时间戳
+     * 获取特定类型的词典的最后修改时间戳
      * 注意：由于Realm不提供单个表的修改时间，这里使用数据库文件修改时间和类型数量作为特征
      */
     fun getLastModifiedTime(type: String): Long {
@@ -271,222 +262,6 @@ class DictionaryRepository {
         }
     }
     
-    /**
-     * 根据拼音前缀从数据库搜索词条，使用策略模式根据输入长度选择合适的查询策略
-     * @param prefix 拼音前缀
-     * @param limit 最大返回数量
-     * @param excludeTypes 要排除的词典类型（如高频词典，因为它们已经在内存中查询过）
-     * @return 匹配的词条列表
-     */
-    fun searchEntries(prefix: String, limit: Int, excludeTypes: List<String>): List<WordFrequency> {
-        if (prefix.isBlank()) {
-            // 空输入，使用空输入策略
-            return CandidateStrategyFactory.getStrategy(0)
-                .queryCandidates(realm, "", limit, excludeTypes)
-        }
-        
-        try {
-            val input = prefix.lowercase().trim()
-            Timber.d("查询候选词: '$input'")
-            
-            // 检查输入是否为汉字
-            val isChineseInput = input.any { it.code in 0x4E00..0x9FFF }
-            if (isChineseInput) {
-                // 如果输入为汉字，直接按汉字查询
-                Timber.d("检测到汉字输入: '$input'，直接搜索汉字")
-                return searchByWord(input, limit)
-            }
-            
-            // 先检查是否为可能的首字母输入模式
-            if (com.shenji.aikeyboard.utils.PinyinInitialUtils.isPossibleInitials(input)) {
-                Timber.d("检测到首字母输入模式: '$input'")
-                // 对于首字母模式，使用专门的首字母查询策略，直接传入原始input，不进行拼音分词处理
-                return InitialsQueryStrategy().queryCandidates(realm, input, limit, excludeTypes)
-            }
-            
-            // 如果是短音节(2-3个字母，如"ba","wei"等)或完整音节，优先查询单字
-            val isSingleSyllable = !input.contains(" ") && 
-                (PinyinSplitter.isValidSyllable(input) || input.length <= 3)
-                
-            if (isSingleSyllable) {
-                Timber.d("检测到单个拼音音节: '$input'，优先查询对应单字")
-                
-                // 存储查询结果
-                val results = mutableListOf<Entry>()
-                
-                // 1. 首先查询chars词典中的单字 - 精确匹配
-                val queryCondition = "pinyin == '$input' AND type == 'chars'"
-                Timber.d("执行Realm查询: $queryCondition")
-                val exactCharsEntries = realm.query<Entry>("pinyin == $0 AND type == 'chars'", input)
-                    .find()
-                    .filter { it.type !in excludeTypes }
-                    .sortedByDescending { it.frequency }
-                    .toList()
-                
-                Timber.d("精确匹配拼音'$input'的单字: ${exactCharsEntries.size}个")
-                if (exactCharsEntries.isNotEmpty()) {
-                    val previewChars = exactCharsEntries.take(3).joinToString { "${it.word}(${it.frequency})" }
-                    Timber.d("拼音'$input'的部分单字: $previewChars")
-                } else {
-                    Timber.d("数据库中没有拼音等于'$input'的单字")
-                    
-                    // 如果数据库中没有找到对应的拼音单字，使用硬编码的常用拼音表
-                    val hardcodedChars = getHardcodedCharsForPinyin(input)
-                    if (hardcodedChars.isNotEmpty()) {
-                        Timber.d("使用硬编码常用拼音-汉字映射表提供备选结果")
-                        return hardcodedChars
-                    }
-                }
-                results.addAll(exactCharsEntries)
-                
-                // 2. 如果精确匹配结果不足，查询前缀匹配的单字
-                if (results.size < limit / 2) {
-                    val prefixCondition = "pinyin BEGINSWITH '$input' AND type == 'chars'"
-                    Timber.d("执行前缀匹配Realm查询: $prefixCondition")
-                    val prefixCharsEntries = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'chars'", input)
-                        .find()
-                        .filter { it.type !in excludeTypes && it !in results && it.word.length == 1 }
-                        .sortedByDescending { it.frequency }
-                        .toList()
-                    
-                    Timber.d("前缀匹配拼音'$input'的单字: ${prefixCharsEntries.size}个")
-                    if (prefixCharsEntries.isNotEmpty()) {
-                        val previewChars = prefixCharsEntries.take(3).joinToString { "${it.word}(${it.frequency})" }
-                        Timber.d("前缀匹配的部分单字: $previewChars")
-                    }
-                    results.addAll(prefixCharsEntries)
-                }
-                
-                // 3. 查找其他词典类型的精确匹配
-                if (results.size < limit / 2) {
-                    // 查询所有词典类型
-                    val otherTypeEntries = realm.query<Entry>("pinyin == $0 AND type != 'chars'", input)
-                        .find()
-                        .filter { it.type !in excludeTypes && it !in results }
-                        .sortedByDescending { it.frequency }
-                        .take(limit / 4)  // 限制这部分结果的数量
-                        .toList()
-                        
-                    Timber.d("其他词典中拼音='$input'的词条: ${otherTypeEntries.size}个")
-                    results.addAll(otherTypeEntries)
-                }
-                
-                // 4. 添加一些词组，但不超过结果总数的一半
-                val targetWordLimit = limit - min(results.size, limit / 2)
-                if (targetWordLimit > 0) {
-                    // 先找精确匹配的词组
-                    val exactWordEntries = realm.query<Entry>("pinyin BEGINSWITH $0 AND type == 'base'", input)
-                        .find()
-                        .filter { it.type !in excludeTypes && it !in results && it.word.length > 1 }
-                        .sortedByDescending { it.frequency }
-                        .take(targetWordLimit)
-                        .toList()
-                        
-                    Timber.d("以拼音'$input'开头的词组: ${exactWordEntries.size}个")
-                    if (exactWordEntries.isNotEmpty()) {
-                        val previewWords = exactWordEntries.take(3).joinToString { "${it.word}(${it.frequency})" }
-                        Timber.d("以'$input'开头的部分词组: $previewWords")
-                    }
-                    results.addAll(exactWordEntries)
-                }
-                
-                if (results.isNotEmpty()) {
-                    // 优先返回单字，然后是词组
-                    val sortedResults = results.sortedWith(
-                        compareBy<Entry> { it.word.length > 1 } // 单字优先
-                          .thenByDescending { it.frequency }    // 然后按词频排序
-                    )
-                    
-                    val finalResults = sortedResults.map { WordFrequency(it.word, it.frequency) }
-                    Timber.d("拼音'$input'的查询结果: 共${finalResults.size}个，前5个: ${
-                        finalResults.take(5).joinToString { it.word }
-                    }")
-                    
-                    return finalResults
-                } else {
-                    Timber.w("拼音'$input'查询无结果")
-                }
-            }
-            
-            // 非单音节输入，进行标准的拼音分词处理
-            val normalizedPrefix = PinyinSplitter.split(input)
-            Timber.d("规范化后的拼音: '$normalizedPrefix'")
-            
-            // 选择合适的策略
-            val strategy = CandidateStrategyFactory.getStrategy(normalizedPrefix.length, input)
-            
-            Timber.d("使用策略: ${strategy.getStrategyName()} 查询拼音'$normalizedPrefix'的候选词")
-            
-            // 使用策略查询候选词
-            val results = strategy.queryCandidates(realm, normalizedPrefix, limit, excludeTypes)
-            if (results.isNotEmpty()) {
-                Timber.d("拼音'$normalizedPrefix'匹配到${results.size}个词条，前5个: ${
-                    results.take(5).joinToString { it.word }
-                }")
-            } else {
-                Timber.d("拼音'$normalizedPrefix'没有匹配到任何词条")
-            }
-            return results
-        } catch (e: Exception) {
-            Timber.e(e, "搜索候选词失败: ${e.message}")
-            return emptyList()
-        }
-    }
-    
-    /**
-     * 获取标准化拼音，用于与数据库中的拼音匹配
-     * 将无空格拼音转换为带空格的格式（如 beijing -> bei jing）
-     */
-    fun normalizePinyin(pinyin: String): String {
-        // 首先标准化格式：转小写并确保适当的分词
-        val normalized = pinyin.lowercase().trim()
-        
-        // 如果已经包含空格，直接返回
-        if (normalized.contains(" ")) {
-            return normalized
-        }
-        
-        // 将无空格拼音转换为有空格格式
-        val withSpaces = PinyinSplitter.split(normalized)
-        
-        Timber.d("拼音规范化：'$pinyin' -> '$withSpaces'")
-        
-        return withSpaces
-    }
-    
-    // 声调相关功能已删除
-    
-    /**
-     * 获取指定类型的词典样本条目
-     * @param type 词典类型
-     * @param count 样本数量
-     * @return 样本条目列表
-     */
-    fun getSampleEntries(type: String, count: Int): List<Entry> {
-        try {
-            Timber.d("获取类型'$type'的词典样本，数量$count")
-            
-            // 查询指定类型的所有条目
-            val entries = realm.query<Entry>("type == $0", type)
-                .find()
-                .take(count)
-                .toList()
-                
-            Timber.d("获取到${entries.size}个样本条目")
-            
-            if (entries.isNotEmpty()) {
-                // 打印部分样本信息进行调试
-                val firstSample = entries.first()
-                Timber.d("第一个样本: 词='${firstSample.word}', 拼音='${firstSample.pinyin}', 频率=${firstSample.frequency}")
-            }
-            
-            return entries
-        } catch (e: Exception) {
-            Timber.e(e, "获取词典样本失败: ${e.message}")
-            return emptyList()
-        }
-    }
-
     /**
      * 根据汉字查询词条
      * @param word 要查询的汉字词语
@@ -525,139 +300,158 @@ class DictionaryRepository {
             emptyList()
         }
     }
-
+    
     /**
-     * 将无空格拼音转换为带空格的拼音音节（如beijing -> bei jing）
-     * @deprecated 使用 PinyinSplitter.split() 替代
+     * 简化版的基本词条查询，直接使用拼音前缀匹配
+     * @param pinyin 拼音前缀
+     * @param limit 限制结果数量
+     * @param excludeTypes 排除的词典类型列表
+     * @return 结果集合
      */
-    @Deprecated("使用PinyinSplitter.split()替代", ReplaceWith("PinyinSplitter.split(pinyin)"))
-    private fun splitPinyinIntoSyllables(pinyin: String): String {
-        return PinyinSplitter.split(pinyin)
+    fun searchBasicEntries(pinyin: String, limit: Int, excludeTypes: List<String> = emptyList()): List<WordFrequency> {
+        val results = mutableListOf<WordFrequency>()
+        
+        try {
+            // 记录查询开始时间
+            val startTime = System.currentTimeMillis()
+            
+            // 先查询完全匹配的词条
+            val exactMatches = realm.query<Entry>("pinyin == $0", pinyin)
+                .find()
+                .filter { it.type !in excludeTypes }
+                .map { WordFrequency(it.word, it.frequency) }
+                .sortedByDescending { it.frequency }
+                .take(limit / 2)
+            
+            results.addAll(exactMatches)
+            
+            // 如果还有空间，查询前缀匹配的词条
+            if (results.size < limit) {
+                val prefixMatches = realm.query<Entry>("pinyin BEGINSWITH $0", pinyin)
+                    .find()
+                    .filter { it.type !in excludeTypes && it.pinyin != pinyin } // 排除已添加的完全匹配项
+                    .map { WordFrequency(it.word, it.frequency) }
+                    .sortedByDescending { it.frequency }
+                    .take(limit - results.size)
+                
+                results.addAll(prefixMatches)
+            }
+            
+            // 查询耗时
+            val searchTime = System.currentTimeMillis() - startTime
+            Timber.d("基本搜索'$pinyin'耗时: ${searchTime}ms, 找到${results.size}个结果")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "基本词条搜索失败: ${e.message}")
+        }
+        
+        return results
+    }
+    
+    /**
+     * 获取标准化拼音，用于与数据库中的拼音匹配
+     * @param pinyin 原始拼音输入
+     * @return 规范化后的拼音
+     */
+    fun normalizePinyin(pinyin: String): String {
+        // 标准化格式：转小写并去除前后空格
+        val normalized = pinyin.lowercase().trim()
+        Timber.d("拼音规范化：'$pinyin' -> '$normalized'")
+        return normalized
+    }
+    
+    /**
+     * 获取指定类型的词典样本条目
+     * @param type 词典类型
+     * @param count 样本数量
+     * @return 样本条目列表
+     */
+    fun getSampleEntries(type: String, count: Int): List<Entry> {
+        try {
+            Timber.d("获取类型'$type'的词典样本，数量$count")
+            
+            // 查询指定类型的所有条目
+            val entries = realm.query<Entry>("type == $0", type)
+                .find()
+                .take(count)
+                .toList()
+                
+            Timber.d("获取到${entries.size}个样本条目")
+            
+            if (entries.isNotEmpty()) {
+                // 打印部分样本信息进行调试
+                val firstSample = entries.first()
+                Timber.d("第一个样本: 词='${firstSample.word}', 拼音='${firstSample.pinyin}', 频率=${firstSample.frequency}")
+            }
+            
+            return entries
+        } catch (e: Exception) {
+            Timber.e(e, "获取词典样本失败: ${e.message}")
+            return emptyList()
+        }
     }
 
     /**
-     * 检查并更新数据库中所有词条的initialLetters字段
-     * 对于没有initialLetters值的词条，根据拼音生成新的initialLetters
-     * @return 更新后的词条数量
+     * 检查并更新词条的initialLetters字段
+     * @return 更新的词条数量
      */
     fun checkAndUpdateInitialLetters(): Int {
         val updateCount = AtomicInteger(0)
-        val batchSize = 1000 // 每次处理的词条数量
         
         try {
-            Timber.d("开始检查并更新initialLetters字段")
-            
-            // 查询所有没有initialLetters值的词条
-            val entries = realm.query<Entry>("initialLetters == '' OR initialLetters == null")
+            // 找出所有缺少initialLetters的词条
+            val entriesToUpdate = realm.query<Entry>("initialLetters == null OR initialLetters == ''")
                 .find()
             
-            val totalCount = entries.size
-            Timber.d("发现${totalCount}个需要更新initialLetters的词条")
+            Timber.d("找到${entriesToUpdate.size}个缺少initialLetters字段的词条")
             
-            if (totalCount == 0) {
-                Timber.d("所有词条的initialLetters字段已全部正确设置")
-                return 0
-            }
-            
-            // 分批处理词条
-            val batches = entries.chunked(batchSize)
-            
-            for ((batchIndex, batch) in batches.withIndex()) {
-                Timber.d("正在处理第${batchIndex + 1}/${batches.size}批")
+            if (entriesToUpdate.isNotEmpty()) {
+                // 分批处理，每批100个词条
+                val batchSize = 100
+                val totalEntries = entriesToUpdate.size
                 
-                realm.writeBlocking {
-                    for (entry in batch) {
-                        val initialLetters = com.shenji.aikeyboard.utils.PinyinInitialUtils.generateInitials(entry.pinyin)
-                        findLatest(entry)?.initialLetters = initialLetters
-                        updateCount.incrementAndGet()
+                for (i in 0 until totalEntries step batchSize) {
+                    val endIndex = min(i + batchSize, totalEntries)
+                    val batch = entriesToUpdate.subList(i, endIndex)
+                    
+                    realm.writeBlocking {
+                        batch.forEach { entry ->
+                            val copyToUpdate = findLatest(entry)
+                            if (copyToUpdate != null) {
+                                // 简单地使用第一个字母作为initialLetters
+                                val pinyinParts = entry.pinyin.split(" ")
+                                val initials = pinyinParts.joinToString("") { it.take(1) }
+                                
+                                copyToUpdate.initialLetters = initials
+                                updateCount.incrementAndGet()
+                            }
+                        }
                     }
+                    
+                    Timber.d("已更新${i + batch.size}/${totalEntries}个词条")
                 }
-                
-                Timber.d("完成第${batchIndex + 1}批更新，已更新${updateCount.get()}个词条")
             }
             
-            Timber.d("所有词条的initialLetters字段已全部更新完成，共更新${updateCount.get()}个词条")
+            Timber.d("初始化词典的initialLetters字段，共更新了${updateCount.get()}个词条")
             
         } catch (e: Exception) {
-            Timber.e(e, "更新initialLetters字段时出错: ${e.message}")
+            Timber.e(e, "更新initialLetters字段失败: ${e.message}")
         }
         
         return updateCount.get()
     }
-
-    /**
-     * 为常用拼音提供硬编码的单字候选词
-     * 这主要用于数据库中未能找到匹配时的备用方案
-     */
+    
+    // 预定义的汉字查询辅助方法
     private fun getHardcodedCharsForPinyin(pinyin: String): List<WordFrequency> {
-        Timber.d("使用硬编码映射表查找拼音'$pinyin'对应的汉字")
+        val frequencyMap = mapOf(
+            "wo" to listOf(WordFrequency("我", 9000), WordFrequency("窝", 2000), WordFrequency("卧", 1500)),
+            "ni" to listOf(WordFrequency("你", 9500), WordFrequency("尼", 2500), WordFrequency("泥", 1800)),
+            "ta" to listOf(WordFrequency("他", 9000), WordFrequency("她", 8500), WordFrequency("它", 8000), WordFrequency("塔", 3000)),
+            "de" to listOf(WordFrequency("的", 9999), WordFrequency("得", 8000), WordFrequency("地", 7500)),
+            "bu" to listOf(WordFrequency("不", 9800), WordFrequency("步", 3500), WordFrequency("布", 3000))
+        )
         
-        return when (pinyin.lowercase()) {
-            "wei" -> listOf(
-                WordFrequency("为", 982),
-                WordFrequency("位", 957),
-                WordFrequency("未", 925),
-                WordFrequency("维", 885),
-                WordFrequency("围", 862),
-                WordFrequency("委", 845),
-                WordFrequency("卫", 832),
-                WordFrequency("微", 815),
-                WordFrequency("尾", 795)
-            )
-            "wo" -> listOf(
-                WordFrequency("我", 995),
-                WordFrequency("窝", 825),
-                WordFrequency("握", 785),
-                WordFrequency("卧", 765)
-            )
-            "ta" -> listOf(
-                WordFrequency("他", 990),
-                WordFrequency("她", 985),
-                WordFrequency("它", 980),
-                WordFrequency("塔", 850),
-                WordFrequency("踏", 830)
-            )
-            "ni" -> listOf(
-                WordFrequency("你", 995),
-                WordFrequency("尼", 870),
-                WordFrequency("拟", 845)
-            )
-            "ba" -> listOf(
-                WordFrequency("把", 960),
-                WordFrequency("吧", 950),
-                WordFrequency("爸", 940),
-                WordFrequency("巴", 920)
-            )
-            "shi" -> listOf(
-                WordFrequency("是", 999),
-                WordFrequency("时", 980),
-                WordFrequency("事", 975),
-                WordFrequency("使", 965),
-                WordFrequency("师", 955),
-                WordFrequency("十", 950)
-            )
-            "li" -> listOf(
-                WordFrequency("里", 980),
-                WordFrequency("力", 970),
-                WordFrequency("利", 960),
-                WordFrequency("理", 950),
-                WordFrequency("立", 940)
-            )
-            "de" -> listOf(
-                WordFrequency("的", 999),
-                WordFrequency("得", 980),
-                WordFrequency("德", 950)
-            )
-            else -> emptyList()
-        }.also {
-            if (it.isNotEmpty()) {
-                Timber.d("硬编码映射表返回${it.size}个结果，前3个: ${
-                    it.take(3).joinToString { char -> char.word }
-                }")
-            } else {
-                Timber.d("硬编码映射表中没有拼音'$pinyin'的映射")
-            }
-        }
+        return frequencyMap[pinyin] ?: emptyList()
     }
 }
 

@@ -3236,7 +3236,6 @@ id btnExportToPublic
 id btnInputTest
 id btnLogs
 id btnResetBuild
-id btnSettings
 id btnShowDbDetails
 id btnTestPinyin
 id buttonContainer
@@ -3244,10 +3243,6 @@ id buttonPanel
 id cache_measures
 id callMeasure
 id cancel_button
-id candidates_container
-id candidates_grid
-id candidates_horizontal_scroll
-id candidates_layout
 id cardDbInfo
 id cardStats
 id carryVelocity
@@ -3334,11 +3329,7 @@ id etMaxNodesPerBatch
 id etNumWorkers
 id exitUntilCollapsed
 id expand_activities_button
-id expand_candidates_button
-id expanded_candidates_container
-id expanded_candidates_scroll
 id expanded_menu
-id expanded_pinyin_text
 id fade
 id fill
 id fill_horizontal
@@ -3387,7 +3378,6 @@ id italic
 id item_touch_helper_previous_elevation
 id jumpToEnd
 id jumpToStart
-id keyboard_view
 id labeled
 id layout
 id left
@@ -3514,7 +3504,6 @@ id pbDictExport
 id peekHeight
 id percent
 id pin
-id pinyin_text
 id position
 id postLayout
 id pressed
@@ -3528,7 +3517,6 @@ id ratio
 id rectangles
 id report_drawn
 id restart
-id return_button
 id reverse
 id reverseSawtooth
 id right
@@ -3647,7 +3635,6 @@ id title
 id titleDividerNoCustom
 id title_template
 id toggle
-id toggle_full_single
 id toolbar
 id top
 id topPanel
@@ -3693,7 +3680,6 @@ id tvModuleListTitle
 id tvNoLogs
 id tvPinyin
 id tvRealmStatus
-id tvStatus
 id tvTitle
 id tvTotalEntries
 id tvWord
@@ -3841,9 +3827,6 @@ layout activity_dictionary_manager
 layout activity_input_test
 layout activity_log_detail
 layout activity_main
-layout candidate_grid_item
-layout candidate_item
-layout candidate_item_horizontal
 layout custom_dialog
 layout design_bottom_navigation_item
 layout design_bottom_sheet_dialog
@@ -3862,15 +3845,12 @@ layout design_text_input_end_icon
 layout design_text_input_start_icon
 layout dialog_database_info
 layout dialog_export_settings
-layout expanded_candidates_grid
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_dictionary_entry
 layout item_dictionary_group_header
 layout item_dictionary_log
 layout item_dictionary_module
-layout key_preview
-layout keyboard_view
 layout m3_alert_dialog
 layout m3_alert_dialog_actions
 layout m3_alert_dialog_title
@@ -5411,6 +5391,3 @@ styleable ViewPager2 android_orientation
 styleable ViewStubCompat android_id android_layout android_inflatedId
 styleable ViewTransition android_id SharedValue SharedValueId clearsTag duration ifTagNotSet ifTagSet motionInterpolator motionTarget onStateTransition pathMotionArc setsTag transitionDisable upDuration viewTransitionMode
 styleable include constraintSet
-xml keyboard_layout
-xml method
-xml pinyin_keyboard_layout

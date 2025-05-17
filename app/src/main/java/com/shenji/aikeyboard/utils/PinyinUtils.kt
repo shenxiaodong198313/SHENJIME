@@ -1,6 +1,5 @@
 package com.shenji.aikeyboard.utils
 
-import com.shenji.aikeyboard.data.PinyinSplitter
 import timber.log.Timber
 
 /**
@@ -19,28 +18,8 @@ object PinyinUtils {
         
         val trimmed = input.trim().lowercase()
         
-        // 如果已经包含空格，检查分词是否正确
-        if (trimmed.contains(" ")) {
-            val syllables = trimmed.split(" ")
-            val validatedSyllables = mutableListOf<String>()
-            
-            for (syllable in syllables) {
-                if (PinyinSplitter.isValidSyllable(syllable) || syllable.length == 1) {
-                    // 有效音节，直接添加
-                    validatedSyllables.add(syllable)
-                } else {
-                    // 无效音节，重新分词
-                    Timber.w("发现无效拼音音节: '$syllable'，进行重新分词")
-                    val splitted = PinyinSplitter.split(syllable)
-                    validatedSyllables.addAll(splitted.split(" "))
-                }
-            }
-            
-            return validatedSyllables.joinToString(" ")
-        }
-        
-        // 无空格输入，直接使用分词器
-        return PinyinSplitter.split(trimmed)
+        // 简化版只返回输入本身，不做分词
+        return trimmed
     }
     
     /**
@@ -51,8 +30,7 @@ object PinyinUtils {
     fun countSyllables(pinyin: String): Int {
         if (pinyin.isBlank()) return 0
         
-        val normalized = normalize(pinyin)
-        return normalized.split(" ").size
+        return pinyin.split(" ").size
     }
     
     /**
@@ -64,8 +42,7 @@ object PinyinUtils {
     fun getSyllable(pinyin: String, index: Int): String? {
         if (pinyin.isBlank()) return null
         
-        val normalized = normalize(pinyin)
-        val syllables = normalized.split(" ")
+        val syllables = pinyin.split(" ")
         
         return if (index >= 0 && index < syllables.size) {
             syllables[index]
@@ -80,39 +57,7 @@ object PinyinUtils {
      * @return 测试结果信息
      */
     fun testPinyinSplitter(): String {
-        val testCases = mapOf(
-            "jiating" to "jia ting",
-            "beijingdaxue" to "bei jing da xue",
-            "woainizhonghua" to "wo ai ni zhong hua",
-            "zhijianguan" to "zhi jian guan",
-            "shuangshuying" to "shuang shu ying",
-            "xiangyun" to "xiang yun",
-            "zhuangyuanjin" to "zhuang yuan jin",
-            "jiatinghuanjingzenmeyang" to "jia ting huan jing zen me yang"
-        )
-        
-        val results = mutableListOf<String>()
-        var passCount = 0
-        
-        results.add("音节库大小: ${PinyinSplitter.getSyllableCount()}")
-        results.add("========= 拼音分词测试 =========")
-        
-        testCases.forEach { (input, expected) ->
-            val actual = normalize(input)
-            val isCorrect = actual == expected
-            
-            if (isCorrect) passCount++
-            
-            results.add("输入: '$input'")
-            results.add("期望: '$expected'")
-            results.add("实际: '$actual'")
-            results.add("结果: ${if (isCorrect) "✓" else "✗"}")
-            results.add("-----------------------------")
-        }
-        
-        results.add("测试通过率: $passCount/${testCases.size}")
-        
-        return results.joinToString("\n")
+        return "拼音分词功能已移除"
     }
 
     // 拼音首字母提取
@@ -123,15 +68,5 @@ object PinyinUtils {
             .filter { it.isNotBlank() }
             .map { it.first().toString() }
             .joinToString("")
-    }
-
-    /**
-     * 分割连续的拼音字符串为音节 (带空格) - 已弃用
-     * @param pinyin 要分割的拼音字符串, 如"nihao"
-     * @return 分割后的拼音, 如"ni hao"
-     */
-    @Deprecated("使用PinyinSplitter.split()替代")
-    fun splitPinyinIntoSyllables(pinyin: String): String {
-        return PinyinSplitter.split(pinyin)
     }
 } 

@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-87:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-87:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-87:12
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-87:12
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-73:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-73:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-73:12
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:2:1-73:12
 MERGED from [androidx.databinding:viewbinding:8.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\caa26751d873b02a06df415cc5841986\transformed\viewbinding-8.3.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\3c0aab35f342f58022d62742e26242f5\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\1955038687966d1f033e8b76578b715e\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -96,8 +96,8 @@ ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:17:5-18:40
 	android:name
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:17:22-79
 application
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-85:19
-INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-85:19
+ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-71:19
+INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:20:5-71:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\3c0aab35f342f58022d62742e26242f5\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\3c0aab35f342f58022d62742e26242f5\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.13\transforms\1955038687966d1f033e8b76578b715e\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -192,28 +192,6 @@ ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:67:9-69:40
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:69:13-37
 	android:name
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:68:13-48
-service#com.shenji.aikeyboard.ime.ShenjiInputMethodService
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:72:9-83:19
-	android:label
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:74:13-45
-	android:exported
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:76:13-36
-	android:permission
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:75:13-70
-	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:73:13-57
-intent-filter#action:name:android.view.InputMethod
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:77:13-79:29
-action#android.view.InputMethod
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:78:17-67
-	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:78:25-64
-meta-data#android.view.im
-ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:80:13-82:50
-	android:resource
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:82:17-47
-	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:81:17-47
 uses-sdk
 INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml

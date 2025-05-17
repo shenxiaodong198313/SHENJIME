@@ -41,16 +41,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/tvStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/ime_status"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvTitle" />
-
             <LinearLayout
                 android:id="@+id/mainButtonContainer"
                 android:layout_width="0dp"
@@ -61,19 +51,12 @@
                 android:orientation="vertical"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvStatus">
-
-                <Button
-                    android:id="@+id/btnSettings"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/ime_settings" />
+                app:layout_constraintTop_toBottomOf="@+id/tvTitle">
 
                 <Button
                     android:id="@+id/btnLogs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
                     android:text="@string/view_logs" />
 
                 <Button

@@ -35,9 +35,6 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnLogs;
 
   @NonNull
-  public final Button btnSettings;
-
-  @NonNull
   public final LinearLayout mainButtonContainer;
 
   @NonNull
@@ -50,27 +47,21 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvHelpText;
 
   @NonNull
-  public final TextView tvStatus;
-
-  @NonNull
   public final TextView tvTitle;
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnDevTools,
       @NonNull Button btnDictManager, @NonNull Button btnInputTest, @NonNull Button btnLogs,
-      @NonNull Button btnSettings, @NonNull LinearLayout mainButtonContainer,
-      @NonNull ConstraintLayout mainContainer, @NonNull Toolbar toolbar,
-      @NonNull TextView tvHelpText, @NonNull TextView tvStatus, @NonNull TextView tvTitle) {
+      @NonNull LinearLayout mainButtonContainer, @NonNull ConstraintLayout mainContainer,
+      @NonNull Toolbar toolbar, @NonNull TextView tvHelpText, @NonNull TextView tvTitle) {
     this.rootView = rootView;
     this.btnDevTools = btnDevTools;
     this.btnDictManager = btnDictManager;
     this.btnInputTest = btnInputTest;
     this.btnLogs = btnLogs;
-    this.btnSettings = btnSettings;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
     this.toolbar = toolbar;
     this.tvHelpText = tvHelpText;
-    this.tvStatus = tvStatus;
     this.tvTitle = tvTitle;
   }
 
@@ -125,12 +116,6 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.btnSettings;
-      Button btnSettings = ViewBindings.findChildViewById(rootView, id);
-      if (btnSettings == null) {
-        break missingId;
-      }
-
       id = R.id.mainButtonContainer;
       LinearLayout mainButtonContainer = ViewBindings.findChildViewById(rootView, id);
       if (mainButtonContainer == null) {
@@ -151,12 +136,6 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.tvStatus;
-      TextView tvStatus = ViewBindings.findChildViewById(rootView, id);
-      if (tvStatus == null) {
-        break missingId;
-      }
-
       id = R.id.tvTitle;
       TextView tvTitle = ViewBindings.findChildViewById(rootView, id);
       if (tvTitle == null) {
@@ -164,8 +143,7 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnDevTools, btnDictManager,
-          btnInputTest, btnLogs, btnSettings, mainButtonContainer, mainContainer, toolbar,
-          tvHelpText, tvStatus, tvTitle);
+          btnInputTest, btnLogs, mainButtonContainer, mainContainer, toolbar, tvHelpText, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -75,9 +75,7 @@ class DictionaryManager private constructor() {
         // 记录开始时间
         val startTime = System.currentTimeMillis()
         
-        // 使用新的候选词策略查询
-        val strategy = CandidateStrategyFactory.getStrategy(normalizedPrefix.length)
-        Timber.d("使用${strategy.getStrategyName()}搜索'$normalizedPrefix'(原始输入:'$prefix')")
+        Timber.d("搜索'$normalizedPrefix'(原始输入:'$prefix')")
         
         // 检查输入中是否包含中文字符
         val containsChinese = prefix.any { it.code in 0x4E00..0x9FFF }
@@ -98,8 +96,8 @@ class DictionaryManager private constructor() {
             }
         }
         
-        // 从Realm词库查询
-        val realmResults = repository.searchEntries(normalizedPrefix, limit, excludeTypes)
+        // 从Realm词库查询 (简化版 - 只基本查询)
+        val realmResults = repository.searchBasicEntries(normalizedPrefix, limit, excludeTypes)
         
         // 记录搜索时间
         val searchTime = System.currentTimeMillis() - startTime
