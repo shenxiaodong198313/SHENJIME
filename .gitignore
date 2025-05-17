@@ -61,3 +61,4 @@ app/build/intermediates/assets/debug/mergeDebugAssets/cn_dicts/base.dict.yaml
 app/build/intermediates/assets/debug/mergeDebugAssets/cn_dicts/associational.dict.yaml
 *.apk
 *.apk
+*.apk
