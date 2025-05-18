@@ -23,6 +23,7 @@ anim btn_radio_to_off_mtrl_ring_outer_path_animation
 anim btn_radio_to_on_mtrl_dot_group_animation
 anim btn_radio_to_on_mtrl_ring_outer_animation
 anim btn_radio_to_on_mtrl_ring_outer_path_animation
+anim candidate_flash
 anim design_bottom_sheet_slide_in
 anim design_bottom_sheet_slide_out
 anim design_snackbar_in
@@ -3024,6 +3025,7 @@ drawable btn_radio_on_to_off_mtrl_animation
 drawable candidate_background
 drawable candidate_item_background
 drawable candidate_word_bg
+drawable candidate_word_selected_bg
 drawable circle_background
 drawable design_fab_background
 drawable design_ic_visibility
@@ -3578,6 +3580,7 @@ id pbDictExport
 id peekHeight
 id percent
 id pin
+id pinyin_display
 id position
 id postLayout
 id pressed

@@ -1,5 +1,6 @@
 R_DEF: Internal format may change without notice
 local
+anim candidate_flash
 color black
 color candidate_other
 color candidate_text
@@ -28,6 +29,7 @@ dimen candidate_word_margin
 drawable candidate_background
 drawable candidate_item_background
 drawable candidate_word_bg
+drawable candidate_word_selected_bg
 drawable circle_background
 drawable ic_arrow_down
 drawable ic_stage_acronym
@@ -132,6 +134,7 @@ id mainContainer
 id matchDisplay
 id noResultsText
 id pbDictExport
+id pinyin_display
 id progressBar
 id progressBarLoading
 id queryDisplay

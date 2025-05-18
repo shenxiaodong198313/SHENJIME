@@ -24,10 +24,6 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_input_method_settings.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/activity_pinyin_test_tool.xml",
-        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_pinyin_test_tool.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_dictionary_log.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\item_dictionary_log.xml"
     },
@@ -38,6 +34,10 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_database_info.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_database_info.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/keyboard_layout.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/keyboard_layout.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_input_test.xml",

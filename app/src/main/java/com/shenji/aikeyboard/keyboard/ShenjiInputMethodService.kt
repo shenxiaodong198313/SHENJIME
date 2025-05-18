@@ -1,5 +1,6 @@
 package com.shenji.aikeyboard.keyboard
 
+import android.animation.AnimatorInflater
 import android.inputmethodservice.InputMethodService
 import android.text.InputType
 import android.view.KeyEvent
@@ -34,6 +35,9 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 展开候选词按钮
     private lateinit var expandCandidatesButton: Button
+    
+    // 拼音显示TextView
+    private lateinit var pinyinDisplay: TextView
     
     // 当前输入的拼音
     private var composingText = StringBuilder()
@@ -83,6 +87,8 @@ class ShenjiInputMethodService : InputMethodService() {
             defaultCandidatesView = keyboardView.findViewById(R.id.default_candidates_view)
             candidatesView = keyboardView.findViewById(R.id.candidates_view)
             expandCandidatesButton = keyboardView.findViewById(R.id.expand_candidates_button)
+            // 初始化拼音显示区域
+            pinyinDisplay = keyboardView.findViewById(R.id.pinyin_display)
             
             // 设置展开按钮点击事件
             expandCandidatesButton.setOnClickListener {
@@ -176,6 +182,12 @@ class ShenjiInputMethodService : InputMethodService() {
         // 显示候选词区域
         showCandidates()
         
+        // 更新拼音显示
+        updatePinyinDisplay(composingText.toString())
+        
+        // 添加日志跟踪拼音显示
+        Timber.d("输入拼音: ${composingText}, 格式化后: ${formatPinyin(composingText.toString())}")
+        
         // 处理输入并生成候选词
         processInput(composingText.toString())
     }
@@ -198,9 +210,12 @@ class ShenjiInputMethodService : InputMethodService() {
                 
                 // 重新处理输入
                 processInput(composingText.toString())
+                
+                // 更新拼音显示
+                updatePinyinDisplay(composingText.toString())
             }
         } else {
-            // 如果没有组合文本，删除前一个字符
+            // 如果没有拼音，执行标准删除操作
             currentInputConnection?.deleteSurroundingText(1, 0)
         }
     }
@@ -855,8 +870,23 @@ class ShenjiInputMethodService : InputMethodService() {
                     layoutParams.marginStart = resources.getDimensionPixelSize(R.dimen.candidate_word_margin)
                     layoutParams.marginEnd = resources.getDimensionPixelSize(R.dimen.candidate_word_margin)
                     
+                    // 第一个候选词默认蓝色背景
+                    if (index == 0) {
+                        textView.setBackgroundResource(R.drawable.candidate_word_selected_bg)
+                        textView.setTextColor(resources.getColor(android.R.color.white, null))
+                    }
+                    
                     // 设置点击监听器
-                    textView.setOnClickListener {
+                    textView.setOnClickListener { view ->
+                        // 播放闪烁动画
+                        val animator = AnimatorInflater.loadAnimator(
+                            this@ShenjiInputMethodService,
+                            R.anim.candidate_flash
+                        )
+                        animator.setTarget(view)
+                        animator.start()
+                        
+                        // 提交文本
                         commitText(candidate.word)
                     }
                     
@@ -882,6 +912,26 @@ class ShenjiInputMethodService : InputMethodService() {
                 candidatesView.addView(textView)
             }
         }
+    }
+    
+    // 更新拼音显示
+    private fun updatePinyinDisplay(pinyin: String) {
+        // 将拼音格式化，音节之间用单引号分隔
+        val formattedPinyin = formatPinyin(pinyin)
+        // 无论如何，都显示原始输入，确保拼音显示区域不为空
+        pinyinDisplay.text = formattedPinyin
+    }
+    
+    // 格式化拼音，在音节之间添加单引号
+    private fun formatPinyin(pinyin: String): String {
+        // 使用拼音分词器拆分拼音
+        val syllables = pinyinSplitter.splitPinyin(pinyin)
+        // 如果能正确拆分音节，则用单引号连接
+        if (syllables.isNotEmpty()) {
+            return syllables.joinToString("'")
+        }
+        // 否则直接返回原始输入
+        return pinyin
     }
     
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
