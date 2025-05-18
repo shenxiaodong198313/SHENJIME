@@ -133,6 +133,25 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 设置功能按键监听器
     private fun setupFunctionKeys() {
+        // 数字键
+        val numberIds = listOf(
+            R.id.key_0, R.id.key_1, R.id.key_2, R.id.key_3, R.id.key_4,
+            R.id.key_5, R.id.key_6, R.id.key_7, R.id.key_8, R.id.key_9
+        )
+        
+        numberIds.forEach { id ->
+            keyboardView.findViewById<Button>(id)?.setOnClickListener { v ->
+                val number = (v as Button).text.toString()
+                if (composingText.isEmpty()) {
+                    // 没有拼音输入，直接输入数字
+                    commitText(number)
+                } else {
+                    // 有拼音输入，追加到拼音中
+                    onInputLetter(number)
+                }
+            }
+        }
+        
         // 删除键
         keyboardView.findViewById<Button>(R.id.key_delete)?.setOnClickListener {
             onDelete()
@@ -143,6 +162,12 @@ class ShenjiInputMethodService : InputMethodService() {
             onSpace()
         }
         
+        // 空格键长按
+        keyboardView.findViewById<Button>(R.id.key_space)?.setOnLongClickListener {
+            Toast.makeText(this, "语音输入功能即将上线", Toast.LENGTH_SHORT).show()
+            true
+        }
+        
         // 回车键
         keyboardView.findViewById<Button>(R.id.key_enter)?.setOnClickListener {
             onEnter()
@@ -151,12 +176,32 @@ class ShenjiInputMethodService : InputMethodService() {
         // 符号键
         keyboardView.findViewById<Button>(R.id.key_symbol)?.setOnClickListener {
             // 暂不实现符号键盘
+            Toast.makeText(this, "符号键盘功能开发中", Toast.LENGTH_SHORT).show()
             Timber.d("符号键盘暂未实现")
         }
         
-        // 逗号键
-        keyboardView.findViewById<Button>(R.id.key_comma)?.setOnClickListener {
-            commitText(",")
+        // 分词键
+        keyboardView.findViewById<Button>(R.id.key_split)?.setOnClickListener {
+            if (composingText.isNotEmpty()) {
+                // 尝试将当前输入拆分为音节
+                val syllables = pinyinSplitter.splitPinyin(composingText.toString())
+                if (syllables.isNotEmpty()) {
+                    // 更新组合文本中的拼音为分词后的拼音
+                    composingText.clear()
+                    composingText.append(syllables.joinToString(" "))
+                    // 更新输入框中显示的拼音
+                    currentInputConnection?.setComposingText(composingText, 1)
+                    // 更新拼音显示
+                    updatePinyinDisplay(composingText.toString())
+                    // 重新处理输入
+                    processInput(composingText.toString())
+                    Toast.makeText(this, "已分词: ${syllables.joinToString(" ")}", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "无法分词当前输入", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                commitText("|")
+            }
         }
         
         // 句号键
@@ -167,6 +212,7 @@ class ShenjiInputMethodService : InputMethodService() {
         // Shift键
         keyboardView.findViewById<Button>(R.id.key_shift)?.setOnClickListener {
             // 暂不实现大小写切换
+            Toast.makeText(this, "大小写切换功能开发中", Toast.LENGTH_SHORT).show()
             Timber.d("大小写切换暂未实现")
         }
     }

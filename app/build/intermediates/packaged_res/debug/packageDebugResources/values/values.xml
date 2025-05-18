@@ -12,8 +12,14 @@
     <color name="divider">#E0E0E0</color>
     <color name="key_text">#333333</color>
     <color name="keyboard_background">#F2F2F2</color>
+    <color name="keyboard_border">#E0E0E0</color>
+    <color name="keyboard_function_key_bg">#E8E8E8</color>
+    <color name="keyboard_function_key_pressed">#D8D8D8</color>
     <color name="keyboard_key_normal">#FFFFFF</color>
     <color name="keyboard_key_pressed">#E0E0E0</color>
+    <color name="keyboard_key_shadow">#DDDDDD</color>
+    <color name="keyboard_special_key_bg">#D0D0D0</color>
+    <color name="keyboard_special_key_pressed">#C0C0C0</color>
     <color name="keyboard_text">#333333</color>
     <color name="pinyin_text">#757575</color>
     <color name="purple_200">#FFBB86FC</color>
@@ -102,19 +108,43 @@
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_weight">1</item>
         <item name="android:background">@drawable/keyboard_key_bg</item>
-        <item name="android:textSize">18sp</item>
-        <item name="android:textColor">#333333</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/keyboard_text</item>
         <item name="android:textAllCaps">false</item>
-        <item name="android:layout_margin">2dp</item>
+        <item name="android:layout_margin">3dp</item>
         <item name="android:gravity">center</item>
+        <item name="android:elevation">2dp</item>
+        <item name="android:stateListAnimator">@null</item>
     </style>
     <style name="KeyboardFunctionButton">
         <item name="android:background">@drawable/keyboard_function_key_bg</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">#333333</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/keyboard_text</item>
         <item name="android:textAllCaps">false</item>
-        <item name="android:layout_margin">2dp</item>
+        <item name="android:layout_margin">3dp</item>
         <item name="android:gravity">center</item>
+        <item name="android:elevation">2dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+    <style name="KeyboardSpaceButton">
+        <item name="android:background">@drawable/keyboard_space_key_bg</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/keyboard_text</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_margin">3dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:elevation">2dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+    <style name="KeyboardSpecialButton">
+        <item name="android:background">@drawable/keyboard_special_key_bg</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/keyboard_text</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_margin">3dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:elevation">2dp</item>
+        <item name="android:stateListAnimator">@null</item>
     </style>
     <style name="Theme.AIKeyboard" parent="Theme.SHENJI">
         

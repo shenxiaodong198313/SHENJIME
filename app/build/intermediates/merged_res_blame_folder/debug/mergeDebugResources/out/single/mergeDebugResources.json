@@ -64,6 +64,10 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_syllable_test.xml"
     },
     {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\drawable_keyboard_space_key_bg.xml.flat",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\drawable\\keyboard_space_key_bg.xml"
+    },
+    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\drawable_candidate_background.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\drawable\\candidate_background.xml"
     },
@@ -100,6 +104,10 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_main.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_mic.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_mic.xml"
+    },
+    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\drawable_ic_stage_initial.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\drawable\\ic_stage_initial.xml"
     },
@@ -122,6 +130,10 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\layout_activity_dictionary_detail.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_dictionary_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\drawable_ic_mic.xml.flat",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\drawable\\ic_mic.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\layout_activity_mobile_debug.xml.flat",
@@ -154,6 +166,10 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\layout_dialog_database_info.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_database_info.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\drawable_keyboard_special_key_bg.xml.flat",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-main-6:\\drawable\\keyboard_special_key_bg.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.13\\com.shenji.aikeyboard.app-debug-4:\\drawable_candidate_item_background.xml.flat",
