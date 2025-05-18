@@ -155,6 +155,7 @@ id mainContainer
 id matchDisplay
 id noResultsText
 id pbDictExport
+id pinyin_container
 id pinyin_display
 id progressBar
 id progressBarLoading
@@ -179,6 +180,7 @@ id stageIcon
 id tableModules
 id tilPinyinInput
 id toolbar
+id toolbar_view
 id tvDatabaseSize
 id tvDbBuildTime
 id tvDbEntryCount

@@ -3601,6 +3601,7 @@ id pbDictExport
 id peekHeight
 id percent
 id pin
+id pinyin_container
 id pinyin_display
 id position
 id postLayout
@@ -3741,6 +3742,7 @@ id titleDividerNoCustom
 id title_template
 id toggle
 id toolbar
+id toolbar_view
 id top
 id topPanel
 id top_to_bottom

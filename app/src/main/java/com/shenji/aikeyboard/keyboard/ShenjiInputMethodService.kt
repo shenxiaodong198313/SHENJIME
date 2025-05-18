@@ -8,10 +8,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.inputmethodservice.InputMethodService
+import android.os.Handler
+import android.os.Looper
 import android.os.Process
 import android.provider.Settings
 import android.text.InputType
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.*
@@ -44,6 +47,9 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 展开候选词按钮
     private lateinit var expandCandidatesButton: Button
+    
+    // 工具栏视图
+    private lateinit var toolbarView: LinearLayout
     
     // 拼音显示TextView
     private lateinit var pinyinDisplay: TextView
@@ -78,12 +84,27 @@ class ShenjiInputMethodService : InputMethodService() {
     // 缓存的最大大小
     private val MAX_CACHE_SIZE = 30
     
+    // 长按删除键自动删除的处理器和任务
+    private val deleteHandler = Handler(Looper.getMainLooper())
+    private val deleteRunnable = object : Runnable {
+        override fun run() {
+            onDelete()
+            // 持续触发删除操作，实现长按连续删除效果
+            deleteHandler.postDelayed(this, DELETE_REPEAT_DELAY)
+        }
+    }
+    
+    // 长按删除键的延迟时间（毫秒）
+    private val DELETE_INITIAL_DELAY = 400L  // 长按后首次触发的延迟
+    private val DELETE_REPEAT_DELAY = 50L   // 连续触发的间隔
+    
     // 当前输入阶段
     private enum class InputStage {
         INITIAL_LETTER,      // 首字母阶段
         PINYIN_COMPLETION,   // 拼音补全阶段
         SYLLABLE_SPLIT,      // 音节拆分阶段
         ACRONYM,             // 首字母缩写阶段
+        MIXED_INITIAL_SYLLABLE, // 首字母+音节混合模式
         UNKNOWN              // 未知阶段
     }
 
@@ -108,6 +129,8 @@ class ShenjiInputMethodService : InputMethodService() {
             // 初始化拼音显示区域
             pinyinDisplay = keyboardView.findViewById(R.id.pinyin_display)
             appNameDisplay = keyboardView.findViewById(R.id.app_name_display)
+            // 初始化工具栏
+            toolbarView = keyboardView.findViewById(R.id.toolbar_view)
             
             // 设置展开按钮点击事件
             expandCandidatesButton.setOnClickListener {
@@ -174,6 +197,24 @@ class ShenjiInputMethodService : InputMethodService() {
         // 删除键
         keyboardView.findViewById<Button>(R.id.key_delete)?.setOnClickListener {
             onDelete()
+        }
+        
+        // 添加删除键长按监听
+        keyboardView.findViewById<Button>(R.id.key_delete)?.setOnLongClickListener { 
+            // 启动长按删除定时器
+            deleteHandler.postDelayed(deleteRunnable, DELETE_INITIAL_DELAY)
+            true
+        }
+        
+        // 删除键触摸监听，用于检测长按结束
+        keyboardView.findViewById<Button>(R.id.key_delete)?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    // 停止自动删除
+                    deleteHandler.removeCallbacks(deleteRunnable)
+                }
+            }
+            false // 返回false以不干扰点击事件
         }
         
         // 空格键
@@ -264,7 +305,7 @@ class ShenjiInputMethodService : InputMethodService() {
             composingText.deleteCharAt(composingText.length - 1)
             
             if (composingText.isEmpty()) {
-                // 如果拼音为空，隐藏候选词区域
+                // 如果拼音为空，只隐藏候选词区域，保留拼音栏
                 hideCandidates()
                 
                 // 结束组合文本状态
@@ -316,8 +357,9 @@ class ShenjiInputMethodService : InputMethodService() {
         currentInputConnection?.commitText(text, 1)
         // 重置组合文本
         composingText.clear()
-        // 隐藏候选词区域（安全检查）
+        // 清空拼音显示区域
         if (areViewComponentsInitialized()) {
+            pinyinDisplay.text = ""
             hideCandidates()
         }
     }
@@ -335,13 +377,27 @@ class ShenjiInputMethodService : InputMethodService() {
         if (areViewComponentsInitialized()) {
             candidatesContainer.visibility = View.VISIBLE
             defaultCandidatesView.visibility = View.VISIBLE
+            // 显示候选词区域时隐藏工具栏
+            toolbarView.visibility = View.GONE
         }
     }
     
     // 隐藏候选词区域
     private fun hideCandidates() {
         if (areViewComponentsInitialized()) {
+            // 只隐藏候选词部分，保留拼音栏
+            defaultCandidatesView.visibility = View.GONE
+            // 隐藏候选词区域时显示工具栏
+            toolbarView.visibility = View.VISIBLE
+        }
+    }
+    
+    // 完全隐藏整个候选词容器（包括拼音栏）
+    private fun hideEntireCandidateContainer() {
+        if (areViewComponentsInitialized()) {
             candidatesContainer.visibility = View.GONE
+            // 工具栏也需要隐藏，因为它是候选词容器的一部分
+            toolbarView.visibility = View.GONE
         }
     }
     
@@ -428,7 +484,14 @@ class ShenjiInputMethodService : InputMethodService() {
             return InputStage.PINYIN_COMPLETION
         }
         
-        // 4. 检查是否可以拆分为有效音节
+        // 4. 检查是否是"首字母+音节"混合模式
+        val mixedSplit = pinyinSplitter.checkMixedInitialAndSyllable(input)
+        if (mixedSplit.isNotEmpty()) {
+            Timber.d("输入'$input'符合首字母+音节模式: ${mixedSplit.joinToString("+")}")
+            return InputStage.MIXED_INITIAL_SYLLABLE
+        }
+        
+        // 5. 检查是否可以拆分为有效音节
         val multipleSplits = pinyinSplitter.getMultipleSplits(input)
         if (multipleSplits.isNotEmpty()) {
             // 记录拆分结果到日志
@@ -439,14 +502,14 @@ class ShenjiInputMethodService : InputMethodService() {
             return InputStage.SYLLABLE_SPLIT
         }
         
-        // 5. 如果无法拆分为任何有效音节，检查是否有部分匹配
+        // 6. 如果无法拆分为任何有效音节，检查是否有部分匹配
         val partialMatch = findPartialMatch(input)
         if (partialMatch.isNotEmpty()) {
             Timber.d("输入'$input'无法完全拆分，但找到部分匹配: ${partialMatch.joinToString("+")}")
             return InputStage.SYLLABLE_SPLIT
         }
 
-        // 6. 所有音节匹配尝试都失败，则视为首字母缩写阶段
+        // 7. 所有音节匹配尝试都失败，则视为首字母缩写阶段
         return InputStage.ACRONYM
     }
 
@@ -528,6 +591,12 @@ class ShenjiInputMethodService : InputMethodService() {
                         // 更新拼音显示为完整音节
                         updatePinyinDisplay(input, forceFullSyllable = true)
                         queryPinyinCandidates(input)
+                    }
+                    InputStage.MIXED_INITIAL_SYLLABLE -> {
+                        Timber.d("当前阶段: 首字母+音节混合阶段")
+                        val mixedSplit = pinyinSplitter.checkMixedInitialAndSyllable(input)
+                        updatePinyinDisplay(input, mixedSplit)
+                        queryMixedInitialSyllableCandidates(input, mixedSplit)
                     }
                     InputStage.SYLLABLE_SPLIT -> {
                         Timber.d("当前阶段: 音节拆分阶段")
@@ -1077,10 +1146,9 @@ class ShenjiInputMethodService : InputMethodService() {
                     layoutParams.marginStart = resources.getDimensionPixelSize(R.dimen.candidate_word_margin)
                     layoutParams.marginEnd = resources.getDimensionPixelSize(R.dimen.candidate_word_margin)
                     
-                    // 第一个候选词默认蓝色背景
+                    // 第一个候选词使用蓝色文字（不使用蓝色背景）
                     if (index == 0) {
-                        textView.setBackgroundResource(R.drawable.candidate_word_selected_bg)
-                        textView.setTextColor(resources.getColor(android.R.color.white, null))
+                        textView.setTextColor(resources.getColor(R.color.colorPrimary, null))
                     }
                     
                     // 设置点击监听器
@@ -1359,8 +1427,13 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 安全检查视图是否已初始化
         if (areViewComponentsInitialized()) {
-            hideCandidates()
-            Timber.d("输入视图初始化完成，隐藏候选词区域")
+            // 显示拼音栏（包含应用名称），但隐藏候选词区域
+            candidatesContainer.visibility = View.VISIBLE
+            defaultCandidatesView.visibility = View.GONE
+            // 显示工具栏
+            toolbarView.visibility = View.VISIBLE
+            
+            Timber.d("输入视图初始化完成，显示拼音栏和工具栏，隐藏候选词区域")
             
             // 延迟更新应用名称显示，给UI时间完成初始化
             coroutineScope.launch {
@@ -1390,7 +1463,8 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 安全检查视图是否已初始化
         if (areViewComponentsInitialized()) {
-            hideCandidates()
+            // 完全隐藏整个候选词容器（包括拼音栏）
+            hideEntireCandidateContainer()
         } else {
             Timber.e("输入视图组件未完全初始化，无法正确清理")
         }
@@ -1403,6 +1477,8 @@ class ShenjiInputMethodService : InputMethodService() {
         coroutineScope.cancel()
         // 清理缓存
         candidateCache.clear()
+        // 确保移除所有删除回调
+        deleteHandler.removeCallbacks(deleteRunnable)
         Timber.d("输入法服务生命周期: onDestroy - 已清理资源")
     }
     
@@ -1622,5 +1698,109 @@ class ShenjiInputMethodService : InputMethodService() {
     private fun Int.dpToPx(): Int {
         val scale = resources.displayMetrics.density
         return (this * scale + 0.5f).toInt()
+    }
+
+    /**
+     * 查询首字母+音节混合模式的候选词
+     * @param input 原始输入
+     * @param syllables 拆分后的音节列表，第一个是首字母，后面是音节
+     */
+    private suspend fun queryMixedInitialSyllableCandidates(input: String, syllables: List<String>) {
+        if (syllables.isEmpty() || syllables.size < 2) {
+            Timber.d("无效的首字母+音节拆分结果")
+            return
+        }
+        
+        val realm = ShenjiApplication.realm
+        Timber.d("处理首字母+音节混合查询: ${syllables.joinToString("+")}")
+        
+        val initial = syllables[0] // 首字母
+        val remainingSyllables = syllables.subList(1, syllables.size) // 剩余音节
+        
+        // 选择适当的词典类型，根据音节数量决定查询哪些词典
+        val dictionaryTypes = when (remainingSyllables.size) {
+            1 -> listOf("chars", "base", "place", "people") // 单音节优先查单字、基础词、地名、人名词典
+            2, 3 -> listOf("base", "place", "people", "chars") // 2-3音节优先查基础词、地名、人名词典
+            else -> listOf("correlation", "associational", "base", "chars") // 4+音节查大词组词典
+        }
+        
+        // 快速查询
+        val quickResults = withContext(Dispatchers.IO) {
+            try {
+                val allResults = mutableListOf<Candidate>()
+                
+                // 首先，尝试查询首字母匹配的同时后续音节也匹配的词条
+                for (dictType in dictionaryTypes) {
+                    // 构建查询条件：首字母匹配+后续音节匹配
+                    val syllablePattern = remainingSyllables.joinToString(" ")
+                    
+                    // 匹配条件: 首字母以initial开头，且完整拼音中包含syllablePattern
+                    val entries = realm.query<Entry>("type == $0 AND initialLetters BEGINSWITH $1 AND pinyin CONTAINS $2",
+                        dictType, initial, syllablePattern)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(5) // 每个词典取前5个
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.ACRONYM) }
+                    
+                    Timber.d("词典'$dictType'首字母+音节匹配结果: ${entries.size}个")
+                    allResults.addAll(entries)
+                    
+                    // 如果已经找到足够多的结果，提前退出循环
+                    if (allResults.size >= initialQueryLimit) break
+                }
+                
+                // 如果结果太少，尝试更宽松的匹配
+                if (allResults.size < 5) {
+                    // 查询仅匹配首字母的词条
+                    val acronymEntries = realm.query<Entry>("initialLetters BEGINSWITH $0", initial)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(initialQueryLimit - allResults.size)
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.ACRONYM) }
+                    
+                    Timber.d("补充首字母匹配结果: ${acronymEntries.size}个")
+                    allResults.addAll(acronymEntries)
+                }
+                
+                allResults
+            } catch (e: Exception) {
+                Timber.e(e, "查询首字母+音节匹配候选词异常")
+                emptyList()
+            }
+        }
+        
+        // 记录查询结果
+        Timber.d("首字母+音节混合查询结果: ${quickResults.size}个候选词")
+        
+        // 去重并更新UI
+        val filteredResults = filterDuplicates(quickResults)
+        val sortedResults = sortCandidates(filteredResults, remainingSyllables.size)
+        updateCandidateView(sortedResults)
+        
+        // 如果快速查询结果不足，且当前查询未取消，异步查询更多结果
+        if (filteredResults.size < 5 && currentQueryJob?.isActive!!) {
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    // 如果结果不足，尝试使用更通用的查询
+                    val moreResults = realm.query<Entry>("initialLetters BEGINSWITH $0", initial)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .drop(initialQueryLimit) // 跳过已查询的部分
+                        .take(20) // 额外查询更多结果
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.ACRONYM) }
+                    
+                    val moreUniqueResults = filterDuplicates(moreResults)
+                    
+                    // 合并结果并更新UI
+                    if (moreUniqueResults.isNotEmpty() && currentQueryJob?.isActive!!) {
+                        val combinedResults = (filteredResults + moreUniqueResults).distinctBy { it.word }
+                        val sortedMoreResults = sortCandidates(combinedResults, remainingSyllables.size)
+                        updateCandidateView(sortedMoreResults)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "异步处理首字母+音节匹配候选词异常")
+                }
+            }
+        }
     }
 } 

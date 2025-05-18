@@ -105,6 +105,12 @@ class PinyinSplitter {
             results.add(dpResult)
         }
         
+        // 检查2.5: 尝试"首字母+音节"混合模式拆分
+        val mixedResult = checkMixedInitialAndSyllable(cleanInput)
+        if (mixedResult.isNotEmpty() && !results.contains(mixedResult)) {
+            results.add(mixedResult)
+        }
+        
         // 检查3: 尝试贪心拆分
         val greedyResult = greedySplit(cleanInput)
         if (greedyResult.isNotEmpty() && 
@@ -121,20 +127,56 @@ class PinyinSplitter {
             results.add(partialResult)
         }
         
-        // 检查5: 尝试右到左拆分
-        val rightToLeftResult = splitPinyinRightToLeft(cleanInput)
-        if (rightToLeftResult.isNotEmpty() && 
-            !results.contains(rightToLeftResult) && 
-            (rightToLeftResult.size > 1 || rightToLeftResult[0] != cleanInput)) {
-            results.add(rightToLeftResult)
-        }
-        
         return results
     }
 
     /**
-     * 智能拆分输入字符串，尝试查找最佳音节分割点
-     * 对于无法完整分词的情况，保留有效音节，将剩余部分视为新音节的开始
+     * 检查是否为首字母+音节的混合模式
+     * 例如：sji -> s + ji, bma -> b + ma
+     * @param input 用户输入
+     * @return 拆分结果，形如 [s, ji] 或 [b, ma]，若不符合此模式则返回空列表
+     */
+    fun checkMixedInitialAndSyllable(input: String): List<String> {
+        // 输入长度至少为2，才可能是首字母+音节
+        if (input.length < 2) return emptyList()
+        
+        // 提取第一个字符作为可能的首字母
+        val initial = input.substring(0, 1)
+        
+        // 检查是否是有效的首字母(a-z)
+        if (!initial.matches(Regex("[a-z]"))) return emptyList()
+        
+        // 提取剩余部分
+        val remaining = input.substring(1)
+        
+        // 尝试将剩余部分识别为一个或多个完整音节
+        
+        // 方法1：检查整个剩余部分是否是一个完整音节
+        if (PINYIN_SYLLABLES.contains(remaining)) {
+            return listOf(initial, remaining)
+        }
+        
+        // 方法2：尝试对剩余部分进行音节拆分
+        val remainingSyllables = split(remaining)
+        if (remainingSyllables.isNotEmpty()) {
+            return listOf(initial) + remainingSyllables
+        }
+        
+        // 方法3：尝试贪心拆分剩余部分
+        val greedySyllables = greedySplit(remaining)
+        if (greedySyllables.isNotEmpty()) {
+            return listOf(initial) + greedySyllables
+        }
+        
+        // 如果无法将剩余部分识别为有效音节，返回空列表
+        return emptyList()
+    }
+
+    /**
+     * 将无空格拼音拆分为有效音节序列
+     * 支持连续拼音输入拆分，如"nihao"拆分为["ni", "hao"]
+     * @param input 原始拼音输入
+     * @return 拆分后的音节列表，若无法拆分则返回空列表
      */
     fun splitPinyin(input: String): List<String> {
         // 清理输入：移除空格，全部转小写
@@ -147,6 +189,12 @@ class PinyinSplitter {
         // 如果输入本身就是一个有效音节，直接返回
         if (PINYIN_SYLLABLES.contains(cleanInput)) {
             return listOf(cleanInput)
+        }
+        
+        // 检查是否是首字母+音节的混合模式
+        val mixedResult = checkMixedInitialAndSyllable(cleanInput)
+        if (mixedResult.isNotEmpty()) {
+            return mixedResult
         }
         
         // 尝试使用动态规划算法进行音节拆分

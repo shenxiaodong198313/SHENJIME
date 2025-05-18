@@ -21,11 +21,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:visibility="gone"
         android:background="#F5F5F5">
 
         <!-- 拼音显示区域 - 新增 -->
         <RelativeLayout
+            android:id="@+id/pinyin_container"
             android:layout_width="match_parent"
             android:layout_height="22dp"
             android:background="#EEEEEE">
@@ -54,12 +54,32 @@
                 android:textStyle="bold" />
         </RelativeLayout>
 
+        <!-- 工具栏 - 默认显示，在输入拼音时隐藏，选择候选词后再显示 -->
+        <LinearLayout
+            android:id="@+id/toolbar_view"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:background="#F8F8F8">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:textColor="#666666"
+                android:textSize="14sp"
+                android:text="预留工具栏" />
+        </LinearLayout>
+
         <!-- 候选词水平布局 -->
         <LinearLayout
             android:id="@+id/default_candidates_view"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="gone">
 
             <HorizontalScrollView
                 android:layout_width="0dp"
