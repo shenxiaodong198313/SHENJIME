@@ -68,7 +68,7 @@ class DictionaryManager private constructor() {
      * @param excludeTypes 排除的词典类型
      * @return 结果集
      */
-    suspend fun searchWords(prefix: String, limit: Int, excludeTypes: List<String> = emptyList()): List<WordFrequency> {
+    suspend fun searchWords(prefix: String, limit: Int, excludeTypes: List<String> = emptyList()): List<WordFrequency> = withContext(Dispatchers.IO) {
         // 规范化拼音
         val normalizedPrefix = normalizePinyin(prefix)
         
@@ -96,20 +96,25 @@ class DictionaryManager private constructor() {
             }
         }
         
-        // 从Realm词库查询 (简化版 - 只基本查询)
+        // 从Realm词库查询，使用withContext确保完整执行完毕
         val realmResults = repository.searchBasicEntries(normalizedPrefix, limit, excludeTypes)
+        
+        // 确保查询完成后再记录日志
+        val resultSize = realmResults.size
         
         // 记录搜索时间
         val searchTime = System.currentTimeMillis() - startTime
-        Timber.d("搜索'$normalizedPrefix'耗时: ${searchTime}ms, 返回${realmResults.size}个结果")
+        Timber.d("搜索'$normalizedPrefix'耗时: ${searchTime}ms, 返回${resultSize}个结果")
         
         // 输出一部分结果
-        if (realmResults.isNotEmpty()) {
-            val previewResults = realmResults.take(5).joinToString { "${it.word}(${it.frequency})" }
-            Timber.d("搜索结果前5项: $previewResults")
+        if (resultSize > 0) {
+            val previewResults = realmResults.take(min(5, resultSize)).joinToString { "${it.word}(${it.frequency})" }
+            Timber.d("搜索结果前${min(5, resultSize)}项: $previewResults")
+        } else {
+            Timber.d("搜索'$normalizedPrefix'未找到匹配结果")
         }
         
-        return realmResults
+        return@withContext realmResults
     }
     
     /**

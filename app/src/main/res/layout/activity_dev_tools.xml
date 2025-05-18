@@ -53,18 +53,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvTitle">
 
-                <Button
-                    android:id="@+id/btnTestPinyin"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="拼音分词测试" />
-
-                <Button
-                    android:id="@+id/btnBuildRealmDb"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="构建Realm实例" />
+                                <Button                    android:id="@+id/btnTestPinyin"                    android:layout_width="match_parent"                    android:layout_height="wrap_content"                    android:text="拼音分词测试" />                                    <Button                    android:id="@+id/btnPinyinTestTool"                    android:layout_width="match_parent"                    android:layout_height="wrap_content"                    android:layout_marginTop="16dp"                    android:text="拼音输入法测试工具" />                <Button                    android:id="@+id/btnBuildRealmDb"                    android:layout_width="match_parent"                    android:layout_height="wrap_content"                    android:layout_marginTop="16dp"                    android:text="构建Realm实例" />
 
                 <Button
                     android:id="@+id/btnExportDb"

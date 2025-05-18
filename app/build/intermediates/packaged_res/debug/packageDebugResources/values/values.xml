@@ -23,8 +23,12 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="white">#FFFFFFFF</color>
+    <dimen name="candidate_divider_height">24dp</dimen>
+    <dimen name="candidate_word_margin">8dp</dimen>
     <string name="app_name">神迹</string>
     <string name="back">返回</string>
+    <string name="check_index">检查索引</string>
+    <string name="clear_log">清除日志</string>
     <string name="clear_logs">清除日志</string>
     <string name="close">关闭</string>
     <string name="copy_log">复制日志内容</string>
@@ -44,11 +48,14 @@
     <string name="dict_no_data">暂无数据</string>
     <string name="dict_total_entries">词条总数: %1$d</string>
     <string name="expand_candidates">展开候选词</string>
+    <string name="export_log">导出日志</string>
     <string name="help_text">请在系统设置中启用"神迹输入法"，并选择作为默认输入法使用。</string>
     <string name="ime_log">输入法日志</string>
     <string name="ime_name">神迹输入法</string>
     <string name="ime_settings">神迹输入法设置</string>
     <string name="ime_status">输入法状态: 未启用</string>
+    <string name="index_check_hint">请输入至少2个字母的首字母缩写</string>
+    <string name="input_empty">请输入拼音</string>
     <string name="input_hint">点击此处输入文字</string>
     <string name="input_test">输入测试</string>
     <string name="input_test_title">输入测试</string>
@@ -57,15 +64,25 @@
     <string name="keyboard_space">空格</string>
     <string name="log_copied">日志内容已复制到剪贴板</string>
     <string name="log_details">日志详情</string>
+    <string name="log_exported">日志已导出</string>
+    <string name="mobile_debug">移动调试工具</string>
+    <string name="mobile_debug_title">拼音输入法调试工具</string>
     <string name="no_candidates">无候选词</string>
     <string name="no_logs">没有发现日志文件</string>
+    <string name="pinyin_input_hint">输入拼音或首字母缩写</string>
     <string name="pinyin_test">拼音分词测试</string>
     <string name="pinyin_test_complete">拼音分词测试完成</string>
     <string name="pinyin_test_running">正在测试拼音分词效果...</string>
     <string name="pinyin_test_title">拼音分词测试结果</string>
+    <string name="query">查询</string>
     <string name="realm_status">Realm词典连接状态: %1$s</string>
+    <string name="select_test_case">选择测试用例</string>
     <string name="storage_permission_required">需要存储权限以保存数据库文件</string>
     <string name="subtype_chinese">中文(拼音)</string>
+    <string name="test_suite">套件测试</string>
+    <string name="test_suite_candidates">对应候选词: %1$s</string>
+    <string name="test_suite_logic">候选词生成逻辑: %1$s</string>
+    <string name="test_suite_pinyin">拼音模拟查询: %1$s</string>
     <string name="toggle_mode">全/单</string>
     <string name="view_logs">查看日志</string>
     <style name="CandidateWord">
@@ -74,10 +91,11 @@
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">#333333</item>
         <item name="android:gravity">center</item>
-        <item name="android:paddingStart">12dp</item>
-        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingStart">15dp</item>
+        <item name="android:paddingEnd">15dp</item>
         <item name="android:background">@drawable/candidate_word_bg</item>
-        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:layout_marginEnd">10dp</item>
+        <item name="android:layout_marginStart">10dp</item>
     </style>
     <style name="KeyboardButton">
         <item name="android:layout_width">0dp</item>
@@ -97,6 +115,13 @@
         <item name="android:textAllCaps">false</item>
         <item name="android:layout_margin">2dp</item>
         <item name="android:gravity">center</item>
+    </style>
+    <style name="Theme.AIKeyboard" parent="Theme.SHENJI">
+        
+    </style>
+    <style name="Theme.AIKeyboard.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light">
+        
+        <item name="android:textColorPrimary">@color/black</item>
     </style>
     <style name="Theme.SHENJI" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         

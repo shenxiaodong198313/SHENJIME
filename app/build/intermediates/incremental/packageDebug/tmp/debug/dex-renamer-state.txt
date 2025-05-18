@@ -1,7 +1,8 @@
-#Sat May 17 21:49:30 CST 2025
+#Sun May 18 17:19:12 CST 2025
 path.4=15/classes.dex
 path.3=14/classes.dex
 path.2=11/classes.dex
+renamed.9=classes10.dex
 path.1=0/classes.dex
 renamed.8=classes9.dex
 path.8=classes2.dex
@@ -18,6 +19,8 @@ renamed.3=classes4.dex
 renamed.2=classes3.dex
 renamed.1=classes2.dex
 renamed.0=classes.dex
+base.9=C\:\\ProjectD\\SHENJI\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\7\\classes.dex
+path.9=7/classes.dex
 renamed.7=classes8.dex
 base.8=C\:\\ProjectD\\SHENJI\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex
 renamed.6=classes7.dex

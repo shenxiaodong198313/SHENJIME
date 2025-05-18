@@ -453,6 +453,353 @@ class DictionaryRepository {
         
         return frequencyMap[pinyin] ?: emptyList()
     }
+
+    /**
+     * 直接通过首字母查询单字（优化性能）
+     * @param initial 首字母（单个字母）
+     * @param limit 最大返回数量
+     * @param onlyChars 是否只查询单字词典
+     * @return 候选词列表
+     */
+    fun searchDirectlyByInitial(initial: String, limit: Int, onlyChars: Boolean = true): List<WordFrequency> {
+        if (initial.length != 1) {
+            Timber.w("searchDirectlyByInitial只适用于单个字母，输入: $initial")
+            return emptyList()
+        }
+        
+        try {
+            Timber.d("直接查询首字母'$initial'的词条")
+            val startTime = System.currentTimeMillis()
+            
+            // 构建查询条件
+            val query = if (onlyChars) {
+                // 只查询单字词典（chars类型）中，拼音以该字母开头的词条
+                realm.query<Entry>("type == 'chars' AND pinyin BEGINSWITH $0", initial)
+            } else {
+                // 查询所有类型中，拼音以该字母开头的词条
+                realm.query<Entry>("pinyin BEGINSWITH $0", initial)
+            }
+            
+            // 执行查询，按词频排序
+            val results = query
+                .find()
+                .sortedByDescending { it.frequency }
+                .take(limit)
+                .map { WordFrequency(it.word, it.frequency) }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("直接查询首字母'$initial'完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
+            
+            return results
+            
+        } catch (e: Exception) {
+            Timber.e(e, "直接查询首字母失败: ${e.message}")
+            return emptyList()
+        }
+    }
+
+    /**
+     * 查询特定音节的单字（仅限chars词典）
+     * @param syllable 完整拼音音节
+     * @param maxResults 最多返回的结果数量
+     * @return 单字候选词列表
+     */
+    fun searchSingleCharsForSyllable(syllable: String, maxResults: Int): List<WordFrequency> {
+        try {
+            Timber.d("查询音节'$syllable'的单字")
+            val startTime = System.currentTimeMillis()
+            
+            // 查询精确匹配该音节的单字，仅限chars词典
+            val query = realm.query<Entry>("type == 'chars' AND pinyin == $0", syllable)
+            
+            // 执行查询，按词频排序
+            val results = query
+                .find()
+                .sortedByDescending { it.frequency }
+                .take(maxResults)
+                .map { WordFrequency(it.word, it.frequency) }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("查询音节'$syllable'的单字完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
+            
+            return results
+            
+        } catch (e: Exception) {
+            Timber.e(e, "查询音节单字失败: ${e.message}")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 查询以特定音节开头的词组
+     * @param syllable 音节
+     * @param maxResults 最多返回的结果数量
+     * @return 词组候选词列表
+     */
+    fun searchCombinedWordsForSyllable(syllable: String, maxResults: Int): List<WordFrequency> {
+        try {
+            Timber.d("查询以音节'$syllable'开头的词组")
+            val startTime = System.currentTimeMillis()
+            
+            // 查询以该音节开头的词组，但不是精确匹配（排除单字音节）
+            // 这里使用BEGINSWITH，但排除type='chars'和完全匹配syllable的情况
+            val query = realm.query<Entry>("pinyin BEGINSWITH $0 AND NOT (type == 'chars' AND pinyin == $0)", syllable)
+            
+            // 执行查询，按词频排序
+            val results = query
+                .find()
+                .sortedByDescending { it.frequency }
+                .take(maxResults)
+                .map { WordFrequency(it.word, it.frequency) }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("查询音节'$syllable'词组完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
+            
+            return results
+            
+        } catch (e: Exception) {
+            Timber.e(e, "查询音节词组失败: ${e.message}")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 通过首字母缩写查询词条
+     * @param initials 首字母序列，如"bj"
+     * @param limit 最大返回数量
+     * @return 匹配的候选词列表
+     */
+    fun searchByInitialLetters(initials: String, limit: Int): List<WordFrequency> {
+        try {
+            Timber.d("通过首字母缩写'$initials'查询")
+            val startTime = System.currentTimeMillis()
+            
+            val results = mutableListOf<WordFrequency>()
+            
+            // 1. 首先查询精确匹配的首字母缩写
+            val exactMatches = realm.query<Entry>("initialLetters == $0", initials)
+                .find()
+                .sortedByDescending { it.frequency }
+                .take(limit / 2)
+                .map { WordFrequency(it.word, it.frequency) }
+                
+            results.addAll(exactMatches)
+            
+            // 2. 如果结果较少，查询包含该首字母序列的词条
+            if (results.size < limit / 2) {
+                val containsMatches = realm.query<Entry>("initialLetters CONTAINS $0 AND initialLetters != $0", initials)
+                    .find()
+                    .sortedByDescending { it.frequency }
+                    .take(limit - results.size)
+                    .map { 
+                        // 降低包含匹配结果的权重（词频减半）
+                        WordFrequency(it.word, it.frequency / 2)
+                    }
+                    
+                results.addAll(containsMatches)
+            }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("首字母缩写'$initials'查询完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
+            
+            // 按词频排序
+            return results.sortedByDescending { it.frequency }.take(limit)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "首字母缩写查询失败: ${e.message}")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 通过拼音首字母查询候选词
+     * @param initials 首字母字符串
+     * @param limit 最大返回数量
+     * @return 匹配的候选词列表
+     */
+    fun searchByInitials(initials: String, limit: Int): List<WordFrequency> {
+        try {
+            Timber.d("通过首字母'$initials'查询候选词")
+            val startTime = System.currentTimeMillis()
+            
+            val results = mutableListOf<WordFrequency>()
+            
+            // 1. 首先查询精确匹配的首字母缩写
+            val exactMatches = searchByInitialLetters(initials, limit / 2)
+            results.addAll(exactMatches)
+            
+            // 2. 如果是单个字母，尝试使用直接查询
+            if (initials.length == 1 && results.size < limit) {
+                val directMatches = searchDirectlyByInitial(
+                    initial = initials,
+                    limit = limit - results.size,
+                    onlyChars = false
+                )
+                
+                // 添加非重复结果
+                val existingWords = results.map { it.word }.toSet()
+                results.addAll(directMatches.filter { it.word !in existingWords })
+            }
+            
+            // 3. 如果结果仍然不足，尝试部分匹配
+            if (results.size < limit && initials.length > 1) {
+                // 查询以这些首字母开头的词条
+                val partialMatches = realm.query<Entry>("initialLetters BEGINSWITH $0", initials)
+                    .find()
+                    .filter { it.initialLetters.length > initials.length } // 只选择更长的首字母序列
+                    .sortedByDescending { it.frequency }
+                    .take(limit - results.size)
+                    .map { WordFrequency(it.word, it.frequency / 3) } // 降低权重
+                
+                // 添加非重复结果
+                val existingWords = results.map { it.word }.toSet()
+                results.addAll(partialMatches.filter { it.word !in existingWords })
+            }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("首字母'$initials'查询完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
+            
+            // 按词频排序
+            return results.sortedByDescending { it.frequency }.take(limit)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "首字母查询失败: ${e.message}")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 查询特定词典类型
+     * @param pinyin 拼音字符串
+     * @param limit 最大返回数量
+     * @param dictType 词典类型
+     * @return 匹配的候选词列表
+     */
+    fun searchDictionary(pinyin: String, limit: Int, dictType: String): List<WordFrequency> {
+        try {
+            Timber.d("在'$dictType'词典中查询'$pinyin'")
+            val startTime = System.currentTimeMillis()
+            
+            // 查询特定类型词典中匹配的拼音
+            val results = realm.query<Entry>("type == $0 AND pinyin == $1", dictType, pinyin)
+                .find()
+                .sortedByDescending { it.frequency }
+                .take(limit)
+                .map { WordFrequency(it.word, it.frequency) }
+                .toMutableList()
+            
+            // 如果精确匹配结果不足，添加前缀匹配
+            if (results.size < limit) {
+                val prefixResults = realm.query<Entry>("type == $0 AND pinyin BEGINSWITH $1 AND pinyin != $1", dictType, pinyin)
+                    .find()
+                    .sortedByDescending { it.frequency }
+                    .take(limit - results.size)
+                    .map { WordFrequency(it.word, it.frequency) }
+                
+                val existingWords = results.map { it.word }.toSet()
+                results.addAll(prefixResults.filter { it.word !in existingWords })
+            }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("'$dictType'词典查询'$pinyin'完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
+            
+            return results
+            
+        } catch (e: Exception) {
+            Timber.e(e, "词典类型查询失败: ${e.message}")
+            return emptyList()
+        }
+    }
+
+    /**
+     * 预测性查询
+     * 查询以指定音节开头，且第二个字拼音首字母为指定字母的词组
+     * 例如："wei" + "x" 可能查询到 "维系"、"维修" 等
+     * 
+     * @param syllable 第一个音节
+     * @param nextInitial 第二个拼音的首字母
+     * @param limit 最大返回数量
+     * @return 匹配的候选词列表
+     */
+    fun searchPredictive(syllable: String, nextInitial: String, limit: Int): List<WordFrequency> {
+        try {
+            Timber.d("预测性查询: 第一音节='$syllable', 后续首字母='$nextInitial'")
+            val startTime = System.currentTimeMillis()
+            
+            val results = mutableListOf<WordFrequency>()
+            
+            // 构建查询条件：查找以指定音节开头的多字词条
+            val multiCharEntries = realm.query<Entry>("pinyin BEGINSWITH $0 AND pinyin != $0 AND length(word) > 1", syllable)
+                .find()
+                .sortedByDescending { it.frequency }
+            
+            // 筛选符合第二个字首字母要求的词条
+            for (entry in multiCharEntries) {
+                // 分割拼音，提取第二个音节
+                val pinyinParts = entry.pinyin.split(" ")
+                if (pinyinParts.size >= 2) {
+                    val secondPinyin = pinyinParts[1]
+                    
+                    // 检查第二个音节是否以指定字母开头
+                    if (secondPinyin.startsWith(nextInitial)) {
+                        results.add(WordFrequency(entry.word, entry.frequency))
+                        Timber.d("找到匹配的词: ${entry.word}[${entry.pinyin}]")
+                        
+                        if (results.size >= limit) break
+                    }
+                }
+            }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("预测性查询完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
+            
+            return results
+            
+        } catch (e: Exception) {
+            Timber.e(e, "预测性查询失败: ${e.message}")
+            return emptyList()
+        }
+    }
+
+    /**
+     * 检查初始字母索引的状态
+     * 用于诊断首字母查询无结果的问题
+     * @param initials 要检查的首字母组合
+     * @return 索引状态的描述信息
+     */
+    fun checkInitialLettersIndex(initials: String): String {
+        try {
+            val countTotal = realm.query<Entry>().count().find()
+            val countWithIndex = realm.query<Entry>().query("initialLetters != $0", "").count().find()
+            val sampleEntries = realm.query<Entry>().query("initialLetters != $0", "").limit(5).find()
+            
+            val indexCompleteness = if (countTotal > 0) {
+                "%.2f%%".format(countWithIndex * 100.0 / countTotal)
+            } else {
+                "0%"
+            }
+            
+            // 构建简单的首字母缩写正则匹配(不严格)，用于检查词库中是否存在潜在匹配
+            val potentialMatches = realm.query<Entry>().limit(1000).find()
+                .filter { entry -> 
+                    // 简单地从拼音中提取首字母并检查是否匹配
+                    val pinyinParts = entry.pinyin.split(" ")
+                    val extractedInitials = pinyinParts.joinToString("") { part -> 
+                        if (part.isNotEmpty()) part.first().toString() else "" 
+                    }
+                    extractedInitials.contains(initials)
+                }
+                .take(10)
+                .map { "${it.word}[${it.pinyin}->初始字母:${it.initialLetters}]" }
+            
+            return "索引完整度: $indexCompleteness (总词条:$countTotal, 有索引词条:$countWithIndex)\n" +
+                   "索引样本: ${sampleEntries.joinToString { "${it.word}[${it.initialLetters}]" }}\n" +
+                   "潜在匹配: ${if (potentialMatches.isEmpty()) "无" else potentialMatches.joinToString()}"
+        } catch (e: Exception) {
+            Timber.e(e, "检查首字母索引状态失败")
+            return "检查失败: ${e.message}"
+        }
+    }
 }
 
 /**

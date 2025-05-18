@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 候选词间距 -->
+    <dimen name="candidate_word_margin">8dp</dimen>
+    <!-- 候选词分隔线高度 -->
+    <dimen name="candidate_divider_height">24dp</dimen>
+</resources> 

@@ -5,7 +5,9 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.shenji.aikeyboard.data.CandidateManager
 import com.shenji.aikeyboard.data.DictionaryManager
+import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.data.Entry
 import com.shenji.aikeyboard.logger.CrashReportingTree
 import io.realm.kotlin.Realm
@@ -31,6 +33,11 @@ class ShenjiApplication : Application() {
             
         lateinit var realm: Realm
             private set
+            
+        // 候选词管理器单例
+        val candidateManager by lazy {
+            CandidateManager(DictionaryRepository())
+        }
     }
     
     override fun onCreate() {
@@ -46,6 +53,9 @@ class ShenjiApplication : Application() {
             
             // 写入基本日志
             logStartupMessage("开始初始化应用")
+            
+            // 记录当前可用内存
+            logMemoryInfo()
             
             // 设置Timber日志框架
             if (BuildConfig.DEBUG) {
@@ -269,5 +279,22 @@ class ShenjiApplication : Application() {
             logDir.mkdirs()
         }
         return File(logDir, "crash_log.txt")
+    }
+    
+    /**
+     * 记录当前内存使用情况
+     */
+    private fun logMemoryInfo() {
+        try {
+            val runtime = Runtime.getRuntime()
+            val maxMem = runtime.maxMemory() / (1024 * 1024)
+            val totalMem = runtime.totalMemory() / (1024 * 1024)
+            val freeMem = runtime.freeMemory() / (1024 * 1024)
+            val usedMem = totalMem - freeMem
+            
+            logStartupMessage("内存状态: 最大=$maxMem MB, 已分配=$totalMem MB, 已使用=$usedMem MB, 空闲=$freeMem MB")
+        } catch (e: Exception) {
+            logStartupMessage("记录内存信息失败: ${e.message}")
+        }
     }
 }

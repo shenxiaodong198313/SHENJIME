@@ -89,6 +89,11 @@ class DevToolsActivity : AppCompatActivity() {
             testPinyinSplitter()
         }
         
+        // 拼音输入法测试工具
+        binding.btnPinyinTestTool.setOnClickListener {
+            startActivity(android.content.Intent(this, PinyinTestToolActivity::class.java))
+        }
+        
         // 构建Realm数据库
         binding.btnBuildRealmDb.setOnClickListener {
             if (!isBuilding) {

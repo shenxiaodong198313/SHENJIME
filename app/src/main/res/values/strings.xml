@@ -36,6 +36,10 @@
     <string name="copy_logs">复制日志</string>
     <string name="clear_logs">清除日志</string>
     <string name="input_hint">点击此处输入文字</string>
+    <string name="test_suite">套件测试</string>
+    <string name="test_suite_pinyin">拼音模拟查询: %1$s</string>
+    <string name="test_suite_candidates">对应候选词: %1$s</string>
+    <string name="test_suite_logic">候选词生成逻辑: %1$s</string>
     
     <!-- 拼音分词测试相关 -->
     <string name="pinyin_test">拼音分词测试</string>
@@ -55,4 +59,17 @@
     <string name="back">返回</string>
     <string name="close">关闭</string>
     <string name="toggle_mode">全/单</string>
+    
+    <!-- 移动调试相关 -->
+    <string name="mobile_debug">移动调试工具</string>
+    <string name="mobile_debug_title">拼音输入法调试工具</string>
+    <string name="select_test_case">选择测试用例</string>
+    <string name="query">查询</string>
+    <string name="check_index">检查索引</string>
+    <string name="clear_log">清除日志</string>
+    <string name="export_log">导出日志</string>
+    <string name="log_exported">日志已导出</string>
+    <string name="pinyin_input_hint">输入拼音或首字母缩写</string>
+    <string name="input_empty">请输入拼音</string>
+    <string name="index_check_hint">请输入至少2个字母的首字母缩写</string>
 </resources> 

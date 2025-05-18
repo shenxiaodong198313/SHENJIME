@@ -69,11 +69,25 @@
             android:name=".ui.DevToolsActivity"
             android:exported="false" />
 
+        <!-- 移动调试工具活动 -->
+        <activity
+            android:name=".ui.MobileDebugActivity"
+            android:exported="false"
+            android:label="@string/mobile_debug_title"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- 音节测试活动 -->
         <activity
             android:name=".ui.SyllableTestActivity"
             android:exported="false"
             android:label="音节测试工具"
+            android:windowSoftInputMode="adjustResize" />
+            
+        <!-- 拼音输入法测试工具 -->
+        <activity
+            android:name=".ui.PinyinTestToolActivity"
+            android:exported="false"
+            android:label="拼音输入法测试工具"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 输入法服务 -->
