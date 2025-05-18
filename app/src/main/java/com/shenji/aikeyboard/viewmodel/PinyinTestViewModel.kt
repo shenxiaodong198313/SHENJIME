@@ -173,8 +173,12 @@ class PinyinTestViewModel : ViewModel() {
             return InputStage.INITIAL_LETTER // 首字母阶段
         }
 
+        // 单个完整拼音音节，直接归类为拼音补全阶段，并且标记为单音节
+        if (isValidPinyin(input) && !input.contains(" ")) {
+            return InputStage.PINYIN_COMPLETION // 拼音补全阶段
+        }
+
         return when {
-            isValidPinyin(input) -> InputStage.PINYIN_COMPLETION // 拼音补全阶段
             canSplitToValidSyllables(input) -> InputStage.SYLLABLE_SPLIT // 音节拆分阶段
             else -> InputStage.ACRONYM // 首字母缩写阶段
         }
@@ -246,30 +250,25 @@ class PinyinTestViewModel : ViewModel() {
             try {
                 processStep.append("1. 查询单字词典中匹配首字母的条目\n")
                 // 查询单字词典中匹配首字母的
-                val singleChars = realm.query<Entry>("type == $0 AND initialLetters BEGINSWITH $1", 
+                val query = realm.query<Entry>("type == $0 AND initialLetters BEGINSWITH $1", 
                     "chars", input)
-                    .find()
                 
-                processStep.append("- 单字匹配结果: ${singleChars.size}个\n")
+                // 记录查询条件
+                processStep.append("- 查询条件: type='chars' AND initialLetters BEGINSWITH '$input'\n")
                 
-                // 如果没有结果，查询短语词典    
-                if (singleChars.isEmpty()) {
-                    processStep.append("2. 单字无结果，查询短语词典\n")
-                    val phrases = realm.query<Entry>("initialLetters BEGINSWITH $0", input)
-                        .find()
-                    processStep.append("- 短语匹配结果: ${phrases.size}个\n")
-                    
-                    phrases
-                        .sortedByDescending { it.frequency }
-                        .take(20)
-                        .map { Candidate.fromEntry(it, Candidate.MatchType.INITIAL_LETTER) }
-                } else {
-                    processStep.append("2. 单字有结果，不查询短语词典\n")
-                    singleChars
-                        .sortedByDescending { it.frequency }
-                        .take(20)
-                        .map { Candidate.fromEntry(it, Candidate.MatchType.INITIAL_LETTER) }
-                }
+                val singleChars = query.find()
+                
+                processStep.append("- 单字匹配结果: ${singleChars.size}个（仅查询chars表）\n")
+                processStep.append("2. 单字有结果，不查询短语词典\n")
+                
+                // 直接返回单字结果，不再查询其他表
+                val candidates = singleChars
+                    .sortedByDescending { it.frequency }
+                    .take(20)
+                    .map { Candidate.fromEntry(it, Candidate.MatchType.INITIAL_LETTER) }
+                
+                processStep.append("- 获取排序后的前20个结果\n")
+                candidates
             } catch (e: Exception) {
                 Timber.e(e, "查询首字母候选词异常")
                 processStep.append("查询异常: ${e.message}\n")
@@ -302,32 +301,50 @@ class PinyinTestViewModel : ViewModel() {
         val realm = ShenjiApplication.realm
         val processStep = StringBuilder("查询过程:\n")
 
+        // 检查是否是单个有效音节
+        val isSingleSyllable = isValidPinyin(input) && !input.contains(" ")
+
         val results = withContext(Dispatchers.IO) {
             try {
-                processStep.append("1. 查询单字词典中匹配拼音的条目\n")
-                // 先查询单字词典
-                val singleChars = realm.query<Entry>("type == $0 AND pinyin BEGINSWITH $1",
-                    "chars", input)
-                    .find()
-                    .sortedByDescending { it.frequency }
-                    .take(10)
-                    .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                // 如果是单个有效音节，只查询单字词典
+                if (isSingleSyllable) {
+                    processStep.append("1. 检测到单个有效音节'$input'，只查询单字词典\n")
+                    val singleChars = realm.query<Entry>("type == $0 AND pinyin == $1",
+                        "chars", input)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(20)
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
                     
-                processStep.append("- 单字匹配结果: ${singleChars.size}个\n")
+                    processStep.append("- 单字精确匹配结果: ${singleChars.size}个\n")
+                    singleChars
+                } else {
+                    // 原有逻辑保持不变
+                    processStep.append("1. 查询单字词典中匹配拼音的条目\n")
+                    // 先查询单字词典
+                    val singleChars = realm.query<Entry>("type == $0 AND pinyin BEGINSWITH $1",
+                        "chars", input)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(10)
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                        
+                    processStep.append("- 单字匹配结果: ${singleChars.size}个\n")
 
-                processStep.append("2. 查询短语词典中匹配拼音的条目\n")
-                // 再查询短语词典
-                val phrases = realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1",
-                    "chars", input)
-                    .find()
-                    .sortedByDescending { it.frequency }
-                    .take(10)
-                    .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
-                    
-                processStep.append("- 短语匹配结果: ${phrases.size}个\n")
+                    processStep.append("2. 查询短语词典中匹配拼音的条目\n")
+                    // 再查询短语词典
+                    val phrases = realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1",
+                        "chars", input)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(10)
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                        
+                    processStep.append("- 短语匹配结果: ${phrases.size}个\n")
 
-                // 合并并按词频排序
-                (singleChars + phrases).sortedByDescending { it.frequency }
+                    // 合并并按词频排序
+                    (singleChars + phrases).sortedByDescending { it.frequency }
+                }
             } catch (e: Exception) {
                 Timber.e(e, "查询拼音补全候选词异常")
                 processStep.append("查询异常: ${e.message}\n")
@@ -370,60 +387,33 @@ class PinyinTestViewModel : ViewModel() {
 
         val results = withContext(Dispatchers.IO) {
             try {
-                // 构建查询条件：每个音节对应一个汉字
-                val entriesForSyllables = syllables.mapIndexed { index, syllable ->
-                    processStep.append("2.${index + 1}. 查询音节'$syllable'对应的条目\n")
-                    val entries = realm.query<Entry>("pinyin == $0", syllable)
+                // 将音节连接为完整的拼音字符串（带空格）
+                val fullPinyin = syllables.joinToString(" ")
+                processStep.append("2. 构建完整拼音查询: '$fullPinyin'\n")
+                
+                // 直接查询完整拼音匹配的词条
+                val entries = realm.query<Entry>("pinyin == $0", fullPinyin)
+                    .find()
+                    .sortedByDescending { it.frequency }
+                processStep.append("- 完整拼音精确匹配结果: ${entries.size}个\n")
+                
+                // 如果精确匹配没有结果，尝试前缀匹配
+                val candidates = if (entries.isEmpty() && syllables.size >= 2) {
+                    processStep.append("3. 精确匹配无结果，尝试前缀匹配\n")
+                    // 查询以这些音节开头的词条
+                    val prefixMatches = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
                         .find()
-                        .map { it }
-                    processStep.append("- 音节'$syllable'匹配结果: ${entries.size}个\n")
-                    entries
-                }
-
-                // 如果任何一个音节没有匹配项，则返回空列表
-                if (entriesForSyllables.any { it.isEmpty() }) {
-                    processStep.append("3. 某个音节没有匹配项，无法组合\n")
-                    return@withContext emptyList<Candidate>()
-                }
-                
-                // 检查组合可能性
-                val totalCombinations = entriesForSyllables.fold(1L) { acc, entries -> acc * entries.size }
-                processStep.append("3. 检查组合可能性: 预计组合数 ${totalCombinations}\n")
-                
-                // 如果组合太多，对每个音节结果进行限制
-                val limitedEntries = if (totalCombinations > 1000) {
-                    processStep.append("- 组合数过多，对每个音节结果限制为最多10个\n")
-                    entriesForSyllables.map { entries ->
-                        if (entries.size > 10) {
-                            // 按频率排序，取前10个
-                            entries.sortedByDescending { it.frequency }.take(10)
-                        } else {
-                            entries
-                        }
-                    }
-                } else {
-                    entriesForSyllables
-                }
-
-                processStep.append("4. 执行笛卡尔积，生成所有可能的组合\n")
-                // 执行笛卡尔积，生成所有可能的组合
-                val combinations = cartesianProduct(limitedEntries)
-                processStep.append("- 组合数量: ${combinations.size}个\n")
-                
-                // 转换为候选词（最多20个）
-                combinations.take(20).map { entries ->
-                    val word = entries.joinToString("") { it.word }
-                    val pinyin = entries.joinToString(" ") { it.pinyin }
-                    val frequency = entries.sumOf { it.frequency }
+                        .sortedByDescending { it.frequency }
+                        .take(20)
                     
-                    Candidate(
-                        word = word,
-                        pinyin = pinyin,
-                        frequency = frequency,
-                        type = "音节组合",
-                        matchType = Candidate.MatchType.SYLLABLE_SPLIT
-                    )
+                    processStep.append("- 前缀匹配结果: ${prefixMatches.size}个\n")
+                    prefixMatches.map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
+                } else {
+                    processStep.append("3. 使用精确匹配结果\n")
+                    entries.take(20).map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
                 }
+                
+                candidates
             } catch (e: Exception) {
                 Timber.e(e, "查询音节拆分候选词异常")
                 processStep.append("查询异常: ${e.message}\n")
@@ -494,7 +484,10 @@ class PinyinTestViewModel : ViewModel() {
 
     /**
      * 执行笛卡尔积，生成所有可能的组合
+     * 注：此方法已不再使用，保留以备后续参考
+     * @deprecated 改用直接词典查询
      */
+    @Deprecated("改用直接词典查询，避免内存溢出问题")
     private fun <T> cartesianProduct(lists: List<List<T>>): List<List<T>> {
         if (lists.isEmpty()) return emptyList()
         if (lists.size == 1) return lists[0].map { listOf(it) }
@@ -515,7 +508,9 @@ class PinyinTestViewModel : ViewModel() {
     
     /**
      * 笛卡尔积实际实现
+     * @deprecated 改用直接词典查询
      */
+    @Deprecated("改用直接词典查询，避免内存溢出问题")
     private fun <T> cartesianProductImpl(lists: List<List<T>>): List<List<T>> {
         if (lists.isEmpty()) return emptyList()
         if (lists.size == 1) return lists[0].map { listOf(it) }
