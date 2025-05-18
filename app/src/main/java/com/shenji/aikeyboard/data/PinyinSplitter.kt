@@ -82,46 +82,63 @@ class PinyinSplitter {
     }
 
     /**
-     * 将无空格拼音分割为有效音节序列
-     * 采用从左到右的贪婪匹配算法，优先匹配最长音节
+     * 智能拆分输入字符串，尝试查找最佳音节分割点
+     * 对于无法完整分词的情况，保留有效音节，将剩余部分视为新音节的开始
      */
     fun splitPinyin(input: String): List<String> {
-        // 预处理：处理ü字符
-        val processedInput = preprocessInput(input)
+        // 清理输入：移除空格，全部转小写
+        val cleanInput = input.trim().lowercase().replace(" ", "")
         
-        val result = mutableListOf<String>()
-        var remainingInput = processedInput
-        
-        // 循环直到剩余字符串为空
-        while (remainingInput.isNotEmpty()) {
-            var matched = false
-            
-            // 从最长音节开始尝试匹配
-            for (syllable in ORDERED_SYLLABLES) {
-                if (remainingInput.startsWith(syllable)) {
-                    result.add(syllable)
-                    remainingInput = remainingInput.substring(syllable.length)
-                    matched = true
-                    break
-                }
-            }
-            
-            // 如果没有匹配到任何音节，则分词失败
-            if (!matched) {
-                return emptyList()
-            }
+        if (cleanInput.isEmpty()) {
+            return emptyList()
         }
         
-        return result
+        // 如果输入本身就是一个有效音节，直接返回
+        if (PINYIN_SYLLABLES.contains(cleanInput)) {
+            return listOf(cleanInput)
+        }
+        
+        // 尝试使用动态规划算法进行音节拆分
+        val result = split(cleanInput)
+        if (result.isNotEmpty()) {
+            return result
+        }
+        
+        // 贪心拆分：从左到右查找最长有效音节
+        val greedyResult = greedySplit(cleanInput)
+        if (greedyResult.isNotEmpty()) {
+            return greedyResult
+        }
+        
+        // 如果仍未成功拆分，尝试部分匹配：匹配最长有效前缀，剩余部分作为单独部分
+        val partialResult = findPartialMatch(cleanInput)
+        if (partialResult.isNotEmpty()) {
+            return partialResult
+        }
+        
+        // 所有方法都失败，返回空列表
+        return emptyList()
     }
     
     /**
-     * 处理输入字符串，支持ü和v的互换
+     * 寻找部分匹配：从输入中找出最长的有效音节前缀，剩余部分单独保留
+     * 这样可以处理类似"nih"这样的输入，将其拆分为"ni" + "h"
      */
-    private fun preprocessInput(input: String): String {
-        // 如果包含ü，则转换为v以便于处理
-        // 注意：在实际应用中，可能需要更复杂的映射逻辑
-        return input.replace('ü', 'v')
+    private fun findPartialMatch(input: String): List<String> {
+        // 查找最长的有效音节前缀
+        for (i in input.length downTo 1) {
+            val prefix = input.substring(0, i)
+            if (PINYIN_SYLLABLES.contains(prefix)) {
+                // 找到有效前缀
+                val result = mutableListOf(prefix)
+                // 将剩余部分作为一个单独部分（可能是下一个音节的开始）
+                if (i < input.length) {
+                    result.add(input.substring(i))
+                }
+                return result
+            }
+        }
+        return emptyList()
     }
     
     /**
@@ -173,5 +190,76 @@ class PinyinSplitter {
         
         // 所有方法都失败
         return emptyList()
+    }
+
+    /**
+     * 动态规划分词算法
+     * 尝试找到最优的音节分割方案
+     */
+    fun split(input: String): List<String> {
+        if (input.isEmpty()) return emptyList()
+        
+        // dp[i]表示前i个字符能否被分词
+        val dp = BooleanArray(input.length + 1)
+        // prev[i]表示前i个字符的最后一个音节的起始位置
+        val prev = IntArray(input.length + 1) { -1 }
+        
+        // 空字符串可以被分词
+        dp[0] = true
+        
+        for (i in 1..input.length) {
+            for (j in 0 until i) {
+                val syllable = input.substring(j, i)
+                if (dp[j] && PINYIN_SYLLABLES.contains(syllable)) {
+                    dp[i] = true
+                    prev[i] = j
+                    break
+                }
+            }
+        }
+        
+        // 如果整个字符串不能被分词，返回空列表
+        if (!dp[input.length]) return emptyList()
+        
+        // 回溯构建分词结果
+        val result = mutableListOf<String>()
+        var pos = input.length
+        while (pos > 0) {
+            val start = prev[pos]
+            result.add(0, input.substring(start, pos))
+            pos = start
+        }
+        
+        return result
+    }
+    
+    /**
+     * 贪心分词方法
+     * 从左到右查找最长有效音节
+     */
+    fun greedySplit(input: String): List<String> {
+        val result = mutableListOf<String>()
+        var remainingInput = input
+        
+        while (remainingInput.isNotEmpty()) {
+            var matched = false
+            
+            // 从最长音节开始尝试匹配
+            for (syllable in ORDERED_SYLLABLES) {
+                if (remainingInput.startsWith(syllable)) {
+                    result.add(syllable)
+                    remainingInput = remainingInput.substring(syllable.length)
+                    matched = true
+                    break
+                }
+            }
+            
+            // 如果没有匹配到任何音节，则分词失败
+            if (!matched) {
+                return emptyList()
+            }
+        }
+        
+        return result
     }
 } 

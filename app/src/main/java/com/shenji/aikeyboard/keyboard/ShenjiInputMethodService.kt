@@ -60,6 +60,12 @@ class ShenjiInputMethodService : InputMethodService() {
     // 当前查询Job，用于取消旧查询
     private var currentQueryJob: Job? = null
     
+    // 候选词缓存，缓存常用音节的查询结果
+    private val candidateCache = mutableMapOf<String, List<Candidate>>()
+    
+    // 缓存的最大大小
+    private val MAX_CACHE_SIZE = 30
+    
     // 当前输入阶段
     private enum class InputStage {
         INITIAL_LETTER,      // 首字母阶段
@@ -379,15 +385,50 @@ class ShenjiInputMethodService : InputMethodService() {
             return InputStage.UNKNOWN
         }
 
+        // 1. 如果输入只有一个字母，直接归类为首字母阶段
         if (input.length == 1 && input.matches(Regex("^[a-z]$"))) {
-            return InputStage.INITIAL_LETTER // 首字母阶段
+            return InputStage.INITIAL_LETTER
         }
 
-        return when {
-            isValidPinyin(input) -> InputStage.PINYIN_COMPLETION // 拼音补全阶段
-            canSplitToValidSyllables(input) -> InputStage.SYLLABLE_SPLIT // 音节拆分阶段
-            else -> InputStage.ACRONYM // 首字母缩写阶段
+        // 2. 如果输入完全匹配一个拼音音节，则为拼音补全阶段
+        if (isValidPinyin(input)) {
+            return InputStage.PINYIN_COMPLETION
         }
+
+        // 3. 优先检查是否可以拆分为有效音节
+        if (canSplitToValidSyllables(input)) {
+            return InputStage.SYLLABLE_SPLIT
+        }
+        
+        // 4. 尝试寻找部分音节匹配
+        val partialMatch = findPartialMatch(input)
+        if (partialMatch.isNotEmpty()) {
+            // 找到部分匹配，仍然归类为音节拆分阶段
+            return InputStage.SYLLABLE_SPLIT
+        }
+
+        // 5. 所有音节匹配尝试都失败，则视为首字母缩写阶段
+        return InputStage.ACRONYM
+    }
+
+    /**
+     * 寻找部分音节匹配（例如"nih"拆分为"ni"+"h"）
+     */
+    private fun findPartialMatch(input: String): List<String> {
+        // 查找最长的有效音节前缀
+        for (i in input.length downTo 1) {
+            val prefix = input.substring(0, i)
+            if (pinyinSplitter.getPinyinSyllables().contains(prefix)) {
+                // 找到有效前缀
+                val result = mutableListOf(prefix)
+                // 将剩余部分作为一个单独部分（可能是下一个音节的开始）
+                if (i < input.length) {
+                    result.add(input.substring(i))
+                }
+                return result
+            }
+        }
+        return emptyList()
     }
 
     /**
@@ -412,10 +453,18 @@ class ShenjiInputMethodService : InputMethodService() {
         // 取消之前的查询任务
         currentQueryJob?.cancel()
         
-        // 清空候选词区域（不再显示"加载中"）
+        // 清空候选词区域
         coroutineScope.launch {
             withContext(Dispatchers.Main) {
                 candidatesView.removeAllViews()
+                
+                // 对于长输入，添加一个"加载中"提示
+                if (input.length > 3) {
+                    val loadingView = TextView(this@ShenjiInputMethodService)
+                    loadingView.text = "查询中..."
+                    loadingView.setTextAppearance(R.style.CandidateWord)
+                    candidatesView.addView(loadingView)
+                }
             }
         }
         
@@ -441,8 +490,31 @@ class ShenjiInputMethodService : InputMethodService() {
                     }
                     InputStage.SYLLABLE_SPLIT -> {
                         Timber.d("当前阶段: 音节拆分阶段")
+                        
+                        // 优先尝试使用拼音分词器拆分
                         val syllables = pinyinSplitter.splitPinyin(input)
-                        querySplitCandidates(syllables)
+                        
+                        // 如果常规拆分失败，尝试部分匹配
+                        if (syllables.isEmpty()) {
+                            val partialMatch = findPartialMatch(input)
+                            if (partialMatch.isNotEmpty()) {
+                                Timber.d("常规拆分失败，使用部分匹配: ${partialMatch.joinToString("+")}")
+                                querySplitCandidates(partialMatch)
+                            } else {
+                                Timber.d("无法拆分音节")
+                                // 显示无法拆分提示
+                                withContext(Dispatchers.Main) {
+                                    candidatesView.removeAllViews()
+                                    val textView = TextView(this@ShenjiInputMethodService)
+                                    textView.text = "无法拆分音节"
+                                    textView.setTextAppearance(R.style.CandidateWord)
+                                    candidatesView.addView(textView)
+                                }
+                            }
+                        } else {
+                            Timber.d("常规拆分成功: ${syllables.joinToString("+")}")
+                            querySplitCandidates(syllables)
+                        }
                     }
                     InputStage.ACRONYM -> {
                         Timber.d("当前阶段: 首字母缩写阶段")
@@ -545,50 +617,102 @@ class ShenjiInputMethodService : InputMethodService() {
      */
     private suspend fun queryPinyinCandidates(input: String) {
         val realm = ShenjiApplication.realm
+        
+        // 检查是否是单个有效音节
+        val isSingleSyllable = isValidPinyin(input) && !input.contains(" ")
+        Timber.d("处理拼音输入: '$input', 是否为单个音节: $isSingleSyllable")
+
+        // 缓存命中检查（针对单音节）
+        if (isSingleSyllable && candidateCache.containsKey(input)) {
+            Timber.d("缓存命中: '$input'")
+            val cachedResults = candidateCache[input] ?: emptyList()
+            if (cachedResults.isNotEmpty()) {
+                // 直接使用缓存的结果
+                updateCandidateView(cachedResults)
+                return
+            }
+        }
 
         // 快速查询前20个结果
         val quickResults = withContext(Dispatchers.IO) {
             try {
-                // 先查询单字词典
-                val singleChars = realm.query<Entry>("type == $0 AND pinyin BEGINSWITH $1",
-                    "chars", input)
-                    .find()
-                    .sortedByDescending { it.frequency }
-                    .take(maxSingleCharCount)
-                    .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
-                    
-                Timber.d("单字匹配结果: ${singleChars.size}个")
-
-                // 再查询短语词典（取数量凑够初始查询限制）
-                val phrasesLimit = (initialQueryLimit - singleChars.size).coerceAtLeast(0)
-                val phrases = if (phrasesLimit > 0) {
-                    realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1",
+                // 如果是单个有效音节，优先精确匹配
+                if (isSingleSyllable) {
+                    Timber.d("检测到单个有效音节'$input'，执行精确匹配")
+                    val singleChars = realm.query<Entry>("type == $0 AND pinyin == $1",
                         "chars", input)
                         .find()
                         .sortedByDescending { it.frequency }
-                        .take(phrasesLimit)
+                        .take(20)
                         .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
-                } else {
-                    emptyList()
-                }
                     
-                Timber.d("短语匹配结果: ${phrases.size}个")
+                    Timber.d("单字精确匹配结果: ${singleChars.size}个")
+                    
+                    // 对于单音节，直接返回精确匹配结果
+                    filterDuplicates(singleChars)
+                } else {
+                    // 原有逻辑保持不变，先查询单字词典
+                    val singleChars = realm.query<Entry>("type == $0 AND pinyin BEGINSWITH $1",
+                        "chars", input)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(maxSingleCharCount)
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                        
+                    Timber.d("单字匹配结果: ${singleChars.size}个")
 
-                // 合并并去重
-                filterDuplicates(singleChars + phrases)
+                    // 再查询短语词典（取数量凑够初始查询限制）
+                    val phrasesLimit = (initialQueryLimit - singleChars.size).coerceAtLeast(0)
+                    val phrases = if (phrasesLimit > 0) {
+                        realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1",
+                            "chars", input)
+                            .find()
+                            .sortedByDescending { it.frequency }
+                            .take(phrasesLimit)
+                            .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                    } else {
+                        emptyList()
+                    }
+                        
+                    Timber.d("短语匹配结果: ${phrases.size}个")
+
+                    // 合并并去重
+                    filterDuplicates(singleChars + phrases)
+                }
             } catch (e: Exception) {
                 Timber.e(e, "查询拼音补全候选词异常")
                 emptyList()
             }
         }
         
+        // 记录结果数量
+        Timber.d("拼音补全查询结果: ${quickResults.size}个候选词")
+        
         // 更新UI显示快速查询结果
         val sortedQuickResults = sortCandidates(quickResults)
         updateCandidateView(sortedQuickResults)
         
-        // 异步查询更多结果
-        if (!currentQueryJob?.isActive!!) return
+        // 更新缓存（针对单音节），只缓存有结果的查询
+        if (isSingleSyllable && sortedQuickResults.isNotEmpty()) {
+            Timber.d("更新缓存: '$input' (${sortedQuickResults.size}个候选词)")
+            
+            // 如果缓存过大，清理最早的条目
+            if (candidateCache.size >= MAX_CACHE_SIZE) {
+                val oldestKey = candidateCache.keys.firstOrNull()
+                if (oldestKey != null) {
+                    candidateCache.remove(oldestKey)
+                    Timber.d("缓存已满，移除最早的缓存项: '$oldestKey'")
+                }
+            }
+            
+            // 添加到缓存
+            candidateCache[input] = sortedQuickResults
+        }
         
+        // 对于单音节查询，已经足够，不需要异步查询更多结果
+        if (isSingleSyllable || !currentQueryJob?.isActive!!) return
+        
+        // 非单音节情况下才进行异步查询更多结果
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 // 查询更多短语
@@ -631,193 +755,93 @@ class ShenjiInputMethodService : InputMethodService() {
         val realm = ShenjiApplication.realm
         Timber.d("音节拆分结果: ${syllables.joinToString("+")}")
         
-        // 构建拼音查询条件
-        val pinyinQuery = syllables.joinToString("+")
-        Timber.d("拼音查询条件: $pinyinQuery")
+        // 将音节连接为完整的拼音字符串（带空格）
+        val fullPinyin = syllables.joinToString(" ")
+        Timber.d("完整拼音查询: '$fullPinyin'")
         
         // 快速查询
         val quickResults = withContext(Dispatchers.IO) {
             try {
-                val results = mutableListOf<Candidate>()
+                // 首先尝试精确匹配完整拼音
+                val exactEntries = realm.query<Entry>("pinyin == $0", fullPinyin)
+                    .find()
                 
-                // 1. 首先查询基础词典(base)中匹配的词语
-                val baseEntries = realm.query<Entry>(
-                    "type == $0 AND pinyin == $1", 
-                    "base", 
-                    syllables.joinToString(" ")
-                ).find()
-                Timber.d("基础词典匹配结果: ${baseEntries.size}个")
+                Timber.d("完整拼音精确匹配结果: ${exactEntries.size}个")
                 
-                if (baseEntries.isNotEmpty()) {
-                    val baseCandidates = baseEntries
+                // 如果精确匹配没有结果，尝试前缀匹配
+                if (exactEntries.isEmpty() && syllables.size >= 2) {
+                    Timber.d("精确匹配无结果，尝试前缀匹配")
+                    // 查询以这些音节开头的词条
+                    val prefixEntries = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(initialQueryLimit)
+                    
+                    Timber.d("前缀匹配结果: ${prefixEntries.size}个")
+                    prefixEntries.map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
+                } else {
+                    // 使用精确匹配结果
+                    exactEntries
                         .sortedByDescending { it.frequency }
                         .take(initialQueryLimit)
                         .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                    results.addAll(baseCandidates)
                 }
-                
-                // 2. 如果基础词典结果不足，继续查询地名词典(place)
-                if (results.size < initialQueryLimit) {
-                    val placeEntries = realm.query<Entry>(
-                        "type == $0 AND pinyin == $1", 
-                        "place", 
-                        syllables.joinToString(" ")
-                    ).find()
-                    Timber.d("地名词典匹配结果: ${placeEntries.size}个")
-                    
-                    if (placeEntries.isNotEmpty()) {
-                        val placeCandidates = placeEntries
-                            .sortedByDescending { it.frequency }
-                            .take(initialQueryLimit - results.size)
-                            .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                        results.addAll(placeCandidates)
-                    }
-                }
-                
-                // 3. 如果结果仍然不足，继续查询人名词典(people)
-                if (results.size < initialQueryLimit) {
-                    val peopleEntries = realm.query<Entry>(
-                        "type == $0 AND pinyin == $1", 
-                        "people", 
-                        syllables.joinToString(" ")
-                    ).find()
-                    Timber.d("人名词典匹配结果: ${peopleEntries.size}个")
-                    
-                    if (peopleEntries.isNotEmpty()) {
-                        val peopleCandidates = peopleEntries
-                            .sortedByDescending { it.frequency }
-                            .take(initialQueryLimit - results.size)
-                            .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                        results.addAll(peopleCandidates)
-                    }
-                }
-                
-                // 4. 如果仍然没有足够结果，查询其他所有词典
-                if (results.size < initialQueryLimit) {
-                    val otherEntries = realm.query<Entry>(
-                        "pinyin == $0 AND type != $1 AND type != $2 AND type != $3", 
-                        syllables.joinToString(" "),
-                        "base", "place", "people"
-                    ).find()
-                    Timber.d("其他词典匹配结果: ${otherEntries.size}个")
-                    
-                    if (otherEntries.isNotEmpty()) {
-                        val otherCandidates = otherEntries
-                            .sortedByDescending { it.frequency }
-                            .take(initialQueryLimit - results.size)
-                            .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                        results.addAll(otherCandidates)
-                    }
-                }
-                
-                // 5. 如果依然没有找到完全匹配的结果，尝试使用BEGINSWITH查询
-                if (results.isEmpty()) {
-                    Timber.d("精确匹配无结果，尝试前缀匹配")
-                    val prefixEntries = realm.query<Entry>(
-                        "pinyin BEGINSWITH $0", 
-                        syllables.joinToString(" ")
-                    ).find()
-                    Timber.d("前缀匹配结果: ${prefixEntries.size}个")
-                    
-                    if (prefixEntries.isNotEmpty()) {
-                        val prefixCandidates = prefixEntries
-                            .sortedByDescending { it.frequency }
-                            .take(initialQueryLimit)
-                            .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                        results.addAll(prefixCandidates)
-                    }
-                }
-                
-                // 6. 只有在以上所有方法都无法找到候选词的情况下，再使用笛卡尔积逐字组合
-                if (results.isEmpty() && syllables.size > 1) {
-                    Timber.d("无法找到词典匹配，使用音节组合")
-                    
-                    // 查询每个音节对应的字
-                    val entriesForSyllables = syllables.map { syllable ->
-                        val entries = realm.query<Entry>("pinyin == $0 AND type == $1", syllable, "chars")
-                            .find()
-                            .sortedByDescending { it.frequency }
-                            .take(5) // 限制每个音节最多取前5个
-                        Timber.d("音节'$syllable'匹配结果: ${entries.size}个")
-                        entries
-                    }
-                    
-                    // 如果每个音节都有匹配的字，才进行组合
-                    if (!entriesForSyllables.any { it.isEmpty() }) {
-                        // 执行笛卡尔积，生成组合
-                        val combinations = cartesianProduct(entriesForSyllables)
-                            .take(initialQueryLimit)
-                            
-                        Timber.d("组合数量: ${combinations.size}个")
-                        
-                        // 转换为候选词
-                        val candidates = combinations.map { entries ->
-                            val word = entries.joinToString("") { it.word }
-                            val pinyin = entries.joinToString(" ") { it.pinyin }
-                            val frequency = entries.sumOf { it.frequency }
-                            
-                            Candidate(
-                                word = word,
-                                pinyin = pinyin,
-                                frequency = frequency,
-                                type = "音节组合",
-                                matchType = Candidate.MatchType.SYLLABLE_SPLIT
-                            )
-                        }
-                        
-                        results.addAll(candidates)
-                    }
-                }
-                
-                filterDuplicates(results)
             } catch (e: Exception) {
-                Timber.e(e, "查询音节拆分候选词异常", e)
+                Timber.e(e, "查询音节拆分候选词异常: ${e.message}")
                 emptyList()
             }
         }
+
+        // 记录查询结果
+        Timber.d("音节拆分查询结果: ${quickResults.size}个候选词")
         
-        // 更新UI显示快速查询结果
-        val sortedQuickResults = sortCandidates(quickResults)
-        updateCandidateView(sortedQuickResults)
+        // 去重并更新UI
+        val filteredResults = filterDuplicates(quickResults)
+        val sortedResults = sortCandidates(filteredResults)
+        updateCandidateView(sortedResults)
         
-        // 异步查询更多结果
-        if (!currentQueryJob?.isActive!!) return
-        
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                val moreResults = mutableListOf<Candidate>()
-                
-                // 查询更多结果，跳过已经查询的结果
-                val allEntries = realm.query<Entry>("pinyin == $0", syllables.joinToString(" "))
-                    .find()
-                    .sortedByDescending { it.frequency }
-                    .drop(initialQueryLimit) // 跳过已处理的
-                    .take(100) // 额外处理一批
-                    .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                
-                moreResults.addAll(allEntries)
-                
-                // 如果额外的结果为空，尝试模糊匹配
-                if (moreResults.isEmpty()) {
-                    val fuzzyEntries = realm.query<Entry>("pinyin CONTAINS $0", syllables.joinToString(" "))
-                        .find()
-                        .sortedByDescending { it.frequency }
-                        .take(100)
-                        .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                    
-                    moreResults.addAll(fuzzyEntries)
+        // 如果快速查询结果不足，且当前查询未取消，异步查询更多结果
+        if (filteredResults.size < 5 && currentQueryJob?.isActive!!) {
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    // 尝试笛卡尔积组合（仅当结果太少时）
+                    if (syllables.size > 1 && filteredResults.isEmpty()) {
+                        Timber.d("结果不足，尝试音节组合")
+                        
+                        // 查询每个音节对应的字
+                        val entriesForSyllables = syllables.map { syllable ->
+                            realm.query<Entry>("pinyin == $0 AND type == $1", syllable, "chars")
+                                .find()
+                                .sortedByDescending { it.frequency }
+                                .take(3) // 减少每个音节的候选项，避免组合爆炸
+                        }
+                        
+                        // 只有当每个音节都有匹配的字时才组合
+                        if (entriesForSyllables.none { it.isEmpty() }) {
+                            // 组合前3个音节（避免组合过多）
+                            val combinations = cartesianProduct(entriesForSyllables.take(3))
+                                .take(20)
+                                .map { entries ->
+                                    val word = entries.joinToString("") { it.word }
+                                    val frequency = entries.sumOf { it.frequency }
+                                    Candidate(
+                                        word = word, 
+                                        frequency = frequency,
+                                        matchType = Candidate.MatchType.SYLLABLE_SPLIT
+                                    )
+                                }
+                            
+                            if (combinations.isNotEmpty() && currentQueryJob?.isActive!!) {
+                                Timber.d("生成${combinations.size}个组合候选词")
+                                val allResults = (filteredResults + combinations).distinctBy { it.word }
+                                val finalResults = sortCandidates(allResults)
+                                updateCandidateView(finalResults)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "异步处理音节拆分候选词异常")
                 }
-                
-                val moreUniqueResults = filterDuplicates(moreResults)
-                
-                // 合并结果并更新UI
-                if (moreUniqueResults.isNotEmpty() && currentQueryJob?.isActive!!) {
-                    val combinedResults = (quickResults + moreUniqueResults).distinctBy { it.word }
-                    val sortedResults = sortCandidates(combinedResults)
-                    updateCandidateView(sortedResults)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "异步处理音节拆分候选词异常", e)
             }
         }
     }
@@ -1028,8 +1052,26 @@ class ShenjiInputMethodService : InputMethodService() {
     
     override fun onDestroy() {
         super.onDestroy()
-        // 取消所有协程
+        Timber.d("神迹输入法服务已销毁")
+        // 清理资源
         coroutineScope.cancel()
-        Timber.d("输入法服务已销毁")
+        // 清理缓存
+        candidateCache.clear()
+        Timber.d("输入法服务生命周期: onDestroy - 已清理资源")
+    }
+    
+    /**
+     * 定期清理不需要的缓存，避免占用过多内存
+     * 每50次查询后执行一次清理
+     */
+    private fun cleanupCacheIfNeeded() {
+        // 只保留最常用的10个缓存项
+        if (candidateCache.size > 10) {
+            val keysToRemove = candidateCache.keys.sorted().dropLast(10)
+            for (key in keysToRemove) {
+                candidateCache.remove(key)
+            }
+            Timber.d("已清理${keysToRemove.size}个缓存项，剩余${candidateCache.size}个")
+        }
     }
 } 
