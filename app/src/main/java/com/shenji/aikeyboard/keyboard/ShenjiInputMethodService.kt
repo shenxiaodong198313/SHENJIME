@@ -357,19 +357,35 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     /**
-     * 对候选词进行排序处理：先单字（按词频），后词语（按词频）
+     * 对候选词进行排序处理
+     * @param candidates 候选词列表
+     * @param syllableCount 音节数量，默认为1（单个音节）
+     * @return 排序后的候选词列表
      */
-    private fun sortCandidates(candidates: List<Candidate>): List<Candidate> {
-        // 先将候选词分为单字和词语两组
+    private fun sortCandidates(candidates: List<Candidate>, syllableCount: Int = 1): List<Candidate> {
+        if (candidates.isEmpty()) return emptyList()
+        
+        // 根据音节数量进行分组
+        // 1. 与音节数量完全匹配的词组（优先级最高）
+        val matchingSyllableWords = candidates.filter { it.word.length == syllableCount && it.word.length > 1 }
+            .sortedByDescending { it.frequency }
+            
+        // 2. 单字（当音节数量为1时，这部分会与上面重叠）
         val singleChars = candidates.filter { it.word.length == 1 }
             .sortedByDescending { it.frequency }
             .take(maxSingleCharCount) // 限制单字数量
             
-        val phrases = candidates.filter { it.word.length > 1 }
+        // 3. 其他词组（优先级最低）
+        val otherPhrases = candidates.filter { it.word.length > 1 && it.word.length != syllableCount }
             .sortedByDescending { it.frequency }
             
-        // 合并：先单字，后词语
-        return singleChars + phrases
+        // 合并结果：音节匹配词组 > 单字 > 其他词组
+        // 当syllableCount=1时，单字会优先（因为它们同时也是匹配音节数量的词）
+        return if (syllableCount > 1) {
+            matchingSyllableWords + singleChars + otherPhrases
+        } else {
+            singleChars + otherPhrases
+        }
     }
     
     /**
@@ -882,7 +898,7 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 去重并更新UI
         val filteredResults = filterDuplicates(quickResults)
-        val sortedResults = sortCandidates(filteredResults)
+        val sortedResults = sortCandidates(filteredResults, syllables.size)
         updateCandidateView(sortedResults)
         
         // 如果快速查询结果不足，且当前查询未取消，异步查询更多结果
@@ -919,7 +935,7 @@ class ShenjiInputMethodService : InputMethodService() {
                             if (combinations.isNotEmpty() && currentQueryJob?.isActive!!) {
                                 Timber.d("生成${combinations.size}个组合候选词")
                                 val allResults = (filteredResults + combinations).distinctBy { it.word }
-                                val finalResults = sortCandidates(allResults)
+                                val finalResults = sortCandidates(allResults, syllables.size)
                                 updateCandidateView(finalResults)
                             }
                         }
@@ -1244,7 +1260,7 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 去重并更新UI
         val filteredResults = filterDuplicates(quickResults)
-        val sortedResults = sortCandidates(filteredResults)
+        val sortedResults = sortCandidates(filteredResults, multipleSplits.first().size)
         updateCandidateView(sortedResults)
         
         // 如果快速查询结果不足，且当前查询未取消，异步查询更多结果
@@ -1281,7 +1297,7 @@ class ShenjiInputMethodService : InputMethodService() {
                             if (combinations.isNotEmpty() && currentQueryJob?.isActive!!) {
                                 Timber.d("生成${combinations.size}个组合候选词")
                                 val allResults = (filteredResults + combinations).distinctBy { it.word }
-                                val finalResults = sortCandidates(allResults)
+                                val finalResults = sortCandidates(allResults, multipleSplits.first().size)
                                 updateCandidateView(finalResults)
                             }
                         }
