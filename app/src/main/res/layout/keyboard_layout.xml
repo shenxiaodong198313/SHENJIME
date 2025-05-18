@@ -25,16 +25,34 @@
         android:background="#F5F5F5">
 
         <!-- 拼音显示区域 - 新增 -->
-        <TextView
-            android:id="@+id/pinyin_display"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="22dp"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:gravity="center_vertical"
-            android:textColor="#333333"
-            android:textSize="12sp"
-            android:background="#EEEEEE" />
+            android:background="#EEEEEE">
+            
+            <TextView
+                android:id="@+id/pinyin_display"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:gravity="center_vertical"
+                android:textColor="#333333"
+                android:textSize="12sp" />
+                
+            <TextView
+                android:id="@+id/app_name_display"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentEnd="true"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:gravity="center_vertical"
+                android:textColor="#FF0000"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
 
         <!-- 候选词水平布局 -->
         <LinearLayout

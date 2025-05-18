@@ -90,6 +90,7 @@
     <string name="test_suite_logic">候选词生成逻辑: %1$s</string>
     <string name="test_suite_pinyin">拼音模拟查询: %1$s</string>
     <string name="toggle_mode">全/单</string>
+    <string name="usage_stats_permission_required">需要应用使用情况权限</string>
     <string name="view_logs">查看日志</string>
     <style name="CandidateWord">
         <item name="android:layout_width">wrap_content</item>

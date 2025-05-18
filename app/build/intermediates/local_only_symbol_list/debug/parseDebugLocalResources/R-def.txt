@@ -32,6 +32,7 @@ color teal_700
 color white
 dimen candidate_divider_height
 dimen candidate_word_margin
+drawable bg_permission_needed
 drawable candidate_background
 drawable candidate_item_background
 drawable candidate_word_bg
@@ -52,6 +53,7 @@ drawable keyboard_space_key_bg
 drawable keyboard_special_key_bg
 id action_db_info
 id action_logs
+id app_name_display
 id btnBuildRealmDb
 id btnCheckIndex
 id btnClear
@@ -302,6 +304,7 @@ string test_suite_candidates
 string test_suite_logic
 string test_suite_pinyin
 string toggle_mode
+string usage_stats_permission_required
 string view_logs
 style CandidateWord
 style KeyboardButton

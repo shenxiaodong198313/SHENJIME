@@ -1,7 +1,15 @@
 package com.shenji.aikeyboard.keyboard
 
 import android.animation.AnimatorInflater
+import android.app.AppOpsManager
+import android.app.usage.UsageStats
+import android.app.usage.UsageStatsManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.inputmethodservice.InputMethodService
+import android.os.Process
+import android.provider.Settings
 import android.text.InputType
 import android.view.KeyEvent
 import android.view.View
@@ -16,6 +24,7 @@ import com.shenji.aikeyboard.model.Candidate
 import io.realm.kotlin.ext.query
 import kotlinx.coroutines.*
 import timber.log.Timber
+import java.util.*
 
 class ShenjiInputMethodService : InputMethodService() {
     
@@ -38,6 +47,9 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 拼音显示TextView
     private lateinit var pinyinDisplay: TextView
+    
+    // 应用名称显示TextView
+    private lateinit var appNameDisplay: TextView
     
     // 当前输入的拼音
     private var composingText = StringBuilder()
@@ -95,6 +107,7 @@ class ShenjiInputMethodService : InputMethodService() {
             expandCandidatesButton = keyboardView.findViewById(R.id.expand_candidates_button)
             // 初始化拼音显示区域
             pinyinDisplay = keyboardView.findViewById(R.id.pinyin_display)
+            appNameDisplay = keyboardView.findViewById(R.id.app_name_display)
             
             // 设置展开按钮点击事件
             expandCandidatesButton.setOnClickListener {
@@ -390,24 +403,34 @@ class ShenjiInputMethodService : InputMethodService() {
             return InputStage.INITIAL_LETTER
         }
 
-        // 2. 如果输入完全匹配一个拼音音节，则为拼音补全阶段
-        if (isValidPinyin(input)) {
+        // 2. 检查整个输入是否是一个完整的有效音节
+        val isFullSyllable = isValidPinyin(input)
+        
+        // 3. 如果是完整有效音节，优先作为拼音补全阶段处理
+        if (isFullSyllable) {
+            Timber.d("输入'$input'是一个完整有效音节，优先按拼音补全阶段处理")
             return InputStage.PINYIN_COMPLETION
         }
-
-        // 3. 优先检查是否可以拆分为有效音节
-        if (canSplitToValidSyllables(input)) {
+        
+        // 4. 检查是否可以拆分为有效音节
+        val multipleSplits = pinyinSplitter.getMultipleSplits(input)
+        if (multipleSplits.isNotEmpty()) {
+            // 记录拆分结果到日志
+            multipleSplits.forEachIndexed { index, split ->
+                Timber.d("拆分方式${index+1}: ${split.joinToString("+")}")
+            }
+            Timber.d("输入'$input'可以拆分为多种方式，归类为音节拆分阶段")
             return InputStage.SYLLABLE_SPLIT
         }
         
-        // 4. 尝试寻找部分音节匹配
+        // 5. 如果无法拆分为任何有效音节，检查是否有部分匹配
         val partialMatch = findPartialMatch(input)
         if (partialMatch.isNotEmpty()) {
-            // 找到部分匹配，仍然归类为音节拆分阶段
+            Timber.d("输入'$input'无法完全拆分，但找到部分匹配: ${partialMatch.joinToString("+")}")
             return InputStage.SYLLABLE_SPLIT
         }
 
-        // 5. 所有音节匹配尝试都失败，则视为首字母缩写阶段
+        // 6. 所有音节匹配尝试都失败，则视为首字母缩写阶段
         return InputStage.ACRONYM
     }
 
@@ -486,19 +509,27 @@ class ShenjiInputMethodService : InputMethodService() {
                     }
                     InputStage.PINYIN_COMPLETION -> {
                         Timber.d("当前阶段: 拼音补全阶段")
+                        // 更新拼音显示为完整音节
+                        updatePinyinDisplay(input, forceFullSyllable = true)
                         queryPinyinCandidates(input)
                     }
                     InputStage.SYLLABLE_SPLIT -> {
                         Timber.d("当前阶段: 音节拆分阶段")
                         
-                        // 优先尝试使用拼音分词器拆分
-                        val syllables = pinyinSplitter.splitPinyin(input)
+                        // 获取多种拆分方式
+                        val multipleSplits = pinyinSplitter.getMultipleSplits(input)
                         
-                        // 如果常规拆分失败，尝试部分匹配
-                        if (syllables.isEmpty()) {
+                        // 如果有多种拆分方式，使用多种拆分查询
+                        if (multipleSplits.isNotEmpty()) {
+                            // 更新拼音显示，使用第一种拆分方式（优先级最高）
+                            updatePinyinDisplay(input, multipleSplits.first())
+                            queryWithMultipleSplits(input, multipleSplits)
+                        } else {
+                            // 如果没有找到拆分方式，尝试部分匹配
                             val partialMatch = findPartialMatch(input)
                             if (partialMatch.isNotEmpty()) {
                                 Timber.d("常规拆分失败，使用部分匹配: ${partialMatch.joinToString("+")}")
+                                updatePinyinDisplay(input, partialMatch)
                                 querySplitCandidates(partialMatch)
                             } else {
                                 Timber.d("无法拆分音节")
@@ -511,9 +542,6 @@ class ShenjiInputMethodService : InputMethodService() {
                                     candidatesView.addView(textView)
                                 }
                             }
-                        } else {
-                            Timber.d("常规拆分成功: ${syllables.joinToString("+")}")
-                            querySplitCandidates(syllables)
                         }
                     }
                     InputStage.ACRONYM -> {
@@ -759,33 +787,90 @@ class ShenjiInputMethodService : InputMethodService() {
         val fullPinyin = syllables.joinToString(" ")
         Timber.d("完整拼音查询: '$fullPinyin'")
         
+        // 检查原始输入是否本身就是一个有效音节
+        val originalInput = if (syllables.size > 1) {
+            syllables.joinToString("")
+        } else {
+            syllables[0]
+        }
+        
+        val isOriginalInputValidSyllable = pinyinSplitter.getPinyinSyllables().contains(originalInput)
+        
+        // 检查是否是连续输入形成的新音节情况
+        val lastValidSyllable = findLastValidSyllable(syllables)
+        
         // 快速查询
         val quickResults = withContext(Dispatchers.IO) {
             try {
-                // 首先尝试精确匹配完整拼音
+                // 存储所有查询结果
+                val allResults = mutableListOf<Candidate>()
+                
+                // 1. 如果检测到连续输入形成的新音节，优先查询该音节的候选词
+                if (lastValidSyllable.isNotEmpty()) {
+                    Timber.d("查询最后形成的有效音节: '$lastValidSyllable'")
+                    val lastSyllableEntries = realm.query<Entry>("pinyin == $0", lastValidSyllable)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(initialQueryLimit / 2)
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                    
+                    Timber.d("最后有效音节匹配结果: ${lastSyllableEntries.size}个")
+                    // 添加最高优先级
+                    allResults.addAll(lastSyllableEntries)
+                }
+                
+                // 2. 尝试精确匹配完整拼音（拆分后的音节组合）
                 val exactEntries = realm.query<Entry>("pinyin == $0", fullPinyin)
                     .find()
                 
                 Timber.d("完整拼音精确匹配结果: ${exactEntries.size}个")
                 
-                // 如果精确匹配没有结果，尝试前缀匹配
-                if (exactEntries.isEmpty() && syllables.size >= 2) {
-                    Timber.d("精确匹配无结果，尝试前缀匹配")
+                // 添加精确匹配结果
+                if (exactEntries.isNotEmpty()) {
+                    val remainingLimit = (initialQueryLimit - allResults.size).coerceAtLeast(0)
+                    if (remainingLimit > 0) {
+                        allResults.addAll(
+                            exactEntries
+                                .sortedByDescending { it.frequency }
+                                .take(remainingLimit / 2) // 为其他查询方式预留空间
+                                .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
+                        )
+                    }
+                }
+                
+                // 3. 如果原始输入本身是一个有效的拼音音节，查询它作为单个音节的结果
+                if (isOriginalInputValidSyllable && lastValidSyllable != originalInput) {
+                    Timber.d("原始输入'$originalInput'本身是个有效音节，尝试作为整体查询")
+                    val remainingLimit = (initialQueryLimit - allResults.size).coerceAtLeast(0)
+                    if (remainingLimit > 0) {
+                        val originalEntries = realm.query<Entry>("pinyin == $0", originalInput)
+                            .find()
+                            .sortedByDescending { it.frequency }
+                            .take(remainingLimit / 2)
+                            .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                        
+                        Timber.d("原始输入作为整体匹配结果: ${originalEntries.size}个")
+                        allResults.addAll(originalEntries)
+                    }
+                }
+                
+                // 4. 如果前面的结果不足，尝试前缀匹配
+                val remainingLimit = (initialQueryLimit - allResults.size).coerceAtLeast(0)
+                if (remainingLimit > 0 && syllables.size >= 2) {
+                    Timber.d("已有结果不足，尝试前缀匹配")
                     // 查询以这些音节开头的词条
                     val prefixEntries = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
                         .find()
                         .sortedByDescending { it.frequency }
-                        .take(initialQueryLimit)
+                        .take(remainingLimit)
                     
                     Timber.d("前缀匹配结果: ${prefixEntries.size}个")
-                    prefixEntries.map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                } else {
-                    // 使用精确匹配结果
-                    exactEntries
-                        .sortedByDescending { it.frequency }
-                        .take(initialQueryLimit)
-                        .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
+                    allResults.addAll(
+                        prefixEntries.map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
+                    )
                 }
+                
+                allResults
             } catch (e: Exception) {
                 Timber.e(e, "查询音节拆分候选词异常: ${e.message}")
                 emptyList()
@@ -843,6 +928,42 @@ class ShenjiInputMethodService : InputMethodService() {
                     Timber.e(e, "异步处理音节拆分候选词异常")
                 }
             }
+        }
+    }
+    
+    /**
+     * 查找最后形成的有效音节
+     * 例如用户输入"zaiy"，拆分为["zai", "y"]，可能是用户先输入了"zai"，
+     * 然后又输入了"y"，这种情况下最后形成的有效音节是"y"
+     */
+    private fun findLastValidSyllable(syllables: List<String>): String {
+        if (syllables.isEmpty()) return ""
+        
+        // 检查最后一个音节是否有效
+        val lastSyllable = syllables.last()
+        if (isValidPinyin(lastSyllable)) {
+            return lastSyllable
+        }
+        
+        // 如果最后一个音节不是有效音节，检查倒数第二个
+        if (syllables.size >= 2) {
+            val secondLastSyllable = syllables[syllables.size - 2]
+            if (isValidPinyin(secondLastSyllable)) {
+                return secondLastSyllable
+            }
+        }
+        
+        // 还可以检查原始输入的末尾部分是否形成有效音节
+        val input = syllables.joinToString("")
+        val lastTwoChars = if (input.length >= 2) input.substring(input.length - 2) else ""
+        val lastThreeChars = if (input.length >= 3) input.substring(input.length - 3) else ""
+        val lastFourChars = if (input.length >= 4) input.substring(input.length - 4) else ""
+        
+        return when {
+            isValidPinyin(lastFourChars) -> lastFourChars
+            isValidPinyin(lastThreeChars) -> lastThreeChars
+            isValidPinyin(lastTwoChars) -> lastTwoChars
+            else -> ""
         }
     }
 
@@ -985,11 +1106,24 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     // 更新拼音显示
-    private fun updatePinyinDisplay(pinyin: String) {
+    private fun updatePinyinDisplay(pinyin: String, forceFullSyllable: Boolean = false) {
+        // 对于需要强制显示为完整音节的情况，直接显示原始输入
+        if (forceFullSyllable) {
+            pinyinDisplay.text = pinyin
+            return
+        }
+        
         // 将拼音格式化，音节之间用单引号分隔
         val formattedPinyin = formatPinyin(pinyin)
         // 无论如何，都显示原始输入，确保拼音显示区域不为空
         pinyinDisplay.text = formattedPinyin
+    }
+    
+    // 使用指定的拆分结果更新拼音显示
+    private fun updatePinyinDisplay(pinyin: String, syllables: List<String>) {
+        // 将音节用单引号连接
+        val formatted = syllables.joinToString("'")
+        pinyinDisplay.text = formatted
     }
     
     // 格式化拼音，在音节之间添加单引号
@@ -1002,6 +1136,191 @@ class ShenjiInputMethodService : InputMethodService() {
         }
         // 否则直接返回原始输入
         return pinyin
+    }
+    
+    /**
+     * 使用多种拆分方式查询候选词
+     */
+    private suspend fun queryWithMultipleSplits(input: String, multipleSplits: List<List<String>>) {
+        if (multipleSplits.isEmpty()) {
+            withContext(Dispatchers.Main) {
+                candidatesView.removeAllViews()
+                val textView = TextView(this@ShenjiInputMethodService)
+                textView.text = "无法拆分音节"
+                textView.setTextAppearance(R.style.CandidateWord)
+                candidatesView.addView(textView)
+            }
+            return
+        }
+
+        val realm = ShenjiApplication.realm
+        Timber.d("多种拆分方式, 共${multipleSplits.size}种")
+        
+        // 快速查询
+        val quickResults = withContext(Dispatchers.IO) {
+            try {
+                // 存储所有查询结果
+                val allResults = mutableListOf<Candidate>()
+                
+                // 查询限制数量
+                val limitPerMethod = (initialQueryLimit / (multipleSplits.size + 1)).coerceAtLeast(3)
+                
+                // 1. 首先检查输入是否接近一个完整音节
+                // 例如"zai"或"zaih"
+                val closeToFullSyllable = findClosestValidSyllable(input)
+                if (closeToFullSyllable.isNotEmpty()) {
+                    Timber.d("输入'$input'接近完整音节'$closeToFullSyllable'，优先查询")
+                    val fullSyllableEntries = realm.query<Entry>("pinyin == $0", closeToFullSyllable)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(limitPerMethod)
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                    
+                    Timber.d("接近完整音节匹配结果: ${fullSyllableEntries.size}个")
+                    allResults.addAll(fullSyllableEntries)
+                }
+                
+                // 2. 依次处理每种拆分方式
+                for ((index, syllables) in multipleSplits.withIndex()) {
+                    // 将音节连接为完整的拼音字符串（带空格）
+                    val fullPinyin = syllables.joinToString(" ")
+                    Timber.d("处理拆分方式${index+1}: ${syllables.joinToString("+")}, 查询'$fullPinyin'")
+                    
+                    // a. 首先尝试精确匹配完整拼音
+                    val exactEntries = realm.query<Entry>("pinyin == $0", fullPinyin)
+                        .find()
+                    
+                    Timber.d("拆分方式${index+1}的精确匹配结果: ${exactEntries.size}个")
+                    
+                    if (exactEntries.isNotEmpty()) {
+                        val remainingLimit = limitPerMethod.coerceAtLeast(1)
+                        allResults.addAll(
+                            exactEntries
+                                .sortedByDescending { it.frequency }
+                                .take(remainingLimit)
+                                .map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
+                        )
+                    }
+                    
+                    // b. 对于第一种拆分方式，如果精确匹配没有结果，尝试前缀匹配
+                    if (index == 0 && exactEntries.isEmpty() && syllables.size >= 2) {
+                        Timber.d("第一种拆分方式精确匹配无结果，尝试前缀匹配")
+                        val prefixEntries = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
+                            .find()
+                            .sortedByDescending { it.frequency }
+                            .take(limitPerMethod)
+                        
+                        Timber.d("前缀匹配结果: ${prefixEntries.size}个")
+                        allResults.addAll(
+                            prefixEntries.map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
+                        )
+                    }
+                }
+                
+                // 3. 如果结果太少，尝试查询单个音节（取第一种拆分方式的第一个音节）
+                if (allResults.size < 5 && multipleSplits[0].isNotEmpty()) {
+                    val firstSyllable = multipleSplits[0][0]
+                    Timber.d("结果不足，查询第一个音节'$firstSyllable'")
+                    
+                    val singleSyllableEntries = realm.query<Entry>("pinyin == $0", firstSyllable)
+                        .find()
+                        .sortedByDescending { it.frequency }
+                        .take(limitPerMethod)
+                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
+                    
+                    Timber.d("单音节查询结果: ${singleSyllableEntries.size}个")
+                    allResults.addAll(singleSyllableEntries)
+                }
+                
+                allResults
+            } catch (e: Exception) {
+                Timber.e(e, "多种拆分查询候选词异常: ${e.message}")
+                emptyList()
+            }
+        }
+
+        // 记录查询结果
+        Timber.d("多种拆分查询结果: ${quickResults.size}个候选词")
+        
+        // 去重并更新UI
+        val filteredResults = filterDuplicates(quickResults)
+        val sortedResults = sortCandidates(filteredResults)
+        updateCandidateView(sortedResults)
+        
+        // 如果快速查询结果不足，且当前查询未取消，异步查询更多结果
+        if (filteredResults.size < 5 && currentQueryJob?.isActive!!) {
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    // 尝试笛卡尔积组合（仅当结果太少时）
+                    if (multipleSplits[0].size > 1 && filteredResults.isEmpty()) {
+                        Timber.d("结果不足，尝试音节组合")
+                        
+                        // 查询每个音节对应的字
+                        val entriesForSyllables = multipleSplits[0].map { syllable ->
+                            realm.query<Entry>("pinyin == $0 AND type == $1", syllable, "chars")
+                                .find()
+                                .sortedByDescending { it.frequency }
+                                .take(3) // 减少每个音节的候选项，避免组合爆炸
+                        }
+                        
+                        // 只有当每个音节都有匹配的字时才组合
+                        if (entriesForSyllables.none { it.isEmpty() }) {
+                            // 组合前3个音节（避免组合过多）
+                            val combinations = cartesianProduct(entriesForSyllables.take(3))
+                                .take(20)
+                                .map { entries ->
+                                    val word = entries.joinToString("") { it.word }
+                                    val frequency = entries.sumOf { it.frequency }
+                                    Candidate(
+                                        word = word, 
+                                        frequency = frequency,
+                                        matchType = Candidate.MatchType.SYLLABLE_SPLIT
+                                    )
+                                }
+                            
+                            if (combinations.isNotEmpty() && currentQueryJob?.isActive!!) {
+                                Timber.d("生成${combinations.size}个组合候选词")
+                                val allResults = (filteredResults + combinations).distinctBy { it.word }
+                                val finalResults = sortCandidates(allResults)
+                                updateCandidateView(finalResults)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "异步处理多种拆分候选词异常")
+                }
+            }
+        }
+    }
+    
+    /**
+     * 查找与输入最接近的有效音节
+     * 例如输入"zai"，返回"zai"；输入"zaih"，可能返回"zai"
+     */
+    private fun findClosestValidSyllable(input: String): String {
+        // 如果输入本身是有效音节，直接返回
+        if (isValidPinyin(input)) {
+            return input
+        }
+        
+        // 检查去掉最后一个字符后是否是有效音节（例如"zaih" -> "zai"）
+        if (input.length > 1) {
+            val withoutLast = input.substring(0, input.length - 1)
+            if (isValidPinyin(withoutLast)) {
+                return withoutLast
+            }
+        }
+        
+        // 从输入末尾开始，寻找最长的有效音节
+        for (len in minOf(input.length, 4) downTo 2) { // 最长考虑4个字符，最短2个字符
+            val substring = input.substring(input.length - len)
+            if (isValidPinyin(substring)) {
+                return substring
+            }
+        }
+        
+        // 无法找到接近的有效音节
+        return ""
     }
     
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
@@ -1026,6 +1345,17 @@ class ShenjiInputMethodService : InputMethodService() {
         if (areViewComponentsInitialized()) {
             hideCandidates()
             Timber.d("输入视图初始化完成，隐藏候选词区域")
+            
+            // 延迟更新应用名称显示，给UI时间完成初始化
+            coroutineScope.launch {
+                try {
+                    // 延迟300毫秒再更新应用名称，避免过早进行此操作
+                    delay(300)
+                    updateAppNameDisplay()
+                } catch (e: Exception) {
+                    Timber.e(e, "延迟更新应用名称失败")
+                }
+            }
         } else {
             Timber.e("输入视图组件未完全初始化")
         }
@@ -1073,5 +1403,208 @@ class ShenjiInputMethodService : InputMethodService() {
             }
             Timber.d("已清理${keysToRemove.size}个缓存项，剩余${candidateCache.size}个")
         }
+    }
+    
+    /**
+     * 检查是否有访问使用情况统计的权限
+     */
+    private fun hasUsageStatsPermission(): Boolean {
+        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = appOps.unsafeCheckOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS, 
+            Process.myUid(), 
+            packageName
+        )
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+    
+    /**
+     * 请求权限-跳转到设置界面
+     * 确保在主线程执行
+     */
+    private suspend fun requestUsageStatsPermission() {
+        withContext(Dispatchers.Main) {
+            Timber.d("请求使用情况统计权限")
+            // 在主线程上显示Toast
+            Toast.makeText(this@ShenjiInputMethodService, getString(R.string.usage_stats_permission_required), Toast.LENGTH_LONG).show()
+            try {
+                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+            } catch (e: Exception) {
+                Timber.e(e, "无法打开使用情况统计权限设置")
+            }
+        }
+    }
+    
+    /**
+     * 获取当前前台应用的名称和图标
+     * 安全处理权限和异常，避免崩溃
+     */
+    private suspend fun getCurrentForegroundAppInfo(): Pair<String, android.graphics.drawable.Drawable?> {
+        // 检查权限，但不立即显示Toast
+        if (!hasUsageStatsPermission()) {
+            // 仅记录日志，不立即请求权限
+            Timber.d("没有使用情况统计权限")
+            return Pair("需要权限", null) // 返回一个提示文本，不引发UI操作
+        }
+        
+        try {
+            val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val time = System.currentTimeMillis()
+            // 获取过去1分钟内的使用统计
+            val stats = usageStatsManager.queryUsageStats(
+                UsageStatsManager.INTERVAL_DAILY,
+                time - 60 * 1000, time
+            )
+            
+            if (stats != null) {
+                var recentStat: UsageStats? = null
+                for (stat in stats) {
+                    if (recentStat == null || stat.lastTimeUsed > recentStat.lastTimeUsed) {
+                        recentStat = stat
+                    }
+                }
+                
+                if (recentStat != null) {
+                    // 获取应用名称和图标
+                    val packageManager = packageManager
+                    return try {
+                        val appInfo = packageManager.getApplicationInfo(recentStat.packageName, 0)
+                        val appName = packageManager.getApplicationLabel(appInfo).toString()
+                        val appIcon = packageManager.getApplicationIcon(recentStat.packageName)
+                        Pair(appName, appIcon)
+                    } catch (e: PackageManager.NameNotFoundException) {
+                        Timber.e(e, "无法获取应用名称")
+                        Pair(recentStat.packageName, null)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "获取前台应用失败")
+        }
+        
+        return Pair("", null)
+    }
+    
+    /**
+     * 更新应用名称显示
+     * 安全地处理异常，避免应用崩溃
+     */
+    private fun updateAppNameDisplay() {
+        try {
+            coroutineScope.launch {
+                try {
+                    // 在IO线程获取应用名称和图标
+                    val appInfo = withContext(Dispatchers.IO) {
+                        getCurrentForegroundAppInfo()
+                    }
+                    
+                    val appName = appInfo.first
+                    val appIcon = appInfo.second
+                    
+                    // 在主线程更新UI
+                    withContext(Dispatchers.Main) {
+                        // 如果应用名是"需要权限"，表示没有使用情况统计权限
+                        if (appName == "需要权限" && !hasUsageStatsPermission()) {
+                            // 添加视觉提示，让用户知道可以点击
+                            appNameDisplay.text = "需要权限 ⚙️"
+                            appNameDisplay.setBackgroundResource(R.drawable.bg_permission_needed)
+                            
+                            // 添加轻微动画效果，提示用户可点击
+                            val alphaAnim = android.animation.ObjectAnimator.ofFloat(
+                                appNameDisplay, "alpha", 0.6f, 1.0f
+                            )
+                            alphaAnim.duration = 800
+                            alphaAnim.repeatCount = android.animation.ObjectAnimator.INFINITE
+                            alphaAnim.repeatMode = android.animation.ObjectAnimator.REVERSE
+                            alphaAnim.start()
+                            
+                            // 没有权限时，点击后请求权限
+                            appNameDisplay.setOnClickListener {
+                                alphaAnim.cancel() // 停止动画
+                                appNameDisplay.alpha = 1.0f // 重置透明度
+                                coroutineScope.launch {
+                                    requestUsageStatsPermission()
+                                }
+                            }
+                        } else if (appName.isNotEmpty()) {
+                            // 新的显示格式：已启用[App名称]增强输入
+                            // 限制整体长度，避免太长
+                            val shortAppName = if (appName.length > 4) appName.substring(0, 4) + "..." else appName
+                            val displayName = "已启用${shortAppName}增强输入"
+                            
+                            // 设置文本
+                            appNameDisplay.text = displayName
+                            
+                            // 尝试设置图标
+                            if (appIcon != null) {
+                                try {
+                                    // 创建缩小版本的图标（16dp x 16dp）
+                                    val scaledDrawable = android.graphics.drawable.BitmapDrawable(
+                                        resources,
+                                        android.graphics.Bitmap.createScaledBitmap(
+                                            getBitmapFromDrawable(appIcon),
+                                            16.dpToPx(),
+                                            16.dpToPx(),
+                                            true
+                                        )
+                                    )
+                                    
+                                    // 设置图标在文本左侧
+                                    scaledDrawable.setBounds(0, 0, 16.dpToPx(), 16.dpToPx())
+                                    appNameDisplay.setCompoundDrawables(scaledDrawable, null, null, null)
+                                    appNameDisplay.compoundDrawablePadding = 4.dpToPx()
+                                } catch (e: Exception) {
+                                    Timber.e(e, "设置应用图标失败")
+                                    appNameDisplay.setCompoundDrawables(null, null, null, null)
+                                }
+                            } else {
+                                appNameDisplay.setCompoundDrawables(null, null, null, null)
+                            }
+                            
+                            appNameDisplay.setBackgroundResource(android.R.color.transparent)
+                            appNameDisplay.alpha = 1.0f // 确保透明度正常
+                            // 有权限时，清除点击事件
+                            appNameDisplay.setOnClickListener(null)
+                        } else {
+                            // 无应用名时的备用显示
+                            appNameDisplay.text = "神迹输入法"
+                            appNameDisplay.setBackgroundResource(android.R.color.transparent)
+                            appNameDisplay.setCompoundDrawables(null, null, null, null)
+                            appNameDisplay.alpha = 1.0f
+                            appNameDisplay.setOnClickListener(null)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "更新应用名称显示异常")
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "启动更新应用名称协程失败")
+        }
+    }
+    
+    /**
+     * 将Drawable转换为Bitmap
+     */
+    private fun getBitmapFromDrawable(drawable: android.graphics.drawable.Drawable): android.graphics.Bitmap {
+        val bitmap = android.graphics.Bitmap.createBitmap(
+            drawable.intrinsicWidth,
+            drawable.intrinsicHeight,
+            android.graphics.Bitmap.Config.ARGB_8888
+        )
+        val canvas = android.graphics.Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bitmap
+    }
+    
+    /**
+     * dp转换为px的扩展函数
+     */
+    private fun Int.dpToPx(): Int {
+        val scale = resources.displayMetrics.density
+        return (this * scale + 0.5f).toInt()
     }
 } 

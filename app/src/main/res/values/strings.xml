@@ -15,6 +15,7 @@
     <string name="dict_completed">转换完成！</string>
     <string name="dict_error">转换出错</string>
     <string name="storage_permission_required">需要存储权限以保存数据库文件</string>
+    <string name="usage_stats_permission_required">需要应用使用情况权限</string>
     
     <!-- 词典管理相关 -->
     <string name="dict_manager">词典管理</string>

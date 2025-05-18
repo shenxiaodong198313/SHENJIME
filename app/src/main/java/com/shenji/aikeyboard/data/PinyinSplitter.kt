@@ -29,7 +29,7 @@ class PinyinSplitter {
         // 声母 f
         "fa", "fo", "fei", "fou", "fan", "fen", "fang", "feng", "fu",
         // 声母 d
-        "da", "de", "dai", "dai", "dan", "dang", "deng", "di", "die", "diao", "diu", "dian", "ding", "dong", "dou", "du", "duan", "dun", "duo",
+        "da", "de", "dai", "dao", "dan", "dang", "deng", "di", "die", "diao", "diu", "dian", "ding", "dong", "dou", "du", "duan", "dun", "duo",
         // 声母 t
         "ta", "te", "tai", "tao", "tou", "tan", "tang", "teng", "ti", "tie", "tiao", "tian", "ting", "tong", "tu", "tuan", "tun", "tuo",
         // 声母 n
@@ -51,19 +51,19 @@ class PinyinSplitter {
         // 声母 x
         "xi", "xia", "xie", "xiao", "xiu", "xian", "xin", "xiang", "xing", "xiong", "xu", "xuan", "xun", "xue",
         // 声母 zh
-        "zhi", "zha", "zhe", "zhi", "zhai", "zhao", "zhou", "zhan", "zhen", "zhang", "zheng", "zhong", "zhu", "zhua", "zhuai", "zhuan", "zhuang", "zhun", "zhui", "zhuo",
+        "zhi", "zha", "zhe", "zhai", "zhao", "zhou", "zhan", "zhen", "zhang", "zheng", "zhong", "zhu", "zhua", "zhuai", "zhuan", "zhuang", "zhun", "zhui", "zhuo",
         // 声母 ch
-        "chi", "cha", "che", "chi", "chai", "chao", "chou", "chan", "chen", "chang", "cheng", "chong", "chu", "chua", "chuai", "chuan", "chuang", "chun", "chui", "chuo",
+        "chi", "cha", "che", "chai", "chao", "chou", "chan", "chen", "chang", "cheng", "chong", "chu", "chua", "chuai", "chuan", "chuang", "chun", "chui", "chuo",
         // 声母 sh
-        "shi", "sha", "she", "shi", "shai", "shao", "shou", "shan", "shen", "shang", "sheng", "shu", "shua", "shuai", "shuan", "shuang", "shun", "shui", "shuo",
+        "shi", "sha", "she", "shai", "shao", "shou", "shan", "shen", "shang", "sheng", "shu", "shua", "shuai", "shuan", "shuang", "shun", "shui", "shuo",
         // 声母 r
         "ri", "re", "rao", "rou", "ran", "ren", "rang", "reng", "rong", "ru", "rui", "ruan", "run", "ruo",
         // 声母 z
-        "zi", "za", "ze", "zuo", "zan", "zou", "zang", "zen", "zeng", "zong", "zu", "zuan", "zun", "zui", "zuo",
+        "zi", "za", "ze", "zai", "zao", "zou", "zan", "zen", "zang", "zeng", "zong", "zu", "zuan", "zun", "zui", "zuo",
         // 声母 c
-        "ci", "ca", "ce", "cuo", "can", "cou", "cang", "cen", "ceng", "cong", "cu", "cuan", "cun", "cui", "cuo",
+        "ci", "ca", "ce", "cai", "cao", "cou", "can", "cen", "ceng", "cong", "cu", "cuan", "cun", "cui", "cuo",
         // 声母 s
-        "si", "sa", "se", "suo", "san", "sou", "sang", "sen", "seng", "song", "su", "suan", "sun", "sui", "suo",
+        "si", "sa", "se", "sai", "sao", "sou", "san", "sen", "sang", "seng", "song", "su", "suan", "sun", "sui", "suo",
         // 额外补充音节
         "wa", "wo", "wai", "wei", "wan", "wen", "wang", "weng",
         "ya", "yo", "yao", "you", "yan", "yang", "yong"
@@ -79,6 +79,57 @@ class PinyinSplitter {
      */
     fun getPinyinSyllables(): Set<String> {
         return PINYIN_SYLLABLES
+    }
+
+    /**
+     * 获取输入的多种可能拆分方式
+     * 返回按优先级排序的拆分结果列表
+     */
+    fun getMultipleSplits(input: String): List<List<String>> {
+        val cleanInput = input.trim().lowercase().replace(" ", "")
+        
+        if (cleanInput.isEmpty()) {
+            return emptyList()
+        }
+        
+        val results = mutableListOf<List<String>>()
+        
+        // 检查1: 如果输入本身是一个有效音节，这是最高优先级
+        if (PINYIN_SYLLABLES.contains(cleanInput)) {
+            results.add(listOf(cleanInput))
+        }
+        
+        // 检查2: 尝试动态规划拆分
+        val dpResult = split(cleanInput)
+        if (dpResult.isNotEmpty() && (dpResult.size > 1 || dpResult[0] != cleanInput)) {
+            results.add(dpResult)
+        }
+        
+        // 检查3: 尝试贪心拆分
+        val greedyResult = greedySplit(cleanInput)
+        if (greedyResult.isNotEmpty() && 
+            !results.contains(greedyResult) && 
+            (greedyResult.size > 1 || greedyResult[0] != cleanInput)) {
+            results.add(greedyResult)
+        }
+        
+        // 检查4: 尝试部分匹配拆分
+        val partialResult = findPartialMatch(cleanInput)
+        if (partialResult.isNotEmpty() && 
+            !results.contains(partialResult) && 
+            (partialResult.size > 1 || partialResult[0] != cleanInput)) {
+            results.add(partialResult)
+        }
+        
+        // 检查5: 尝试右到左拆分
+        val rightToLeftResult = splitPinyinRightToLeft(cleanInput)
+        if (rightToLeftResult.isNotEmpty() && 
+            !results.contains(rightToLeftResult) && 
+            (rightToLeftResult.size > 1 || rightToLeftResult[0] != cleanInput)) {
+            results.add(rightToLeftResult)
+        }
+        
+        return results
     }
 
     /**

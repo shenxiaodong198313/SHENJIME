@@ -24,6 +24,9 @@
     <!-- Android 10+ 需要特殊权限 -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
+    <!-- 添加获取应用使用统计的权限 -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
     <permission
         android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />

@@ -3020,6 +3020,7 @@ drawable abc_textfield_search_material
 drawable abc_vector_test
 drawable avd_hide_password
 drawable avd_show_password
+drawable bg_permission_needed
 drawable btn_checkbox_checked_mtrl
 drawable btn_checkbox_checked_to_unchecked_mtrl_animation
 drawable btn_checkbox_unchecked_mtrl
@@ -3226,6 +3227,7 @@ id animateToEnd
 id animateToStart
 id antiClockwise
 id anticipate
+id app_name_display
 id arc
 id asConfigured
 id async
@@ -4259,6 +4261,7 @@ string test_suite_candidates
 string test_suite_logic
 string test_suite_pinyin
 string toggle_mode
+string usage_stats_permission_required
 string view_logs
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
