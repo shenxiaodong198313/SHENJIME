@@ -1,5 +1,7 @@
 package com.shenji.aikeyboard.utils
 
+import timber.log.Timber
+
 /**
  * 拼音音节管理器
  * 负责管理拼音音节表，提供音节查询和验证功能
@@ -73,7 +75,30 @@ object PinyinSyllableManager {
      * 判断给定字符串是否为有效的拼音音节
      */
     fun isValidSyllable(syllable: String): Boolean {
-        return ALL_SYLLABLES.contains(syllable.lowercase())
+        val lowercased = syllable.lowercase()
+        val isValid = ALL_SYLLABLES.contains(lowercased)
+        Timber.d("【PYDEBUG】检查音节 '$syllable' 是否有效: $isValid")
+        
+        // 对常见错误拆分进行特别日志记录
+        if (!isValid && (lowercased == "bei" || lowercased == "jing" || 
+                          lowercased == "tai" || lowercased == "wan" ||
+                          lowercased == "wei" || lowercased == "xin")) {
+            Timber.e("【PYDEBUG】关键音节 '$lowercased' 未被识别为有效音节! 所有音节表大小: ${ALL_SYLLABLES.size}")
+            
+            // 列出所有B开头的音节，帮助调试
+            if (lowercased.startsWith("b")) {
+                val bSyllables = ALL_SYLLABLES.filter { it.startsWith("b") }
+                Timber.d("【PYDEBUG】所有B开头的音节: ${bSyllables.joinToString(", ")}")
+            }
+            
+            // 列出所有J开头的音节，帮助调试
+            if (lowercased.startsWith("j")) {
+                val jSyllables = ALL_SYLLABLES.filter { it.startsWith("j") }
+                Timber.d("【PYDEBUG】所有J开头的音节: ${jSyllables.joinToString(", ")}")
+            }
+        }
+        
+        return isValid
     }
     
     /**

@@ -5,7 +5,7 @@ import timber.log.Timber
 /**
  * 拼音分词器
  * 将无空格拼音字符串分割为标准音节序列
- * 支持两种分词算法：从右到左和从左到右
+ * 支持两种分词算法：从左到右和从右到左，优先使用从左到右
  */
 object PinyinSplitter {
     
@@ -14,37 +14,57 @@ object PinyinSplitter {
     
     /**
      * 将无空格拼音分割为标准音节列表
-     * 先尝试从右到左的最长匹配算法，若失败则尝试从左到右的最长匹配
+     * 先尝试从左到右的最长匹配算法，若失败则尝试从右到左的最长匹配
      * 
      * @param input 待分割的拼音字符串
      * @return 分割后的音节列表，若无法分割则返回空列表
      */
     fun split(input: String): List<String> {
+        // 【PYDEBUG】记录开始拆分拼音
+        Timber.d("【PYDEBUG】开始拆分拼音: '$input'")
+        
         // 检查输入是否为空
-        if (input.isBlank()) return emptyList()
+        if (input.isBlank()) {
+            Timber.d("【PYDEBUG】输入为空，返回空列表")
+            return emptyList()
+        }
         
         // 预处理输入
-        val normalized = preprocessInput(input) ?: return emptyList()
+        val normalized = preprocessInput(input)
+        if (normalized == null) {
+            Timber.d("【PYDEBUG】预处理失败，返回空列表")
+            return emptyList()
+        }
+        Timber.d("【PYDEBUG】预处理后: '$normalized'")
         
         // 检查缓存
-        splitCache[normalized]?.let { return it }
+        splitCache[normalized]?.let { 
+            Timber.d("【PYDEBUG】命中缓存: ${it.joinToString(", ")}")
+            return it 
+        }
         
-        // 首先尝试从右到左分词
-        val resultFromRight = splitFromRight(normalized)
+        // 首先尝试从左到右分词（更符合汉语拼音习惯和构词规则）
+        Timber.d("【PYDEBUG】尝试从左到右分词: '$normalized'")
+        val resultFromLeft = splitFromLeft(normalized)
+        Timber.d("【PYDEBUG】从左到右分词结果: ${resultFromLeft.joinToString(", ")}")
         
-        // 若从右到左分词失败，则尝试从左到右分词
-        val result = if (resultFromRight.isEmpty()) {
-            splitFromLeft(normalized)
+        // 若从左到右分词失败，则尝试从右到左分词
+        val result = if (resultFromLeft.isNotEmpty()) {
+            Timber.d("【PYDEBUG】使用从左到右分词结果")
+            resultFromLeft
         } else {
+            Timber.d("【PYDEBUG】尝试从右到左分词: '$normalized'")
+            val resultFromRight = splitFromRight(normalized)
+            Timber.d("【PYDEBUG】从右到左分词结果: ${resultFromRight.joinToString(", ")}")
             resultFromRight
         }
         
         // 缓存结果（仅当成功分词时）
         if (result.isNotEmpty()) {
             splitCache[normalized] = result
-            Timber.d("成功分词: '$normalized' -> ${result.joinToString(", ")}")
+            Timber.d("【PYDEBUG】成功分词并缓存: '$normalized' -> ${result.joinToString(", ")}")
         } else {
-            Timber.d("无法完整分词: '$normalized'")
+            Timber.d("【PYDEBUG】无法完整分词: '$normalized'")
         }
         
         return result
@@ -61,12 +81,14 @@ object PinyinSplitter {
     private fun preprocessInput(input: String): String? {
         // 检查是否只包含合法字符
         if (!input.matches(Regex("[a-zü ]+"))) {
-            Timber.d("输入包含非法字符: $input")
+            Timber.d("【PYDEBUG】输入包含非法字符: $input")
             return null
         }
         
         // 转换为小写并规范化特殊字符
-        return PinyinSyllableManager.normalizeSpecialChar(input.lowercase().trim())
+        val result = PinyinSyllableManager.normalizeSpecialChar(input.lowercase().trim())
+        Timber.d("【PYDEBUG】预处理: '$input' -> '$result'")
+        return result
     }
     
     /**
@@ -90,24 +112,28 @@ object PinyinSplitter {
             // 从最长音节开始尝试匹配
             for (len in maxLen downTo 1) {
                 val substr = input.substring(pos - len, pos)
+                Timber.d("【PYDEBUG】从右到左检查: '$substr'")
                 
                 if (PinyinSyllableManager.isValidSyllable(substr)) {
                     result.add(substr)
                     pos -= len
                     found = true
+                    Timber.d("【PYDEBUG】从右到左找到音节: '$substr'")
                     break
                 }
             }
             
             // 若无法匹配任何有效音节，则分词失败
             if (!found) {
-                Timber.d("从右到左分词失败，在位置 $pos 处无法找到有效音节: ${input.substring(0, pos)}")
+                Timber.d("【PYDEBUG】从右到左分词失败，在位置 $pos 处无法找到有效音节: ${input.substring(0, pos)}")
                 return emptyList()
             }
         }
         
         // 由于是从右到左分词，需要反转结果
-        return result.reversed()
+        val reversed = result.reversed()
+        Timber.d("【PYDEBUG】从右到左最终结果: ${reversed.joinToString(", ")}")
+        return reversed
     }
     
     /**
@@ -132,11 +158,16 @@ object PinyinSplitter {
             for (len in maxLen downTo 1) {
                 if (pos + len <= input.length) {
                     val substr = input.substring(pos, pos + len)
+                    Timber.d("【PYDEBUG】从左到右检查: '$substr'")
                     
-                    if (PinyinSyllableManager.isValidSyllable(substr)) {
+                    val isValid = PinyinSyllableManager.isValidSyllable(substr)
+                    Timber.d("【PYDEBUG】'$substr' 是否有效音节: $isValid")
+                    
+                    if (isValid) {
                         result.add(substr)
                         pos += len
                         found = true
+                        Timber.d("【PYDEBUG】从左到右找到音节: '$substr'")
                         break
                     }
                 }
@@ -144,11 +175,12 @@ object PinyinSplitter {
             
             // 若无法匹配任何有效音节，则分词失败
             if (!found) {
-                Timber.d("从左到右分词失败，在位置 $pos 处无法找到有效音节: ${input.substring(pos)}")
+                Timber.d("【PYDEBUG】从左到右分词失败，在位置 $pos 处无法找到有效音节: ${input.substring(pos)}")
                 return emptyList()
             }
         }
         
+        Timber.d("【PYDEBUG】从左到右最终结果: ${result.joinToString(", ")}")
         return result
     }
     
