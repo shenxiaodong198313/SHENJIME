@@ -3,6 +3,7 @@ package com.shenji.aikeyboard.ui
 import android.Manifest
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -87,6 +88,11 @@ class DevToolsActivity : AppCompatActivity() {
         // 拼音分词测试
         binding.btnTestPinyin.setOnClickListener {
             testPinyinSplitter()
+        }
+        
+        // 拼音分词优化测试工具
+        binding.btnPinyinSegmenterTest.setOnClickListener {
+            startActivity(Intent(this, PinyinTestActivity::class.java))
         }
         
         // 拼音输入法测试工具

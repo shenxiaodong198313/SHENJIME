@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.data.Entry
-import com.shenji.aikeyboard.data.PinyinSplitter
+import com.shenji.aikeyboard.data.PinyinSplitterOptimized
 import com.shenji.aikeyboard.model.Candidate
 import io.realm.kotlin.ext.query
 import kotlinx.coroutines.Dispatchers
@@ -25,8 +25,8 @@ class PinyinTestViewModel : ViewModel() {
     private val _inputFlow = MutableStateFlow("")
     val inputFlow: StateFlow<String> = _inputFlow
 
-    // 拼音分词器
-    private val pinyinSplitter = PinyinSplitter()
+    // 拼音分词器 - 使用优化版本
+    private val pinyinSplitter = PinyinSplitterOptimized()
 
     // 判断是否为调试模式
     private val isDebugMode = true

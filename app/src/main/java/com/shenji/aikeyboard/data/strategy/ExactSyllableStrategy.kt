@@ -1,8 +1,9 @@
 package com.shenji.aikeyboard.data.strategy
 
 import com.shenji.aikeyboard.data.DictionaryRepository
-import com.shenji.aikeyboard.data.PinyinSplitter
+import com.shenji.aikeyboard.data.PinyinSplitterOptimized
 import com.shenji.aikeyboard.data.WordFrequency
+import com.shenji.aikeyboard.utils.PinyinSegmenterOptimized
 import timber.log.Timber
 
 /**
@@ -11,16 +12,15 @@ import timber.log.Timber
  */
 class ExactSyllableStrategy(private val repository: DictionaryRepository) : CandidateStrategy {
     
-    // 拼音分词器，用于获取和验证拼音音节
-    private val pinyinSplitter = PinyinSplitter()
+    // 优化版拼音分词器，用于获取和验证拼音音节
+    private val pinyinSplitter = PinyinSplitterOptimized()
     
     /**
      * 判断输入是否为完整的标准音节
      */
     override fun isApplicable(input: String): Boolean {
-        // 获取所有有效音节
-        val validSyllables = pinyinSplitter.getPinyinSyllables()
-        val isExactSyllable = input in validSyllables
+        // 使用优化版分词器判断是否为合法音节
+        val isExactSyllable = PinyinSegmenterOptimized.isValidSyllable(input)
         
         if (isExactSyllable) {
             Timber.d("输入'$input'是完整音节，使用精确音节匹配策略")

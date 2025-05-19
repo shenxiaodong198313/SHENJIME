@@ -3260,6 +3260,7 @@ id btnDictManager
 id btnExportDb
 id btnExportToPublic
 id btnLogs
+id btnPinyinSegmenterTest
 id btnPinyinTestTool
 id btnResetBuild
 id btnShowDbDetails
@@ -3406,6 +3407,7 @@ id immediateStop
 id included
 id indeterminate
 id info
+id inputEditText
 id inputField
 id invisible
 id inward
@@ -3600,6 +3602,7 @@ id ratio
 id rectangles
 id report_drawn
 id restart
+id resultTextView
 id reverse
 id reverseSawtooth
 id right
@@ -3699,6 +3702,8 @@ id tag_transition_group
 id tag_unhandled_key_event_manager
 id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
+id testAllButton
+id testButton
 id text
 id text2
 id textEnd
@@ -3912,6 +3917,7 @@ layout activity_dictionary_manager
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
+layout activity_pinyin_test
 layout activity_pinyin_test_tool
 layout custom_dialog
 layout design_bottom_navigation_item

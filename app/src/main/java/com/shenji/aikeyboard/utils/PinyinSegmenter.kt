@@ -16,25 +16,26 @@ object PinyinSegmenter {
         "z", "c", "s",
         "y", "w"
     )
-    // 韵母表（39个，含三拼、单韵母、复韵母、鼻韵母、特殊韵母）
+    // 韵母表（39个，按长度从长到短排序，确保最长匹配优先）
     private val ymbmax = arrayOf(
-        // 三拼音节介韵组合
-        "ia", "ua", "uo", "uai", "uan", "uang", "iang", "iao", "ian", "iong",
+        // 三拼音节介韵组合（按长度排序）
+        "iang", "iong", "uang", "uai", "uan", "iao", "ian", 
+        // 鼻韵母（前鼻音+后鼻音）
+        "ang", "eng", "ing", "ong",
+        // 复韵母和其他组合
+        "ua", "uo", "ai", "ei", "ui", "ao", "ou", "iu", "ie", "üe",
+        "an", "en", "in", "un", "ün",
         // 单韵母
         "a", "o", "e", "i", "u", "v",
-        // 复韵母
-        "ai", "ei", "ui", "ao", "ou", "iu", "ie", "üe",
-        // 鼻韵母（前鼻音+后鼻音）
-        "an", "en", "in", "un", "ün",
-        "ang", "eng", "ing", "ong",
         // 特殊韵母
         "er"
     )
-    // 独立成字韵母表（12个）
+    // 独立成字韵母表（12个，也按长度排序）
     private val ymbmin = arrayOf(
-        "a", "o", "e", "er",
-        "ai", "ao", "ou", "ei",
-        "an", "ang", "en", "eng"
+        "ang", "eng", "er",
+        "ai", "ei", "ao", "ou",
+        "an", "en",
+        "a", "o", "e"
     )
     // 整体认读音节和所有合法音节集合（包含所有主流输入法支持的音节）
     private val syllableSet: Set<String> by lazy {
@@ -115,21 +116,18 @@ object PinyinSegmenter {
                 }
             }
         }
-        // 2. 如果没有整体音节，再走原有声母+韵母递归
-        val list = findWord(s, index)
-        if (list.isNullOrEmpty()) return null
-        for (x in list) {
-            if (x == 0) {
-                return listOf("")
-            }
-            val left = cutWithWholeSyllablePriority(s, index + x)
-            if (!left.isNullOrEmpty()) {
-                val ans = mutableListOf<String>()
-                ans.add(s.substring(index, index + x))
-                ans.addAll(left)
-                return ans
-            }
+        // 2. 如果没有整体音节，再走优化后的声母+韵母递归
+        val wordLength = findWord(s, index)
+        if (wordLength <= 0) return null
+        
+        val left = cutWithWholeSyllablePriority(s, index + wordLength)
+        if (!left.isNullOrEmpty()) {
+            val ans = mutableListOf<String>()
+            ans.add(s.substring(index, index + wordLength))
+            ans.addAll(left)
+            return ans
         }
+        
         return null
     }
 
@@ -157,34 +155,49 @@ object PinyinSegmenter {
         return 0
     }
 
-    // 找独立成字的韵母
-    private fun findDlym(s: String, index: Int): List<Int> {
-        val list = mutableListOf<Int>()
+    // 找独立成字的韵母 - 返回最长匹配长度
+    private fun findDlym(s: String, index: Int): Int {
+        var maxLength = 0
         for (ym in ymbmin) {
-            if (s.startsWith(ym, index)) {
-                list.add(ym.length)
+            if (s.startsWith(ym, index) && ym.length > maxLength) {
+                maxLength = ym.length
             }
         }
-        return list
+        return maxLength
     }
 
-    // 找韵母
-    private fun findYm(s: String, index: Int): List<Int> {
-        val list = mutableListOf<Int>()
+    // 找韵母 - 返回最长匹配长度
+    private fun findYm(s: String, index: Int): Int {
+        var maxLength = 0
         for (ym in ymbmax) {
-            if (s.startsWith(ym, index)) {
-                list.add(ym.length)
+            if (s.startsWith(ym, index) && ym.length > maxLength) {
+                maxLength = ym.length
             }
         }
-        return list
+        return maxLength
     }
 
-    // 找单字
-    private fun findWord(s: String, index: Int): List<Int> {
-        if (index >= s.length) return listOf(0)
-        val len = findSm(s, index)
-        val r = if (len == 0) findDlym(s, index) else findYm(s, index + len)
-        return r.map { it + len }
+    // 找单字 - 返回最长匹配组合长度
+    private fun findWord(s: String, index: Int): Int {
+        if (index >= s.length) return 0
+        
+        val smLen = findSm(s, index)
+        
+        // 如果有声母，尝试声母+韵母组合
+        if (smLen > 0) {
+            val ymLen = findYm(s, index + smLen)
+            if (ymLen > 0) {
+                return smLen + ymLen // 声母 + 最长韵母
+            }
+        } else {
+            // 如果没有声母，尝试独立韵母
+            val ymLen = findDlym(s, index)
+            if (ymLen > 0) {
+                return ymLen // 独立韵母
+            }
+        }
+        
+        return 0
     }
 
     /**

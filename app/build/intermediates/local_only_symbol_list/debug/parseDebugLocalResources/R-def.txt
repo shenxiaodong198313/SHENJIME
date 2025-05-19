@@ -67,6 +67,7 @@ id btnDictManager
 id btnExportDb
 id btnExportToPublic
 id btnLogs
+id btnPinyinSegmenterTest
 id btnPinyinTestTool
 id btnResetBuild
 id btnShowDbDetails
@@ -87,6 +88,7 @@ id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
 id expand_candidates_button
+id inputEditText
 id inputField
 id key_0
 id key_1
@@ -143,6 +145,7 @@ id progressBar
 id progressBarLoading
 id queryDisplay
 id queryProcessDisplay
+id resultTextView
 id rvDictionaryModules
 id rvEntries
 id rvLogs
@@ -158,6 +161,8 @@ id splitResultDisplay
 id stageDisplay
 id stageIcon
 id tableModules
+id testAllButton
+id testButton
 id toolbar
 id toolbar_view
 id tvDatabaseSize
@@ -201,6 +206,7 @@ layout activity_dictionary_manager
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
+layout activity_pinyin_test
 layout activity_pinyin_test_tool
 layout dialog_database_info
 layout dialog_export_settings

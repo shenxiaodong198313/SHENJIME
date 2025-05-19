@@ -23,8 +23,9 @@ object PinyinUtils {
             return trimmed
         }
         
-        // 使用拼音分词器进行分词
-        return PinyinSplitter.normalize(trimmed)
+        // 使用优化版拼音分词器进行分词
+        val syllables = PinyinSegmenterOptimized.cut(trimmed)
+        return syllables.joinToString(" ")
     }
     
     /**
@@ -64,19 +65,18 @@ object PinyinUtils {
     fun testPinyinSplitter(): String {
         val testCases = listOf(
             "zhangsan",     // 正常分割
-            "xianggang",    // 从右到左匹配避免失败
+            "xianggang",    // 匹配测试
             "xian",         // 优先匹配长音节
-            "zhang1",       // 包含非法字符
-            "zhx"           // 无法分割为合法音节
+            "nihao",        // 测试n+i+hao问题
+            "weixn",        // 测试weix+n问题
+            "beijing",      // 正常分割
+            "zhongwen",     // 正常分割
+            "xuesheng"      // 正常分割
         )
         
         val results = testCases.map { input ->
-            val syllables = PinyinSplitter.split(input)
-            val result = if (syllables.isNotEmpty()) {
-                PinyinSplitter.joinSyllables(syllables)
-            } else {
-                "无法分词"
-            }
+            val syllables = PinyinSegmenterOptimized.cut(input)
+            val result = syllables.joinToString(" + ")
             "$input -> $result"
         }
         

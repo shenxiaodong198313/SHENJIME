@@ -2,8 +2,7 @@ package com.shenji.aikeyboard.data.strategy
 
 import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.data.WordFrequency
-import com.shenji.aikeyboard.utils.PinyinSplitter
-import com.shenji.aikeyboard.utils.PinyinSyllableManager
+import com.shenji.aikeyboard.utils.PinyinSegmenterOptimized
 import timber.log.Timber
 
 /**
@@ -19,9 +18,9 @@ class PinyinCompletionStrategy(private val repository: DictionaryRepository) : C
     override fun isApplicable(input: String): Boolean {
         if (input.length <= 1) return false
         
-        // 尝试分词，检查是否为完整音节
-        val syllables = PinyinSplitter.split(input)
-        val isValid = syllables.isNotEmpty()
+        // 尝试使用优化版分词器进行分词
+        val syllables = PinyinSegmenterOptimized.cut(input)
+        val isValid = syllables.size > 1 || (syllables.size == 1 && syllables[0] != input)
         
         if (isValid) {
             val splitResult = syllables.joinToString(" ")
@@ -38,8 +37,9 @@ class PinyinCompletionStrategy(private val repository: DictionaryRepository) : C
      * 2. 查询不同词典并按权重排序
      */
     override suspend fun generateCandidates(input: String, limit: Int): List<WordFrequency> {
-        // 规范化拼音，确保空格正确
-        val normalizedPinyin = PinyinSplitter.normalize(input)
+        // 使用优化版分词器规范化拼音
+        val syllables = PinyinSegmenterOptimized.cut(input)
+        val normalizedPinyin = syllables.joinToString(" ")
         Timber.d("拼音补全策略处理输入: '$input' -> '$normalizedPinyin'")
         
         val results = mutableListOf<WordFrequency>()
