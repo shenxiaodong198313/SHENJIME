@@ -14,11 +14,13 @@ import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.databinding.ActivityPinyinTestToolBinding
 import com.shenji.aikeyboard.viewmodel.PinyinTestViewModel
 import com.shenji.aikeyboard.viewmodel.PinyinTestViewModel.InputStage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class PinyinTestToolActivity : AppCompatActivity() {
@@ -161,7 +163,7 @@ class PinyinTestToolActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                onBackPressed()
+                onBackPressedDispatcher.onBackPressed()
                 true
             }
             else -> super.onOptionsItemSelected(item)

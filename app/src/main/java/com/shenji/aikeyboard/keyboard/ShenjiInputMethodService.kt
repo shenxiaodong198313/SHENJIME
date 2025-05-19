@@ -9,7 +9,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.*
+import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
+import com.shenji.aikeyboard.ShenjiApplication
+import com.shenji.aikeyboard.data.WordFrequency
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class ShenjiInputMethodService : InputMethodService() {
@@ -42,6 +46,9 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 当前输入的拼音
     private var composingText = StringBuilder()
+    
+    // 当前候选词列表
+    private var candidates = listOf<WordFrequency>()
     
     // 长按删除键自动删除的处理器和任务
     private val deleteHandler = Handler(Looper.getMainLooper())
@@ -219,11 +226,11 @@ class ShenjiInputMethodService : InputMethodService() {
         // 更新输入框中显示的拼音
         currentInputConnection?.setComposingText(composingText, 1)
         
-        // 显示候选词区域
-        showCandidates()
-        
         // 更新拼音显示
         updatePinyinDisplay(composingText.toString())
+        
+        // 显示候选词区域并获取候选词
+        loadCandidates(composingText.toString())
     }
     
     // 处理删除操作
@@ -242,8 +249,9 @@ class ShenjiInputMethodService : InputMethodService() {
                 // 更新输入框中显示的拼音
                 currentInputConnection?.setComposingText(composingText, 1)
                 
-                // 更新拼音显示
+                // 更新拼音显示和候选词
                 updatePinyinDisplay(composingText.toString())
+                loadCandidates(composingText.toString())
             }
         } else {
             // 如果没有拼音，执行标准删除操作
@@ -253,8 +261,12 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 处理空格操作
     private fun onSpace() {
-        if (composingText.isNotEmpty()) {
-            // 如果有拼音输入，提交拼音
+        if (composingText.isNotEmpty() && candidates.isNotEmpty()) {
+            // 如果有拼音输入和候选词，选择第一个候选词
+            val firstCandidate = candidates.firstOrNull()?.word ?: composingText.toString()
+            commitText(firstCandidate)
+        } else if (composingText.isNotEmpty()) {
+            // 如果只有拼音输入，直接提交拼音
             commitText(composingText.toString())
         } else {
             // 否则插入空格
@@ -285,6 +297,8 @@ class ShenjiInputMethodService : InputMethodService() {
             pinyinDisplay.text = ""
             hideCandidates()
         }
+        // 清空候选词
+        candidates = emptyList()
     }
     
     // 辅助方法：检查视图组件是否已初始化
@@ -319,6 +333,104 @@ class ShenjiInputMethodService : InputMethodService() {
     private fun updatePinyinDisplay(pinyin: String) {
         if (::pinyinDisplay.isInitialized) {
             pinyinDisplay.text = pinyin
+        }
+    }
+    
+    // 加载候选词
+    private fun loadCandidates(input: String) {
+        if (input.isEmpty()) {
+            hideCandidates()
+            return
+        }
+        
+        // 先显示候选词区域
+        showCandidates()
+        
+        // 使用CandidateManager异步获取候选词
+        Handler(Looper.getMainLooper()).post {
+            try {
+                // 启动异步任务获取候选词
+                Thread {
+                    try {
+                        // 调用全局候选词管理器获取候选词
+                        val candidateManager = ShenjiApplication.candidateManager
+                        
+                        // 在主线程中处理结果
+                        Handler(Looper.getMainLooper()).post {
+                            runCatching {
+                                // 使用kotlinx.coroutines获取候选词
+                                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                                    try {
+                                        val result = candidateManager.generateCandidates(input, 20)
+                                        if (result.isNotEmpty()) {
+                                            // 更新成员变量
+                                            candidates = result
+                                            // 显示候选词
+                                            updateCandidatesView(result)
+                                            Timber.d("成功加载候选词: ${result.size}个")
+                                        } else {
+                                            Timber.d("未找到候选词")
+                                            candidates = emptyList()
+                                            clearCandidatesView()
+                                        }
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "加载候选词失败")
+                                        Toast.makeText(this@ShenjiInputMethodService, "加载候选词失败", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }.onFailure { e ->
+                                Timber.e(e, "启动协程失败")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "获取候选词线程失败")
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(this@ShenjiInputMethodService, "获取候选词失败", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }.start()
+            } catch (e: Exception) {
+                Timber.e(e, "启动候选词获取任务失败")
+            }
+        }
+    }
+    
+    // 更新候选词视图
+    private fun updateCandidatesView(wordList: List<WordFrequency>) {
+        if (!areViewComponentsInitialized()) return
+        
+        // 清空现有的候选词
+        candidatesView.removeAllViews()
+        
+        // 添加每个候选词按钮
+        wordList.forEachIndexed { index, word ->
+            val candidateButton = Button(this)
+            candidateButton.text = word.word
+            candidateButton.textSize = 16f
+            candidateButton.setPadding(16, 8, 16, 8)
+            
+            // 设置左右margin
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            params.setMargins(4, 0, 4, 0)
+            candidateButton.layoutParams = params
+            
+            // 设置点击事件
+            candidateButton.setOnClickListener {
+                commitText(word.word)
+            }
+            
+            // 添加到候选词容器
+            candidatesView.addView(candidateButton)
+        }
+    }
+    
+    // 清空候选词视图
+    private fun clearCandidatesView() {
+        if (areViewComponentsInitialized()) {
+            candidatesView.removeAllViews()
         }
     }
     

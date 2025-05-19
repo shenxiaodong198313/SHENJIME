@@ -83,7 +83,7 @@ class PinyinTestViewModel : ViewModel() {
      * 更新输入
      */
     fun updateInput(input: String) {
-        _inputFlow.value = input.trim().toLowerCase()
+        _inputFlow.value = input.trim().lowercase()
     }
 
     /**
@@ -480,63 +480,5 @@ class PinyinTestViewModel : ViewModel() {
         
         // 更新候选词列表
         _candidates.value = filteredResults
-    }
-
-    /**
-     * 执行笛卡尔积，生成所有可能的组合
-     * 注：此方法已不再使用，保留以备后续参考
-     * @deprecated 改用直接词典查询
-     */
-    @Deprecated("改用直接词典查询，避免内存溢出问题")
-    private fun <T> cartesianProduct(lists: List<List<T>>): List<List<T>> {
-        if (lists.isEmpty()) return emptyList()
-        if (lists.size == 1) return lists[0].map { listOf(it) }
-        
-        // 限制最大组合数量，避免内存溢出
-        val estimatedCombinations = lists.fold(1L) { acc, list -> acc * list.size }
-        if (estimatedCombinations > 1000) {
-            Timber.w("笛卡尔积可能产生过多组合: $estimatedCombinations > 1000，将限制数量")
-            // 通过减少每个列表的大小来限制组合
-            val trimmedLists = lists.map { list -> 
-                if (list.size > 5) list.take(5) else list 
-            }
-            return cartesianProductImpl(trimmedLists)
-        }
-        
-        return cartesianProductImpl(lists)
-    }
-    
-    /**
-     * 笛卡尔积实际实现
-     * @deprecated 改用直接词典查询
-     */
-    @Deprecated("改用直接词典查询，避免内存溢出问题")
-    private fun <T> cartesianProductImpl(lists: List<List<T>>): List<List<T>> {
-        if (lists.isEmpty()) return emptyList()
-        if (lists.size == 1) return lists[0].map { listOf(it) }
-        
-        val result = mutableListOf<List<T>>()
-        val head = lists[0]
-        val tail = lists.subList(1, lists.size)
-        
-        // 通过限制处理的元素数量降低内存消耗
-        val processLimit = 20
-        val headList = if (head.size > processLimit) head.take(processLimit) else head
-        val tailProduct = cartesianProductImpl(tail)
-        
-        // 创建一个固定上限的结果集合
-        val maxResults = 100
-        for (headItem in headList) {
-            for (tailItems in tailProduct) {
-                // 达到上限时提前返回
-                if (result.size >= maxResults) {
-                    Timber.d("达到结果上限($maxResults)，提前返回")
-                    return result
-                }
-                result.add(listOf(headItem) + tailItems)
-            }
-        }
-        
-        return result
     }
 } 
