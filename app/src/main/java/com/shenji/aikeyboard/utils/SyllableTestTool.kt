@@ -3,7 +3,7 @@ package com.shenji.aikeyboard.utils
 import android.content.Context
 import android.os.Environment
 import android.util.Log
-import com.shenji.aikeyboard.data.PinyinSplitter
+import com.shenji.aikeyboard.utils.PinyinSegmenter
 import timber.log.Timber
 import java.io.File
 import java.io.FileWriter
@@ -17,14 +17,13 @@ class SyllableTestTool(private val context: Context) {
     
     private val TAG = "SyllableTestTool"
     private val syllablesByLength: Map<Int, Set<String>>
-    private val pinyinSplitter = PinyinSplitter()
     private val dateFormat = SimpleDateFormat("[yyyy-MM-dd HH:mm:ss.SSS]", Locale.getDefault())
     private var logBuffer = StringBuilder()
     
     init {
         // 根据音节长度初始化音节集合
-        val allSyllables = pinyinSplitter.getPinyinSyllables()
-        syllablesByLength = allSyllables.groupBy { it.length }.mapValues { it.value.toSet() }
+        val allSyllables = getAllSyllables()
+        syllablesByLength = allSyllables.groupBy { it.length }.mapValues { entry -> entry.value.toSet() }
         setupLogger()
     }
     
@@ -44,7 +43,7 @@ class SyllableTestTool(private val context: Context) {
             logFile.createNewFile()
         }
         
-        log(LogLevel.INFO, "音节测试工具初始化完成，共载入${pinyinSplitter.getPinyinSyllables().size}个音节")
+        log(LogLevel.INFO, "音节测试工具初始化完成，共载入${getAllSyllables().size}个音节")
     }
     
     /**
@@ -107,8 +106,8 @@ class SyllableTestTool(private val context: Context) {
             
             // 使用两种方法测试分词
             val customResult = splitPinyin(cleaned)
-            // 使用优化后的分词方法
-            val splitterResult = pinyinSplitter.trySplitPinyin(cleaned)
+            // 使用PinyinSegmenter分词
+            val splitterResult = PinyinSegmenter.cut(cleaned)
             
             // 记录结果
             if (customResult == null) {
@@ -467,5 +466,25 @@ class SyllableTestTool(private val context: Context) {
         ) {
             val total: Int get() = passed + failed
         }
+    }
+    
+    private fun getAllSyllables(): Set<String> {
+        // 组合声母+韵母和独立韵母
+        val set = mutableSetOf<String>()
+        val smb = PinyinSegmenter.javaClass.getDeclaredField("smb").apply { isAccessible = true }.get(PinyinSegmenter) as Array<String>
+        val ymbmax = PinyinSegmenter.javaClass.getDeclaredField("ymbmax").apply { isAccessible = true }.get(PinyinSegmenter) as Array<String>
+        val ymbmin = PinyinSegmenter.javaClass.getDeclaredField("ymbmin").apply { isAccessible = true }.get(PinyinSegmenter) as Array<String>
+        for (sm in smb) {
+            for (ym in ymbmax) {
+                set.add(sm + ym)
+            }
+        }
+        for (ym in ymbmin) {
+            set.add(ym)
+        }
+        for (ym in ymbmax) {
+            set.add(ym)
+        }
+        return set
     }
 } 
