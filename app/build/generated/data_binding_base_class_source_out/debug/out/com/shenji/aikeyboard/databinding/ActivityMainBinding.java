@@ -32,16 +32,7 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnImeSettings;
 
   @NonNull
-  public final Button btnInputTest;
-
-  @NonNull
   public final Button btnLogs;
-
-  @NonNull
-  public final Button btnMobileDebug;
-
-  @NonNull
-  public final Button btnSyllableTest;
 
   @NonNull
   public final LinearLayout mainButtonContainer;
@@ -59,18 +50,14 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvTitle;
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnDevTools,
-      @NonNull Button btnDictManager, @NonNull Button btnImeSettings, @NonNull Button btnInputTest,
-      @NonNull Button btnLogs, @NonNull Button btnMobileDebug, @NonNull Button btnSyllableTest,
+      @NonNull Button btnDictManager, @NonNull Button btnImeSettings, @NonNull Button btnLogs,
       @NonNull LinearLayout mainButtonContainer, @NonNull ConstraintLayout mainContainer,
       @NonNull Toolbar toolbar, @NonNull TextView tvHelpText, @NonNull TextView tvTitle) {
     this.rootView = rootView;
     this.btnDevTools = btnDevTools;
     this.btnDictManager = btnDictManager;
     this.btnImeSettings = btnImeSettings;
-    this.btnInputTest = btnInputTest;
     this.btnLogs = btnLogs;
-    this.btnMobileDebug = btnMobileDebug;
-    this.btnSyllableTest = btnSyllableTest;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
     this.toolbar = toolbar;
@@ -123,27 +110,9 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.btnInputTest;
-      Button btnInputTest = ViewBindings.findChildViewById(rootView, id);
-      if (btnInputTest == null) {
-        break missingId;
-      }
-
       id = R.id.btnLogs;
       Button btnLogs = ViewBindings.findChildViewById(rootView, id);
       if (btnLogs == null) {
-        break missingId;
-      }
-
-      id = R.id.btnMobileDebug;
-      Button btnMobileDebug = ViewBindings.findChildViewById(rootView, id);
-      if (btnMobileDebug == null) {
-        break missingId;
-      }
-
-      id = R.id.btnSyllableTest;
-      Button btnSyllableTest = ViewBindings.findChildViewById(rootView, id);
-      if (btnSyllableTest == null) {
         break missingId;
       }
 
@@ -174,8 +143,8 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnDevTools, btnDictManager,
-          btnImeSettings, btnInputTest, btnLogs, btnMobileDebug, btnSyllableTest,
-          mainButtonContainer, mainContainer, toolbar, tvHelpText, tvTitle);
+          btnImeSettings, btnLogs, mainButtonContainer, mainContainer, toolbar, tvHelpText,
+          tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

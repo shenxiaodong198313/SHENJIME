@@ -65,23 +65,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="@string/dict_manager" />
-
-                <Button
-                    android:id="@+id/btnInputTest"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="输入测试" />
                 
-                <Button
-                    android:id="@+id/btnMobileDebug"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/mobile_debug"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#E91E63" />
-
                 <Button
                     android:id="@+id/btnDevTools"
                     android:layout_width="match_parent"
@@ -95,13 +79,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="输入法设置" />
-
-                <Button
-                    android:id="@+id/btnSyllableTest"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="音节测试" />
 
             </LinearLayout>
             

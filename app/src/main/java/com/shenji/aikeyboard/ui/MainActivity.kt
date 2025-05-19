@@ -65,28 +65,14 @@ class MainActivity : AppCompatActivity() {
                 openDictManager()
             }
             
-            binding.btnInputTest?.setOnClickListener {
-                openInputTest()
-            }
-            
             // 添加开发工具入口
             binding.btnDevTools?.setOnClickListener {
                 openDevTools()
             }
             
-            // 添加移动调试工具入口
-            binding.btnMobileDebug?.setOnClickListener {
-                openMobileDebug()
-            }
-            
             // 添加输入法设置入口
             binding.mainButtonContainer?.findViewById<Button>(R.id.btn_ime_settings)?.setOnClickListener {
                 openInputMethodSettings()
-            }
-            
-            // 跳转到音节测试界面
-            binding.mainButtonContainer?.findViewById<Button>(R.id.btnSyllableTest)?.setOnClickListener {
-                startActivity(Intent(this, SyllableTestActivity::class.java))
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "设置UI元素失败: ${e.message}", e)
@@ -123,20 +109,6 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * 打开输入测试界面
-     */
-    private fun openInputTest() {
-        try {
-            Timber.d("打开输入测试")
-            val intent = Intent(this, InputTestActivity::class.java)
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "打开输入测试失败: ${e.message}", e)
-            Toast.makeText(this, "无法打开输入测试: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    /**
      * 打开开发工具界面
      */
     private fun openDevTools() {
@@ -161,20 +133,6 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "打开输入法设置失败: ${e.message}", e)
             Toast.makeText(this, "无法打开输入法设置: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    /**
-     * 打开移动调试工具界面
-     */
-    private fun openMobileDebug() {
-        try {
-            Timber.d("打开移动调试工具")
-            val intent = Intent(this, MobileDebugActivity::class.java)
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "打开移动调试工具失败: ${e.message}", e)
-            Toast.makeText(this, "无法打开移动调试工具: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 } 
