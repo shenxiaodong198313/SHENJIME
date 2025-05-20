@@ -564,10 +564,10 @@ class DictionaryRepository {
     }
     
     /**
-     * 通过首字母缩写查询词条
-     * @param initials 首字母序列，如"bj"
+     * 根据首字母缩写查询候选词
+     * @param initials 首字母缩写
      * @param limit 最大返回数量
-     * @return 匹配的候选词列表
+     * @return 候选词列表
      */
     fun searchByInitialLetters(initials: String, limit: Int): List<WordFrequency> {
         try {
@@ -575,28 +575,66 @@ class DictionaryRepository {
             val startTime = System.currentTimeMillis()
             
             val results = mutableListOf<WordFrequency>()
+            val seenWords = mutableSetOf<String>()
             
             // 1. 首先查询精确匹配的首字母缩写
             val exactMatches = realm.query<Entry>("initialLetters == $0", initials)
                 .find()
                 .sortedByDescending { it.frequency }
-                .take(limit / 2)
-                .map { WordFrequency(it.word, it.frequency) }
+                .take(limit)
+                .map { 
+                    // 提高精确匹配的权重，确保它们排在前面
+                    WordFrequency(it.word, it.frequency * 3) 
+                }
                 
-            results.addAll(exactMatches)
+            // 添加精确匹配并标记为已见
+            exactMatches.forEach {
+                results.add(it)
+                seenWords.add(it.word)
+            }
             
-            // 2. 如果结果较少，查询包含该首字母序列的词条
-            if (results.size < limit / 2) {
-                val containsMatches = realm.query<Entry>("initialLetters CONTAINS $0 AND initialLetters != $0", initials)
+            // 2. 如果结果较少，查询以首字母序列开头的词条
+            if (results.size < limit) {
+                val prefixMatches = realm.query<Entry>("initialLetters BEGINSWITH $0 AND initialLetters != $0", initials)
                     .find()
                     .sortedByDescending { it.frequency }
+                    .filter { it.word !in seenWords } // 排除已有结果
+                    .take(limit - results.size)
+                    .map { WordFrequency(it.word, it.frequency) }
+                    
+                results.addAll(prefixMatches)
+                prefixMatches.forEach { seenWords.add(it.word) }
+            }
+            
+            // 3. 如果结果仍然不足，尝试查询包含该首字母序列的词条 (仅当结果很少时采用)
+            if (results.size < limit / 4 && initials.length > 1) {
+                val containsMatches = realm.query<Entry>("initialLetters CONTAINS $0 AND initialLetters != $0 AND initialLetters NOT BEGINSWITH $0", initials)
+                    .find()
+                    .sortedByDescending { it.frequency }
+                    .filter { it.word !in seenWords } // 排除已有结果
                     .take(limit - results.size)
                     .map { 
-                        // 降低包含匹配结果的权重（词频减半）
-                        WordFrequency(it.word, it.frequency / 2)
+                        // 大幅降低包含匹配结果的权重
+                        WordFrequency(it.word, it.frequency / 5)
                     }
                     
                 results.addAll(containsMatches)
+            }
+            
+            // 4. 特殊处理：对于2-3字母的缩写，尝试匹配相同长度的词条
+            if (results.size < limit / 2 && initials.length in 2..3) {
+                // 选择词长与首字母数量相同的词条
+                val lengthMatches = realm.query<Entry>("length(word) == $0", initials.length)
+                    .find()
+                    .filter { it.word !in seenWords } // 排除已有结果
+                    .sortedByDescending { it.frequency }
+                    .take((limit - results.size) / 2)
+                    .map { 
+                        // 大幅降低长度匹配结果的权重
+                        WordFrequency(it.word, it.frequency / 10)
+                    }
+                
+                results.addAll(lengthMatches)
             }
             
             val endTime = System.currentTimeMillis()
@@ -607,63 +645,6 @@ class DictionaryRepository {
             
         } catch (e: Exception) {
             Timber.e(e, "首字母缩写查询失败: ${e.message}")
-            return emptyList()
-        }
-    }
-    
-    /**
-     * 通过拼音首字母查询候选词
-     * @param initials 首字母字符串
-     * @param limit 最大返回数量
-     * @return 匹配的候选词列表
-     */
-    fun searchByInitials(initials: String, limit: Int): List<WordFrequency> {
-        try {
-            Timber.d("通过首字母'$initials'查询候选词")
-            val startTime = System.currentTimeMillis()
-            
-            val results = mutableListOf<WordFrequency>()
-            
-            // 1. 首先查询精确匹配的首字母缩写
-            val exactMatches = searchByInitialLetters(initials, limit / 2)
-            results.addAll(exactMatches)
-            
-            // 2. 如果是单个字母，尝试使用直接查询
-            if (initials.length == 1 && results.size < limit) {
-                val directMatches = searchDirectlyByInitial(
-                    initial = initials,
-                    limit = limit - results.size,
-                    onlyChars = false
-                )
-                
-                // 添加非重复结果
-                val existingWords = results.map { it.word }.toSet()
-                results.addAll(directMatches.filter { it.word !in existingWords })
-            }
-            
-            // 3. 如果结果仍然不足，尝试部分匹配
-            if (results.size < limit && initials.length > 1) {
-                // 查询以这些首字母开头的词条
-                val partialMatches = realm.query<Entry>("initialLetters BEGINSWITH $0", initials)
-                    .find()
-                    .filter { it.initialLetters.length > initials.length } // 只选择更长的首字母序列
-                    .sortedByDescending { it.frequency }
-                    .take(limit - results.size)
-                    .map { WordFrequency(it.word, it.frequency / 3) } // 降低权重
-                
-                // 添加非重复结果
-                val existingWords = results.map { it.word }.toSet()
-                results.addAll(partialMatches.filter { it.word !in existingWords })
-            }
-            
-            val endTime = System.currentTimeMillis()
-            Timber.d("首字母'$initials'查询完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
-            
-            // 按词频排序
-            return results.sortedByDescending { it.frequency }.take(limit)
-            
-        } catch (e: Exception) {
-            Timber.e(e, "首字母查询失败: ${e.message}")
             return emptyList()
         }
     }

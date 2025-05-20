@@ -86,26 +86,6 @@
             android:label="音节测试工具"
             android:windowSoftInputMode="adjustResize" />
             
-        <!-- 拼音输入法测试工具 -->
-        <activity
-            android:name=".ui.PinyinTestToolActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize" />
-
-        <!-- 拼音分词测试活动 -->
-        <activity
-            android:name=".ui.PinyinTestActivity"
-            android:exported="false"
-            android:label="拼音分词测试"
-            android:windowSoftInputMode="adjustResize" />
-            
-        <!-- 词典调试活动 -->
-        <activity
-            android:name=".ui.DictionaryDebugActivity"
-            android:exported="false"
-            android:label="词典调试工具"
-            android:windowSoftInputMode="adjustResize" />
-
         <!-- 输入法服务 -->
         <service
             android:name=".keyboard.ShenjiInputMethodService"
@@ -129,11 +109,6 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".ui.QueryConsistencyActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize" />
 
     </application>
 

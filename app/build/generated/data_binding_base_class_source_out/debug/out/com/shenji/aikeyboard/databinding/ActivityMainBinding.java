@@ -35,12 +35,6 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnLogs;
 
   @NonNull
-  public final Button btnPinyinTest;
-
-  @NonNull
-  public final Button btnQueryConsistency;
-
-  @NonNull
   public final LinearLayout mainButtonContainer;
 
   @NonNull
@@ -57,7 +51,6 @@ public final class ActivityMainBinding implements ViewBinding {
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnDevTools,
       @NonNull Button btnDictManager, @NonNull Button btnImeSettings, @NonNull Button btnLogs,
-      @NonNull Button btnPinyinTest, @NonNull Button btnQueryConsistency,
       @NonNull LinearLayout mainButtonContainer, @NonNull ConstraintLayout mainContainer,
       @NonNull Toolbar toolbar, @NonNull TextView tvHelpText, @NonNull TextView tvTitle) {
     this.rootView = rootView;
@@ -65,8 +58,6 @@ public final class ActivityMainBinding implements ViewBinding {
     this.btnDictManager = btnDictManager;
     this.btnImeSettings = btnImeSettings;
     this.btnLogs = btnLogs;
-    this.btnPinyinTest = btnPinyinTest;
-    this.btnQueryConsistency = btnQueryConsistency;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
     this.toolbar = toolbar;
@@ -125,18 +116,6 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.btn_pinyin_test;
-      Button btnPinyinTest = ViewBindings.findChildViewById(rootView, id);
-      if (btnPinyinTest == null) {
-        break missingId;
-      }
-
-      id = R.id.btn_query_consistency;
-      Button btnQueryConsistency = ViewBindings.findChildViewById(rootView, id);
-      if (btnQueryConsistency == null) {
-        break missingId;
-      }
-
       id = R.id.mainButtonContainer;
       LinearLayout mainButtonContainer = ViewBindings.findChildViewById(rootView, id);
       if (mainButtonContainer == null) {
@@ -164,8 +143,8 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnDevTools, btnDictManager,
-          btnImeSettings, btnLogs, btnPinyinTest, btnQueryConsistency, mainButtonContainer,
-          mainContainer, toolbar, tvHelpText, tvTitle);
+          btnImeSettings, btnLogs, mainButtonContainer, mainContainer, toolbar, tvHelpText,
+          tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

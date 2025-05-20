@@ -73,9 +73,31 @@ open class Entry : RealmObject {
     
     // 添加首字母生成方法
     private fun generateInitialLetters(pinyin: String): String {
-        return pinyin.split(" ")
-            .filter { it.isNotEmpty() }
-            .joinToString("") { if (it.isNotEmpty()) it.first().toString() else "" }
+        // 如果拼音包含空格，按空格分割
+        if (pinyin.contains(" ")) {
+            return pinyin.split(" ")
+                .filter { it.isNotEmpty() }
+                .joinToString("") { if (it.isNotEmpty()) it.first().toString() else "" }
+        } 
+        // 如果拼音不包含空格，尝试使用拼音分词器拆分
+        else {
+            try {
+                // 使用拼音分词器拆分单词
+                val syllables = com.shenji.aikeyboard.utils.PinyinSegmenterOptimized.cut(pinyin)
+                
+                // 如果成功拆分，获取每个音节的首字母
+                if (syllables.isNotEmpty()) {
+                    return syllables.joinToString("") { syllable -> 
+                        if (syllable.isNotEmpty()) syllable.first().toString() else "" 
+                    }
+                }
+            } catch (e: Exception) {
+                // 如果拆分失败，什么也不做，继续使用默认方法
+            }
+            
+            // 如果无法拆分或发生异常，将整个拼音的首字母作为initialLetters
+            return if (pinyin.isNotEmpty()) pinyin.first().toString() else ""
+        }
     }
 }
 

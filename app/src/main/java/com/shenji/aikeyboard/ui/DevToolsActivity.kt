@@ -85,51 +85,6 @@ class DevToolsActivity : AppCompatActivity() {
     }
     
     private fun setupUI() {
-        // 拼音分词测试
-        binding.btnTestPinyin.setOnClickListener {
-            Timber.d("按钮点击: 拼音分词测试")
-            testPinyinSplitter()
-        }
-        
-        // 拼音分词优化测试工具
-        binding.btnPinyinSegmenterTest.setOnClickListener {
-            Timber.d("按钮点击: 拼音分词优化测试工具")
-            try {
-                Timber.d("开始启动PinyinTestActivity")
-                startActivity(Intent(this, PinyinTestActivity::class.java))
-                Timber.d("PinyinTestActivity启动完成")
-            } catch (e: Exception) {
-                Timber.e(e, "启动PinyinTestActivity失败")
-                Toast.makeText(this, "启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-        
-        // 拼音输入法测试工具
-        binding.btnPinyinTestTool.setOnClickListener {
-            Timber.d("按钮点击: 拼音输入法测试工具")
-            try {
-                Timber.d("开始启动PinyinTestToolActivity")
-                startActivity(Intent(this, PinyinTestToolActivity::class.java))
-                Timber.d("PinyinTestToolActivity启动完成")
-            } catch (e: Exception) {
-                Timber.e(e, "启动PinyinTestToolActivity失败")
-                Toast.makeText(this, "启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-        
-        // 词典调试工具
-        binding.btnDictionaryDebug.setOnClickListener {
-            Timber.d("按钮点击: 词典调试工具")
-            try {
-                Timber.d("开始启动DictionaryDebugActivity")
-                startActivity(Intent(this, DictionaryDebugActivity::class.java))
-                Timber.d("DictionaryDebugActivity启动完成")
-            } catch (e: Exception) {
-                Timber.e(e, "启动DictionaryDebugActivity失败")
-                Toast.makeText(this, "启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-        
         // 构建Realm数据库
         binding.btnBuildRealmDb.setOnClickListener {
             if (!isBuilding) {
@@ -294,31 +249,6 @@ class DevToolsActivity : AppCompatActivity() {
         val clip = android.content.ClipData.newPlainText("数据库路径", dbPath)
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, "数据库路径已复制到剪贴板", Toast.LENGTH_SHORT).show()
-    }
-    
-    /**
-     * 测试拼音分词器效果
-     */
-    private fun testPinyinSplitter() {
-        lifecycleScope.launch {
-            // 显示加载提示
-            Toast.makeText(this@DevToolsActivity, getString(R.string.pinyin_test_running), Toast.LENGTH_SHORT).show()
-            
-            // 在IO线程中执行测试
-            val result = withContext(Dispatchers.IO) {
-                PinyinUtils.testPinyinSplitter()
-            }
-            
-            // 显示结果对话框
-            AlertDialog.Builder(this@DevToolsActivity)
-                .setTitle(getString(R.string.pinyin_test_title))
-                .setMessage(result)
-                .setPositiveButton("确定", null)
-                .show()
-                
-            // 记录日志
-            Timber.i(getString(R.string.pinyin_test_complete))
-        }
     }
     
     /**

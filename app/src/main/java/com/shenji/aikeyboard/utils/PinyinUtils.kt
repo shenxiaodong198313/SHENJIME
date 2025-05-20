@@ -87,12 +87,24 @@ object PinyinUtils {
     fun generateInitials(pinyin: String): String {
         if (pinyin.isBlank()) return ""
         
-        // 先规范化拼音，确保有正确的音节分隔
-        val normalized = normalize(pinyin)
-        
-        return normalized.split(" ")
-            .filter { it.isNotBlank() }
-            .map { it.first().toString() }
-            .joinToString("")
+        // 如果拼音包含空格，按空格分割
+        if (pinyin.contains(" ")) {
+            return pinyin.split(" ")
+                .filter { it.isNotEmpty() }
+                .joinToString("") { if (it.isNotEmpty()) it.first().toString() else "" }
+        } 
+        // 如果拼音不包含空格，尝试使用拼音分词器拆分
+        else {
+            // 使用优化版拼音分词器进行分词
+            val syllables = PinyinSegmenterOptimized.cut(pinyin)
+            if (syllables.isNotEmpty()) {
+                return syllables.joinToString("") { 
+                    if (it.isNotEmpty()) it.first().toString() else "" 
+                }
+            }
+            
+            // 如果无法拆分或发生异常，将整个拼音的首字母作为initialLetters
+            return if (pinyin.isNotEmpty()) pinyin.first().toString() else ""
+        }
     }
 } 
