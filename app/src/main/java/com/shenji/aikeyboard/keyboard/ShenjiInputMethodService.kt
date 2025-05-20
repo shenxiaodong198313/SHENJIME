@@ -431,19 +431,8 @@ class ShenjiInputMethodService : InputMethodService() {
                                         // 强制显示候选词容器，确保可见性
                                         showCandidates()
                                         
-                                        // 对于2个字母的输入，尝试首字母缩写查询
-                                        val queryInput = if (input.length == 2 && 
-                                                              input.all { it.isLetter() } && 
-                                                              input.lowercase() == input) {
-                                            // 如果输入是两个小写字母，强制尝试作为首字母缩写处理
-                                            Timber.d("检测到可能的首字母缩写: $input，强制按缩写处理")
-                                            // 我们传入一个特殊格式的查询，让CandidateManager知道这是首字母
-                                            "abbr:$input"
-                                        } else {
-                                            input
-                                        }
-                                        
-                                        val result = candidateManager.generateCandidates(queryInput, 20)
+                                        // 直接使用标准查询逻辑，与测试工具保持一致
+                                        val result = candidateManager.generateCandidates(input, 20)
                                         if (result.isNotEmpty()) {
                                             // 更新成员变量
                                             candidates = result

@@ -48,12 +48,12 @@
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_log_detail.xml"
     },
     {
-        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\drawable_ic_stage_initial.xml.flat",
-        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\drawable\\ic_stage_initial.xml"
-    },
-    {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\menu_menu_dictionary_manager.xml.flat",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\menu\\menu_dictionary_manager.xml"
+    },
+    {
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\drawable_ic_stage_initial.xml.flat",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\drawable\\ic_stage_initial.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\layout_item_dictionary_entry.xml.flat",
@@ -84,12 +84,16 @@
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_logs.xml"
     },
     {
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\drawable_candidate_button_bg.xml.flat",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\drawable\\candidate_button_bg.xml"
+    },
+    {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\drawable_candidate_item_background.xml.flat",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\drawable\\candidate_item_background.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-debug-35:/drawable_candidate_button_bg.xml.flat",
-        "source": "com.shenji.aikeyboard.app-main-37:/drawable/candidate_button_bg.xml"
+        "merged": "com.shenji.aikeyboard.app-debug-35:/layout_activity_query_consistency.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_query_consistency.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\layout_activity_dictionary_manager.xml.flat",
@@ -176,8 +180,8 @@
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\shimmer_dictionary_stat_card.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-debug-35:/layout_keyboard_layout.xml.flat",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/keyboard_layout.xml"
+        "merged": "com.shenji.aikeyboard.app-debug-35:/layout_activity_main.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_main.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\xml_method.xml.flat",

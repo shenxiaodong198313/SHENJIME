@@ -1,6 +1,7 @@
 package com.shenji.aikeyboard.data
 
 import com.shenji.aikeyboard.utils.PinyinSegmenterOptimized
+import timber.log.Timber
 
 /**
  * 优化版拼音分词器 - 使用PinyinSegmenterOptimized进行音节分割
@@ -30,15 +31,23 @@ class PinyinSplitterOptimized {
             return emptyList()
         }
         
-        // 使用优化后的PinyinSegmenterOptimized进行分词
-        val result = PinyinSegmenterOptimized.cut(cleanInput)
-        
-        // 如果分词结果与原输入相同，说明无法拆分
-        if (result.size == 1 && result[0] == cleanInput) {
+        try {
+            // 使用优化后的PinyinSegmenterOptimized进行分词
+            val result = PinyinSegmenterOptimized.cut(cleanInput)
+            
+            // 记录分词结果
+            Timber.d("拼音分词: '$cleanInput' -> ${result.joinToString("+")}")
+            
+            // 如果分词结果与原输入相同，说明无法拆分
+            if (result.size == 1 && result[0] == cleanInput) {
+                return emptyList()
+            }
+            
+            return result
+        } catch (e: Exception) {
+            Timber.e(e, "拼音分词异常: ${e.message}")
             return emptyList()
         }
-        
-        return result
     }
     
     /**

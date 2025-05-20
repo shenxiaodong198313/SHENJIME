@@ -74,6 +74,16 @@ class MainActivity : AppCompatActivity() {
             binding.mainButtonContainer?.findViewById<Button>(R.id.btn_ime_settings)?.setOnClickListener {
                 openInputMethodSettings()
             }
+            
+            // 添加拼音测试工具入口
+            binding.mainButtonContainer?.findViewById<Button>(R.id.btn_pinyin_test)?.setOnClickListener {
+                openPinyinTestTool()
+            }
+            
+            // 添加查询一致性测试入口
+            binding.mainButtonContainer?.findViewById<Button>(R.id.btn_query_consistency)?.setOnClickListener {
+                openQueryConsistencyTool()
+            }
         } catch (e: Exception) {
             Log.e("MainActivity", "设置UI元素失败: ${e.message}", e)
             Toast.makeText(this, "界面初始化异常，部分功能可能不可用", Toast.LENGTH_LONG).show()
@@ -133,6 +143,34 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "打开输入法设置失败: ${e.message}", e)
             Toast.makeText(this, "无法打开输入法设置: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 打开拼音测试工具
+     */
+    private fun openPinyinTestTool() {
+        try {
+            Timber.d("打开拼音测试工具")
+            val intent = Intent(this, PinyinTestToolActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开拼音测试工具失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开拼音测试工具: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 打开查询一致性测试工具
+     */
+    private fun openQueryConsistencyTool() {
+        try {
+            Timber.d("打开查询一致性测试工具")
+            val intent = Intent(this, QueryConsistencyActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开查询一致性测试工具失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开查询一致性测试工具: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 } 

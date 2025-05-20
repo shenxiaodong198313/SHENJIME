@@ -76,6 +76,8 @@ id btnShowDbDetails
 id btnTestPinyin
 id btn_enable_ime
 id btn_ime_settings
+id btn_pinyin_test
+id btn_query_consistency
 id btn_search
 id btn_set_default_ime
 id buttonContainer
@@ -96,6 +98,7 @@ id et_input
 id expand_candidates_button
 id inputEditText
 id inputField
+id input_field
 id key_0
 id key_1
 id key_2
@@ -155,6 +158,8 @@ id progress_bar
 id queryDisplay
 id queryProcessDisplay
 id resultTextView
+id result_text
+id run_standard_button
 id rvDictionaryModules
 id rvEntries
 id rvLogs
@@ -175,6 +180,7 @@ id stageIcon
 id tableModules
 id testAllButton
 id testButton
+id test_button
 id til_input
 id toolbar
 id toolbar_view
@@ -231,6 +237,7 @@ layout activity_log_detail
 layout activity_main
 layout activity_pinyin_test
 layout activity_pinyin_test_tool
+layout activity_query_consistency
 layout dialog_database_info
 layout dialog_export_settings
 layout item_candidate

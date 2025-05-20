@@ -59,7 +59,7 @@ class CandidateManager(private val repository: DictionaryRepository) {
     val optimizationStatus: OptimizationStatus get() = currentOptimizationStatus
     
     // 拼音分词器
-    private val pinyinSplitter = PinyinSplitter.getInstance()
+    private val pinyinSplitter = PinyinSplitterOptimized()
     
     /**
      * 根据输入生成候选词
@@ -101,82 +101,25 @@ class CandidateManager(private val repository: DictionaryRepository) {
             return@withContext cachedResults
         }
         
-        // 检查是否是回退操作（从长输入回退到短输入）
-        val isBackspaceOperation = normalizedInput.length < previousInput.length && 
-                                  previousInput.startsWith(normalizedInput)
+        // 使用测试工具的查询逻辑
+        val results = queryUsingTestToolLogic(normalizedInput, limit)
         
-        val results = if (isBackspaceOperation) {
-            // 尝试从已有缓存中过滤得到回退结果
-            val cachedPrevResults = candidateCache.get(previousInput)
-            if (cachedPrevResults != null) {
-                Timber.d("检测到回退操作，尝试从缓存过滤")
-                // 过滤出仍然有效的候选词
-                val filteredResults = filterCandidatesForBackward(cachedPrevResults, normalizedInput)
-                
-                // 如果过滤后结果太少，回退到正常查询
-                if (filteredResults.size < limit / 2) {
-                    Timber.d("过滤后结果太少(${filteredResults.size})，执行完整查询")
-                    queryAndCacheResults(normalizedInput, limit)
-                } else {
-                    Timber.d("使用过滤后的缓存结果(${filteredResults.size}个)")
-                    // 缓存过滤后的结果
-                    candidateCache.put(normalizedInput, filteredResults)
-                    
-                    // 更新优化状态
-                    currentOptimizationStatus = OptimizationStatus(
-                        backwardFilterUsed = true,
-                        queryTime = System.currentTimeMillis() - startTime,
-                        stagesExecuted = 0 // 过滤不执行查询阶段
-                    )
-                    
-                    filteredResults
-                }
-            } else {
-                queryAndCacheResults(normalizedInput, limit)
-            }
-        } else {
-            queryAndCacheResults(normalizedInput, limit)
-        }
-        
-        // 更新上一次输入
+        // 更新缓存
+        candidateCache.put(normalizedInput, results)
         previousInput = normalizedInput
+        
+        // 更新优化状态
+        currentOptimizationStatus = OptimizationStatus(
+            queryTime = System.currentTimeMillis() - startTime,
+            stagesExecuted = 1 // 只执行一个统一的查询阶段
+        )
         
         return@withContext results
     }
     
     /**
-     * 执行查询并缓存结果 - 使用测试工具的查询逻辑
-     */
-    private suspend fun queryAndCacheResults(input: String, limit: Int): List<WordFrequency> {
-        val startTime = System.currentTimeMillis()
-        
-        // 使用测试工具的查询逻辑
-        val results = queryUsingTestToolLogic(input, limit)
-        
-        val endTime = System.currentTimeMillis()
-        
-        // 记录查询时间
-        val resultSize = results.size
-        val queryTime = endTime - startTime
-        Timber.d("使用测试工具查询逻辑，耗时${queryTime}ms，生成${resultSize}个候选词")
-        
-        // 缓存查询结果
-        candidateCache.put(input, results)
-        
-        // 更新优化状态
-        currentOptimizationStatus = OptimizationStatus(
-            cacheUsed = false,
-            earlyTerminated = false,
-            queryTime = queryTime,
-            backwardFilterUsed = false,
-            stagesExecuted = 1 // 只执行一个阶段
-        )
-        
-        return results
-    }
-    
-    /**
-     * 使用测试工具的查询逻辑
+     * 使用测试工具的查询逻辑生成候选词
+     * 确保与测试工具完全一致的查询流程
      */
     private suspend fun queryUsingTestToolLogic(input: String, limit: Int): List<WordFrequency> {
         val realm = ShenjiApplication.realm
@@ -218,21 +161,25 @@ class CandidateManager(private val repository: DictionaryRepository) {
                         .sortedByDescending { it.frequency }
                         .take(limit / 2)
                         .map { WordFrequency(it.word, it.frequency) }
-
-                    // 再查询短语词典
-                    val phrases = realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1",
+                    
+                    // 然后查询其他词典
+                    val otherWords = realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1",
                         "chars", input).find()
                         .sortedByDescending { it.frequency }
                         .take(limit / 2)
                         .map { WordFrequency(it.word, it.frequency) }
-
-                    // 合并并按词频排序
-                    (singleChars + phrases).sortedByDescending { it.frequency }
+                    
+                    // 合并结果
+                    (singleChars + otherWords)
+                        .sortedByDescending { it.frequency }
+                        .take(limit)
                 }
             }
             
             InputStage.SYLLABLE_SPLIT -> {
+                // 拆分音节
                 val syllables = pinyinSplitter.splitPinyin(input)
+                
                 if (syllables.isEmpty()) {
                     return@queryUsingTestToolLogic emptyList()
                 }

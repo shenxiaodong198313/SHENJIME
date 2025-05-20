@@ -89,8 +89,7 @@
         <!-- 拼音输入法测试工具 -->
         <activity
             android:name=".ui.PinyinTestToolActivity"
-            android:exported="false"
-            android:label="拼音输入法测试工具"
+            android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 拼音分词测试活动 -->
@@ -130,6 +129,11 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.QueryConsistencyActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
 
     </application>
 

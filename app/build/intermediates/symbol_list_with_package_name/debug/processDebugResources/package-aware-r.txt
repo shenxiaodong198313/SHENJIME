@@ -3269,6 +3269,8 @@ id btnShowDbDetails
 id btnTestPinyin
 id btn_enable_ime
 id btn_ime_settings
+id btn_pinyin_test
+id btn_query_consistency
 id btn_search
 id btn_set_default_ime
 id buttonContainer
@@ -3415,6 +3417,7 @@ id indeterminate
 id info
 id inputEditText
 id inputField
+id input_field
 id invisible
 id inward
 id italic
@@ -3612,6 +3615,7 @@ id rectangles
 id report_drawn
 id restart
 id resultTextView
+id result_text
 id reverse
 id reverseSawtooth
 id right
@@ -3621,6 +3625,7 @@ id right_side
 id right_to_left
 id rounded
 id row_index_key
+id run_standard_button
 id rvDictionaryModules
 id rvEntries
 id rvLogs
@@ -3716,6 +3721,7 @@ id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
 id testAllButton
 id testButton
+id test_button
 id text
 id text2
 id textEnd
@@ -3942,6 +3948,7 @@ layout activity_log_detail
 layout activity_main
 layout activity_pinyin_test
 layout activity_pinyin_test_tool
+layout activity_query_consistency
 layout custom_dialog
 layout design_bottom_navigation_item
 layout design_bottom_sheet_dialog
