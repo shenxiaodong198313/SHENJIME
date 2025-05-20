@@ -54,6 +54,7 @@ drawable keyboard_space_key_bg
 drawable keyboard_special_key_bg
 id action_db_info
 id action_logs
+id app_icon
 id app_name_display
 id btnBuildRealmDb
 id btnClearLogs

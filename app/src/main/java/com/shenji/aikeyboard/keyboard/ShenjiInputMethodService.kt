@@ -15,6 +15,7 @@ import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.data.WordFrequency
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import android.graphics.Color
 
 class ShenjiInputMethodService : InputMethodService() {
     
@@ -33,7 +34,7 @@ class ShenjiInputMethodService : InputMethodService() {
     private lateinit var candidatesView: LinearLayout
     
     // 展开候选词按钮
-    private lateinit var expandCandidatesButton: Button
+    private lateinit var expandCandidatesButton: TextView
     
     // 工具栏视图
     private lateinit var toolbarView: LinearLayout
@@ -43,6 +44,9 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 应用名称显示TextView
     private lateinit var appNameDisplay: TextView
+    
+    // 应用图标ImageView
+    private lateinit var appIcon: ImageView
     
     // 当前输入的拼音
     private var composingText = StringBuilder()
@@ -94,6 +98,7 @@ class ShenjiInputMethodService : InputMethodService() {
             // 初始化拼音显示区域
             pinyinDisplay = keyboardView.findViewById(R.id.pinyin_display)
             appNameDisplay = keyboardView.findViewById(R.id.app_name_display)
+            appIcon = keyboardView.findViewById(R.id.app_icon)
             // 初始化工具栏
             toolbarView = keyboardView.findViewById(R.id.toolbar_view)
             
@@ -514,44 +519,54 @@ class ShenjiInputMethodService : InputMethodService() {
             
             // 确保候选词视图有足够高度
             val params = defaultCandidatesView.layoutParams
-            params.height = 120 // 设置固定高度，确保可见
+            params.height = 140 // 设置固定高度，确保可见
             defaultCandidatesView.layoutParams = params
+            
+            // 获取拼音显示区域的左边距，确保候选词与拼音完全对齐
+            val pinyinPaddingStart = pinyinDisplay.paddingStart
+            
+            // 设置候选词容器内边距与拼音区域一致
+            candidatesView.setPadding(0, candidatesView.paddingTop, candidatesView.paddingRight, candidatesView.paddingBottom)
             
             // 添加每个候选词按钮
             wordList.forEachIndexed { index, word ->
-                val candidateButton = Button(this)
-                candidateButton.text = word.word
+                val candidateText = TextView(this)
+                candidateText.text = word.word
                 
-                // 使用自定义样式设置按钮
-                candidateButton.setTextSize(16f)
-                candidateButton.setPadding(16, 8, 16, 8)
+                // 使用TextView而不是Button以减少默认样式的影响
+                candidateText.setTextSize(16f)
+                candidateText.setPadding(0, 8, 0, 8)
                 
-                // 设置第一个候选词为蓝色，其他保持黑色
+                // 设置第一个候选词为绿色，其他保持黑色
                 if (index == 0) {
-                    candidateButton.setTextColor(android.graphics.Color.BLUE)
+                    candidateText.setTextColor(Color.parseColor("#4CAF50")) // 绿色
                 } else {
-                    candidateButton.setTextColor(android.graphics.Color.BLACK)
+                    candidateText.setTextColor(Color.BLACK)
                 }
                 
-                candidateButton.setBackgroundResource(R.drawable.candidate_button_bg)
-                candidateButton.minWidth = 80
-                candidateButton.minHeight = 40
-                
-                // 设置左右margin
-                val buttonParams = LinearLayout.LayoutParams(
+                // 设置左右margin（非常小的间距）
+                val textParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.MATCH_PARENT
                 )
-                buttonParams.setMargins(4, 0, 4, 0)
-                candidateButton.layoutParams = buttonParams
+                
+                if (index == 0) {
+                    // 第一个候选词，与拼音保持一致的左对齐，使用相同的padding
+                    textParams.setMargins(pinyinPaddingStart, 0, 20, 0)
+                } else {
+                    // 其他候选词间距非常小
+                    textParams.setMargins(20, 0, 20, 0)
+                }
+                
+                candidateText.layoutParams = textParams
                 
                 // 设置点击事件
-                candidateButton.setOnClickListener {
+                candidateText.setOnClickListener {
                     commitText(word.word)
                 }
                 
                 // 添加到候选词容器
-                candidatesView.addView(candidateButton)
+                candidatesView.addView(candidateText)
             }
             
             // 重置水平滚动位置到起始位置
@@ -627,10 +642,11 @@ class ShenjiInputMethodService : InputMethodService() {
         val packageManager = packageManager
         try {
             val appInfo = packageManager.getApplicationInfo(packageName, 0)
-            return packageManager.getApplicationLabel(appInfo).toString()
+            val appName = packageManager.getApplicationLabel(appInfo).toString()
+            return "${appName}已增强"
         } catch (e: Exception) {
             Timber.e(e, "获取应用名称失败")
-            return packageName
+            return "${packageName}已增强"
         }
     }
 }

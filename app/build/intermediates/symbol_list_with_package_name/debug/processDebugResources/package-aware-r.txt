@@ -3228,6 +3228,7 @@ id animateToEnd
 id animateToStart
 id antiClockwise
 id anticipate
+id app_icon
 id app_name_display
 id arc
 id asConfigured
