@@ -85,6 +85,12 @@ class ShenjiInputMethodService : InputMethodService() {
             defaultCandidatesView = keyboardView.findViewById(R.id.default_candidates_view)
             candidatesView = keyboardView.findViewById(R.id.candidates_view)
             expandCandidatesButton = keyboardView.findViewById(R.id.expand_candidates_button)
+            
+            // 确保候选词视图初始化正确
+            val params = defaultCandidatesView.layoutParams
+            params.height = 120 // 设置固定高度
+            defaultCandidatesView.layoutParams = params
+            
             // 初始化拼音显示区域
             pinyinDisplay = keyboardView.findViewById(R.id.pinyin_display)
             appNameDisplay = keyboardView.findViewById(R.id.app_name_display)
@@ -340,6 +346,28 @@ class ShenjiInputMethodService : InputMethodService() {
                ::candidatesView.isInitialized
     }
     
+    // 添加调试方法：记录候选词视图状态
+    private fun logCandidateViewState() {
+        if (areViewComponentsInitialized()) {
+            Timber.d("候选词视图状态:")
+            Timber.d("- 候选词容器可见性: ${visibilityToString(candidatesContainer.visibility)}")
+            Timber.d("- 默认候选词视图可见性: ${visibilityToString(defaultCandidatesView.visibility)}")
+            Timber.d("- 候选词视图子项数量: ${candidatesView.childCount}")
+            Timber.d("- 默认候选词视图高度: ${defaultCandidatesView.height}px")
+            Timber.d("- 候选词视图宽度: ${candidatesView.width}px")
+        }
+    }
+    
+    // 辅助方法：将可见性值转换为字符串
+    private fun visibilityToString(visibility: Int): String {
+        return when (visibility) {
+            View.VISIBLE -> "VISIBLE"
+            View.INVISIBLE -> "INVISIBLE"
+            View.GONE -> "GONE"
+            else -> "UNKNOWN($visibility)"
+        }
+    }
+    
     // 安全显示候选词区域
     private fun showCandidates() {
         if (areViewComponentsInitialized()) {
@@ -347,6 +375,14 @@ class ShenjiInputMethodService : InputMethodService() {
             defaultCandidatesView.visibility = View.VISIBLE
             // 显示候选词区域时隐藏工具栏
             toolbarView.visibility = View.GONE
+            
+            // 确保候选词视图有足够高度
+            val params = defaultCandidatesView.layoutParams
+            params.height = 120 // 设置固定高度，确保可见
+            defaultCandidatesView.layoutParams = params
+            
+            Timber.d("显示候选词区域，设置高度为120")
+            logCandidateViewState()
         }
     }
     
@@ -419,6 +455,12 @@ class ShenjiInputMethodService : InputMethodService() {
                                             if (areViewComponentsInitialized()) {
                                                 candidatesContainer.visibility = View.VISIBLE
                                                 defaultCandidatesView.visibility = View.VISIBLE
+                                                toolbarView.visibility = View.GONE
+                                                
+                                                // 确保候选词视图有足够高度
+                                                val params = defaultCandidatesView.layoutParams
+                                                params.height = 120 // 设置固定高度，确保可见
+                                                defaultCandidatesView.layoutParams = params
                                             }
                                         } else {
                                             Timber.d("未找到候选词")
@@ -466,20 +508,36 @@ class ShenjiInputMethodService : InputMethodService() {
             
             Timber.d("更新候选词视图，数量: ${wordList.size}")
             
+            // 强制设置候选词容器可见性
+            candidatesContainer.visibility = View.VISIBLE
+            defaultCandidatesView.visibility = View.VISIBLE
+            toolbarView.visibility = View.GONE
+            
+            // 确保候选词视图有足够高度
+            val params = defaultCandidatesView.layoutParams
+            params.height = 120 // 设置固定高度，确保可见
+            defaultCandidatesView.layoutParams = params
+            
             // 添加每个候选词按钮
             wordList.forEachIndexed { index, word ->
                 val candidateButton = Button(this)
                 candidateButton.text = word.word
-                candidateButton.textSize = 16f
+                
+                // 使用自定义样式设置按钮
+                candidateButton.setTextSize(16f)
                 candidateButton.setPadding(16, 8, 16, 8)
+                candidateButton.setTextColor(android.graphics.Color.BLACK)
+                candidateButton.setBackgroundResource(R.drawable.candidate_button_bg)
+                candidateButton.minWidth = 80
+                candidateButton.minHeight = 40
                 
                 // 设置左右margin
-                val params = LinearLayout.LayoutParams(
+                val buttonParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.MATCH_PARENT
                 )
-                params.setMargins(4, 0, 4, 0)
-                candidateButton.layoutParams = params
+                buttonParams.setMargins(4, 0, 4, 0)
+                candidateButton.layoutParams = buttonParams
                 
                 // 设置点击事件
                 candidateButton.setOnClickListener {
@@ -490,10 +548,14 @@ class ShenjiInputMethodService : InputMethodService() {
                 candidatesView.addView(candidateButton)
             }
             
-            // 确保候选词区域可见
-            candidatesContainer.visibility = View.VISIBLE
-            defaultCandidatesView.visibility = View.VISIBLE
-            toolbarView.visibility = View.GONE
+            // 记录日志，确认候选词视图状态
+            Timber.d("候选词容器可见性: ${candidatesContainer.visibility == View.VISIBLE}")
+            Timber.d("默认候选词视图可见性: ${defaultCandidatesView.visibility == View.VISIBLE}")
+            Timber.d("候选词视图子项数量: ${candidatesView.childCount}")
+            
+            // 记录详细的候选词视图状态
+            logCandidateViewState()
+            
         } catch (e: Exception) {
             Timber.e(e, "更新候选词视图失败: ${e.message}")
         }
@@ -525,6 +587,17 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 确保输入连接上的组合文本也被清除
         currentInputConnection?.finishComposingText()
+        
+        // 确保候选词视图正确初始化
+        if (areViewComponentsInitialized()) {
+            // 设置候选词视图高度
+            val params = defaultCandidatesView.layoutParams
+            params.height = 120 // 设置固定高度
+            defaultCandidatesView.layoutParams = params
+            
+            // 记录候选词视图状态
+            logCandidateViewState()
+        }
         
         Timber.d("初始化输入视图，已清空所有状态")
     }

@@ -49,6 +49,20 @@
         <item name="android:background">@drawable/candidate_word_bg</item>
         <item name="android:layout_marginEnd">10dp</item>
         <item name="android:layout_marginStart">10dp</item>
+    </style><style name="CandidateButtonStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:background">@drawable/candidate_button_bg</item>
+        <item name="android:minWidth">80dp</item>
+        <item name="android:minHeight">32dp</item>
     </style></file><file path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\res\values\themes.xml" qualifiers=""><style name="Theme.SHENJI" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         
         <item name="colorPrimary">@color/purple_500</item>
@@ -77,4 +91,4 @@
         
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         
-    </style></file><file name="method" path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\res\xml\method.xml" qualifiers="" type="xml"/></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\build\generated\res\resValues\debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\build\generated\res\resValues\debug"/></dataSet><mergedItems/></merger>
+    </style></file><file name="method" path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\res\xml\method.xml" qualifiers="" type="xml"/><file name="candidate_button_bg" path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\res\drawable\candidate_button_bg.xml" qualifiers="" type="drawable"/></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\build\generated\res\resValues\debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\build\generated\res\resValues\debug"/></dataSet><mergedItems/></merger>

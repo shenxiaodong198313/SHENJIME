@@ -34,6 +34,7 @@ dimen candidate_divider_height
 dimen candidate_word_margin
 drawable bg_permission_needed
 drawable candidate_background
+drawable candidate_button_bg
 drawable candidate_item_background
 drawable candidate_word_bg
 drawable candidate_word_selected_bg
@@ -306,6 +307,7 @@ string test_suite_pinyin
 string toggle_mode
 string usage_stats_permission_required
 string view_logs
+style CandidateButtonStyle
 style CandidateWord
 style KeyboardButton
 style KeyboardFunctionButton

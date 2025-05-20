@@ -92,6 +92,21 @@
     <string name="toggle_mode">全/单</string>
     <string name="usage_stats_permission_required">需要应用使用情况权限</string>
     <string name="view_logs">查看日志</string>
+    <style name="CandidateButtonStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:background">@drawable/candidate_button_bg</item>
+        <item name="android:minWidth">80dp</item>
+        <item name="android:minHeight">32dp</item>
+    </style>
     <style name="CandidateWord">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">match_parent</item>

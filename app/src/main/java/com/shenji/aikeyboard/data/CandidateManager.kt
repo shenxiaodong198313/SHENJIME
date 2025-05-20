@@ -1,9 +1,12 @@
 package com.shenji.aikeyboard.data
 
 import android.util.LruCache
+import com.shenji.aikeyboard.ShenjiApplication
+import com.shenji.aikeyboard.model.Candidate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import io.realm.kotlin.ext.query
 
 // 调试信息类型别名，方便外部引用
 typealias DebugInfo = StagedDictionaryRepository.DebugInfo
@@ -14,7 +17,7 @@ typealias DebugInfo = StagedDictionaryRepository.DebugInfo
  */
 class CandidateManager(private val repository: DictionaryRepository) {
     
-    // 分阶段查询仓库
+    // 分阶段查询仓库 - 保留但不再使用
     private val stagedRepository = StagedDictionaryRepository()
     
     // 调试信息
@@ -54,6 +57,9 @@ class CandidateManager(private val repository: DictionaryRepository) {
     
     // 获取当前优化状态
     val optimizationStatus: OptimizationStatus get() = currentOptimizationStatus
+    
+    // 拼音分词器
+    private val pinyinSplitter = PinyinSplitter.getInstance()
     
     /**
      * 根据输入生成候选词
@@ -139,17 +145,20 @@ class CandidateManager(private val repository: DictionaryRepository) {
     }
     
     /**
-     * 执行查询并缓存结果
+     * 执行查询并缓存结果 - 使用测试工具的查询逻辑
      */
     private suspend fun queryAndCacheResults(input: String, limit: Int): List<WordFrequency> {
         val startTime = System.currentTimeMillis()
-        val results = stagedRepository.queryCandidates(input, limit)
+        
+        // 使用测试工具的查询逻辑
+        val results = queryUsingTestToolLogic(input, limit)
+        
         val endTime = System.currentTimeMillis()
         
         // 记录查询时间
         val resultSize = results.size
         val queryTime = endTime - startTime
-        Timber.d("使用分阶段查询，耗时${queryTime}ms，生成${resultSize}个候选词")
+        Timber.d("使用测试工具查询逻辑，耗时${queryTime}ms，生成${resultSize}个候选词")
         
         // 缓存查询结果
         candidateCache.put(input, results)
@@ -157,13 +166,157 @@ class CandidateManager(private val repository: DictionaryRepository) {
         // 更新优化状态
         currentOptimizationStatus = OptimizationStatus(
             cacheUsed = false,
-            earlyTerminated = debugInfo.earlyTerminated,
+            earlyTerminated = false,
             queryTime = queryTime,
             backwardFilterUsed = false,
-            stagesExecuted = debugInfo.stages.size
+            stagesExecuted = 1 // 只执行一个阶段
         )
         
         return results
+    }
+    
+    /**
+     * 使用测试工具的查询逻辑
+     */
+    private suspend fun queryUsingTestToolLogic(input: String, limit: Int): List<WordFrequency> {
+        val realm = ShenjiApplication.realm
+        
+        // 判断输入类型
+        val inputStage = classifyInputStage(input)
+        Timber.d("输入'$input'被分类为: $inputStage")
+        
+        return when (inputStage) {
+            InputStage.INITIAL_LETTER -> {
+                // 查询单字词典中匹配首字母的
+                val singleChars = realm.query<Entry>("type == $0 AND initialLetters BEGINSWITH $1", 
+                    "chars", input).find()
+                
+                // 直接返回单字结果，不再查询其他表
+                singleChars
+                    .sortedByDescending { it.frequency }
+                    .take(limit)
+                    .map { WordFrequency(it.word, it.frequency) }
+            }
+            
+            InputStage.PINYIN_COMPLETION -> {
+                // 检查是否是单个有效音节
+                val isSingleSyllable = isValidPinyin(input) && !input.contains(" ")
+                
+                // 如果是单个有效音节，只查询单字词典
+                if (isSingleSyllable) {
+                    val singleChars = realm.query<Entry>("type == $0 AND pinyin == $1",
+                        "chars", input).find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit)
+                        .map { WordFrequency(it.word, it.frequency) }
+                    
+                    singleChars
+                } else {
+                    // 先查询单字词典
+                    val singleChars = realm.query<Entry>("type == $0 AND pinyin BEGINSWITH $1",
+                        "chars", input).find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit / 2)
+                        .map { WordFrequency(it.word, it.frequency) }
+
+                    // 再查询短语词典
+                    val phrases = realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1",
+                        "chars", input).find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit / 2)
+                        .map { WordFrequency(it.word, it.frequency) }
+
+                    // 合并并按词频排序
+                    (singleChars + phrases).sortedByDescending { it.frequency }
+                }
+            }
+            
+            InputStage.SYLLABLE_SPLIT -> {
+                val syllables = pinyinSplitter.splitPinyin(input)
+                if (syllables.isEmpty()) {
+                    return@queryUsingTestToolLogic emptyList()
+                }
+                
+                // 将音节连接为完整的拼音字符串（带空格）
+                val fullPinyin = syllables.joinToString(" ")
+                
+                // 直接查询完整拼音匹配的词条
+                val entries = realm.query<Entry>("pinyin == $0", fullPinyin).find()
+                    .sortedByDescending { it.frequency }
+                
+                // 如果精确匹配没有结果，尝试前缀匹配
+                if (entries.isEmpty() && syllables.size >= 2) {
+                    // 查询以这些音节开头的词条
+                    val prefixMatches = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin).find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit)
+                    
+                    prefixMatches.map { WordFrequency(it.word, it.frequency) }
+                } else {
+                    entries.take(limit).map { WordFrequency(it.word, it.frequency) }
+                }
+            }
+            
+            InputStage.ACRONYM -> {
+                val entries = realm.query<Entry>("initialLetters == $0", input).find()
+                
+                entries
+                    .sortedByDescending { it.frequency }
+                    .take(limit)
+                    .map { WordFrequency(it.word, it.frequency) }
+            }
+            
+            else -> emptyList()
+        }
+    }
+    
+    /**
+     * 判断输入阶段
+     */
+    private fun classifyInputStage(input: String): InputStage {
+        if (input.isEmpty()) {
+            return InputStage.UNKNOWN
+        }
+
+        if (input.length == 1 && input.matches(Regex("^[a-z]$"))) {
+            return InputStage.INITIAL_LETTER // 首字母阶段
+        }
+
+        // 单个完整拼音音节，直接归类为拼音补全阶段，并且标记为单音节
+        if (isValidPinyin(input) && !input.contains(" ")) {
+            return InputStage.PINYIN_COMPLETION // 拼音补全阶段
+        }
+
+        return when {
+            canSplitToValidSyllables(input) -> InputStage.SYLLABLE_SPLIT // 音节拆分阶段
+            else -> InputStage.ACRONYM // 首字母缩写阶段
+        }
+    }
+    
+    /**
+     * 验证是否为有效的拼音音节
+     */
+    private fun isValidPinyin(input: String): Boolean {
+        return pinyinSplitter.getPinyinSyllables().contains(input)
+    }
+    
+    /**
+     * 判断是否可以拆分为有效音节
+     */
+    private fun canSplitToValidSyllables(input: String): Boolean {
+        val result = pinyinSplitter.splitPinyin(input)
+        return result.isNotEmpty()
+    }
+    
+    /**
+     * 输入阶段枚举
+     */
+    enum class InputStage {
+        INITIAL_LETTER,      // 首字母阶段
+        PINYIN_COMPLETION,   // 拼音补全阶段
+        SYLLABLE_SPLIT,      // 音节拆分阶段
+        ACRONYM,             // 首字母缩写阶段
+        UNKNOWN              // 未知阶段
     }
     
     /**
