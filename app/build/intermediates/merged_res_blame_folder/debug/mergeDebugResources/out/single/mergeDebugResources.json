@@ -32,10 +32,6 @@
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\item_debug_stage.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-debug-35:/layout_item_candidate.xml.flat",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_candidate.xml"
-    },
-    {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\layout_activity_pinyin_test_tool.xml.flat",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_pinyin_test_tool.xml"
     },
@@ -70,6 +66,10 @@
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\mipmap-mdpi_ic_launcher.xml.flat",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\mipmap-mdpi\\ic_launcher.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-35:/layout_activity_pinyin_test_tool.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_pinyin_test_tool.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-35:\\layout_keyboard_layout.xml.flat",

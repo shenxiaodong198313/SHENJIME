@@ -143,6 +143,8 @@ id mainButtonContainer
 id mainContainer
 id matchDisplay
 id noResultsText
+id optimizationDisplay
+id optimizationDisplayTitle
 id pbDictExport
 id pinyin_container
 id pinyin_display

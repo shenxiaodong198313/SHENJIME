@@ -987,6 +987,20 @@ class DictionaryRepository {
             return emptyList()
         }
     }
+
+    /**
+     * 通过词查询Entry
+     * @param word 要查询的词
+     * @return 查询到的词条列表
+     */
+    fun queryByWord(word: String): List<Entry> {
+        return try {
+            realm.query<Entry>("word == $0", word).find()
+        } catch (e: Exception) {
+            Timber.e(e, "查询词'$word'失败")
+            emptyList()
+        }
+    }
 }
 
 /**

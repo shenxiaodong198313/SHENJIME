@@ -140,11 +140,11 @@
 85
 86        <!-- 开发工具活动 -->
 87        <activity
-87-->C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:71:9-73:40
+87-->C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:71:9-73:39
 88            android:name="com.shenji.aikeyboard.ui.DevToolsActivity"
 88-->C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:72:13-48
-89            android:exported="false" />
-89-->C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:73:13-37
+89            android:exported="true" />
+89-->C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:73:13-36
 90
 91        <!-- 移动调试工具活动 -->
 92        <activity

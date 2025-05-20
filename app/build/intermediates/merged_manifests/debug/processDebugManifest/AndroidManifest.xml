@@ -86,7 +86,7 @@
         <!-- 开发工具活动 -->
         <activity
             android:name="com.shenji.aikeyboard.ui.DevToolsActivity"
-            android:exported="false" />
+            android:exported="true" />
 
         <!-- 移动调试工具活动 -->
         <activity

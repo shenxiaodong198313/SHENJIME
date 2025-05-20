@@ -149,6 +149,22 @@ class PinyinTestToolActivity : AppCompatActivity() {
             binding.candidateStatsDisplay.text = "候选词统计: 总计 ${stats.totalCount} 个（单字 ${stats.singleCharCount} 个，词语 ${stats.phraseCount} 个）"
         }
 
+        // 观察优化状态信息
+        viewModel.optimizationStatus.observe(this) { status ->
+            val statusText = buildString {
+                append("查询耗时: ${status?.queryTime ?: "0"}ms\n")
+                append("使用缓存: ${if (status?.cacheUsed == true) "是" else "否"}\n")
+                append("提前终止: ${if (status?.earlyTerminated == true) "是" else "否"}\n")
+                append("执行阶段: ${status?.stagesExecuted ?: "0"} 个\n")
+                if (status?.backwardFilterUsed == true) {
+                    append("回退过滤: 已应用\n")
+                }
+            }
+            binding.optimizationDisplay.text = statusText
+            binding.optimizationDisplayTitle.visibility = View.VISIBLE
+            binding.optimizationDisplay.visibility = View.VISIBLE
+        }
+
         // 观察候选词
         viewModel.candidates.observe(this) { candidates ->
             candidateAdapter.updateCandidates(candidates)

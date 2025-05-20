@@ -194,9 +194,9 @@ ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidM
 	android:name
 		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:66:13-49
 activity#com.shenji.aikeyboard.ui.DevToolsActivity
-ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:71:9-73:40
+ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:71:9-73:39
 	android:exported
-		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:73:13-37
+		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:73:13-36
 	android:name
 		ADDED from C:\Users\shenxiaodong\Desktop\AIkeyboard\SHENJI\app\src\main\AndroidManifest.xml:72:13-48
 activity#com.shenji.aikeyboard.ui.MobileDebugActivity

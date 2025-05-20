@@ -5,6 +5,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shenji.aikeyboard.ShenjiApplication
+import com.shenji.aikeyboard.data.CandidateManager
+import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.data.Entry
 import com.shenji.aikeyboard.data.PinyinSplitterOptimized
 import com.shenji.aikeyboard.model.Candidate
@@ -20,6 +22,13 @@ import timber.log.Timber
  * 拼音测试工具的ViewModel，处理核心业务逻辑
  */
 class PinyinTestViewModel : ViewModel() {
+
+    // 候选词管理器
+    private val candidateManager = CandidateManager(DictionaryRepository())
+    
+    // 优化状态
+    private val _optimizationStatus = MutableLiveData<CandidateManager.OptimizationStatus>()
+    val optimizationStatus: LiveData<CandidateManager.OptimizationStatus> = _optimizationStatus
 
     // 输入状态流，用于防抖处理
     private val _inputFlow = MutableStateFlow("")

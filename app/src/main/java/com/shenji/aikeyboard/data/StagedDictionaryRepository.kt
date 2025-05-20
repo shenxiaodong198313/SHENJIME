@@ -19,11 +19,24 @@ class StagedDictionaryRepository {
         val input: String,
         val stages: Map<Int, List<String>>,
         val duplicates: List<Pair<String, String>>,
-        val weights: Map<String, CandidateWeight>
+        val weights: Map<String, CandidateWeight>,
+        val earlyTerminated: Boolean = false  // 新增标记，表示是否提前终止
     )
     
     private var _debugInfo = DebugInfo("", emptyMap(), emptyList(), emptyMap())
     val debugInfo get() = _debugInfo
+    
+    // 提前终止查询的配置
+    companion object {
+        // 提前终止的候选词数量阈值 - 最低匹配数
+        const val EARLY_TERMINATION_THRESHOLD = 12
+        
+        // 最小匹配质量阈值 - 确保有足够的高质量词
+        const val HIGH_QUALITY_THRESHOLD = 6
+        
+        // 高质量候选词的词频阈值
+        const val HIGH_QUALITY_FREQUENCY = 5000
+    }
     
     /**
      * 阶段化查询候选词
@@ -48,6 +61,9 @@ class StagedDictionaryRepository {
         val stageResults = mutableMapOf<Int, List<String>>()
         val duplicateDetector = DuplicateDetector()
         val allCandidates = mutableListOf<CandidateEntry>()
+        
+        // 提前终止标志
+        var earlyTerminated = false
         
         try {
             // 检查是否是强制首字母缩写模式
@@ -87,55 +103,67 @@ class StagedDictionaryRepository {
                     allCandidates.addAll(stage1Results)
                     stageResults[1] = stage1Results.map { it.word }
                     
-                    // 阶段2: 关联扩展匹配 (correlation + associational)
-                    // 相邻双字母组合查询，优先级3-4词典
-                    val stage2Results = if (normalizedInput.length >= 2) {
-                        val twoLetterResults = mutableListOf<CandidateEntry>()
-                        for (i in 0 until normalizedInput.length - 1) {
-                            val twoLetters = normalizedInput.substring(i, i + 2)
-                            val results = queryByInitials(
-                                twoLetters, 
-                                2, 
-                                listOf("correlation", "associational"), 
-                                limit / (normalizedInput.length - 1)
-                            )
-                            twoLetterResults.addAll(results)
+                    // 检查是否已经有足够多高质量的候选词
+                    if (shouldEarlyTerminate(allCandidates)) {
+                        Timber.d("阶段1已找到足够高质量候选词(${allCandidates.size}个)，提前终止查询")
+                        earlyTerminated = true
+                    } else {
+                        // 阶段2: 关联扩展匹配 (correlation + associational)
+                        // 相邻双字母组合查询，优先级3-4词典
+                        val stage2Results = if (normalizedInput.length >= 2) {
+                            val twoLetterResults = mutableListOf<CandidateEntry>()
+                            for (i in 0 until normalizedInput.length - 1) {
+                                val twoLetters = normalizedInput.substring(i, i + 2)
+                                val results = queryByInitials(
+                                    twoLetters, 
+                                    2, 
+                                    listOf("correlation", "associational"), 
+                                    limit / (normalizedInput.length - 1)
+                                )
+                                twoLetterResults.addAll(results)
+                            }
+                            twoLetterResults
+                        } else {
+                            emptyList()
                         }
-                        twoLetterResults
-                    } else {
-                        emptyList()
-                    }
-                    allCandidates.addAll(stage2Results)
-                    stageResults[2] = stage2Results.map { it.word }
-                    
-                    // 阶段3: 专业词典补充 (place + people + poetry)
-                    // 特定领域词典扩展查询
-                    val stage3Results = if (normalizedInput.length >= 3) {
-                        val specialDomainResults = queryByInitials(
-                            normalizedInput.takeLast(minOf(3, normalizedInput.length)), 
-                            3, 
-                            listOf("place", "people", "poetry"), 
-                            limit / 4
-                        ).filter { it.word.length > 2 } // 只保留有意义的词组
+                        allCandidates.addAll(stage2Results)
+                        stageResults[2] = stage2Results.map { it.word }
                         
-                        specialDomainResults
-                    } else {
-                        emptyList()
-                    }
-                    allCandidates.addAll(stage3Results)
-                    stageResults[3] = stage3Results.map { it.word }
-                    
-                    // 阶段4: 兜底模糊匹配 (corrections + compatible)
-                    // 当前三个阶段都没有足够结果时尝试纠错匹配
-                    if (allCandidates.size < 5 && normalizedInput.length >= 2) {
-                        val stage4Results = queryByInitials(
-                            normalizedInput, 
-                            4, 
-                            listOf("corrections", "compatible"), 
-                            limit / 4
-                        )
-                        allCandidates.addAll(stage4Results)
-                        stageResults[4] = stage4Results.map { it.word }
+                        // 再次检查是否可以提前终止
+                        if (shouldEarlyTerminate(allCandidates)) {
+                            Timber.d("阶段2已找到足够高质量候选词(${allCandidates.size}个)，提前终止查询")
+                            earlyTerminated = true
+                        } else {
+                            // 阶段3: 专业词典补充 (place + people + poetry)
+                            // 特定领域词典扩展查询
+                            val stage3Results = if (normalizedInput.length >= 3) {
+                                val specialDomainResults = queryByInitials(
+                                    normalizedInput.takeLast(minOf(3, normalizedInput.length)), 
+                                    3, 
+                                    listOf("place", "people", "poetry"), 
+                                    limit / 4
+                                ).filter { it.word.length > 2 } // 只保留有意义的词组
+                                
+                                specialDomainResults
+                            } else {
+                                emptyList()
+                            }
+                            allCandidates.addAll(stage3Results)
+                            stageResults[3] = stage3Results.map { it.word }
+                            
+                            // 阶段4: 兜底模糊匹配 (corrections + compatible)
+                            // 当前三个阶段都没有足够结果时尝试纠错匹配
+                            if (allCandidates.size < 5 && normalizedInput.length >= 2) {
+                                val stage4Results = queryByInitials(
+                                    normalizedInput, 
+                                    4, 
+                                    listOf("corrections", "compatible"), 
+                                    limit / 4
+                                )
+                                allCandidates.addAll(stage4Results)
+                                stageResults[4] = stage4Results.map { it.word }
+                            }
+                        }
                     }
                 }
                 
@@ -151,29 +179,41 @@ class StagedDictionaryRepository {
                     allCandidates.addAll(stage1Results)
                     stageResults[1] = stage1Results.map { it.word }
                     
-                    // 不足阶段1不足10个结果时继续查询
-                    if (stage1Results.size < 10 && stageCount >= 2) {
-                        // 阶段2: correlation + associational
-                        val stage2Results = queryByPinyin(normalizedInput, 2, 
-                                                          listOf("correlation", "associational"), limit / 4)
-                        allCandidates.addAll(stage2Results)
-                        stageResults[2] = stage2Results.map { it.word }
-                        
-                        // 不足5个结果时继续查询
-                        if (allCandidates.size < 5 && stageCount >= 3) {
-                            // 阶段3: 专业词典
-                            val stage3Results = queryByPinyin(normalizedInput, 3, 
-                                                             listOf("place", "people", "poetry"), limit / 4)
-                            allCandidates.addAll(stage3Results)
-                            stageResults[3] = stage3Results.map { it.word }
+                    // 检查是否可以提前终止
+                    if (shouldEarlyTerminate(allCandidates)) {
+                        Timber.d("阶段1已找到足够高质量候选词(${allCandidates.size}个)，提前终止查询")
+                        earlyTerminated = true
+                    } else {
+                        // 不足阶段1不足10个结果时继续查询
+                        if (stage1Results.size < 10 && stageCount >= 2) {
+                            // 阶段2: correlation + associational
+                            val stage2Results = queryByPinyin(normalizedInput, 2, 
+                                                              listOf("correlation", "associational"), limit / 4)
+                            allCandidates.addAll(stage2Results)
+                            stageResults[2] = stage2Results.map { it.word }
                             
-                            // 仍不足5个结果时进行纠错查询
-                            if (allCandidates.size < 5 && stageCount >= 4) {
-                                // 阶段4: 纠错查询
-                                val stage4Results = queryByPinyin(normalizedInput, 4, 
-                                                                 listOf("corrections", "compatible"), limit / 4)
-                                allCandidates.addAll(stage4Results)
-                                stageResults[4] = stage4Results.map { it.word }
+                            // 再次检查是否可以提前终止
+                            if (shouldEarlyTerminate(allCandidates)) {
+                                Timber.d("阶段2已找到足够高质量候选词(${allCandidates.size}个)，提前终止查询")
+                                earlyTerminated = true
+                            } else {
+                                // 不足5个结果时继续查询
+                                if (allCandidates.size < 5 && stageCount >= 3) {
+                                    // 阶段3: 专业词典
+                                    val stage3Results = queryByPinyin(normalizedInput, 3, 
+                                                                 listOf("place", "people", "poetry"), limit / 4)
+                                    allCandidates.addAll(stage3Results)
+                                    stageResults[3] = stage3Results.map { it.word }
+                                    
+                                    // 仍不足5个结果时进行纠错查询
+                                    if (allCandidates.size < 5 && stageCount >= 4) {
+                                        // 阶段4: 纠错查询
+                                        val stage4Results = queryByPinyin(normalizedInput, 4, 
+                                                                         listOf("corrections", "compatible"), limit / 4)
+                                        allCandidates.addAll(stage4Results)
+                                        stageResults[4] = stage4Results.map { it.word }
+                                    }
+                                }
                             }
                         }
                     }
@@ -205,17 +245,41 @@ class StagedDictionaryRepository {
                 duplicates = duplicates,
                 weights = sortedResults.take(10).associate { 
                     it.word to CandidateWeight(it.stage, it.frequency, it.matchType, it.lengthBonus) 
-                }
+                },
+                earlyTerminated = earlyTerminated
             )
             
             // 返回最终结果
-            Timber.d("分阶段查询完成，总计${sortedResults.size}个候选词")
+            Timber.d("分阶段查询完成，总计${sortedResults.size}个候选词" + 
+                   (if (earlyTerminated) "，提前终止查询" else ""))
             return@coroutineScope sortedResults.take(limit).map { it.toWordFrequency() }
             
         } catch (e: Exception) {
             Timber.e(e, "分阶段查询出错: ${e.message}")
             return@coroutineScope emptyList()
         }
+    }
+    
+    /**
+     * 判断是否应该提前终止查询
+     * 当候选词数量和质量均满足条件时提前结束
+     */
+    private fun shouldEarlyTerminate(candidates: List<CandidateEntry>): Boolean {
+        // 条件1: 候选词总数满足阈值
+        if (candidates.size < EARLY_TERMINATION_THRESHOLD) {
+            return false
+        }
+        
+        // 条件2: 高质量候选词数量满足阈值
+        val highQualityCount = candidates.count { it.frequency >= HIGH_QUALITY_FREQUENCY }
+        
+        // 提前终止日志
+        if (highQualityCount >= HIGH_QUALITY_THRESHOLD) {
+            Timber.d("满足提前终止条件：总候选词=${candidates.size}，高质量词=${highQualityCount}")
+            return true
+        }
+        
+        return false
     }
     
     /**

@@ -5,6 +5,23 @@ package com.shenji.aikeyboard.data
  */
 class PinyinSplitter {
 
+    companion object {
+        // 单例实例
+        private var instance: PinyinSplitter? = null
+        
+        /**
+         * 获取PinyinSplitter单例实例
+         * @return PinyinSplitter实例
+         */
+        @JvmStatic
+        fun getInstance(): PinyinSplitter {
+            if (instance == null) {
+                instance = PinyinSplitter()
+            }
+            return instance!!
+        }
+    }
+
     /**
      * 完整汉语拼音音节表
      */
