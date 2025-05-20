@@ -236,6 +236,9 @@ class ShenjiInputMethodService : InputMethodService() {
             justCommittedText = false
             // 再次确保输入连接上的组合文本被清除
             currentInputConnection?.finishComposingText()
+            
+            // 重置候选词滚动位置
+            keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
         }
         
         // 添加字母到拼音组合中
@@ -258,7 +261,8 @@ class ShenjiInputMethodService : InputMethodService() {
             composingText.deleteCharAt(composingText.length - 1)
             
             if (composingText.isEmpty()) {
-                // 如果拼音为空，只隐藏候选词区域，保留拼音栏
+                // 如果拼音为空，清空拼音显示并隐藏候选词区域
+                updatePinyinDisplay("")
                 hideCandidates()
                 
                 // 结束组合文本状态
@@ -321,6 +325,9 @@ class ShenjiInputMethodService : InputMethodService() {
             if (areViewComponentsInitialized()) {
                 pinyinDisplay.text = ""
                 hideCandidates()
+                
+                // 重置候选词滚动位置
+                keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
             }
             
             // 清空候选词
@@ -412,6 +419,9 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 先显示候选词区域，确保可见性
         showCandidates()
+        
+        // 重置候选词滚动位置到起始位置
+        keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
         
         // 使用CandidateManager异步获取候选词
         Handler(Looper.getMainLooper()).post {
@@ -515,7 +525,14 @@ class ShenjiInputMethodService : InputMethodService() {
                 // 使用自定义样式设置按钮
                 candidateButton.setTextSize(16f)
                 candidateButton.setPadding(16, 8, 16, 8)
-                candidateButton.setTextColor(android.graphics.Color.BLACK)
+                
+                // 设置第一个候选词为蓝色，其他保持黑色
+                if (index == 0) {
+                    candidateButton.setTextColor(android.graphics.Color.BLUE)
+                } else {
+                    candidateButton.setTextColor(android.graphics.Color.BLACK)
+                }
+                
                 candidateButton.setBackgroundResource(R.drawable.candidate_button_bg)
                 candidateButton.minWidth = 80
                 candidateButton.minHeight = 40
@@ -536,6 +553,9 @@ class ShenjiInputMethodService : InputMethodService() {
                 // 添加到候选词容器
                 candidatesView.addView(candidateButton)
             }
+            
+            // 重置水平滚动位置到起始位置
+            keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
             
             // 记录日志，确认候选词视图状态
             Timber.d("候选词容器可见性: ${candidatesContainer.visibility == View.VISIBLE}")

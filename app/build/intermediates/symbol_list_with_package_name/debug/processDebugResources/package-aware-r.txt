@@ -3271,6 +3271,7 @@ id cache_measures
 id callMeasure
 id cancel_button
 id candidates_container
+id candidates_scroll_view
 id candidates_view
 id cardDbInfo
 id cardStats
