@@ -87,17 +87,47 @@ class DevToolsActivity : AppCompatActivity() {
     private fun setupUI() {
         // 拼音分词测试
         binding.btnTestPinyin.setOnClickListener {
+            Timber.d("按钮点击: 拼音分词测试")
             testPinyinSplitter()
         }
         
         // 拼音分词优化测试工具
         binding.btnPinyinSegmenterTest.setOnClickListener {
-            startActivity(Intent(this, PinyinTestActivity::class.java))
+            Timber.d("按钮点击: 拼音分词优化测试工具")
+            try {
+                Timber.d("开始启动PinyinTestActivity")
+                startActivity(Intent(this, PinyinTestActivity::class.java))
+                Timber.d("PinyinTestActivity启动完成")
+            } catch (e: Exception) {
+                Timber.e(e, "启动PinyinTestActivity失败")
+                Toast.makeText(this, "启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
         
         // 拼音输入法测试工具
         binding.btnPinyinTestTool.setOnClickListener {
-            startActivity(android.content.Intent(this, PinyinTestToolActivity::class.java))
+            Timber.d("按钮点击: 拼音输入法测试工具")
+            try {
+                Timber.d("开始启动PinyinTestToolActivity")
+                startActivity(Intent(this, PinyinTestToolActivity::class.java))
+                Timber.d("PinyinTestToolActivity启动完成")
+            } catch (e: Exception) {
+                Timber.e(e, "启动PinyinTestToolActivity失败")
+                Toast.makeText(this, "启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        // 词典调试工具
+        binding.btnDictionaryDebug.setOnClickListener {
+            Timber.d("按钮点击: 词典调试工具")
+            try {
+                Timber.d("开始启动DictionaryDebugActivity")
+                startActivity(Intent(this, DictionaryDebugActivity::class.java))
+                Timber.d("DictionaryDebugActivity启动完成")
+            } catch (e: Exception) {
+                Timber.e(e, "启动DictionaryDebugActivity失败")
+                Toast.makeText(this, "启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
         
         // 构建Realm数据库

@@ -50,6 +50,9 @@ class ShenjiInputMethodService : InputMethodService() {
     // 当前候选词列表
     private var candidates = listOf<WordFrequency>()
     
+    // 标记是否刚提交过候选词，用于处理连续输入
+    private var justCommittedText = false
+    
     // 长按删除键自动删除的处理器和任务
     private val deleteHandler = Handler(Looper.getMainLooper())
     private val deleteRunnable = object : Runnable {
@@ -220,6 +223,15 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 处理字母输入
     private fun onInputLetter(letter: String) {
+        // 检查是否刚刚提交了候选词，如果是则开始新的输入流程
+        if (justCommittedText) {
+            // 确保开始新的输入流程
+            composingText.clear()
+            justCommittedText = false
+            // 再次确保输入连接上的组合文本被清除
+            currentInputConnection?.finishComposingText()
+        }
+        
         // 添加字母到拼音组合中
         composingText.append(letter)
         
@@ -289,16 +301,35 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 提交文本到输入框
     private fun commitText(text: String) {
-        currentInputConnection?.commitText(text, 1)
-        // 重置组合文本
-        composingText.clear()
-        // 清空拼音显示区域
-        if (areViewComponentsInitialized()) {
-            pinyinDisplay.text = ""
-            hideCandidates()
+        // 记录之前的输入状态，用于日志
+        val hadComposingText = composingText.isNotEmpty()
+        
+        try {
+            // 提交文本到输入框
+            currentInputConnection?.commitText(text, 1)
+            
+            // 重置组合文本
+            composingText.clear()
+            
+            // 清空拼音显示区域
+            if (areViewComponentsInitialized()) {
+                pinyinDisplay.text = ""
+                hideCandidates()
+            }
+            
+            // 清空候选词
+            candidates = emptyList()
+            
+            // 确保完全结束组合状态
+            currentInputConnection?.finishComposingText()
+            
+            // 标记刚刚提交了候选词，下次输入时需要重置状态
+            justCommittedText = true
+            
+            Timber.d("提交文本: '$text', 之前有输入: $hadComposingText")
+        } catch (e: Exception) {
+            Timber.e(e, "提交文本失败: ${e.message}")
         }
-        // 清空候选词
-        candidates = emptyList()
     }
     
     // 辅助方法：检查视图组件是否已初始化
@@ -343,7 +374,7 @@ class ShenjiInputMethodService : InputMethodService() {
             return
         }
         
-        // 先显示候选词区域
+        // 先显示候选词区域，确保可见性
         showCandidates()
         
         // 使用CandidateManager异步获取候选词
@@ -361,69 +392,110 @@ class ShenjiInputMethodService : InputMethodService() {
                                 // 使用kotlinx.coroutines获取候选词
                                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
                                     try {
-                                        val result = candidateManager.generateCandidates(input, 20)
+                                        // 强制显示候选词容器，确保可见性
+                                        showCandidates()
+                                        
+                                        // 对于2个字母的输入，尝试首字母缩写查询
+                                        val queryInput = if (input.length == 2 && 
+                                                              input.all { it.isLetter() } && 
+                                                              input.lowercase() == input) {
+                                            // 如果输入是两个小写字母，强制尝试作为首字母缩写处理
+                                            Timber.d("检测到可能的首字母缩写: $input，强制按缩写处理")
+                                            // 我们传入一个特殊格式的查询，让CandidateManager知道这是首字母
+                                            "abbr:$input"
+                                        } else {
+                                            input
+                                        }
+                                        
+                                        val result = candidateManager.generateCandidates(queryInput, 20)
                                         if (result.isNotEmpty()) {
                                             // 更新成员变量
                                             candidates = result
                                             // 显示候选词
                                             updateCandidatesView(result)
                                             Timber.d("成功加载候选词: ${result.size}个")
+                                            
+                                            // 再次确保候选词区域可见
+                                            if (areViewComponentsInitialized()) {
+                                                candidatesContainer.visibility = View.VISIBLE
+                                                defaultCandidatesView.visibility = View.VISIBLE
+                                            }
                                         } else {
                                             Timber.d("未找到候选词")
                                             candidates = emptyList()
                                             clearCandidatesView()
                                         }
                                     } catch (e: Exception) {
-                                        Timber.e(e, "加载候选词失败")
+                                        Timber.e(e, "加载候选词失败: ${e.message}")
                                         Toast.makeText(this@ShenjiInputMethodService, "加载候选词失败", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }.onFailure { e ->
-                                Timber.e(e, "启动协程失败")
+                                Timber.e(e, "启动协程失败: ${e.message}")
                             }
                         }
                     } catch (e: Exception) {
-                        Timber.e(e, "获取候选词线程失败")
+                        Timber.e(e, "获取候选词线程失败: ${e.message}")
                         Handler(Looper.getMainLooper()).post {
                             Toast.makeText(this@ShenjiInputMethodService, "获取候选词失败", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }.start()
             } catch (e: Exception) {
-                Timber.e(e, "启动候选词获取任务失败")
+                Timber.e(e, "启动候选词获取任务失败: ${e.message}")
             }
         }
     }
     
     // 更新候选词视图
     private fun updateCandidatesView(wordList: List<WordFrequency>) {
-        if (!areViewComponentsInitialized()) return
+        if (!areViewComponentsInitialized()) {
+            Timber.e("视图组件未初始化，无法更新候选词")
+            return
+        }
         
-        // 清空现有的候选词
-        candidatesView.removeAllViews()
-        
-        // 添加每个候选词按钮
-        wordList.forEachIndexed { index, word ->
-            val candidateButton = Button(this)
-            candidateButton.text = word.word
-            candidateButton.textSize = 16f
-            candidateButton.setPadding(16, 8, 16, 8)
+        try {
+            // 清空现有的候选词
+            candidatesView.removeAllViews()
             
-            // 设置左右margin
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
-            params.setMargins(4, 0, 4, 0)
-            candidateButton.layoutParams = params
-            
-            // 设置点击事件
-            candidateButton.setOnClickListener {
-                commitText(word.word)
+            // 如果没有候选词，显示提示信息
+            if (wordList.isEmpty()) {
+                Timber.d("没有候选词可显示")
+                return
             }
             
-            // 添加到候选词容器
-            candidatesView.addView(candidateButton)
+            Timber.d("更新候选词视图，数量: ${wordList.size}")
+            
+            // 添加每个候选词按钮
+            wordList.forEachIndexed { index, word ->
+                val candidateButton = Button(this)
+                candidateButton.text = word.word
+                candidateButton.textSize = 16f
+                candidateButton.setPadding(16, 8, 16, 8)
+                
+                // 设置左右margin
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT
+                )
+                params.setMargins(4, 0, 4, 0)
+                candidateButton.layoutParams = params
+                
+                // 设置点击事件
+                candidateButton.setOnClickListener {
+                    commitText(word.word)
+                }
+                
+                // 添加到候选词容器
+                candidatesView.addView(candidateButton)
+            }
+            
+            // 确保候选词区域可见
+            candidatesContainer.visibility = View.VISIBLE
+            defaultCandidatesView.visibility = View.VISIBLE
+            toolbarView.visibility = View.GONE
+        } catch (e: Exception) {
+            Timber.e(e, "更新候选词视图失败: ${e.message}")
         }
     }
     
@@ -442,6 +514,28 @@ class ShenjiInputMethodService : InputMethodService() {
             appNameDisplay.text = getAppNameFromPackage(packageName)
             Timber.d("当前应用: ${appNameDisplay.text}")
         }
+        
+        // 清空初始化状态，确保没有硬编码的"w"等字符
+        composingText.clear()
+        updatePinyinDisplay("")
+        clearCandidatesView()
+        hideCandidates()
+        candidates = emptyList()
+        justCommittedText = false
+        
+        // 确保输入连接上的组合文本也被清除
+        currentInputConnection?.finishComposingText()
+        
+        Timber.d("初始化输入视图，已清空所有状态")
+    }
+    
+    override fun onInitializeInterface() {
+        super.onInitializeInterface()
+        // 初始化时确保状态清空
+        composingText.clear()
+        candidates = emptyList()
+        justCommittedText = false
+        Timber.d("输入法接口初始化，清空所有状态")
     }
     
     // 获取应用名称

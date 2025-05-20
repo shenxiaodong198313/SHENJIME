@@ -66,19 +66,7 @@
                     android:layout_marginTop="16dp"
                     android:text="拼音分词优化测试" />
                     
-                <Button
-                    android:id="@+id/btnPinyinTestTool"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="拼音输入法测试工具" />
-
-                <Button
-                    android:id="@+id/btnBuildRealmDb"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="构建Realm实例" />
+                                <Button                    android:id="@+id/btnPinyinTestTool"                    android:layout_width="match_parent"                    android:layout_height="wrap_content"                    android:layout_marginTop="16dp"                    android:text="拼音输入法测试工具" />                                <Button                    android:id="@+id/btnDictionaryDebug"                    android:layout_width="match_parent"                    android:layout_height="wrap_content"                    android:layout_marginTop="16dp"                    android:text="词典调试工具" />                <Button                    android:id="@+id/btnBuildRealmDb"                    android:layout_width="match_parent"                    android:layout_height="wrap_content"                    android:layout_marginTop="16dp"                    android:text="构建Realm实例" />
 
                 <Button
                     android:id="@+id/btnExportDb"

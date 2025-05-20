@@ -800,6 +800,193 @@ class DictionaryRepository {
             return "检查失败: ${e.message}"
         }
     }
+
+    /**
+     * 按词典类型和拼音精确匹配查询
+     * @param pinyin 完整拼音
+     * @param type 词典类型
+     * @param limit 最大返回数量
+     * @return 匹配的词条列表
+     */
+    fun searchExactPinyinByType(pinyin: String, type: String, limit: Int): List<Entry> {
+        try {
+            Timber.d("按类型'$type'精确查询拼音'$pinyin'")
+            
+            return realm.query<Entry>("pinyin == $0 AND type == $1", pinyin, type)
+                .find()
+                .sortedByDescending { it.frequency }
+                .take(limit)
+                .toList()
+        } catch (e: Exception) {
+            Timber.e(e, "按类型精确查询拼音失败: ${e.message}")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 按词典类型和拼音前缀匹配查询
+     * @param pinyinPrefix 拼音前缀
+     * @param type 词典类型
+     * @param limit 最大返回数量
+     * @return 匹配的词条列表
+     */
+    fun searchPinyinPrefixByType(pinyinPrefix: String, type: String, limit: Int): List<Entry> {
+        try {
+            Timber.d("按类型'$type'查询拼音前缀'$pinyinPrefix'")
+            
+            return realm.query<Entry>("pinyin BEGINSWITH $0 AND type == $1", pinyinPrefix, type)
+                .find()
+                .filter { it.pinyin != pinyinPrefix } // 排除精确匹配，避免重复
+                .sortedByDescending { it.frequency }
+                .take(limit)
+                .toList()
+        } catch (e: Exception) {
+            Timber.e(e, "按类型查询拼音前缀失败: ${e.message}")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 按首字母缩写和词典类型查询
+     * @param initials 首字母缩写
+     * @param type 词典类型
+     * @param limit 最大返回数量
+     * @return 匹配的词条列表
+     */
+    fun searchByInitialLettersAndType(initials: String, type: String, limit: Int): List<Entry> {
+        try {
+            Timber.d("按类型'$type'查询首字母'$initials'")
+            
+            // 精确匹配首字母缩写
+            val exactMatches = realm.query<Entry>("initialLetters == $0 AND type == $1", initials, type)
+                .find()
+                .sortedByDescending { it.frequency }
+                .take(limit / 2)
+                .toList()
+            
+            // 如果结果不足，添加以该首字母开头的结果
+            if (exactMatches.size < limit / 2) {
+                val prefixMatches = realm.query<Entry>("initialLetters BEGINSWITH $0 AND type == $1", initials, type)
+                    .find()
+                    .filter { it.initialLetters != initials } // 排除已有的精确匹配
+                    .sortedByDescending { it.frequency }
+                    .take(limit - exactMatches.size)
+                    .toList()
+                
+                return exactMatches + prefixMatches
+            }
+            
+            return exactMatches
+            
+        } catch (e: Exception) {
+            Timber.e(e, "按类型查询首字母失败: ${e.message}")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 检查是否为合法的完整拼音
+     * @param pinyin 拼音字符串
+     * @return 是否为合法拼音
+     */
+    fun isValidPinyin(pinyin: String): Boolean {
+        // 尝试拆分拼音
+        val syllables = splitPinyin(pinyin)
+        // 如果能成功拆分为音节，并且拆分结果拼接起来等于原始输入，则为合法拼音
+        return syllables.isNotEmpty() && syllables.joinToString("") == pinyin
+    }
+    
+    /**
+     * 拆分拼音为音节序列
+     * @param pinyin 拼音字符串
+     * @return 音节序列
+     */
+    fun splitPinyin(pinyin: String): List<String> {
+        if (pinyin.isBlank()) return emptyList()
+        
+        try {
+            // 调用优化版拼音分词器
+            val splitter = com.shenji.aikeyboard.data.PinyinSplitterOptimized()
+            return splitter.splitPinyin(pinyin)
+        } catch (e: Exception) {
+            Timber.e(e, "拆分拼音失败: ${e.message}")
+            return emptyList()
+        }
+    }
+
+    /**
+     * 模糊匹配首字母输入
+     * 当精确的首字母匹配找不到足够结果时，尝试更宽松的模糊匹配
+     * @param initial 首字母输入
+     * @param limit 最大返回数量
+     * @return 匹配的词条列表
+     */
+    fun searchFuzzyByInitial(initial: String, limit: Int): List<Entry> {
+        try {
+            Timber.d("模糊匹配首字母: '$initial'")
+            val startTime = System.currentTimeMillis()
+            val results = mutableListOf<Entry>()
+            
+            // 策略1: 查找字或词的首字母（从initialLetters字段的任意位置）包含输入字母的情况
+            val containsMatches = realm.query<Entry>("initialLetters CONTAINS[c] $0", initial)
+                .find()
+                .sortedByDescending { it.frequency }
+                .take(limit / 2)
+            
+            results.addAll(containsMatches)
+            
+            // 策略2: 如果输入是单个字母，直接查询词条的首字拼音
+            if (initial.length == 1) {
+                val singleCharMatches = realm.query<Entry>("pinyin BEGINSWITH $0", initial)
+                    .find()
+                    .filter { entry -> 
+                        entry.word.length <= 2 && // 限制为1-2个汉字
+                        entry !in results // 避免重复
+                    }
+                    .sortedByDescending { it.frequency }
+                    .take(limit / 2)
+                
+                results.addAll(singleCharMatches)
+            }
+            
+            // 策略3: 对于双字母输入，尝试将其视为拼音缩写
+            if (initial.length == 2) {
+                val firstChar = initial[0].toString()
+                val secondChar = initial[1].toString()
+                
+                // 查找两个字的词，第一个字的拼音以firstChar开头，第二个字的拼音以secondChar开头
+                val twoCharMatches = realm.query<Entry>()
+                    .find()
+                    .filter { entry ->
+                        if (entry.word.length == 2 && entry.pinyin.contains(" ")) {
+                            val syllables = entry.pinyin.split(" ")
+                            if (syllables.size == 2) {
+                                syllables[0].startsWith(firstChar) && 
+                                syllables[1].startsWith(secondChar)
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        }
+                    }
+                    .filter { it !in results } // 避免重复
+                    .sortedByDescending { it.frequency }
+                    .take(limit / 4)
+                
+                results.addAll(twoCharMatches)
+            }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("模糊匹配完成，耗时${endTime - startTime}ms，找到${results.size}个结果")
+            
+            return results.take(limit)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "模糊匹配首字母失败: ${e.message}")
+            return emptyList()
+        }
+    }
 }
 
 /**

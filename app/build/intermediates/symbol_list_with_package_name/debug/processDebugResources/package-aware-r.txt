@@ -3257,6 +3257,7 @@ id btnCopyLog
 id btnCopyLogs
 id btnDevTools
 id btnDictManager
+id btnDictionaryDebug
 id btnExportDb
 id btnExportToPublic
 id btnLogs
@@ -3267,6 +3268,7 @@ id btnShowDbDetails
 id btnTestPinyin
 id btn_enable_ime
 id btn_ime_settings
+id btn_search
 id btn_set_default_ime
 id buttonContainer
 id buttonPanel
@@ -3279,6 +3281,8 @@ id candidates_container
 id candidates_view
 id cardDbInfo
 id cardStats
+id card_candidates
+id card_debug_info
 id carryVelocity
 id center
 id centerCrop
@@ -3361,6 +3365,7 @@ id enterAlwaysCollapsed
 id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
+id et_input
 id exitUntilCollapsed
 id expand_activities_button
 id expand_candidates_button
@@ -3592,6 +3597,7 @@ id postLayout
 id pressed
 id progressBar
 id progressBarLoading
+id progress_bar
 id progress_circular
 id progress_horizontal
 id queryDisplay
@@ -3616,6 +3622,9 @@ id rvDictionaryModules
 id rvEntries
 id rvLogs
 id rvShimmerModules
+id rv_candidates
+id rv_stages
+id rv_weights
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -3720,6 +3729,7 @@ id textinput_helper_text
 id textinput_placeholder
 id textinput_prefix_text
 id textinput_suffix_text
+id til_input
 id time
 id title
 id titleDividerNoCustom
@@ -3768,11 +3778,20 @@ id tvModuleCount
 id tvModuleListTitle
 id tvNoLogs
 id tvPinyin
-id tvRank
-id tvSource
 id tvTitle
 id tvTotalEntries
 id tvWord
+id tv_candidate_weight
+id tv_candidate_word
+id tv_duplicates
+id tv_frequency
+id tv_input
+id tv_pinyin
+id tv_rank
+id tv_source
+id tv_stage_results
+id tv_stage_title
+id tv_word
 id unchecked
 id uniform
 id unlabeled
@@ -3911,6 +3930,7 @@ layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
 layout activity_dev_tools
+layout activity_dictionary_debug
 layout activity_dictionary_detail
 layout activity_dictionary_logs
 layout activity_dictionary_manager
@@ -3940,6 +3960,8 @@ layout dialog_export_settings
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_candidate
+layout item_debug_stage
+layout item_debug_weight
 layout item_dictionary_entry
 layout item_dictionary_group_header
 layout item_dictionary_log
