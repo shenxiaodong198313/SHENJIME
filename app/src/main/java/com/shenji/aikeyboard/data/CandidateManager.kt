@@ -141,6 +141,100 @@ class CandidateManager(private val repository: DictionaryRepository) {
                     .map { WordFrequency(it.word, it.frequency) }
             }
             
+            InputStage.ACRONYM -> {
+                // 单字母组合查询，根据字母数量匹配相应词长的候选词
+                if (input.length > 1 && input.all { it in 'a'..'z' }) {
+                    Timber.d("单字母组合查询: '$input', 字母数: ${input.length}")
+                    
+                    // 根据字母数量选择对应的词典
+                    val dictType = when(input.length) {
+                        2, 3 -> "base" // 2-3个字母优先查base词典
+                        4, 5 -> "correlation" // 4-5个字母查correlation词典
+                        else -> "associational" // 5个以上查associational词典
+                    }
+                    
+                    // 优先查询指定词典中词长与字母数量一致且首字母匹配的词条
+                    val primaryDictResults = realm.query<Entry>(
+                        "type == $0 AND length(word) == $1 AND initialLetters BEGINSWITH $2", 
+                        dictType, input.length, input
+                    ).find().sortedByDescending { it.frequency }
+                    
+                    // 查询其他词典中匹配的结果（按优先级顺序）
+                    val secondaryDictTypes = when(input.length) {
+                        2, 3 -> listOf("place", "people", "compatible", "poetry")
+                        4, 5 -> listOf("base", "place", "people", "compatible", "poetry")
+                        else -> listOf("correlation", "base", "place", "people", "compatible", "poetry")
+                    }
+                    
+                    // 二级词典结果
+                    val secondaryResults = mutableListOf<Entry>()
+                    
+                    // 查询每个二级词典
+                    secondaryDictTypes.forEach { dictName ->
+                        val results = realm.query<Entry>(
+                            "type == $0 AND length(word) == $1 AND initialLetters BEGINSWITH $2", 
+                            dictName, input.length, input
+                        ).find().sortedByDescending { it.frequency }
+                        
+                        secondaryResults.addAll(results)
+                    }
+                    
+                    // 精确匹配结果（任何词典）
+                    val exactMatches = realm.query<Entry>(
+                        "initialLetters == $0", input
+                    ).find().sortedByDescending { it.frequency }
+                    
+                    // 合并结果，确保不重复
+                    val result = mutableListOf<WordFrequency>()
+                    val seenWords = mutableSetOf<String>()
+                    
+                    // 1. 首先添加精确匹配的首字母结果
+                    exactMatches.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            result.add(WordFrequency(entry.word, entry.frequency))
+                        }
+                    }
+                    
+                    // 2. 添加主要词典的结果
+                    primaryDictResults.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            result.add(WordFrequency(entry.word, entry.frequency))
+                        }
+                    }
+                    
+                    // 3. 添加次要词典的结果
+                    secondaryResults.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            result.add(WordFrequency(entry.word, entry.frequency))
+                        }
+                    }
+                    
+                    // 4. 如果结果不足，尝试更宽松的匹配
+                    if (result.size < limit) {
+                        val otherMatches = realm.query<Entry>(
+                            "initialLetters BEGINSWITH $0", input
+                        ).find().sortedByDescending { it.frequency }
+                        
+                        otherMatches.forEach { entry ->
+                            if (seenWords.add(entry.word) && result.size < limit) {
+                                result.add(WordFrequency(entry.word, entry.frequency))
+                            }
+                        }
+                    }
+                    
+                    // 取前limit个结果
+                    result.take(limit)
+                } else {
+                    // 常规缩写查询
+                    val entries = realm.query<Entry>("initialLetters == $0", input).find()
+                    
+                    entries
+                        .sortedByDescending { it.frequency }
+                        .take(limit)
+                        .map { WordFrequency(it.word, it.frequency) }
+                }
+            }
+            
             InputStage.PINYIN_COMPLETION -> {
                 // 检查是否是单个有效音节
                 val isSingleSyllable = isValidPinyin(input) && !input.contains(" ")
@@ -204,15 +298,6 @@ class CandidateManager(private val repository: DictionaryRepository) {
                 }
             }
             
-            InputStage.ACRONYM -> {
-                val entries = realm.query<Entry>("initialLetters == $0", input).find()
-                
-                entries
-                    .sortedByDescending { it.frequency }
-                    .take(limit)
-                    .map { WordFrequency(it.word, it.frequency) }
-            }
-            
             else -> emptyList()
         }
     }
@@ -228,15 +313,37 @@ class CandidateManager(private val repository: DictionaryRepository) {
         if (input.length == 1 && input.matches(Regex("^[a-z]$"))) {
             return InputStage.INITIAL_LETTER // 首字母阶段
         }
+        
+        // 优先检查是否是单字母组合（如"wx", "nh"等），每个字符都是单个字母
+        if (input.all { it in 'a'..'z' } && input.length > 1) {
+            // 检查每个字符是否是可能的首字母（非有效拼音音节）
+            val allSingleLetters = input.all { 
+                val singleChar = it.toString()
+                !isValidPinyin(singleChar) // 不是有效拼音音节
+            }
+            
+            if (allSingleLetters) {
+                Timber.d("识别为单字母组合: '$input'")
+                return InputStage.ACRONYM // 首字母缩写阶段
+            }
+        }
 
-        // 单个完整拼音音节，直接归类为拼音补全阶段，并且标记为单音节
+        // 单个完整拼音音节，直接归类为拼音补全阶段
         if (isValidPinyin(input) && !input.contains(" ")) {
             return InputStage.PINYIN_COMPLETION // 拼音补全阶段
         }
 
+        // 其他情况，尝试音节拆分或作为缩写处理
+        val canSplit = canSplitToValidSyllables(input)
+        
+        // 输出调试信息
+        if (!canSplit) {
+            Timber.d("无法进行音节拆分，作为首字母缩写处理: '$input'")
+        }
+        
         return when {
-            canSplitToValidSyllables(input) -> InputStage.SYLLABLE_SPLIT // 音节拆分阶段
-            else -> InputStage.ACRONYM // 首字母缩写阶段
+            canSplit -> InputStage.SYLLABLE_SPLIT // 音节拆分阶段
+            else -> InputStage.ACRONYM // 无法拆分则作为首字母缩写阶段
         }
     }
     

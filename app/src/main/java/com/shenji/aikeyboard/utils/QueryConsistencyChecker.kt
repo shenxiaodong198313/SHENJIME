@@ -55,15 +55,37 @@ class QueryConsistencyChecker {
         if (input.length == 1 && input.matches(Regex("^[a-z]$"))) {
             return PinyinTestViewModel.InputStage.INITIAL_LETTER // 首字母阶段
         }
+        
+        // 优先检查是否是单字母组合（如"wx", "nh"等），每个字符都是单个字母
+        if (input.all { it in 'a'..'z' } && input.length > 1) {
+            // 检查每个字符是否是可能的首字母（非有效拼音音节）
+            val allSingleLetters = input.all { 
+                val singleChar = it.toString()
+                !isValidPinyin(singleChar) // 不是有效拼音音节
+            }
+            
+            if (allSingleLetters) {
+                Timber.d("识别为单字母组合: '$input'")
+                return PinyinTestViewModel.InputStage.ACRONYM // 首字母缩写阶段
+            }
+        }
 
-        // 单个完整拼音音节，直接归类为拼音补全阶段，并且标记为单音节
+        // 单个完整拼音音节，直接归类为拼音补全阶段
         if (isValidPinyin(input) && !input.contains(" ")) {
             return PinyinTestViewModel.InputStage.PINYIN_COMPLETION // 拼音补全阶段
         }
 
+        // 其他情况，尝试音节拆分或作为缩写处理
+        val canSplit = canSplitToValidSyllables(input)
+        
+        // 输出调试信息
+        if (!canSplit) {
+            Timber.d("无法进行音节拆分，作为首字母缩写处理: '$input'")
+        }
+        
         return when {
-            canSplitToValidSyllables(input) -> PinyinTestViewModel.InputStage.SYLLABLE_SPLIT // 音节拆分阶段
-            else -> PinyinTestViewModel.InputStage.ACRONYM // 首字母缩写阶段
+            canSplit -> PinyinTestViewModel.InputStage.SYLLABLE_SPLIT // 音节拆分阶段
+            else -> PinyinTestViewModel.InputStage.ACRONYM // 无法拆分则作为首字母缩写阶段
         }
     }
     
