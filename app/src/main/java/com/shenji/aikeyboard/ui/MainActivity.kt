@@ -58,26 +58,34 @@ class MainActivity : AppCompatActivity() {
     private fun setupUI() {
         try {
             // 设置按钮点击事件
+            Log.d("MainActivity", "设置按钮点击事件监听器")
+            
             binding.btnLogs?.setOnClickListener {
+                Log.d("MainActivity", "btnLogs 按钮被点击")
                 openLogDetail()
             }
             
             binding.btnDictManager?.setOnClickListener {
+                Log.d("MainActivity", "btnDictManager 按钮被点击")
                 openDictManager()
             }
             
             // 添加开发工具入口
             binding.btnDevTools?.setOnClickListener {
+                Log.d("MainActivity", "btnDevTools 按钮被点击")
                 openDevTools()
             }
             
             // 添加输入法设置入口
             binding.mainButtonContainer?.findViewById<Button>(R.id.btn_ime_settings)?.setOnClickListener {
+                Log.d("MainActivity", "btn_ime_settings 按钮被点击")
                 openInputMethodSettings()
             }
+            
+            Log.d("MainActivity", "所有按钮监听器设置完成")
         } catch (e: Exception) {
             Log.e("MainActivity", "设置UI元素失败: ${e.message}", e)
-            Toast.makeText(this, "界面初始化异常，部分功能可能不可用", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "界面初始化异常，部分功能可能不可用", Toast.LENGTH_LONG).show()      
         }
     }
     
@@ -86,9 +94,12 @@ class MainActivity : AppCompatActivity() {
      */
     private fun openLogDetail() {
         try {
+            Log.d("MainActivity", "开始打开日志详情")
             Timber.d("打开日志详情")
             val intent = Intent(this, LogDetailActivity::class.java)
+            Log.d("MainActivity", "创建Intent: ${intent}")
             startActivity(intent)
+            Log.d("MainActivity", "日志详情Activity启动完成")
         } catch (e: Exception) {
             Log.e("MainActivity", "打开日志详情失败: ${e.message}", e)
             Toast.makeText(this, "无法打开日志详情: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -100,9 +111,12 @@ class MainActivity : AppCompatActivity() {
      */
     private fun openDictManager() {
         try {
+            Log.d("MainActivity", "开始打开词典管理")
             Timber.d("打开词典管理")
             val intent = Intent(this, DictionaryManagerActivity::class.java)
+            Log.d("MainActivity", "创建Intent: ${intent}")
             startActivity(intent)
+            Log.d("MainActivity", "词典管理Activity启动完成")
         } catch (e: Exception) {
             Log.e("MainActivity", "打开词典管理失败: ${e.message}", e)
             Toast.makeText(this, "无法打开词典管理: ${e.message}", Toast.LENGTH_SHORT).show()

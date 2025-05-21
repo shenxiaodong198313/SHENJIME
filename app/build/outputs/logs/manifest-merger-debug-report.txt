@@ -153,12 +153,12 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\15811\scoop\apps\g
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:36:9-44
 	android:name
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:29:9-42
-activity#com.shenji.aikeyboard.MainActivity
+activity#com.shenji.aikeyboard.ui.MainActivity
 ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:39:9-46:20
 	android:exported
 		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:41:13-36
 	android:name
-		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:40:13-41
+		ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:40:13-44
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
 ADDED from C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:42:13-45:29
 action#android.intent.action.MAIN

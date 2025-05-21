@@ -88,8 +88,8 @@
 53        <!-- 主活动 -->
 54        <activity
 54-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:39:9-46:20
-55            android:name="com.shenji.aikeyboard.MainActivity"
-55-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:40:13-41
+55            android:name="com.shenji.aikeyboard.ui.MainActivity"
+55-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:40:13-44
 56            android:exported="true" >
 56-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:41:13-36
 57            <intent-filter>

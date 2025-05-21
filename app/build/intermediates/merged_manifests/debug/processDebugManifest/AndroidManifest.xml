@@ -52,7 +52,7 @@
 
         <!-- 主活动 -->
         <activity
-            android:name="com.shenji.aikeyboard.MainActivity"
+            android:name="com.shenji.aikeyboard.ui.MainActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
