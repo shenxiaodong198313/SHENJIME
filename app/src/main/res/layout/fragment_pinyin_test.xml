@@ -75,6 +75,17 @@
                     android:textColor="#333333"
                     android:textSize="16sp"
                     android:textStyle="bold" />
+                
+                <!-- 当前处理的输入提示 -->
+                <TextView
+                    android:id="@+id/current_input_text_view"
+                    android:layout_width="match_parent" 
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:textColor="#FF5722"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    tools:text="当前输入: wei" />
 
                 <TextView
                     android:id="@+id/stage_text_view"

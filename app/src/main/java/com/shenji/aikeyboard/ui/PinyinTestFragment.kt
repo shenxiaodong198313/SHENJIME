@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shenji.aikeyboard.R
+import com.shenji.aikeyboard.adapter.CandidateAdapter
 import com.shenji.aikeyboard.model.Candidate
 import com.shenji.aikeyboard.pinyin.InputType
 import com.shenji.aikeyboard.viewmodel.PinyinTestViewModel
@@ -21,6 +22,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -31,6 +33,7 @@ class PinyinTestFragment : Fragment() {
 
     private lateinit var viewModel: PinyinTestViewModel
     private lateinit var inputEditText: EditText
+    private lateinit var currentInputTextView: TextView
     private lateinit var stageTextView: TextView
     private lateinit var splitResultTextView: TextView
     private lateinit var queryConditionTextView: TextView
@@ -68,6 +71,7 @@ class PinyinTestFragment : Fragment() {
     
     private fun initViews(view: View) {
         inputEditText = view.findViewById(R.id.input_edit_text)
+        currentInputTextView = view.findViewById(R.id.current_input_text_view)
         stageTextView = view.findViewById(R.id.stage_text_view)
         splitResultTextView = view.findViewById(R.id.split_result_text_view)
         queryConditionTextView = view.findViewById(R.id.query_condition_text_view)
@@ -104,6 +108,11 @@ class PinyinTestFragment : Fragment() {
         viewModel.inputFlow
             .debounce(300) // 300ms防抖
             .onEach { input ->
+                // 更新当前输入提示
+                lifecycleScope.launch {
+                    currentInputTextView.text = "当前输入: $input"
+                }
+                
                 // 处理输入
                 if (input.isNotEmpty()) {
                     try {
@@ -124,6 +133,33 @@ class PinyinTestFragment : Fragment() {
         // 复制结果按钮点击事件
         copyResultButton.setOnClickListener {
             copyTestResult()
+        }
+
+        // 当点击候选词时模拟输入法中选择候选词的行为
+        candidateAdapter.setOnItemClickListener { candidate ->
+            val currentText = inputEditText.text.toString()
+            val currentPosition = inputEditText.selectionStart
+            
+            // 模拟输入法选择候选词的行为
+            // 在当前位置插入选中的候选词和一个空格，表示已确认
+            val confirmedText = if (currentText.isEmpty()) {
+                candidate.word + " "
+            } else {
+                // 如果当前有输入，将其替换为候选词并添加空格
+                val parts = currentText.split(" ")
+                if (parts.size > 1) {
+                    // 已有确认文本，替换最后一部分
+                    parts.dropLast(1).joinToString(" ") + " " + candidate.word + " "
+                } else {
+                    // 没有确认文本，直接替换
+                    candidate.word + " "
+                }
+            }
+            
+            // 更新输入框
+            inputEditText.setText(confirmedText)
+            // 将光标移动到末尾
+            inputEditText.setSelection(confirmedText.length)
         }
     }
     

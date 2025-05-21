@@ -79,6 +79,7 @@ id clear_button
 id clear_logs_button
 id copy_logs_button
 id copy_result_button
+id current_input_text_view
 id default_candidates_view
 id etBatchSize
 id etMaxNodesPerBatch

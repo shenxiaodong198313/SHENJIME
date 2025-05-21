@@ -27,6 +27,12 @@ class PinyinTestViewModel : ViewModel() {
     private val _inputFlow = MutableStateFlow("")
     val inputFlow: StateFlow<String> = _inputFlow
 
+    // 已确认的文本（模拟输入法环境中已选择的文字）
+    private var confirmedText = ""
+    
+    // 当前正在输入的文本（未确认的拼音）
+    private var currentInput = ""
+
     // 当前输入类型
     private val _inputType = MutableLiveData<InputType>()
     val inputType: LiveData<InputType> = _inputType
@@ -76,9 +82,46 @@ class PinyinTestViewModel : ViewModel() {
 
     /**
      * 更新输入
+     * 在真实输入法中，通过composingText可以获取当前正在编辑的文本
+     * 在模拟工具中，我们需要提取出最新输入的拼音
      */
     fun updateInput(input: String) {
-        _inputFlow.value = input.trim().lowercase()
+        if (input.isEmpty()) {
+            _inputFlow.value = ""
+            confirmedText = ""
+            currentInput = ""
+            return
+        }
+        
+        // 从输入框中提取出最新的拼音输入部分
+        // 正则表达式匹配连续的英文字母和数字
+        val regex = Regex("[a-zA-Z0-9]+")
+        val matches = regex.findAll(input)
+        
+        // 获取最后一个匹配项（最新的拼音输入）
+        val lastMatch = matches.lastOrNull()
+        
+        if (lastMatch != null) {
+            // 用户当前正在输入的拼音部分
+            currentInput = lastMatch.value.trim().lowercase()
+            
+            // 可能的已确认文本（最后一个拼音之前的部分）
+            val endIndex = lastMatch.range.first
+            if (endIndex > 0) {
+                confirmedText = input.substring(0, endIndex)
+            } else {
+                confirmedText = ""
+            }
+            
+            // 更新输入流
+            _inputFlow.value = currentInput
+            Timber.d("输入更新: 已确认文本='$confirmedText', 当前输入='$currentInput'")
+        } else {
+            // 没有拼音输入
+            currentInput = ""
+            confirmedText = input
+            _inputFlow.value = ""
+        }
     }
 
     /**
@@ -86,6 +129,8 @@ class PinyinTestViewModel : ViewModel() {
      */
     fun clearInput() {
         _inputFlow.value = ""
+        confirmedText = ""
+        currentInput = ""
         _candidates.value = emptyList()
         _matchRule.value = ""
         _syllableSplit.value = emptyList()
@@ -97,17 +142,19 @@ class PinyinTestViewModel : ViewModel() {
 
     /**
      * 处理输入，执行分词和查询操作
+     * 只处理当前输入的拼音部分，不包括已确认的文本
      */
     fun processInput(input: String) {
         viewModelScope.launch {
             try {
-                if (input.isEmpty()) {
+                // 只处理当前输入的部分
+                if (currentInput.isEmpty()) {
                     clearInput()
                     return@launch
                 }
 
-                // 使用标准化模块查询
-                val queryResult = pinyinQueryEngine.query(input, 20, true)
+                // 使用标准化模块查询，只查询当前输入的拼音部分
+                val queryResult = pinyinQueryEngine.query(currentInput, 20, true)
                 
                 // 更新UI数据
                 updateUIWithQueryResult(queryResult)

@@ -3308,6 +3308,7 @@ id cos
 id counterclockwise
 id cradle
 id currentState
+id current_input_text_view
 id custom
 id customPanel
 id cut
