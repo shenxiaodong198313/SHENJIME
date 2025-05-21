@@ -66,6 +66,7 @@ class PinyinQueryEngine {
                 InputType.PINYIN_SYLLABLE -> queryPinyinSyllable(normalizedInput, limit, needExplain)
                 InputType.SYLLABLE_SPLIT -> querySyllableSplit(normalizedInput, limit, needExplain)
                 InputType.ACRONYM -> queryAcronym(normalizedInput, limit, needExplain)
+                InputType.DYNAMIC_SYLLABLE -> queryDynamicSyllable(normalizedInput, limit, needExplain)
                 else -> PinyinQueryResult.empty(inputType, "未知类型的输入")
             }
         } catch (e: Exception) {
@@ -98,7 +99,14 @@ class PinyinQueryEngine {
             return InputType.PINYIN_SYLLABLE
         }
 
-        // 其他情况，尝试音节拆分或作为缩写处理
+        // 尝试动态音节识别（优先级高于音节拆分和首字母缩写）
+        val dynamicSyllables = pinyinSplitter.splitDynamicInput(pinyinPart)
+        if (dynamicSyllables.isNotEmpty() && dynamicSyllables.any { it.length == 1 }) {
+            // 如果拆分结果包含单字符，说明有未完成的音节，使用动态音节识别
+            return InputType.DYNAMIC_SYLLABLE
+        }
+        
+        // 其他情况，尝试常规音节拆分或作为缩写处理
         val canSplit = canSplitToValidSyllables(pinyinPart)
         
         return when {
@@ -433,6 +441,186 @@ class PinyinQueryEngine {
             inputType = InputType.ACRONYM,
             candidates = candidates.take(limit),
             syllables = listOf(),
+            explanation = explanation.toString()
+        )
+    }
+    
+    /**
+     * 查询动态音节候选词
+     * 处理未完成的拼音输入，如"shenjingb"，将其拆分为完整音节+剩余字母
+     */
+    private suspend fun queryDynamicSyllable(
+        input: String, 
+        limit: Int,
+        needExplain: Boolean
+    ): PinyinQueryResult = withContext(Dispatchers.IO) {
+        val explanation = StringBuilder()
+        val candidates = mutableListOf<PinyinCandidate>()
+        
+        // 从输入中提取纯英文拼音部分
+        val pinyinPart = extractPinyinPart(input)
+        
+        // 使用动态音节拆分
+        val syllables = pinyinSplitter.splitDynamicInput(pinyinPart)
+        
+        if (syllables.isEmpty()) {
+            if (needExplain) {
+                explanation.append("动态音节拆分失败，无法获得有效拆分\n")
+                explanation.append("- 原始输入: '$input'\n")
+                explanation.append("- 提取拼音部分: '$pinyinPart'\n")
+            }
+            return@withContext PinyinQueryResult(
+                inputType = InputType.DYNAMIC_SYLLABLE,
+                candidates = emptyList(),
+                syllables = emptyList(),
+                explanation = explanation.toString()
+            )
+        }
+        
+        if (needExplain) {
+            explanation.append("查询过程:\n")
+            explanation.append("1. 使用首字母缩写规则查询词典\n")
+            explanation.append("- 原始输入: '$input'\n")
+            explanation.append("- 提取拼音部分: '$pinyinPart'\n")
+            explanation.append("- 音节拆分: ${syllables.joinToString("+")}\n")
+        }
+        
+        try {
+            val realm = ShenjiApplication.realm
+            
+            // 查询策略1：如果最后一个元素是单字符，作为词首字母缩写来查询
+            if (syllables.last().length == 1) {
+                // 前面部分拼成拼音字符串（带空格）
+                val completeSyllables = syllables.dropLast(1)
+                val lastChar = syllables.last()
+                
+                if (needExplain) {
+                    explanation.append("2. 完整音节: ${completeSyllables.joinToString("+")}\n")
+                    explanation.append("3. 剩余首字母: $lastChar\n")
+                }
+                
+                // 如果有完整音节部分
+                if (completeSyllables.isNotEmpty()) {
+                    val fullPinyin = completeSyllables.joinToString(" ")
+                    
+                    if (needExplain) {
+                        explanation.append("4. 查询条件: pinyin BEGINSWITH '$fullPinyin' AND initialLetters LIKE '*$lastChar*'\n")
+                    }
+                    
+                    // 查询拼音以完整音节开头，且初始字母包含剩余字符的词条
+                    val query = realm.query<Entry>("pinyin BEGINSWITH $0 AND initialLetters CONTAINS $1", 
+                        fullPinyin, lastChar)
+                    
+                    val entries = query.find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit)
+                    
+                    if (needExplain) {
+                        explanation.append("- 匹配结果: ${entries.size}个\n")
+                    }
+                    
+                    // 转换为候选词
+                    val seenWords = mutableSetOf<String>()
+                    entries.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            candidates.add(
+                                PinyinCandidate(
+                                    word = entry.word,
+                                    pinyin = entry.pinyin,
+                                    frequency = entry.frequency,
+                                    type = entry.type,
+                                    matchType = MatchType.SYLLABLE_SPLIT
+                                )
+                            )
+                        }
+                    }
+                } 
+                // 如果只有单个字母
+                else {
+                    if (needExplain) {
+                        explanation.append("4. 只有单个字母，使用首字母查询\n")
+                    }
+                    
+                    // 只有一个字母的情况，按首字母查询
+                    val initialQuery = realm.query<Entry>("initialLetters BEGINSWITH $0", lastChar)
+                    
+                    val entries = initialQuery.find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit)
+                    
+                    if (needExplain) {
+                        explanation.append("- 匹配结果: ${entries.size}个\n")
+                    }
+                    
+                    // 转换为候选词
+                    val seenWords = mutableSetOf<String>()
+                    entries.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            candidates.add(
+                                PinyinCandidate(
+                                    word = entry.word,
+                                    pinyin = entry.pinyin,
+                                    frequency = entry.frequency,
+                                    type = entry.type,
+                                    matchType = MatchType.INITIAL_LETTER
+                                )
+                            )
+                        }
+                    }
+                }
+            } 
+            // 所有音节都是完整的
+            else {
+                if (needExplain) {
+                    explanation.append("2. 全部为完整音节，使用标准拼音查询\n")
+                }
+                
+                // 使用标准音节查询方式
+                val fullPinyin = syllables.joinToString(" ")
+                
+                if (needExplain) {
+                    explanation.append("- 查询条件: pinyin == '$fullPinyin'\n")
+                }
+                
+                val query = realm.query<Entry>("pinyin == $0", fullPinyin)
+                
+                val entries = query.find()
+                    .sortedByDescending { it.frequency }
+                    .take(limit)
+                
+                if (needExplain) {
+                    explanation.append("- 匹配结果: ${entries.size}个\n")
+                }
+                
+                // 转换为候选词
+                val seenWords = mutableSetOf<String>()
+                entries.forEach { entry ->
+                    if (seenWords.add(entry.word)) {
+                        candidates.add(
+                            PinyinCandidate(
+                                word = entry.word,
+                                pinyin = entry.pinyin,
+                                frequency = entry.frequency,
+                                type = entry.type,
+                                matchType = MatchType.SYLLABLE_SPLIT
+                            )
+                        )
+                    }
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "查询动态音节候选词异常")
+            if (needExplain) {
+                explanation.append("查询异常: ${e.message}\n")
+            }
+        }
+        
+        // 返回结果对象，应用limit限制
+        PinyinQueryResult(
+            inputType = InputType.DYNAMIC_SYLLABLE,
+            candidates = candidates.take(limit),
+            syllables = syllables,
             explanation = explanation.toString()
         )
     }

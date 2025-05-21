@@ -182,6 +182,7 @@ class PinyinTestViewModel : ViewModel() {
             InputType.PINYIN_SYLLABLE -> "单音节拼音匹配"
             InputType.SYLLABLE_SPLIT -> "拼音音节拆分匹配"
             InputType.ACRONYM -> "首字母缩写匹配"
+            InputType.DYNAMIC_SYLLABLE -> "动态音节识别匹配"
             else -> "未知匹配方式"
         }
         
@@ -194,6 +195,17 @@ class PinyinTestViewModel : ViewModel() {
             InputType.PINYIN_SYLLABLE -> "拼音音节 = ${result.syllables.firstOrNull() ?: ""}"
             InputType.SYLLABLE_SPLIT -> "音节拆分 = ${result.syllables.joinToString("+")}"
             InputType.ACRONYM -> "首字母缩写 = ${result.initialLetters}"
+            InputType.DYNAMIC_SYLLABLE -> {
+                val lastSyllable = result.syllables.lastOrNull()
+                if (lastSyllable != null && lastSyllable.length == 1) {
+                    // 有未完成部分，显示为音节+首字母
+                    val completeSyllables = result.syllables.dropLast(1)
+                    "动态识别 = ${completeSyllables.joinToString("+")} + 首字母'$lastSyllable'"
+                } else {
+                    // 全是完整音节
+                    "动态识别 = ${result.syllables.joinToString("+")}"
+                }
+            }
             else -> "无法解析输入"
         }
         

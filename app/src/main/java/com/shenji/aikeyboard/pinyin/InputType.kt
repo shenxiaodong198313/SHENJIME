@@ -33,5 +33,12 @@ enum class InputType {
     /**
      * 未知或无法识别的输入类型
      */
-    UNKNOWN
+    UNKNOWN,
+    
+    /**
+     * 动态音节识别
+     * 处理未完成的拼音输入，将输入拆分为完整音节+剩余字母
+     * 例如：shenjingb -> 神经病
+     */
+    DYNAMIC_SYLLABLE
 } 

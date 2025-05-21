@@ -311,4 +311,56 @@ class PinyinSplitter {
             return if (pinyin.isNotEmpty()) pinyin.first().toString() else ""
         }
     }
+
+    /**
+     * 动态拆分未完成拼音输入
+     * 优先从左到右拆分为完整音节，将剩余部分作为首字母缩写处理
+     * 例如：shenjingb -> ["shen", "jing", "b"]，其中b作为一个字母缩写
+     * 专门用于处理输入过程中的实时拼音
+     * 
+     * @param input 原始拼音输入
+     * @return 拆分后的列表，包含完整音节和剩余字母
+     */
+    fun splitDynamicInput(input: String): List<String> {
+        // 清理输入：移除空格，全部转小写
+        val cleanInput = input.trim().lowercase().replace(" ", "")
+        
+        if (cleanInput.isEmpty()) {
+            return emptyList()
+        }
+        
+        // 如果输入本身就是一个有效音节，直接返回
+        if (PINYIN_SYLLABLES.contains(cleanInput)) {
+            return listOf(cleanInput)
+        }
+        
+        // 1. 尝试贪心算法从左到右拆分尽可能多的完整音节
+        val result = mutableListOf<String>()
+        var currentPos = 0
+        
+        while (currentPos < cleanInput.length) {
+            var foundSyllable = false
+            
+            // 从当前位置开始，尝试找到最长的有效音节
+            for (syllable in ORDERED_SYLLABLES) {
+                if (currentPos + syllable.length <= cleanInput.length && 
+                    cleanInput.substring(currentPos, currentPos + syllable.length) == syllable) {
+                    
+                    result.add(syllable)
+                    currentPos += syllable.length
+                    foundSyllable = true
+                    break
+                }
+            }
+            
+            // 如果在当前位置没有找到有效音节，则当前字符作为单独的首字母处理
+            if (!foundSyllable) {
+                // 将当前字符作为一个单独的"部分音节/首字母"添加
+                result.add(cleanInput.substring(currentPos, currentPos + 1))
+                currentPos += 1
+            }
+        }
+        
+        return result
+    }
 } 
