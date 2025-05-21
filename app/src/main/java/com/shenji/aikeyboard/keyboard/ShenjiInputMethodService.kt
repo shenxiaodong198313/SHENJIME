@@ -12,7 +12,7 @@ import android.widget.*
 import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ShenjiApplication
-import com.shenji.aikeyboard.data.WordFrequency
+import com.shenji.aikeyboard.model.WordFrequency
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import android.graphics.Color
@@ -428,65 +428,47 @@ class ShenjiInputMethodService : InputMethodService() {
         // 重置候选词滚动位置到起始位置
         keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
         
-        // 使用CandidateManager异步获取候选词
+        // 使用PinyinIMEAdapter异步获取候选词
         Handler(Looper.getMainLooper()).post {
             try {
                 // 启动异步任务获取候选词
-                Thread {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
                     try {
-                        // 调用全局候选词管理器获取候选词
-                        val candidateManager = ShenjiApplication.candidateManager
+                        // 强制显示候选词容器，确保可见性
+                        showCandidates()
                         
-                        // 在主线程中处理结果
-                        Handler(Looper.getMainLooper()).post {
-                            runCatching {
-                                // 使用kotlinx.coroutines获取候选词
-                                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                                    try {
-                                        // 强制显示候选词容器，确保可见性
-                                        showCandidates()
-                                        
-                                        // 直接使用标准查询逻辑，与测试工具保持一致
-                                        val result = candidateManager.generateCandidates(input, 20)
-                                        if (result.isNotEmpty()) {
-                                            // 更新成员变量
-                                            candidates = result
-                                            // 显示候选词
-                                            updateCandidatesView(result)
-                                            Timber.d("成功加载候选词: ${result.size}个")
-                                            
-                                            // 再次确保候选词区域可见
-                                            if (areViewComponentsInitialized()) {
-                                                candidatesContainer.visibility = View.VISIBLE
-                                                defaultCandidatesView.visibility = View.VISIBLE
-                                                toolbarView.visibility = View.GONE
-                                                
-                                                // 确保候选词视图有足够高度
-                                                val params = defaultCandidatesView.layoutParams
-                                                params.height = 120 // 设置固定高度，确保可见
-                                                defaultCandidatesView.layoutParams = params
-                                            }
-                                        } else {
-                                            Timber.d("未找到候选词")
-                                            candidates = emptyList()
-                                            clearCandidatesView()
-                                        }
-                                    } catch (e: Exception) {
-                                        Timber.e(e, "加载候选词失败: ${e.message}")
-                                        Toast.makeText(this@ShenjiInputMethodService, "加载候选词失败", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            }.onFailure { e ->
-                                Timber.e(e, "启动协程失败: ${e.message}")
+                        // 使用标准化的PinyinIMEAdapter获取候选词
+                        val pinyinAdapter = PinyinIMEAdapter.getInstance()
+                        val result = pinyinAdapter.getCandidates(input, 20)
+                        
+                        if (result.isNotEmpty()) {
+                            // 更新成员变量
+                            candidates = result
+                            // 显示候选词
+                            updateCandidatesView(result)
+                            Timber.d("成功加载候选词: ${result.size}个")
+                            
+                            // 再次确保候选词区域可见
+                            if (areViewComponentsInitialized()) {
+                                candidatesContainer.visibility = View.VISIBLE
+                                defaultCandidatesView.visibility = View.VISIBLE
+                                toolbarView.visibility = View.GONE
+                                
+                                // 确保候选词视图有足够高度
+                                val params = defaultCandidatesView.layoutParams
+                                params.height = 120 // 设置固定高度，确保可见
+                                defaultCandidatesView.layoutParams = params
                             }
+                        } else {
+                            Timber.d("未找到候选词")
+                            candidates = emptyList()
+                            clearCandidatesView()
                         }
                     } catch (e: Exception) {
-                        Timber.e(e, "获取候选词线程失败: ${e.message}")
-                        Handler(Looper.getMainLooper()).post {
-                            Toast.makeText(this@ShenjiInputMethodService, "获取候选词失败", Toast.LENGTH_SHORT).show()
-                        }
+                        Timber.e(e, "加载候选词失败: ${e.message}")
+                        Toast.makeText(this@ShenjiInputMethodService, "加载候选词失败", Toast.LENGTH_SHORT).show()
                     }
-                }.start()
+                }
             } catch (e: Exception) {
                 Timber.e(e, "启动候选词获取任务失败: ${e.message}")
             }

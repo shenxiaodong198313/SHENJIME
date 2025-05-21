@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.shenji.aikeyboard.R
-import com.shenji.aikeyboard.data.WordFrequency
+import com.shenji.aikeyboard.model.WordFrequency
 
 /**
  * 词频适配器，用于显示候选词查询结果

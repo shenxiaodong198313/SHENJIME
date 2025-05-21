@@ -3,12 +3,11 @@ package com.shenji.aikeyboard.utils
 import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.data.CandidateManager
 import com.shenji.aikeyboard.data.DictionaryRepository
-import com.shenji.aikeyboard.data.Entry
-import com.shenji.aikeyboard.data.PinyinSplitterOptimized
-import com.shenji.aikeyboard.data.WordFrequency
+import com.shenji.aikeyboard.model.WordFrequency
 import com.shenji.aikeyboard.model.Candidate
+import com.shenji.aikeyboard.pinyin.InputType
+import com.shenji.aikeyboard.pinyin.PinyinQueryEngine
 import com.shenji.aikeyboard.viewmodel.PinyinTestViewModel
-import io.realm.kotlin.ext.query
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -26,15 +25,15 @@ class QueryConsistencyChecker {
     // 拼音测试ViewModel（测试工具使用）
     private val testViewModel = PinyinTestViewModel()
     
-    // 拼音分词器
-    private val pinyinSplitter = PinyinSplitterOptimized()
+    // 标准化的拼音查询引擎
+    private val pinyinQueryEngine = PinyinQueryEngine.getInstance()
     
     /**
      * 检查结果
      */
     data class CheckResult(
         val input: String,
-        val stage: String,
+        val inputType: InputType,
         val syllables: List<String>,
         val consistent: Boolean,
         val inputMethodResults: List<String>,
@@ -42,67 +41,6 @@ class QueryConsistencyChecker {
         val missingInInputMethod: List<String>,
         val missingInTestTool: List<String>
     )
-    
-    /**
-     * 判断输入阶段
-     * 与PinyinTestViewModel中的classifyInputStage方法逻辑相同
-     */
-    private fun classifyInputStage(input: String): PinyinTestViewModel.InputStage {
-        if (input.isEmpty()) {
-            return PinyinTestViewModel.InputStage.UNKNOWN
-        }
-
-        if (input.length == 1 && input.matches(Regex("^[a-z]$"))) {
-            return PinyinTestViewModel.InputStage.INITIAL_LETTER // 首字母阶段
-        }
-        
-        // 优先检查是否是单字母组合（如"wx", "nh"等），每个字符都是单个字母
-        if (input.all { it in 'a'..'z' } && input.length > 1) {
-            // 检查每个字符是否是可能的首字母（非有效拼音音节）
-            val allSingleLetters = input.all { 
-                val singleChar = it.toString()
-                !isValidPinyin(singleChar) // 不是有效拼音音节
-            }
-            
-            if (allSingleLetters) {
-                Timber.d("识别为单字母组合: '$input'")
-                return PinyinTestViewModel.InputStage.ACRONYM // 首字母缩写阶段
-            }
-        }
-
-        // 单个完整拼音音节，直接归类为拼音补全阶段
-        if (isValidPinyin(input) && !input.contains(" ")) {
-            return PinyinTestViewModel.InputStage.PINYIN_COMPLETION // 拼音补全阶段
-        }
-
-        // 其他情况，尝试音节拆分或作为缩写处理
-        val canSplit = canSplitToValidSyllables(input)
-        
-        // 输出调试信息
-        if (!canSplit) {
-            Timber.d("无法进行音节拆分，作为首字母缩写处理: '$input'")
-        }
-        
-        return when {
-            canSplit -> PinyinTestViewModel.InputStage.SYLLABLE_SPLIT // 音节拆分阶段
-            else -> PinyinTestViewModel.InputStage.ACRONYM // 无法拆分则作为首字母缩写阶段
-        }
-    }
-    
-    /**
-     * 验证是否为有效的拼音音节
-     */
-    private fun isValidPinyin(input: String): Boolean {
-        return pinyinSplitter.getPinyinSyllables().contains(input)
-    }
-    
-    /**
-     * 判断是否可以拆分为有效音节
-     */
-    private fun canSplitToValidSyllables(input: String): Boolean {
-        val result = pinyinSplitter.splitPinyin(input)
-        return result.isNotEmpty()
-    }
     
     /**
      * 检查指定输入的查询结果是否一致
@@ -113,12 +51,10 @@ class QueryConsistencyChecker {
         // 1. 获取输入法的候选词结果
         val inputMethodResults = candidateManager.generateCandidates(input, 20)
         
-        // 2. 使用测试工具的方式获取结果
-        val stage = classifyInputStage(input)
-        val syllables = when (stage) {
-            PinyinTestViewModel.InputStage.SYLLABLE_SPLIT -> pinyinSplitter.splitPinyin(input)
-            else -> emptyList()
-        }
+        // 2. 使用标准化模块获取输入类型和音节
+        val queryResult = pinyinQueryEngine.query(input, 1, false)
+        val inputType = queryResult.inputType
+        val syllables = queryResult.syllables
         
         // 3. 获取测试工具的候选词结果
         testViewModel.processInput(input)
@@ -144,7 +80,7 @@ class QueryConsistencyChecker {
         
         return@withContext CheckResult(
             input = input,
-            stage = stage.toString(),
+            inputType = inputType,
             syllables = syllables,
             consistent = consistent,
             inputMethodResults = inputMethodWords,
@@ -183,7 +119,7 @@ class QueryConsistencyChecker {
             results.filterNot { it.consistent }.forEach { result ->
                 report.appendLine("-----------------------")
                 report.appendLine("输入: '${result.input}'")
-                report.appendLine("阶段: ${result.stage}")
+                report.appendLine("类型: ${result.inputType}")
                 if (result.syllables.isNotEmpty()) {
                     report.appendLine("音节拆分: ${result.syllables.joinToString("+")}")
                 }

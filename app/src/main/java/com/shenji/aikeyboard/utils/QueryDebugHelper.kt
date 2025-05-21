@@ -5,7 +5,7 @@ import android.widget.TextView
 import com.shenji.aikeyboard.data.CandidateManager
 import com.shenji.aikeyboard.data.CandidateWeight
 import com.shenji.aikeyboard.data.DebugInfo
-import com.shenji.aikeyboard.data.WordFrequency
+import com.shenji.aikeyboard.model.WordFrequency
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

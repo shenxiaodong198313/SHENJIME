@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.model.Candidate
+import com.shenji.aikeyboard.pinyin.InputType
 import com.shenji.aikeyboard.viewmodel.PinyinTestViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -24,6 +25,7 @@ import timber.log.Timber
 
 /**
  * 拼音测试Fragment - 用于测试拼音分词和候选词查询
+ * 使用标准化拼音查询模块
  */
 class PinyinTestFragment : Fragment() {
 
@@ -126,14 +128,16 @@ class PinyinTestFragment : Fragment() {
     }
     
     private fun observeViewModel() {
-        // 观察输入阶段
-        viewModel.inputStage.observe(viewLifecycleOwner) { stage ->
-            stageTextView.text = "当前阶段: ${stage.name}"
+        // 观察输入类型
+        viewModel.inputType.observe(viewLifecycleOwner) { type ->
+            stageTextView.text = "当前类型: ${getInputTypeDisplayName(type)}"
         }
         
         // 观察匹配规则
         viewModel.matchRule.observe(viewLifecycleOwner) { rule ->
-            stageTextView.text = "匹配规则: $rule"
+            if (rule.isNotEmpty()) {
+                stageTextView.text = "匹配规则: $rule"
+            }
         }
         
         // 观察音节拆分结果
@@ -163,6 +167,19 @@ class PinyinTestFragment : Fragment() {
         // 观察候选词列表
         viewModel.candidates.observe(viewLifecycleOwner) { candidates ->
             candidateAdapter.submitList(candidates)
+        }
+    }
+    
+    /**
+     * 获取输入类型的显示名称
+     */
+    private fun getInputTypeDisplayName(type: InputType): String {
+        return when (type) {
+            InputType.INITIAL_LETTER -> "首字母"
+            InputType.PINYIN_SYLLABLE -> "拼音音节"
+            InputType.SYLLABLE_SPLIT -> "音节拆分"
+            InputType.ACRONYM -> "首字母缩写"
+            else -> "未知"
         }
     }
     

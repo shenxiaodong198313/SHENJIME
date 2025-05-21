@@ -4,45 +4,32 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.shenji.aikeyboard.ShenjiApplication
-import com.shenji.aikeyboard.data.CandidateManager
-import com.shenji.aikeyboard.data.DictionaryRepository
-import com.shenji.aikeyboard.data.Entry
-import com.shenji.aikeyboard.data.PinyinSplitterOptimized
 import com.shenji.aikeyboard.model.Candidate
-import io.realm.kotlin.ext.query
-import kotlinx.coroutines.Dispatchers
+import com.shenji.aikeyboard.pinyin.InputType
+import com.shenji.aikeyboard.pinyin.PinyinCandidate
+import com.shenji.aikeyboard.pinyin.PinyinQueryEngine
+import com.shenji.aikeyboard.pinyin.PinyinQueryResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
  * 拼音测试工具的ViewModel，处理核心业务逻辑
+ * 使用标准化拼音查询模块进行处理
  */
 class PinyinTestViewModel : ViewModel() {
 
-    // 候选词管理器
-    private val candidateManager = CandidateManager(DictionaryRepository())
+    // 拼音查询引擎
+    private val pinyinQueryEngine = PinyinQueryEngine.getInstance()
     
-    // 优化状态
-    private val _optimizationStatus = MutableLiveData<CandidateManager.OptimizationStatus>()
-    val optimizationStatus: LiveData<CandidateManager.OptimizationStatus> = _optimizationStatus
-
     // 输入状态流，用于防抖处理
     private val _inputFlow = MutableStateFlow("")
     val inputFlow: StateFlow<String> = _inputFlow
 
-    // 拼音分词器 - 使用优化版本
-    private val pinyinSplitter = PinyinSplitterOptimized()
-
-    // 判断是否为调试模式
-    private val isDebugMode = true
-
-    // 当前输入阶段
-    private val _inputStage = MutableLiveData<InputStage>()
-    val inputStage: LiveData<InputStage> = _inputStage
+    // 当前输入类型
+    private val _inputType = MutableLiveData<InputType>()
+    val inputType: LiveData<InputType> = _inputType
 
     // 匹配规则
     private val _matchRule = MutableLiveData<String>()
@@ -77,15 +64,14 @@ class PinyinTestViewModel : ViewModel() {
         val phraseCount: Int = 0
     )
 
-    /**
-     * 输入阶段枚举
-     */
-    enum class InputStage {
-        INITIAL_LETTER,      // 首字母阶段
-        PINYIN_COMPLETION,   // 拼音补全阶段
-        SYLLABLE_SPLIT,      // 音节拆分阶段
-        ACRONYM,             // 首字母缩写阶段
-        UNKNOWN              // 未知阶段
+    init {
+        // 初始化空结果
+        _candidates.value = emptyList()
+        _matchRule.value = ""
+        _syllableSplit.value = emptyList()
+        _queryCondition.value = ""
+        _queryProcess.value = ""
+        _candidateStats.value = CandidateStats()
     }
 
     /**
@@ -106,7 +92,7 @@ class PinyinTestViewModel : ViewModel() {
         _queryCondition.value = ""
         _queryProcess.value = ""
         _candidateStats.value = CandidateStats()
-        _inputStage.value = InputStage.UNKNOWN
+        _inputType.value = InputType.UNKNOWN
     }
 
     /**
@@ -120,46 +106,12 @@ class PinyinTestViewModel : ViewModel() {
                     return@launch
                 }
 
-                // 1. 判断当前输入阶段
-                val stage = classifyInputStage(input)
-                _inputStage.value = stage
-
-                // 2. 根据不同阶段执行相应的查询
-                when (stage) {
-                    InputStage.INITIAL_LETTER -> {
-                        _matchRule.value = "单字符首字母匹配"
-                        _syllableSplit.value = emptyList()
-                        _queryCondition.value = "初始字母 = $input"
-                        queryInitialLetterCandidates(input)
-                    }
-                    InputStage.PINYIN_COMPLETION -> {
-                        _matchRule.value = "完整拼音音节匹配"
-                        _syllableSplit.value = listOf(input)
-                        _queryCondition.value = "拼音前缀 = $input"
-                        queryPinyinCandidates(input)
-                    }
-                    InputStage.SYLLABLE_SPLIT -> {
-                        val syllables = pinyinSplitter.splitPinyin(input)
-                        _matchRule.value = "音节拆分匹配"
-                        _syllableSplit.value = syllables
-                        _queryCondition.value = "音节拆分 = ${syllables.joinToString("+")}"
-                        querySplitCandidates(syllables)
-                    }
-                    InputStage.ACRONYM -> {
-                        _matchRule.value = "首字母缩写匹配"
-                        _syllableSplit.value = emptyList()
-                        _queryCondition.value = "首字母缩写 = $input"
-                        queryAcronymCandidates(input)
-                    }
-                    else -> {
-                        _matchRule.value = "未知匹配方式"
-                        _syllableSplit.value = emptyList()
-                        _queryCondition.value = "无法解析输入"
-                        _queryProcess.value = "无法解析输入，跳过查询"
-                        _candidates.value = emptyList()
-                        _candidateStats.value = CandidateStats()
-                    }
-                }
+                // 使用标准化模块查询
+                val queryResult = pinyinQueryEngine.query(input, 20, true)
+                
+                // 更新UI数据
+                updateUIWithQueryResult(queryResult)
+                
             } catch (e: Exception) {
                 Timber.e(e, "处理输入异常")
                 _matchRule.value = "处理异常: ${e.message}"
@@ -169,73 +121,70 @@ class PinyinTestViewModel : ViewModel() {
             }
         }
     }
-
+    
     /**
-     * 判断输入阶段
+     * 更新UI显示
      */
-    private fun classifyInputStage(input: String): InputStage {
-        if (input.isEmpty()) {
-            return InputStage.UNKNOWN
-        }
-
-        if (input.length == 1 && input.matches(Regex("^[a-z]$"))) {
-            return InputStage.INITIAL_LETTER // 首字母阶段
-        }
-
-        // 单个完整拼音音节，直接归类为拼音补全阶段，并且标记为单音节
-        if (isValidPinyin(input) && !input.contains(" ")) {
-            return InputStage.PINYIN_COMPLETION // 拼音补全阶段
-        }
-
-        return when {
-            canSplitToValidSyllables(input) -> InputStage.SYLLABLE_SPLIT // 音节拆分阶段
-            else -> InputStage.ACRONYM // 首字母缩写阶段
-        }
-    }
-
-    /**
-     * 验证是否为有效的拼音音节
-     */
-    private fun isValidPinyin(input: String): Boolean {
-        return pinyinSplitter.getPinyinSyllables().contains(input)
-    }
-
-    /**
-     * 判断是否可以拆分为有效音节
-     */
-    private fun canSplitToValidSyllables(input: String): Boolean {
-        val result = pinyinSplitter.splitPinyin(input)
-        return result.isNotEmpty()
-    }
-
-    /**
-     * 过滤重复候选词，只保留高词频的
-     */
-    private fun filterDuplicates(candidates: List<Candidate>): List<Candidate> {
-        val processStep = StringBuilder("去重处理:\n")
-        val uniqueCandidates = mutableMapOf<String, Candidate>()
+    private fun updateUIWithQueryResult(result: PinyinQueryResult) {
+        // 1. 更新输入类型
+        _inputType.value = result.inputType
         
-        candidates.forEach { candidate ->
-            val existingCandidate = uniqueCandidates[candidate.word]
-            if (existingCandidate == null || existingCandidate.frequency < candidate.frequency) {
-                if (existingCandidate != null) {
-                    processStep.append("- 替换 '${candidate.word}' (词频 ${existingCandidate.frequency} -> ${candidate.frequency})\n")
-                }
-                uniqueCandidates[candidate.word] = candidate
-            }
+        // 2. 设置匹配规则文本描述
+        _matchRule.value = when (result.inputType) {
+            InputType.INITIAL_LETTER -> "单字符首字母匹配"
+            InputType.PINYIN_SYLLABLE -> "单音节拼音匹配"
+            InputType.SYLLABLE_SPLIT -> "拼音音节拆分匹配"
+            InputType.ACRONYM -> "首字母缩写匹配"
+            else -> "未知匹配方式"
         }
         
-        processStep.append("- 去重前: ${candidates.size}个, 去重后: ${uniqueCandidates.size}个\n")
+        // 3. 更新音节拆分结果
+        _syllableSplit.value = result.syllables
         
-        // 添加到现有的查询过程信息
-        val currentProcess = _queryProcess.value ?: ""
-        _queryProcess.value = currentProcess + processStep.toString()
+        // 4. 更新查询条件
+        _queryCondition.value = when (result.inputType) {
+            InputType.INITIAL_LETTER -> "初始字母 = ${result.syllables.firstOrNull() ?: ""}"
+            InputType.PINYIN_SYLLABLE -> "拼音音节 = ${result.syllables.firstOrNull() ?: ""}"
+            InputType.SYLLABLE_SPLIT -> "音节拆分 = ${result.syllables.joinToString("+")}"
+            InputType.ACRONYM -> "首字母缩写 = ${result.initialLetters}"
+            else -> "无法解析输入"
+        }
         
-        return uniqueCandidates.values.toList()
+        // 5. 更新查询过程
+        _queryProcess.value = result.explanation
+        
+        // 6. 转换并更新候选词
+        val candidates = result.candidates.map { pinyinCandidate ->
+            convertToCandidateModel(pinyinCandidate)
+        }
+        _candidates.value = candidates
+        
+        // 7. 更新候选词统计
+        updateCandidateStats(candidates)
     }
     
     /**
-     * 统计候选词数量
+     * 将标准模块的PinyinCandidate转换为UI使用的Candidate模型
+     */
+    private fun convertToCandidateModel(pinyinCandidate: PinyinCandidate): Candidate {
+        return Candidate(
+            word = pinyinCandidate.word,
+            pinyin = pinyinCandidate.pinyin,
+            type = pinyinCandidate.type,
+            frequency = pinyinCandidate.frequency,
+            initialLetters = pinyinCandidate.initialLetters,
+            matchType = when (pinyinCandidate.matchType) {
+                com.shenji.aikeyboard.pinyin.MatchType.INITIAL_LETTER -> Candidate.MatchType.INITIAL_LETTER
+                com.shenji.aikeyboard.pinyin.MatchType.PINYIN_SYLLABLE -> Candidate.MatchType.PINYIN_PREFIX
+                com.shenji.aikeyboard.pinyin.MatchType.SYLLABLE_SPLIT -> Candidate.MatchType.SYLLABLE_SPLIT
+                com.shenji.aikeyboard.pinyin.MatchType.ACRONYM -> Candidate.MatchType.ACRONYM
+                else -> Candidate.MatchType.UNKNOWN
+            }
+        )
+    }
+    
+    /**
+     * 更新候选词统计
      */
     private fun updateCandidateStats(candidates: List<Candidate>) {
         val singleCharCount = candidates.count { it.word.length == 1 }
@@ -246,248 +195,5 @@ class PinyinTestViewModel : ViewModel() {
             singleCharCount = singleCharCount,
             phraseCount = phraseCount
         )
-    }
-
-    /**
-     * 查询首字母阶段的候选词
-     */
-    private suspend fun queryInitialLetterCandidates(input: String) {
-        val realm = ShenjiApplication.realm
-        val processStep = StringBuilder("查询过程:\n")
-
-        val results = withContext(Dispatchers.IO) {
-            try {
-                processStep.append("1. 查询单字词典中匹配首字母的条目\n")
-                // 查询单字词典中匹配首字母的
-                val query = realm.query<Entry>("type == $0 AND initialLetters BEGINSWITH $1", 
-                    "chars", input)
-                
-                // 记录查询条件
-                processStep.append("- 查询条件: type='chars' AND initialLetters BEGINSWITH '$input'\n")
-                
-                val singleChars = query.find()
-                
-                processStep.append("- 单字匹配结果: ${singleChars.size}个（仅查询chars表）\n")
-                processStep.append("2. 单字有结果，不查询短语词典\n")
-                
-                // 直接返回单字结果，不再查询其他表
-                val candidates = singleChars
-                    .sortedByDescending { it.frequency }
-                    .take(20)
-                    .map { Candidate.fromEntry(it, Candidate.MatchType.INITIAL_LETTER) }
-                
-                processStep.append("- 获取排序后的前20个结果\n")
-                candidates
-            } catch (e: Exception) {
-                Timber.e(e, "查询首字母候选词异常")
-                processStep.append("查询异常: ${e.message}\n")
-                emptyList()
-            }
-        }
-
-        if (isDebugMode) {
-            Timber.d("首字母查询结果: ${results.size}个候选词")
-            processStep.append("3. 查询完成，获取候选词: ${results.size}个\n")
-        }
-        
-        // 去重候选词
-        val filteredResults = filterDuplicates(results)
-        
-        // 更新查询过程
-        _queryProcess.value = processStep.toString()
-        
-        // 更新候选词统计
-        updateCandidateStats(filteredResults)
-        
-        // 更新候选词列表
-        _candidates.value = filteredResults
-    }
-
-    /**
-     * 查询拼音补全阶段的候选词
-     */
-    private suspend fun queryPinyinCandidates(input: String) {
-        val realm = ShenjiApplication.realm
-        val processStep = StringBuilder("查询过程:\n")
-
-        // 检查是否是单个有效音节
-        val isSingleSyllable = isValidPinyin(input) && !input.contains(" ")
-
-        val results = withContext(Dispatchers.IO) {
-            try {
-                // 如果是单个有效音节，只查询单字词典
-                if (isSingleSyllable) {
-                    processStep.append("1. 检测到单个有效音节'$input'，只查询单字词典\n")
-                    val singleChars = realm.query<Entry>("type == $0 AND pinyin == $1",
-                        "chars", input)
-                        .find()
-                        .sortedByDescending { it.frequency }
-                        .take(20)
-                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
-                    
-                    processStep.append("- 单字精确匹配结果: ${singleChars.size}个\n")
-                    singleChars
-                } else {
-                    // 原有逻辑保持不变
-                    processStep.append("1. 查询单字词典中匹配拼音的条目\n")
-                    // 先查询单字词典
-                    val singleChars = realm.query<Entry>("type == $0 AND pinyin BEGINSWITH $1",
-                        "chars", input)
-                        .find()
-                        .sortedByDescending { it.frequency }
-                        .take(10)
-                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
-                        
-                    processStep.append("- 单字匹配结果: ${singleChars.size}个\n")
-
-                    processStep.append("2. 查询短语词典中匹配拼音的条目\n")
-                    // 再查询短语词典
-                    val phrases = realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1",
-                        "chars", input)
-                        .find()
-                        .sortedByDescending { it.frequency }
-                        .take(10)
-                        .map { Candidate.fromEntry(it, Candidate.MatchType.PINYIN_PREFIX) }
-                        
-                    processStep.append("- 短语匹配结果: ${phrases.size}个\n")
-
-                    // 合并并按词频排序
-                    (singleChars + phrases).sortedByDescending { it.frequency }
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "查询拼音补全候选词异常")
-                processStep.append("查询异常: ${e.message}\n")
-                emptyList()
-            }
-        }
-
-        if (isDebugMode) {
-            Timber.d("拼音补全查询结果: ${results.size}个候选词")
-            processStep.append("3. 查询完成，获取候选词: ${results.size}个\n")
-        }
-        
-        // 去重候选词
-        val filteredResults = filterDuplicates(results)
-        
-        // 更新查询过程
-        _queryProcess.value = processStep.toString()
-        
-        // 更新候选词统计
-        updateCandidateStats(filteredResults)
-        
-        // 更新候选词列表
-        _candidates.value = filteredResults
-    }
-
-    /**
-     * 查询音节拆分阶段的候选词
-     */
-    private suspend fun querySplitCandidates(syllables: List<String>) {
-        if (syllables.isEmpty()) {
-            _candidates.value = emptyList()
-            _candidateStats.value = CandidateStats()
-            _queryProcess.value = "音节拆分为空，跳过查询"
-            return
-        }
-
-        val realm = ShenjiApplication.realm
-        val processStep = StringBuilder("查询过程:\n")
-        processStep.append("1. 音节拆分结果: ${syllables.joinToString("+")}\n")
-
-        val results = withContext(Dispatchers.IO) {
-            try {
-                // 将音节连接为完整的拼音字符串（带空格）
-                val fullPinyin = syllables.joinToString(" ")
-                processStep.append("2. 构建完整拼音查询: '$fullPinyin'\n")
-                
-                // 直接查询完整拼音匹配的词条
-                val entries = realm.query<Entry>("pinyin == $0", fullPinyin)
-                    .find()
-                    .sortedByDescending { it.frequency }
-                processStep.append("- 完整拼音精确匹配结果: ${entries.size}个\n")
-                
-                // 如果精确匹配没有结果，尝试前缀匹配
-                val candidates = if (entries.isEmpty() && syllables.size >= 2) {
-                    processStep.append("3. 精确匹配无结果，尝试前缀匹配\n")
-                    // 查询以这些音节开头的词条
-                    val prefixMatches = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
-                        .find()
-                        .sortedByDescending { it.frequency }
-                        .take(20)
-                    
-                    processStep.append("- 前缀匹配结果: ${prefixMatches.size}个\n")
-                    prefixMatches.map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                } else {
-                    processStep.append("3. 使用精确匹配结果\n")
-                    entries.take(20).map { Candidate.fromEntry(it, Candidate.MatchType.SYLLABLE_SPLIT) }
-                }
-                
-                candidates
-            } catch (e: Exception) {
-                Timber.e(e, "查询音节拆分候选词异常")
-                processStep.append("查询异常: ${e.message}\n")
-                emptyList()
-            }
-        }
-
-        if (isDebugMode) {
-            Timber.d("音节拆分查询结果: ${results.size}个候选词")
-            processStep.append("4. 查询完成，获取候选词: ${results.size}个\n")
-        }
-        
-        // 去重候选词
-        val filteredResults = filterDuplicates(results)
-        
-        // 更新查询过程
-        _queryProcess.value = processStep.toString()
-        
-        // 更新候选词统计
-        updateCandidateStats(filteredResults)
-        
-        // 更新候选词列表
-        _candidates.value = filteredResults
-    }
-
-    /**
-     * 查询首字母缩写阶段的候选词
-     */
-    private suspend fun queryAcronymCandidates(input: String) {
-        val realm = ShenjiApplication.realm
-        val processStep = StringBuilder("查询过程:\n")
-        processStep.append("1. 查询首字母缩写'$input'对应的条目\n")
-
-        val results = withContext(Dispatchers.IO) {
-            try {
-                val entries = realm.query<Entry>("initialLetters == $0", input)
-                    .find()
-                processStep.append("- 匹配结果: ${entries.size}个\n")
-                
-                entries
-                    .sortedByDescending { it.frequency }
-                    .take(20)
-                    .map { Candidate.fromEntry(it, Candidate.MatchType.ACRONYM) }
-            } catch (e: Exception) {
-                Timber.e(e, "查询首字母缩写候选词异常")
-                processStep.append("查询异常: ${e.message}\n")
-                emptyList()
-            }
-        }
-
-        if (isDebugMode) {
-            Timber.d("首字母缩写查询结果: ${results.size}个候选词")
-            processStep.append("2. 查询完成，获取候选词: ${results.size}个\n")
-        }
-        
-        // 去重候选词
-        val filteredResults = filterDuplicates(results)
-        
-        // 更新查询过程
-        _queryProcess.value = processStep.toString()
-        
-        // 更新候选词统计
-        updateCandidateStats(filteredResults)
-        
-        // 更新候选词列表
-        _candidates.value = filteredResults
     }
 } 

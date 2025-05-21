@@ -3,6 +3,7 @@ package com.shenji.aikeyboard.data
 import android.util.LruCache
 import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.model.Candidate
+import com.shenji.aikeyboard.model.WordFrequency
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber

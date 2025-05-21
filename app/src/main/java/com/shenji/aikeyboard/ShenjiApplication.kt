@@ -10,6 +10,7 @@ import com.shenji.aikeyboard.data.DictionaryManager
 import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.data.Entry
 import com.shenji.aikeyboard.logger.CrashReportingTree
+import com.shenji.aikeyboard.pinyin.PinyinQueryEngine
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import timber.log.Timber
@@ -37,6 +38,11 @@ class ShenjiApplication : Application() {
         // 候选词管理器单例
         val candidateManager by lazy {
             CandidateManager(DictionaryRepository())
+        }
+        
+        // 标准化的拼音查询引擎
+        val pinyinQueryEngine by lazy {
+            PinyinQueryEngine.getInstance()
         }
     }
     
