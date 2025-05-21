@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.databinding.ActivityMainBinding
+import com.shenji.aikeyboard.settings.InputMethodSettingsActivity
 import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
@@ -128,7 +129,7 @@ class MainActivity : AppCompatActivity() {
     private fun openInputMethodSettings() {
         try {
             Timber.d("打开输入法设置")
-            val intent = Intent(this, com.shenji.aikeyboard.settings.InputMethodSettingsActivity::class.java)
+            val intent = Intent(this, InputMethodSettingsActivity::class.java)
             startActivity(intent)
         } catch (e: Exception) {
             Log.e("MainActivity", "打开输入法设置失败: ${e.message}", e)

@@ -2,22 +2,16 @@ package com.shenji.aikeyboard.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.shenji.aikeyboard.databinding.ItemCandidateBinding
 import com.shenji.aikeyboard.model.Candidate
 
 /**
- * 候选词列表适配器
+ * 候选词适配器 - 用于展示候选词列表
  */
-class CandidateAdapter : RecyclerView.Adapter<CandidateAdapter.CandidateViewHolder>() {
-
-    private val candidates = mutableListOf<Candidate>()
-
-    fun updateCandidates(newCandidates: List<Candidate>) {
-        candidates.clear()
-        candidates.addAll(newCandidates)
-        notifyDataSetChanged()
-    }
+class CandidateAdapter : ListAdapter<Candidate, CandidateAdapter.CandidateViewHolder>(CandidateDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CandidateViewHolder {
         val binding = ItemCandidateBinding.inflate(
@@ -29,10 +23,9 @@ class CandidateAdapter : RecyclerView.Adapter<CandidateAdapter.CandidateViewHold
     }
 
     override fun onBindViewHolder(holder: CandidateViewHolder, position: Int) {
-        holder.bind(candidates[position], position + 1)
+        val candidate = getItem(position)
+        holder.bind(candidate, position + 1)
     }
-
-    override fun getItemCount(): Int = candidates.size
 
     inner class CandidateViewHolder(private val binding: ItemCandidateBinding) : 
         RecyclerView.ViewHolder(binding.root) {
@@ -59,5 +52,18 @@ class CandidateAdapter : RecyclerView.Adapter<CandidateAdapter.CandidateViewHold
             }
             binding.tvSource.text = sourceInfo
         }
+    }
+}
+
+/**
+ * 候选词差异比较回调
+ */
+class CandidateDiffCallback : DiffUtil.ItemCallback<Candidate>() {
+    override fun areItemsTheSame(oldItem: Candidate, newItem: Candidate): Boolean {
+        return oldItem.word == newItem.word && oldItem.pinyin == newItem.pinyin
+    }
+
+    override fun areContentsTheSame(oldItem: Candidate, newItem: Candidate): Boolean {
+        return oldItem == newItem
     }
 } 
