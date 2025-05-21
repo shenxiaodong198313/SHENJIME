@@ -147,6 +147,12 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+        
+        <!-- 模糊拼音设置 -->
+        <activity
+            android:name=".settings.FuzzyPinyinSettingsActivity"
+            android:label="模糊拼音设置"
+            android:exported="false" />
 
     </application>
 

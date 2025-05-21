@@ -3257,7 +3257,9 @@ id btnCopyLogs
 id btnDevTools
 id btnDictManager
 id btnLogs
+id btn_back
 id btn_enable_ime
+id btn_fuzzy_pinyin
 id btn_ime_settings
 id btn_set_default_ime
 id buttonContainer
@@ -3690,6 +3692,14 @@ id stretch
 id submenuarrow
 id submit_area
 id supportScrollUp
+id switch_an_ang
+id switch_c_ch
+id switch_en_eng
+id switch_in_ing
+id switch_l_n
+id switch_s_sh
+id switch_select_all
+id switch_z_zh
 id tabMode
 id tab_layout
 id tableModules
@@ -3922,6 +3932,7 @@ layout activity_dictionary_detail
 layout activity_dictionary_logs
 layout activity_dictionary_manager
 layout activity_fragment_container
+layout activity_fuzzy_pinyin_settings
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main

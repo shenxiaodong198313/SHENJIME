@@ -7,31 +7,37 @@ package com.shenji.aikeyboard.pinyin
  */
 enum class MatchType {
     /**
-     * 首字母匹配
-     * 例如：'z'匹配'中'
+     * 未知类型
+     */
+    UNKNOWN,
+    
+    /**
+     * 单字符首字母匹配
+     * 例如：输入z，匹配"找"（zhao）的首字母z
      */
     INITIAL_LETTER,
     
     /**
-     * 拼音音节/前缀匹配
-     * 例如：'zhong'匹配'中'
+     * 拼音音节匹配
+     * 例如：输入zao，匹配拼音为"zao"的字词
      */
     PINYIN_SYLLABLE,
     
     /**
-     * 音节拆分匹配
-     * 例如：'nihao'拆分为'ni'+'hao'匹配'你好'
+     * 拼音音节拆分匹配
+     * 例如：输入nihao，拆分为ni+hao并匹配
      */
     SYLLABLE_SPLIT,
     
     /**
      * 首字母缩写匹配
-     * 例如：'bjr'匹配'北京人'
+     * 例如：输入bjrm，匹配"北京人民"(beijing renmin)
      */
     ACRONYM,
     
     /**
-     * 未知匹配类型
+     * 模糊拼音匹配
+     * 例如：输入zan但匹配zang（模糊规则an=ang）
      */
-    UNKNOWN
+    FUZZY_SYLLABLE
 } 

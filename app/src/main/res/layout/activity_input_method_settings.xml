@@ -85,6 +85,49 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="高级设置"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+        
+    <!-- 模糊拼音设置 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+        
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_edit"
+            android:contentDescription="模糊拼音"
+            android:layout_marginEnd="16dp"/>
+            
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="模糊拼音设置"
+            android:textSize="16sp"/>
+            
+        <Button
+            android:id="@+id/btn_fuzzy_pinyin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="设置"/>
+    </LinearLayout>
+    
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_marginBottom="24dp"/>
+        
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="功能说明"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -93,7 +136,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="1. 标准QWERTY键盘布局\n2. 拼音输入支持\n3. 候选词条智能推荐\n4. 点击键盘才显示候选词区域"
+        android:text="1. 标准QWERTY键盘布局\n2. 拼音输入支持\n3. 候选词条智能推荐\n4. 点击键盘才显示候选词区域\n5. 模糊拼音支持(z=zh, c=ch等)"
         android:textSize="14sp"
         android:lineSpacingExtra="8dp"/>
 

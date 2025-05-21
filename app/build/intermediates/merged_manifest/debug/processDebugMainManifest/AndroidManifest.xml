@@ -166,6 +166,12 @@
             </intent-filter>
         </activity>
 
+        <!-- 模糊拼音设置 -->
+        <activity
+            android:name="com.shenji.aikeyboard.settings.FuzzyPinyinSettingsActivity"
+            android:exported="false"
+            android:label="模糊拼音设置" />
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.shenji.aikeyboard.androidx-startup"

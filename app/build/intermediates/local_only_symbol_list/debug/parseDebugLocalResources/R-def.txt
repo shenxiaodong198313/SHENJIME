@@ -64,7 +64,9 @@ id btnCopyLogs
 id btnDevTools
 id btnDictManager
 id btnLogs
+id btn_back
 id btn_enable_ime
+id btn_fuzzy_pinyin
 id btn_ime_settings
 id btn_set_default_ime
 id buttonContainer
@@ -163,6 +165,14 @@ id simulate_button
 id split_result_text_view
 id stage_text_view
 id status_text_view
+id switch_an_ang
+id switch_c_ch
+id switch_en_eng
+id switch_in_ing
+id switch_l_n
+id switch_s_sh
+id switch_select_all
+id switch_z_zh
 id tab_layout
 id tableModules
 id test_edit_text
@@ -211,6 +221,7 @@ layout activity_dictionary_detail
 layout activity_dictionary_logs
 layout activity_dictionary_manager
 layout activity_fragment_container
+layout activity_fuzzy_pinyin_settings
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main

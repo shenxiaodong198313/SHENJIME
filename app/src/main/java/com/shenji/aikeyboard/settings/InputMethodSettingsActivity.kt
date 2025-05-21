@@ -33,6 +33,11 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_set_default_ime)?.setOnClickListener {
             openInputMethodPicker()
         }
+        
+        // 模糊拼音设置按钮
+        findViewById<Button>(R.id.btn_fuzzy_pinyin)?.setOnClickListener {
+            openFuzzyPinyinSettings()
+        }
     }
     
     // 打开输入法设置界面
@@ -64,6 +69,17 @@ class InputMethodSettingsActivity : AppCompatActivity() {
                 Timber.e(e2, "打开输入法选择器失败")
                 Toast.makeText(this, "打开输入法选择器失败", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+    
+    // 打开模糊拼音设置
+    private fun openFuzzyPinyinSettings() {
+        try {
+            val intent = Intent(this, FuzzyPinyinSettingsActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Timber.e(e, "打开模糊拼音设置失败: ${e.message}")
+            Toast.makeText(this, "打开模糊拼音设置失败", Toast.LENGTH_SHORT).show()
         }
     }
 } 

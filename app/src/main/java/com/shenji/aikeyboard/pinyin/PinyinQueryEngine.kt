@@ -2,6 +2,7 @@ package com.shenji.aikeyboard.pinyin
 
 import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.data.Entry
+import com.shenji.aikeyboard.settings.FuzzyPinyinManager
 import io.realm.kotlin.ext.query
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,6 +35,9 @@ class PinyinQueryEngine {
     
     // 拼音分词器
     private val pinyinSplitter = PinyinSplitter.getInstance()
+    
+    // 模糊拼音管理器
+    private val fuzzyPinyinManager = FuzzyPinyinManager.getInstance()
     
     /**
      * 对输入执行拼音查询（异步方法）
@@ -208,42 +212,104 @@ class PinyinQueryEngine {
         // 从输入中提取纯英文拼音部分
         val pinyinPart = extractPinyinPart(input)
         
+        // 应用模糊拼音规则，获取可能的音节变体
+        val fuzzySyllables = if (fuzzyPinyinManager.isFuzzyEnabled()) {
+            fuzzyPinyinManager.applyFuzzyRules(pinyinPart)
+        } else {
+            listOf(pinyinPart)
+        }
+        
         if (needExplain) {
             explanation.append("查询过程:\n")
             explanation.append("1. 使用精确音节匹配规则查询单字词典\n")
             explanation.append("- 原始输入: '$input'\n")
             explanation.append("- 提取拼音部分: '$pinyinPart'\n")
-            explanation.append("- 查询条件: type='chars' AND pinyin == '$pinyinPart'\n")
+            
+            if (fuzzySyllables.size > 1) {
+                explanation.append("- 应用模糊拼音规则，可能的音节: ${fuzzySyllables.joinToString(", ")}\n")
+            }
+            
+            explanation.append("- 查询条件: type='chars' AND pinyin IN (${fuzzySyllables.joinToString(", ") { "'$it'" }})\n")
         }
         
         try {
             val realm = ShenjiApplication.realm
             
-            // 查询单字词典中精确匹配的单字
-            val query = realm.query<Entry>("type == $0 AND pinyin == $1", 
-                "chars", pinyinPart)
-            
-            val entries = query.find()
-                .sortedByDescending { it.frequency }
-            
-            if (needExplain) {
-                explanation.append("- 单字精确匹配结果: ${entries.size}个\n")
+            // 对每个可能的音节变体执行查询
+            for (syllable in fuzzySyllables) {
+                // 查询单字词典中精确匹配的单字
+                val query = realm.query<Entry>("type == $0 AND pinyin == $1", 
+                    "chars", syllable)
+                
+                val entries = query.find()
+                    .sortedByDescending { it.frequency }
+                
+                if (needExplain) {
+                    explanation.append("- 音节'$syllable'匹配结果: ${entries.size}个\n")
+                }
+                
+                // 转换为候选词，添加去重逻辑
+                val seenWords = mutableSetOf<String>()
+                entries.forEach { entry ->
+                    // 只添加未见过的词
+                    if (seenWords.add(entry.word)) {
+                        val matchType = if (syllable == pinyinPart) 
+                            MatchType.PINYIN_SYLLABLE 
+                        else 
+                            MatchType.FUZZY_SYLLABLE
+                            
+                        candidates.add(
+                            PinyinCandidate(
+                                word = entry.word,
+                                pinyin = entry.pinyin,
+                                frequency = entry.frequency,
+                                type = entry.type,
+                                matchType = matchType
+                            )
+                        )
+                    }
+                }
             }
             
-            // 转换为候选词，添加去重逻辑
-            val seenWords = mutableSetOf<String>()
-            entries.forEach { entry ->
-                // 只添加未见过的词
-                if (seenWords.add(entry.word)) {
-                    candidates.add(
-                        PinyinCandidate(
-                            word = entry.word,
-                            pinyin = entry.pinyin,
-                            frequency = entry.frequency,
-                            type = entry.type,
-                            matchType = MatchType.PINYIN_SYLLABLE
-                        )
-                    )
+            // 如果是开启了模糊拼音但没有精确匹配结果，查询词组
+            if (candidates.isEmpty() && fuzzySyllables.size > 1) {
+                if (needExplain) {
+                    explanation.append("2. 单字无匹配，尝试查询以模糊音节开头的词组\n")
+                }
+                
+                for (syllable in fuzzySyllables) {
+                    // 查询以该音节开头的词组
+                    val query = realm.query<Entry>("type != $0 AND pinyin BEGINSWITH $1", 
+                        "chars", syllable)
+                    
+                    val entries = query.find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit / fuzzySyllables.size)
+                    
+                    if (needExplain) {
+                        explanation.append("- 以'$syllable'开头的词组: ${entries.size}个\n")
+                    }
+                    
+                    // 转换为候选词
+                    val seenWords = mutableSetOf<String>()
+                    entries.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            val matchType = if (syllable == pinyinPart) 
+                                MatchType.PINYIN_SYLLABLE 
+                            else 
+                                MatchType.FUZZY_SYLLABLE
+                                
+                            candidates.add(
+                                PinyinCandidate(
+                                    word = entry.word,
+                                    pinyin = entry.pinyin,
+                                    frequency = entry.frequency,
+                                    type = entry.type,
+                                    matchType = matchType
+                                )
+                            )
+                        }
+                    }
                 }
             }
             
@@ -258,7 +324,7 @@ class PinyinQueryEngine {
         PinyinQueryResult(
             inputType = InputType.PINYIN_SYLLABLE,
             candidates = candidates.take(limit),
-            syllables = listOf(pinyinPart),
+            syllables = fuzzySyllables,
             explanation = explanation.toString()
         )
     }
@@ -305,88 +371,133 @@ class PinyinQueryEngine {
             explanation.append("- 提取拼音部分: '$pinyinPart'\n")
         }
         
+        // 检查是否开启了模糊拼音
+        val useFuzzy = fuzzyPinyinManager.isFuzzyEnabled()
+        
+        if (useFuzzy && needExplain) {
+            explanation.append("- 模糊拼音已开启，将对每个音节应用模糊规则\n")
+        }
+        
         // 尝试每一种拆分方案
         var successIndex = -1
         var currentCandidates = mutableListOf<PinyinCandidate>()
         
         for ((index, syllables) in allSplitResults.withIndex()) {
-            // 将音节连接为完整的拼音字符串（带空格）
-            val fullPinyin = syllables.joinToString(" ")
+            // 为每个音节应用模糊拼音规则
+            val syllablesWithFuzzy = if (useFuzzy) {
+                // 对每个音节应用模糊规则，生成所有可能的组合
+                applyFuzzyToSyllables(syllables)
+            } else {
+                // 不使用模糊拼音，只有一种可能的组合
+                listOf(syllables)
+            }
             
             if (needExplain) {
                 explanation.append("2. 尝试拆分方案${index + 1}: ${syllables.joinToString("+")}\n")
-                explanation.append("   - 构建完整拼音查询: '$fullPinyin'\n")
-                explanation.append("   - 查询条件: pinyin == '$fullPinyin'\n")
-            }
-            
-            try {
-                val realm = ShenjiApplication.realm
                 
-                // 查询精确匹配的词条
-                val query = realm.query<Entry>("pinyin == $0", fullPinyin)
-                
-                var entries = query.find()
-                    .sortedByDescending { it.frequency }
-                
-                if (needExplain) {
-                    explanation.append("   - 精确匹配结果: ${entries.size}个\n")
-                }
-                
-                // 如果精确匹配没有结果，尝试前缀匹配
-                if (entries.isEmpty() && syllables.size >= 2) {
-                    if (needExplain) {
-                        explanation.append("   - 精确匹配无结果，尝试前缀匹配\n")
-                        explanation.append("   - 查询条件: pinyin BEGINSWITH '$fullPinyin'\n")
-                    }
-                    
-                    val prefixQuery = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
-                    entries = prefixQuery.find()
-                        .sortedByDescending { it.frequency }
-                        .take(limit)
-                    
-                    if (needExplain) {
-                        explanation.append("   - 前缀匹配结果: ${entries.size}个\n")
-                    }
-                } else {
-                    entries = entries.take(limit)
-                }
-                
-                // 如果找到了候选词，则使用这个拆分方案
-                if (entries.isNotEmpty()) {
-                    successIndex = index
-                    currentCandidates.clear()
-                    
-                    // 转换为候选词，添加去重逻辑
-                    val seenWords = mutableSetOf<String>()
-                    entries.forEach { entry ->
-                        // 只添加未见过的词
-                        if (seenWords.add(entry.word)) {
-                            currentCandidates.add(
-                                PinyinCandidate(
-                                    word = entry.word,
-                                    pinyin = entry.pinyin,
-                                    frequency = entry.frequency,
-                                    type = entry.type,
-                                    matchType = MatchType.SYLLABLE_SPLIT
-                                )
-                            )
+                if (useFuzzy && syllablesWithFuzzy.size > 1) {
+                    explanation.append("   - 应用模糊拼音规则，生成${syllablesWithFuzzy.size}种变体\n")
+                    syllablesWithFuzzy.forEachIndexed { fuzzyIndex, fuzzySyllables ->
+                        if (fuzzyIndex > 0) { // 跳过原始音节组合
+                            explanation.append("     * 变体${fuzzyIndex}: ${fuzzySyllables.joinToString("+")}\n")
                         }
                     }
+                }
+            }
+            
+            var foundCandidates = false
+            
+            // 尝试每种可能的音节组合
+            for (fuzzySyllables in syllablesWithFuzzy) {
+                // 将音节连接为完整的拼音字符串（带空格）
+                val fullPinyin = fuzzySyllables.joinToString(" ")
+                
+                if (needExplain && (syllablesWithFuzzy.size > 1 || syllablesWithFuzzy.first() != syllables)) {
+                    explanation.append("   - 尝试音节组合: ${fuzzySyllables.joinToString("+")}\n")
+                    explanation.append("   - 构建完整拼音查询: '$fullPinyin'\n")
+                    explanation.append("   - 查询条件: pinyin == '$fullPinyin'\n")
+                }
+                
+                try {
+                    val realm = ShenjiApplication.realm
+                    
+                    // 查询精确匹配的词条
+                    val query = realm.query<Entry>("pinyin == $0", fullPinyin)
+                    
+                    var entries = query.find()
+                        .sortedByDescending { it.frequency }
                     
                     if (needExplain) {
-                        explanation.append("3. 成功找到候选词，使用拆分方案${index + 1}\n")
+                        explanation.append("   - 精确匹配结果: ${entries.size}个\n")
                     }
                     
-                    // 找到候选词后，不再尝试其他拆分方案
-                    break
-                } else if (needExplain) {
-                    explanation.append("   - 未找到候选词，尝试下一个拆分方案\n")
+                    // 如果精确匹配没有结果，尝试前缀匹配
+                    if (entries.isEmpty() && fuzzySyllables.size >= 2) {
+                        if (needExplain) {
+                            explanation.append("   - 精确匹配无结果，尝试前缀匹配\n")
+                            explanation.append("   - 查询条件: pinyin BEGINSWITH '$fullPinyin'\n")
+                        }
+                        
+                        val prefixQuery = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
+                        entries = prefixQuery.find()
+                            .sortedByDescending { it.frequency }
+                            .take(limit)
+                        
+                        if (needExplain) {
+                            explanation.append("   - 前缀匹配结果: ${entries.size}个\n")
+                        }
+                    } else {
+                        entries = entries.take(limit)
+                    }
+                    
+                    // 如果找到了候选词，则使用这个音节组合
+                    if (entries.isNotEmpty()) {
+                        foundCandidates = true
+                        
+                        // 确定是否是模糊匹配
+                        val isFuzzyMatch = fuzzySyllables != syllables
+                        
+                        // 转换为候选词，添加去重逻辑
+                        val seenWords = mutableSetOf<String>()
+                        entries.forEach { entry ->
+                            // 只添加未见过的词
+                            if (seenWords.add(entry.word)) {
+                                currentCandidates.add(
+                                    PinyinCandidate(
+                                        word = entry.word,
+                                        pinyin = entry.pinyin,
+                                        frequency = entry.frequency,
+                                        type = entry.type,
+                                        matchType = if (isFuzzyMatch) MatchType.FUZZY_SYLLABLE else MatchType.SYLLABLE_SPLIT
+                                    )
+                                )
+                            }
+                        }
+                        
+                        if (needExplain) {
+                            explanation.append("   - 成功找到候选词，使用${if (isFuzzyMatch) "模糊" else "精确"}音节组合\n")
+                        }
+                        
+                        // 找到候选词后，不再尝试此拆分方案的其他模糊变体
+                        break
+                    } else if (needExplain) {
+                        explanation.append("   - 未找到候选词，尝试下一个变体\n")
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "查询音节拆分候选词异常")
+                    if (needExplain) {
+                        explanation.append("   - 查询异常: ${e.message}\n")
+                    }
                 }
-            } catch (e: Exception) {
-                Timber.e(e, "查询音节拆分候选词异常")
-                if (needExplain) {
-                    explanation.append("   - 查询异常: ${e.message}\n")
-                }
+            }
+            
+            // 如果当前拆分方案找到了候选词
+            if (foundCandidates) {
+                successIndex = index
+                // 找到候选词后，不再尝试其他拆分方案
+                break
+            } else if (needExplain) {
+                explanation.append("   - 此拆分方案未找到候选词，尝试下一个拆分方案\n")
             }
         }
         
@@ -668,5 +779,57 @@ class PinyinQueryEngine {
         
         // 返回最后一个匹配项（作为最新的拼音输入）
         return matches.lastOrNull()?.value ?: input
+    }
+    
+    /**
+     * 对一组音节应用模糊拼音规则，生成所有可能的组合
+     * 
+     * @param syllables 原始音节列表
+     * @return 包含原始音节列表和所有可能的模糊变体的列表
+     */
+    private fun applyFuzzyToSyllables(syllables: List<String>): List<List<String>> {
+        // 如果没有开启模糊拼音，或者音节列表为空，直接返回原始列表
+        if (!fuzzyPinyinManager.isFuzzyEnabled() || syllables.isEmpty()) {
+            return listOf(syllables)
+        }
+        
+        val result = mutableListOf<List<String>>()
+        
+        // 添加原始音节列表作为第一个结果
+        result.add(syllables)
+        
+        // 为每个音节获取其可能的模糊变体
+        val syllableVariants = syllables.map { syllable ->
+            fuzzyPinyinManager.applyFuzzyRules(syllable)
+        }
+        
+        // 检查是否有任何一个音节有模糊变体
+        val hasFuzzyVariants = syllableVariants.any { it.size > 1 }
+        
+        // 如果没有模糊变体，直接返回原始列表
+        if (!hasFuzzyVariants) {
+            return result
+        }
+        
+        // 为了限制组合爆炸，只生成每个位置最多一个变体的组合
+        // 首先，找出所有有模糊变体的位置
+        val positionsWithVariants = syllableVariants.mapIndexed { index, variants ->
+            if (variants.size > 1) index else -1
+        }.filter { it >= 0 }
+        
+        // 对于每个有变体的位置，生成一个替换了该位置的变体列表
+        for (position in positionsWithVariants) {
+            // 对于该位置的每个变体（除了原始音节）
+            for (variant in syllableVariants[position].drop(1)) {
+                // 创建一个新的音节列表，替换该位置的音节
+                val newSyllables = syllables.toMutableList()
+                newSyllables[position] = variant
+                
+                // 将新的音节列表添加到结果中
+                result.add(newSyllables)
+            }
+        }
+        
+        return result
     }
 } 
