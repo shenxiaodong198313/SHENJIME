@@ -82,18 +82,24 @@ class PinyinQueryEngine {
             return InputType.UNKNOWN
         }
 
+        // 提取纯拼音部分
+        val pinyinPart = extractPinyinPart(input)
+        if (pinyinPart.isEmpty()) {
+            return InputType.UNKNOWN
+        }
+
         // 单字符首字母
-        if (input.length == 1 && input.matches(Regex("^[a-z]$"))) {
+        if (pinyinPart.length == 1 && pinyinPart.matches(Regex("^[a-z]$"))) {
             return InputType.INITIAL_LETTER
         }
 
         // 单个完整拼音音节
-        if (isValidPinyinSyllable(input) && !input.contains(" ")) {
+        if (isValidPinyinSyllable(pinyinPart) && !pinyinPart.contains(" ")) {
             return InputType.PINYIN_SYLLABLE
         }
 
         // 其他情况，尝试音节拆分或作为缩写处理
-        val canSplit = canSplitToValidSyllables(input)
+        val canSplit = canSplitToValidSyllables(pinyinPart)
         
         return when {
             canSplit -> InputType.SYLLABLE_SPLIT
@@ -191,10 +197,15 @@ class PinyinQueryEngine {
         val explanation = StringBuilder()
         val candidates = mutableListOf<PinyinCandidate>()
         
+        // 从输入中提取纯英文拼音部分
+        val pinyinPart = extractPinyinPart(input)
+        
         if (needExplain) {
             explanation.append("查询过程:\n")
             explanation.append("1. 使用精确音节匹配规则查询单字词典\n")
-            explanation.append("- 查询条件: type='chars' AND pinyin == '$input'\n")
+            explanation.append("- 原始输入: '$input'\n")
+            explanation.append("- 提取拼音部分: '$pinyinPart'\n")
+            explanation.append("- 查询条件: type='chars' AND pinyin == '$pinyinPart'\n")
         }
         
         try {
@@ -202,7 +213,7 @@ class PinyinQueryEngine {
             
             // 查询单字词典中精确匹配的单字
             val query = realm.query<Entry>("type == $0 AND pinyin == $1", 
-                "chars", input)
+                "chars", pinyinPart)
             
             val entries = query.find()
                 .sortedByDescending { it.frequency }
@@ -239,7 +250,7 @@ class PinyinQueryEngine {
         PinyinQueryResult(
             inputType = InputType.PINYIN_SYLLABLE,
             candidates = candidates.take(limit),
-            syllables = listOf(input),
+            syllables = listOf(pinyinPart),
             explanation = explanation.toString()
         )
     }
@@ -255,12 +266,17 @@ class PinyinQueryEngine {
         val explanation = StringBuilder()
         val candidates = mutableListOf<PinyinCandidate>()
         
+        // 从输入中提取纯英文拼音部分
+        val pinyinPart = extractPinyinPart(input)
+        
         // 拆分音节
-        val syllables = pinyinSplitter.splitPinyin(input)
+        val syllables = pinyinSplitter.splitPinyin(pinyinPart)
         
         if (syllables.isEmpty()) {
             if (needExplain) {
                 explanation.append("音节拆分失败，无法获得有效音节\n")
+                explanation.append("- 原始输入: '$input'\n")
+                explanation.append("- 提取拼音部分: '$pinyinPart'\n")
             }
             return@withContext PinyinQueryResult(
                 inputType = InputType.SYLLABLE_SPLIT,
@@ -273,6 +289,8 @@ class PinyinQueryEngine {
         if (needExplain) {
             explanation.append("查询过程:\n")
             explanation.append("1. 音节拆分结果: ${syllables.joinToString("+")}\n")
+            explanation.append("- 原始输入: '$input'\n")
+            explanation.append("- 提取拼音部分: '$pinyinPart'\n")
         }
         
         // 将音节连接为完整的拼音字符串（带空格）
@@ -362,17 +380,22 @@ class PinyinQueryEngine {
         val explanation = StringBuilder()
         val candidates = mutableListOf<PinyinCandidate>()
         
+        // 从输入中提取纯英文拼音部分
+        val pinyinPart = extractPinyinPart(input)
+        
         if (needExplain) {
             explanation.append("查询过程:\n")
             explanation.append("1. 使用首字母缩写规则查询词典\n")
-            explanation.append("- 查询条件: initialLetters == '$input'\n")
+            explanation.append("- 原始输入: '$input'\n")
+            explanation.append("- 提取拼音部分: '$pinyinPart'\n")
+            explanation.append("- 查询条件: initialLetters == '$pinyinPart'\n")
         }
         
         try {
             val realm = ShenjiApplication.realm
             
             // 查询匹配首字母缩写的词条
-            val query = realm.query<Entry>("initialLetters == $0", input)
+            val query = realm.query<Entry>("initialLetters == $0", pinyinPart)
             
             val entries = query.find()
                 .sortedByDescending { it.frequency }
@@ -412,5 +435,18 @@ class PinyinQueryEngine {
             syllables = listOf(),
             explanation = explanation.toString()
         )
+    }
+    
+    /**
+     * 从混合输入中提取纯拼音部分
+     * 例如从"你好吗我很好微信gongzhonghao"中提取"gongzhonghao"
+     */
+    private fun extractPinyinPart(input: String): String {
+        // 正则表达式匹配连续的英文字母和数字
+        val regex = Regex("[a-zA-Z0-9]+")
+        val matches = regex.findAll(input)
+        
+        // 返回最后一个匹配项（作为最新的拼音输入）
+        return matches.lastOrNull()?.value ?: input
     }
 } 
