@@ -120,22 +120,22 @@ class PinyinSplitter {
             return listOf(cleanInput)
         }
         
-        // 检查是否是首字母+音节的混合模式
+        // 优先使用贪心算法从左到右拆分，总是选择最长匹配
+        val greedyResult = greedySplit(cleanInput)
+        if (greedyResult.isNotEmpty()) {
+            return greedyResult
+        }
+        
+        // 如果贪心算法失败，尝试检查是否是首字母+音节的混合模式
         val mixedResult = checkMixedInitialAndSyllable(cleanInput)
         if (mixedResult.isNotEmpty()) {
             return mixedResult
         }
         
-        // 尝试使用动态规划算法进行音节拆分
+        // 最后尝试动态规划算法
         val dpResult = splitByDP(cleanInput)
         if (dpResult.isNotEmpty()) {
             return dpResult
-        }
-        
-        // 贪心拆分：从左到右查找最长有效音节
-        val greedyResult = greedySplit(cleanInput)
-        if (greedyResult.isNotEmpty()) {
-            return greedyResult
         }
         
         // 所有方法都失败，返回空列表
@@ -205,13 +205,25 @@ class PinyinSplitter {
         
         // 填充dp数组
         for (i in 1..n) {
-            for (j in 0 until i) {
+            // 修改遍历顺序，优先尝试更长的音节
+            // 从当前位置向前查找，优先匹配更长的音节
+            var j = 0
+            val candidateSyllables = mutableListOf<Pair<Int, String>>()
+            
+            while (j < i) {
                 val syllable = input.substring(j, i)
                 if (dp[j] && PINYIN_SYLLABLES.contains(syllable)) {
-                    dp[i] = true
-                    prev[i] = j
-                    break
+                    candidateSyllables.add(Pair(j, syllable))
                 }
+                j++
+            }
+            
+            // 如果找到了有效的拆分，选择最长的音节
+            if (candidateSyllables.isNotEmpty()) {
+                // 按音节长度排序，选择最长的
+                val (bestJ, _) = candidateSyllables.maxByOrNull { it.second.length }!!
+                dp[i] = true
+                prev[i] = bestJ
             }
         }
         

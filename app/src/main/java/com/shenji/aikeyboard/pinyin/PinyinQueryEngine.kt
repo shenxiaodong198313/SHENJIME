@@ -142,23 +142,26 @@ class PinyinQueryEngine {
             
             val entries = query.find()
                 .sortedByDescending { it.frequency }
-                .take(limit)
             
             if (needExplain) {
                 explanation.append("- 单字匹配结果: ${entries.size}个\n")
             }
             
-            // 转换为候选词
+            // 转换为候选词，添加去重逻辑
+            val seenWords = mutableSetOf<String>()
             entries.forEach { entry ->
-                candidates.add(
-                    PinyinCandidate(
-                        word = entry.word,
-                        pinyin = entry.pinyin,
-                        frequency = entry.frequency,
-                        type = entry.type,
-                        matchType = MatchType.INITIAL_LETTER
+                // 只添加未见过的词
+                if (seenWords.add(entry.word)) {
+                    candidates.add(
+                        PinyinCandidate(
+                            word = entry.word,
+                            pinyin = entry.pinyin,
+                            frequency = entry.frequency,
+                            type = entry.type,
+                            matchType = MatchType.INITIAL_LETTER
+                        )
                     )
-                )
+                }
             }
             
         } catch (e: Exception) {
@@ -168,10 +171,10 @@ class PinyinQueryEngine {
             }
         }
         
-        // 返回结果对象
+        // 返回结果对象，应用limit限制
         PinyinQueryResult(
             inputType = InputType.INITIAL_LETTER,
-            candidates = candidates,
+            candidates = candidates.take(limit),
             syllables = listOf(),
             explanation = explanation.toString()
         )
@@ -203,23 +206,26 @@ class PinyinQueryEngine {
             
             val entries = query.find()
                 .sortedByDescending { it.frequency }
-                .take(limit)
             
             if (needExplain) {
                 explanation.append("- 单字精确匹配结果: ${entries.size}个\n")
             }
             
-            // 转换为候选词
+            // 转换为候选词，添加去重逻辑
+            val seenWords = mutableSetOf<String>()
             entries.forEach { entry ->
-                candidates.add(
-                    PinyinCandidate(
-                        word = entry.word,
-                        pinyin = entry.pinyin,
-                        frequency = entry.frequency,
-                        type = entry.type,
-                        matchType = MatchType.PINYIN_SYLLABLE
+                // 只添加未见过的词
+                if (seenWords.add(entry.word)) {
+                    candidates.add(
+                        PinyinCandidate(
+                            word = entry.word,
+                            pinyin = entry.pinyin,
+                            frequency = entry.frequency,
+                            type = entry.type,
+                            matchType = MatchType.PINYIN_SYLLABLE
+                        )
                     )
-                )
+                }
             }
             
         } catch (e: Exception) {
@@ -229,10 +235,10 @@ class PinyinQueryEngine {
             }
         }
         
-        // 返回结果对象
+        // 返回结果对象，应用limit限制
         PinyinQueryResult(
             inputType = InputType.PINYIN_SYLLABLE,
-            candidates = candidates,
+            candidates = candidates.take(limit),
             syllables = listOf(input),
             explanation = explanation.toString()
         )
@@ -312,17 +318,21 @@ class PinyinQueryEngine {
                 entries = entries.take(limit)
             }
             
-            // 转换为候选词
+            // 转换为候选词，添加去重逻辑
+            val seenWords = mutableSetOf<String>()
             entries.forEach { entry ->
-                candidates.add(
-                    PinyinCandidate(
-                        word = entry.word,
-                        pinyin = entry.pinyin,
-                        frequency = entry.frequency,
-                        type = entry.type,
-                        matchType = MatchType.SYLLABLE_SPLIT
+                // 只添加未见过的词
+                if (seenWords.add(entry.word)) {
+                    candidates.add(
+                        PinyinCandidate(
+                            word = entry.word,
+                            pinyin = entry.pinyin,
+                            frequency = entry.frequency,
+                            type = entry.type,
+                            matchType = MatchType.SYLLABLE_SPLIT
+                        )
                     )
-                )
+                }
             }
             
         } catch (e: Exception) {
@@ -332,10 +342,10 @@ class PinyinQueryEngine {
             }
         }
         
-        // 返回结果对象
+        // 返回结果对象，应用limit限制
         PinyinQueryResult(
             inputType = InputType.SYLLABLE_SPLIT,
-            candidates = candidates,
+            candidates = candidates.take(limit),
             syllables = syllables,
             explanation = explanation.toString()
         )
@@ -366,23 +376,26 @@ class PinyinQueryEngine {
             
             val entries = query.find()
                 .sortedByDescending { it.frequency }
-                .take(limit)
             
             if (needExplain) {
                 explanation.append("- 匹配结果: ${entries.size}个\n")
             }
             
-            // 转换为候选词
+            // 转换为候选词，添加去重逻辑
+            val seenWords = mutableSetOf<String>()
             entries.forEach { entry ->
-                candidates.add(
-                    PinyinCandidate(
-                        word = entry.word,
-                        pinyin = entry.pinyin,
-                        frequency = entry.frequency,
-                        type = entry.type,
-                        matchType = MatchType.ACRONYM
+                // 只添加未见过的词
+                if (seenWords.add(entry.word)) {
+                    candidates.add(
+                        PinyinCandidate(
+                            word = entry.word,
+                            pinyin = entry.pinyin,
+                            frequency = entry.frequency,
+                            type = entry.type,
+                            matchType = MatchType.ACRONYM
+                        )
                     )
-                )
+                }
             }
             
         } catch (e: Exception) {
@@ -392,10 +405,10 @@ class PinyinQueryEngine {
             }
         }
         
-        // 返回结果对象
+        // 返回结果对象，应用limit限制
         PinyinQueryResult(
             inputType = InputType.ACRONYM,
-            candidates = candidates,
+            candidates = candidates.take(limit),
             syllables = listOf(),
             explanation = explanation.toString()
         )
