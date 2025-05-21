@@ -3194,6 +3194,7 @@ id accessibility_custom_action_6
 id accessibility_custom_action_7
 id accessibility_custom_action_8
 id accessibility_custom_action_9
+id accessibility_settings_button
 id actionDown
 id actionDownUp
 id actionUp
@@ -3256,11 +3257,8 @@ id btnCopyLogs
 id btnDevTools
 id btnDictManager
 id btnLogs
-id btn_clear_log
 id btn_enable_ime
-id btn_export_log
 id btn_ime_settings
-id btn_refresh_log
 id btn_set_default_ime
 id buttonContainer
 id buttonPanel
@@ -3282,11 +3280,13 @@ id center_vertical
 id chain
 id chain2
 id chains
+id check_all_permissions_button
 id checkbox
 id checked
 id chronometer
 id circle_center
 id clear_button
+id clear_logs_button
 id clear_text
 id clip_horizontal
 id clip_vertical
@@ -3302,6 +3302,7 @@ id contentPanel
 id contiguous
 id continuousVelocity
 id coordinator
+id copy_logs_button
 id copy_result_button
 id cos
 id counterclockwise
@@ -3374,6 +3375,7 @@ id fixed
 id flip
 id floating
 id forever
+id fragment_container
 id fragment_container_view_tag
 id frost
 id fullscreen_header
@@ -3464,7 +3466,8 @@ id linear
 id listMode
 id list_item
 id loadMoreProgress
-id log_content
+id log_viewer_button
+id logs_text_view
 id m3_side_sheet
 id mainButtonContainer
 id mainContainer
@@ -3576,9 +3579,12 @@ id path
 id pathRelative
 id peekHeight
 id percent
+id permission_check_button
+id permission_status_text_view
 id pin
 id pinyin_container
 id pinyin_display
+id pinyin_test_button
 id position
 id postLayout
 id pressed
@@ -3592,7 +3598,11 @@ id radial
 id radio
 id ratio
 id rectangles
+id refresh_logs_button
 id report_drawn
+id request_permission_button
+id request_sms_permission_button
+id request_storage_permission_button
 id restart
 id reverse
 id reverseSawtooth
@@ -3643,6 +3653,7 @@ id shortcut
 id showCustom
 id showHome
 id showTitle
+id simulate_button
 id sin
 id skipCollapsed
 id skipped
@@ -3672,6 +3683,7 @@ id startToEnd
 id startVertical
 id staticLayout
 id staticPostLayout
+id status_text_view
 id stop
 id stretch
 id submenuarrow
@@ -3693,6 +3705,7 @@ id tag_transition_group
 id tag_unhandled_key_event_manager
 id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
+id test_edit_text
 id text
 id text2
 id textEnd
@@ -3713,6 +3726,7 @@ id time
 id title
 id titleDividerNoCustom
 id title_template
+id title_text_view
 id toggle
 id toolbar
 id toolbar_view
@@ -3767,6 +3781,7 @@ id uniform
 id unlabeled
 id up
 id useLogo
+id verification_code_button
 id vertical_only
 id view_offset_helper
 id view_pager
@@ -3901,9 +3916,11 @@ layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
 layout activity_dev_tools
+layout activity_dev_tools_new
 layout activity_dictionary_detail
 layout activity_dictionary_logs
 layout activity_dictionary_manager
+layout activity_fragment_container
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
@@ -3926,7 +3943,9 @@ layout design_text_input_start_icon
 layout dialog_database_info
 layout dialog_export_settings
 layout fragment_log_viewer
+layout fragment_permission_check
 layout fragment_pinyin_test
+layout fragment_verification_code
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_candidate
@@ -4031,6 +4050,10 @@ string abc_searchview_description_voice
 string abc_shareactionprovider_share_with
 string abc_shareactionprovider_share_with_application
 string abc_toolbar_collapse_description
+string accessibility_disabled
+string accessibility_enabled
+string accessibility_service_description
+string all_permissions_granted
 string androidx_startup
 string app_name
 string appbar_scrolling_view_behavior
@@ -4051,7 +4074,9 @@ string call_notification_screening_text
 string character_counter_content_description
 string character_counter_overflowed_content_description
 string character_counter_pattern
+string check_all_permissions
 string check_index
+string clear_input
 string clear_log
 string clear_logs
 string clear_text_end_icon_content_description
@@ -4202,11 +4227,13 @@ string mtrl_timepicker_cancel
 string mtrl_timepicker_confirm
 string no_candidates
 string no_logs
+string open_accessibility_settings
 string password_toggle_content_description
 string path_password_eye
 string path_password_eye_mask_strike_through
 string path_password_eye_mask_visible
 string path_password_strike_through
+string permission_check
 string pinyin_input_hint
 string pinyin_test
 string pinyin_test_complete
@@ -4214,6 +4241,8 @@ string pinyin_test_running
 string pinyin_test_title
 string query
 string realm_status
+string request_sms_permission
+string request_storage_permission
 string search_menu_title
 string searchbar_scrolling_view_behavior
 string searchview_clear_text_content_description
@@ -4221,7 +4250,13 @@ string searchview_navigation_content_description
 string select_test_case
 string side_sheet_accessibility_pane_title
 string side_sheet_behavior
+string simulate_code
+string sms_permission_denied
+string sms_permission_granted
+string some_permissions_missing
 string status_bar_notification_info_overflow
+string storage_permission_denied
+string storage_permission_granted
 string storage_permission_required
 string subtype_chinese
 string test_suite
@@ -4230,6 +4265,8 @@ string test_suite_logic
 string test_suite_pinyin
 string toggle_mode
 string usage_stats_permission_required
+string verification_code_received
+string verification_code_test
 string view_logs
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
@@ -5510,4 +5547,5 @@ styleable ViewPager2 android_orientation
 styleable ViewStubCompat android_id android_layout android_inflatedId
 styleable ViewTransition android_id SharedValue SharedValueId clearsTag duration ifTagNotSet ifTagSet motionInterpolator motionTarget onStateTransition pathMotionArc setsTag transitionDisable upDuration viewTransitionMode
 styleable include constraintSet
+xml accessibility_service_config
 xml method

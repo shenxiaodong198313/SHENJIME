@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".ui.DevToolsActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="开发工具"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/pinyin_test_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="1. 拼音测试"
+            android:textAlignment="textStart"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/log_viewer_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="2. 日志查看"
+            android:textAlignment="textStart"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/verification_code_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="3. 验证码测试"
+            android:textAlignment="textStart"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/permission_check_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="4. 权限状态"
+            android:textAlignment="textStart"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="工具说明"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="拼音测试：测试拼音分词和候选词查询功能\n日志查看：查看应用日志记录\n验证码测试：测试短信验证码自动填写功能\n权限状态：检查所需权限并提供一键开启"
+            android:layout_marginBottom="16dp"/>
+
+    </LinearLayout>
+</ScrollView> 

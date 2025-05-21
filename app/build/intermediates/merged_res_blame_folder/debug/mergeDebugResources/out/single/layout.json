@@ -12,8 +12,8 @@
         "source": "com.shenji.aikeyboard.app-main-37:/layout/item_dictionary_log.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/item_dictionary_group_header.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_dictionary_group_header.xml"
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/fragment_permission_check.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/fragment_permission_check.xml"
     },
     {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/keyboard_layout.xml",
@@ -32,18 +32,6 @@
         "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_main.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_input_method_settings.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_input_method_settings.xml"
-    },
-    {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_dictionary_logs.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dictionary_logs.xml"
-    },
-    {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/item_candidate.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_candidate.xml"
-    },
-    {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/fragment_pinyin_test.xml",
         "source": "com.shenji.aikeyboard.app-main-37:/layout/fragment_pinyin_test.xml"
     },
@@ -56,16 +44,16 @@
         "source": "com.shenji.aikeyboard.app-main-37:/layout/fragment_log_viewer.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/item_debug_stage.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_debug_stage.xml"
-    },
-    {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/dialog_database_info.xml",
         "source": "com.shenji.aikeyboard.app-main-37:/layout/dialog_database_info.xml"
     },
     {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_dev_tools.xml",
         "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dev_tools.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_dev_tools_new.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dev_tools_new.xml"
     },
     {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/shimmer_dictionary_stat_card.xml",
@@ -76,11 +64,39 @@
         "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dictionary_detail.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/item_debug_weight.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_debug_weight.xml"
-    },
-    {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/shimmer_dictionary_module.xml",
         "source": "com.shenji.aikeyboard.app-main-37:/layout/shimmer_dictionary_module.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/item_dictionary_group_header.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_dictionary_group_header.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/fragment_verification_code.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/fragment_verification_code.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_input_method_settings.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_input_method_settings.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_dictionary_logs.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dictionary_logs.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/item_candidate.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_candidate.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/item_debug_stage.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_debug_stage.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_fragment_container.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_fragment_container.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/item_debug_weight.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/item_debug_weight.xml"
     }
 ]

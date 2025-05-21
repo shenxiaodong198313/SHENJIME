@@ -73,4 +73,26 @@
     <string name="pinyin_input_hint">输入拼音或首字母缩写</string>
     <string name="input_empty">请输入拼音</string>
     <string name="index_check_hint">请输入至少2个字母的首字母缩写</string>
+    
+    <!-- 验证码自动填写相关 -->
+    <string name="verification_code_test">验证码测试</string>
+    <string name="accessibility_service_description">用于自动检测和填写短信验证码到输入框中，提高用户验证体验。无需手动复制粘贴，收到短信验证码后会自动填入当前焦点的输入框。</string>
+    <string name="request_sms_permission">请求短信权限</string>
+    <string name="open_accessibility_settings">打开无障碍服务设置</string>
+    <string name="simulate_code">模拟验证码</string>
+    <string name="clear_input">清除输入框</string>
+    <string name="sms_permission_granted">短信权限已授予</string>
+    <string name="sms_permission_denied">短信权限未授予</string>
+    <string name="accessibility_enabled">无障碍服务已启用</string>
+    <string name="accessibility_disabled">无障碍服务未启用</string>
+    <string name="verification_code_received">收到验证码: %1$s</string>
+    
+    <!-- 权限检查相关 -->
+    <string name="permission_check">权限检查</string>
+    <string name="check_all_permissions">重新检查权限状态</string>
+    <string name="request_storage_permission">请求存储权限</string>
+    <string name="storage_permission_granted">存储权限已授予</string>
+    <string name="storage_permission_denied">存储权限未授予</string>
+    <string name="all_permissions_granted">所有权限已授予</string>
+    <string name="some_permissions_missing">部分权限未授予</string>
 </resources> 

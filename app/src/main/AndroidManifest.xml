@@ -13,6 +13,10 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    
+    <!-- 验证码自动填写相关权限 -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
 
     <!-- Android 10+ 需要特殊权限 -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
@@ -33,7 +37,7 @@
 
         <!-- 主活动 -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -71,6 +75,26 @@
         <activity
             android:name=".ui.DevToolsActivity"
             android:exported="true" />
+            
+        <!-- 拼音测试活动 -->
+        <activity
+            android:name=".ui.PinyinTestActivity"
+            android:exported="false" />
+            
+        <!-- 日志查看活动 -->
+        <activity
+            android:name=".ui.LogViewerActivity"
+            android:exported="false" />
+            
+        <!-- 验证码测试活动 -->
+        <activity
+            android:name=".ui.VerificationCodeActivity"
+            android:exported="false" />
+            
+        <!-- 权限检查活动 -->
+        <activity
+            android:name=".ui.PermissionCheckActivity"
+            android:exported="false" />
 
         <!-- 移动调试工具活动 -->
         <activity
@@ -98,6 +122,20 @@
             <meta-data
                 android:name="android.view.im"
                 android:resource="@xml/method" />
+        </service>
+        
+        <!-- 无障碍服务 - 用于自动填写验证码 -->
+        <service
+            android:name=".utils.AutofillAccessibilityService"
+            android:label="神机键盘验证码自动填写"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
         </service>
 
         <!-- 输入法设置活动 -->

@@ -12,6 +12,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.view.MenuItem
 import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -55,45 +56,177 @@ class DevToolsActivity : AppCompatActivity() {
 
     private lateinit var viewPager: ViewPager2
     private lateinit var tabLayout: TabLayout
+    private lateinit var pinyinTestButton: Button
+    private lateinit var logViewerButton: Button
+    private lateinit var verificationCodeButton: Button
+    private lateinit var permissionCheckButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_dev_tools)
+        setContentView(R.layout.activity_dev_tools_new)
         
         // 设置ActionBar标题
         supportActionBar?.title = "开发工具"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         
-        // 初始化ViewPager和TabLayout
-        viewPager = findViewById(R.id.view_pager)
-        tabLayout = findViewById(R.id.tab_layout)
+        // 初始化视图
+        pinyinTestButton = findViewById(R.id.pinyin_test_button)
+        logViewerButton = findViewById(R.id.log_viewer_button)
+        verificationCodeButton = findViewById(R.id.verification_code_button)
+        permissionCheckButton = findViewById(R.id.permission_check_button)
         
-        // 设置ViewPager适配器
-        viewPager.adapter = DevToolsPagerAdapter(this)
+        // 设置按钮点击监听器
+        pinyinTestButton.setOnClickListener {
+            startToolActivity(PinyinTestActivity::class.java)
+        }
         
-        // 设置TabLayout和ViewPager的关联
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = when(position) {
-                0 -> "拼音测试"
-                1 -> "日志查看"
-                else -> "工具${position + 1}"
-            }
-        }.attach()
+        logViewerButton.setOnClickListener {
+            startToolActivity(LogViewerActivity::class.java)
+        }
+        
+        verificationCodeButton.setOnClickListener {
+            startToolActivity(VerificationCodeActivity::class.java)
+        }
+        
+        permissionCheckButton.setOnClickListener {
+            startToolActivity(PermissionCheckActivity::class.java)
+        }
     }
     
     /**
-     * ViewPager2适配器
+     * 启动工具活动
      */
-    private inner class DevToolsPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
-        
-        override fun getItemCount(): Int = 2
-        
-        override fun createFragment(position: Int): Fragment {
-            return when(position) {
-                0 -> PinyinTestFragment()
-                1 -> LogViewerFragment()
-                else -> Fragment()
-            }
+    private fun startToolActivity(activityClass: Class<*>) {
+        val intent = Intent(this, activityClass)
+        startActivity(intent)
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            onBackPressed()
+            return true
         }
+        return super.onOptionsItemSelected(item)
+    }
+}
+
+/**
+ * 拼音测试活动 - 容器活动
+ */
+class PinyinTestActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_fragment_container)
+        
+        // 设置标题
+        supportActionBar?.title = "拼音测试"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        
+        // 加载fragment
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, PinyinTestFragment())
+                .commit()
+        }
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            onBackPressed()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+}
+
+/**
+ * 日志查看活动 - 容器活动
+ */
+class LogViewerActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_fragment_container)
+        
+        // 设置标题
+        supportActionBar?.title = "日志查看"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        
+        // 加载fragment
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, LogViewerFragment())
+                .commit()
+        }
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            onBackPressed()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+}
+
+/**
+ * 验证码测试活动 - 容器活动
+ */
+class VerificationCodeActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_fragment_container)
+        
+        // 设置标题
+        supportActionBar?.title = "验证码测试"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        
+        // 加载fragment
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, VerificationCodeFragment())
+                .commit()
+        }
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            onBackPressed()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+}
+
+/**
+ * 权限检查活动 - 容器活动
+ */
+class PermissionCheckActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_fragment_container)
+        
+        // 设置标题
+        supportActionBar?.title = "权限检查"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        
+        // 加载fragment
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, PermissionCheckFragment())
+                .commit()
+        }
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            onBackPressed()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 }
 
