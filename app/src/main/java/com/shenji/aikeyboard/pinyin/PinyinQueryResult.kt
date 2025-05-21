@@ -9,11 +9,20 @@ data class PinyinQueryResult(
     // 输入类型
     val inputType: InputType = InputType.UNKNOWN,
     
-    // 候选词列表
-    val candidates: List<PinyinCandidate> = emptyList(),
+    // 拼音首字母缩写
+    val initialLetters: String = "",
     
-    // 音节拆分结果（如果有）
-    val syllables: List<String> = emptyList(),
+    // 音节拆分结果，如 ["ni", "hao"]
+    val syllables: List<String> = listOf(),
+    
+    // 所有可能的音节拆分结果，如 [["ni", "hao"], ["ni", "ha", "o"]]
+    val allSyllableSplits: List<List<String>> = listOf(),
+    
+    // 使用的拆分结果索引
+    val usedSplitIndex: Int = 0,
+    
+    // 候选词列表
+    val candidates: List<PinyinCandidate> = listOf(),
     
     // 查询过程的详细解释（仅在测试工具中使用）
     val explanation: String = "",
@@ -68,13 +77,6 @@ data class PinyinQueryResult(
      * 获取拼音字符串（带空格）
      */
     val fullPinyin: String get() = syllables.joinToString(" ")
-    
-    /**
-     * 获取拼音首字母字符串
-     */
-    val initialLetters: String get() = syllables.joinToString("") { 
-        if (it.isNotEmpty()) it.first().toString() else "" 
-    }
     
     /**
      * 获取统计信息

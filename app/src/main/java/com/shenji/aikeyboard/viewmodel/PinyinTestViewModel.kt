@@ -189,11 +189,30 @@ class PinyinTestViewModel : ViewModel() {
         // 3. 更新音节拆分结果
         _syllableSplit.value = result.syllables
         
-        // 4. 更新查询条件
+        // 4. 如果有多种拆分结果，显示所有可能的拆分方式
+        val allSplitsDescription = if (result.allSyllableSplits.isNotEmpty() && result.inputType == InputType.SYLLABLE_SPLIT) {
+            val sb = StringBuilder()
+            result.allSyllableSplits.forEachIndexed { index, syllables ->
+                val markerSymbol = if (index == result.usedSplitIndex) "* " else ""
+                sb.append("${markerSymbol}方案${index + 1}: ${syllables.joinToString("+")}\n")
+            }
+            "可能的拆分方案:\n$sb"
+        } else {
+            ""
+        }
+        
+        // 5. 更新查询条件
         _queryCondition.value = when (result.inputType) {
             InputType.INITIAL_LETTER -> "初始字母 = ${result.syllables.firstOrNull() ?: ""}"
             InputType.PINYIN_SYLLABLE -> "拼音音节 = ${result.syllables.firstOrNull() ?: ""}"
-            InputType.SYLLABLE_SPLIT -> "音节拆分 = ${result.syllables.joinToString("+")}"
+            InputType.SYLLABLE_SPLIT -> {
+                val baseText = "音节拆分 = ${result.syllables.joinToString("+")}"
+                if (result.allSyllableSplits.size > 1) {
+                    "$baseText (共${result.allSyllableSplits.size}种拆分可能)"
+                } else {
+                    baseText
+                }
+            }
             InputType.ACRONYM -> "首字母缩写 = ${result.initialLetters}"
             InputType.DYNAMIC_SYLLABLE -> {
                 val lastSyllable = result.syllables.lastOrNull()
@@ -209,16 +228,20 @@ class PinyinTestViewModel : ViewModel() {
             else -> "无法解析输入"
         }
         
-        // 5. 更新查询过程
-        _queryProcess.value = result.explanation
+        // 6. 更新查询过程，添加多种拆分结果的描述
+        _queryProcess.value = if (allSplitsDescription.isNotEmpty()) {
+            "$allSplitsDescription\n${result.explanation}"
+        } else {
+            result.explanation
+        }
         
-        // 6. 转换并更新候选词
+        // 7. 转换并更新候选词
         val candidates = result.candidates.map { pinyinCandidate ->
             convertToCandidateModel(pinyinCandidate)
         }
         _candidates.value = candidates
         
-        // 7. 更新候选词统计
+        // 8. 更新候选词统计
         updateCandidateStats(candidates)
     }
     

@@ -277,10 +277,10 @@ class PinyinQueryEngine {
         // 从输入中提取纯英文拼音部分
         val pinyinPart = extractPinyinPart(input)
         
-        // 拆分音节
-        val syllables = pinyinSplitter.splitPinyin(pinyinPart)
+        // 获取所有可能的拆分结果
+        val allSplitResults = pinyinSplitter.getMultipleSplitResults(pinyinPart)
         
-        if (syllables.isEmpty()) {
+        if (allSplitResults.isEmpty()) {
             if (needExplain) {
                 explanation.append("音节拆分失败，无法获得有效音节\n")
                 explanation.append("- 原始输入: '$input'\n")
@@ -290,89 +290,121 @@ class PinyinQueryEngine {
                 inputType = InputType.SYLLABLE_SPLIT,
                 candidates = emptyList(),
                 syllables = emptyList(),
+                allSyllableSplits = emptyList(),
                 explanation = explanation.toString()
             )
         }
         
         if (needExplain) {
             explanation.append("查询过程:\n")
-            explanation.append("1. 音节拆分结果: ${syllables.joinToString("+")}\n")
+            explanation.append("1. 获取到${allSplitResults.size}种可能的音节拆分结果:\n")
+            allSplitResults.forEachIndexed { index, syllables ->
+                explanation.append("   - 拆分方案${index + 1}: ${syllables.joinToString("+")}\n")
+            }
             explanation.append("- 原始输入: '$input'\n")
             explanation.append("- 提取拼音部分: '$pinyinPart'\n")
         }
         
-        // 将音节连接为完整的拼音字符串（带空格）
-        val fullPinyin = syllables.joinToString(" ")
+        // 尝试每一种拆分方案
+        var successIndex = -1
+        var currentCandidates = mutableListOf<PinyinCandidate>()
         
-        if (needExplain) {
-            explanation.append("2. 构建完整拼音查询: '$fullPinyin'\n")
-            explanation.append("- 查询条件: pinyin == '$fullPinyin'\n")
-        }
-        
-        try {
-            val realm = ShenjiApplication.realm
-            
-            // 查询精确匹配的词条
-            val query = realm.query<Entry>("pinyin == $0", fullPinyin)
-            
-            var entries = query.find()
-                .sortedByDescending { it.frequency }
+        for ((index, syllables) in allSplitResults.withIndex()) {
+            // 将音节连接为完整的拼音字符串（带空格）
+            val fullPinyin = syllables.joinToString(" ")
             
             if (needExplain) {
-                explanation.append("- 精确匹配结果: ${entries.size}个\n")
+                explanation.append("2. 尝试拆分方案${index + 1}: ${syllables.joinToString("+")}\n")
+                explanation.append("   - 构建完整拼音查询: '$fullPinyin'\n")
+                explanation.append("   - 查询条件: pinyin == '$fullPinyin'\n")
             }
             
-            // 如果精确匹配没有结果，尝试前缀匹配
-            if (entries.isEmpty() && syllables.size >= 2) {
-                if (needExplain) {
-                    explanation.append("3. 精确匹配无结果，尝试前缀匹配\n")
-                    explanation.append("- 查询条件: pinyin BEGINSWITH '$fullPinyin'\n")
-                }
+            try {
+                val realm = ShenjiApplication.realm
                 
-                val prefixQuery = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
-                entries = prefixQuery.find()
+                // 查询精确匹配的词条
+                val query = realm.query<Entry>("pinyin == $0", fullPinyin)
+                
+                var entries = query.find()
                     .sortedByDescending { it.frequency }
-                    .take(limit)
                 
                 if (needExplain) {
-                    explanation.append("- 前缀匹配结果: ${entries.size}个\n")
+                    explanation.append("   - 精确匹配结果: ${entries.size}个\n")
                 }
-            } else {
+                
+                // 如果精确匹配没有结果，尝试前缀匹配
+                if (entries.isEmpty() && syllables.size >= 2) {
+                    if (needExplain) {
+                        explanation.append("   - 精确匹配无结果，尝试前缀匹配\n")
+                        explanation.append("   - 查询条件: pinyin BEGINSWITH '$fullPinyin'\n")
+                    }
+                    
+                    val prefixQuery = realm.query<Entry>("pinyin BEGINSWITH $0", fullPinyin)
+                    entries = prefixQuery.find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit)
+                    
+                    if (needExplain) {
+                        explanation.append("   - 前缀匹配结果: ${entries.size}个\n")
+                    }
+                } else {
+                    entries = entries.take(limit)
+                }
+                
+                // 如果找到了候选词，则使用这个拆分方案
+                if (entries.isNotEmpty()) {
+                    successIndex = index
+                    currentCandidates.clear()
+                    
+                    // 转换为候选词，添加去重逻辑
+                    val seenWords = mutableSetOf<String>()
+                    entries.forEach { entry ->
+                        // 只添加未见过的词
+                        if (seenWords.add(entry.word)) {
+                            currentCandidates.add(
+                                PinyinCandidate(
+                                    word = entry.word,
+                                    pinyin = entry.pinyin,
+                                    frequency = entry.frequency,
+                                    type = entry.type,
+                                    matchType = MatchType.SYLLABLE_SPLIT
+                                )
+                            )
+                        }
+                    }
+                    
+                    if (needExplain) {
+                        explanation.append("3. 成功找到候选词，使用拆分方案${index + 1}\n")
+                    }
+                    
+                    // 找到候选词后，不再尝试其他拆分方案
+                    break
+                } else if (needExplain) {
+                    explanation.append("   - 未找到候选词，尝试下一个拆分方案\n")
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "查询音节拆分候选词异常")
                 if (needExplain) {
-                    explanation.append("3. 使用精确匹配结果\n")
+                    explanation.append("   - 查询异常: ${e.message}\n")
                 }
-                entries = entries.take(limit)
-            }
-            
-            // 转换为候选词，添加去重逻辑
-            val seenWords = mutableSetOf<String>()
-            entries.forEach { entry ->
-                // 只添加未见过的词
-                if (seenWords.add(entry.word)) {
-                    candidates.add(
-                        PinyinCandidate(
-                            word = entry.word,
-                            pinyin = entry.pinyin,
-                            frequency = entry.frequency,
-                            type = entry.type,
-                            matchType = MatchType.SYLLABLE_SPLIT
-                        )
-                    )
-                }
-            }
-            
-        } catch (e: Exception) {
-            Timber.e(e, "查询音节拆分候选词异常")
-            if (needExplain) {
-                explanation.append("查询异常: ${e.message}\n")
             }
         }
         
-        // 返回结果对象，应用limit限制
+        // 如果所有拆分方案都没有找到候选词，使用第一个拆分方案作为结果
+        val usedIndex = if (successIndex >= 0) successIndex else 0
+        val usedSyllables = if (allSplitResults.isNotEmpty()) allSplitResults[usedIndex] else emptyList()
+        
+        if (successIndex < 0 && needExplain) {
+            explanation.append("3. 所有拆分方案都未找到候选词，使用默认拆分方案\n")
+        }
+        
+        // 返回结果对象
         PinyinQueryResult(
             inputType = InputType.SYLLABLE_SPLIT,
-            candidates = candidates.take(limit),
-            syllables = syllables,
+            candidates = currentCandidates,
+            syllables = usedSyllables,
+            allSyllableSplits = allSplitResults,
+            usedSplitIndex = usedIndex,
             explanation = explanation.toString()
         )
     }

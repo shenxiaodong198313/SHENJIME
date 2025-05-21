@@ -363,4 +363,145 @@ class PinyinSplitter {
         
         return result
     }
+
+    /**
+     * 获取多组可能的拼音拆分结果
+     * 尝试不同的拆分策略，返回所有可能的有效拆分结果
+     * 例如："shengridangao" 可能拆分为 ["sheng", "ri", "dang", "ao"] 或 ["sheng", "ri", "dan", "gao"]
+     * 
+     * @param input 原始拼音输入
+     * @return 多组拆分结果的列表，每个元素是一个拆分方案
+     */
+    fun getMultipleSplitResults(input: String): List<List<String>> {
+        // 清理输入：移除空格，全部转小写
+        val cleanInput = input.trim().lowercase().replace(" ", "")
+        
+        if (cleanInput.isEmpty()) {
+            return emptyList()
+        }
+        
+        // 如果输入本身就是一个有效音节，直接返回
+        if (PINYIN_SYLLABLES.contains(cleanInput)) {
+            return listOf(listOf(cleanInput))
+        }
+        
+        val results = mutableListOf<List<String>>()
+        
+        // 1. 尝试标准贪心算法拆分
+        val greedyResult = greedySplit(cleanInput)
+        if (greedyResult.isNotEmpty()) {
+            results.add(greedyResult)
+        }
+        
+        // 2. 尝试动态规划算法拆分
+        val dpResult = splitByDP(cleanInput)
+        if (dpResult.isNotEmpty() && !results.contains(dpResult)) {
+            results.add(dpResult)
+        }
+        
+        // 3. 尝试混合模式拆分（首字母+音节）
+        val mixedResult = checkMixedInitialAndSyllable(cleanInput)
+        if (mixedResult.isNotEmpty() && !results.contains(mixedResult)) {
+            results.add(mixedResult)
+        }
+        
+        // 4. 尝试动态输入拆分
+        val dynamicResult = splitDynamicInput(cleanInput)
+        if (dynamicResult.isNotEmpty() && !results.contains(dynamicResult)) {
+            results.add(dynamicResult)
+        }
+        
+        // 5. 尝试替换性拆分策略 - 替换某些字符后再尝试拆分
+        trySubstitutionSplitting(cleanInput).forEach { result ->
+            if (result.isNotEmpty() && !results.contains(result)) {
+                results.add(result)
+            }
+        }
+        
+        // 6. 尝试回溯法的不同拆分方案
+        val backtrackingResults = getBacktrackingSplitResults(cleanInput, 5) // 最多返回5种不同方案
+        backtrackingResults.forEach { result ->
+            if (result.isNotEmpty() && !results.contains(result)) {
+                results.add(result)
+            }
+        }
+        
+        return results
+    }
+    
+    /**
+     * 尝试使用替换策略生成不同的拆分结果
+     * 例如将"an"替换为"ang"后再尝试拆分
+     */
+    private fun trySubstitutionSplitting(input: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        
+        // 常见的容易混淆的音节对
+        val substitutions = mapOf(
+            "an" to "ang", "ang" to "an",
+            "en" to "eng", "eng" to "en",
+            "in" to "ing", "ing" to "in",
+            "dan" to "dang", "dang" to "dan",
+            "ran" to "rang", "rang" to "ran",
+            "zan" to "zang", "zang" to "zan",
+            "can" to "cang", "cang" to "can",
+            "san" to "sang", "sang" to "san",
+            "ka" to "ga", "ga" to "ka",
+            "zhe" to "ze", "ze" to "zhe"
+        )
+        
+        // 尝试替换后拆分
+        for ((oldSyllable, newSyllable) in substitutions) {
+            if (input.contains(oldSyllable)) {
+                val modifiedInput = input.replace(oldSyllable, newSyllable)
+                val greedyResult = greedySplit(modifiedInput)
+                if (greedyResult.isNotEmpty() && !results.contains(greedyResult)) {
+                    results.add(greedyResult)
+                }
+                
+                val dpResult = splitByDP(modifiedInput)
+                if (dpResult.isNotEmpty() && !results.contains(dpResult)) {
+                    results.add(dpResult)
+                }
+            }
+        }
+        
+        return results
+    }
+    
+    /**
+     * 使用回溯法获取多种拆分方案
+     * 不同于贪心算法，会考虑多种可能性
+     */
+    private fun getBacktrackingSplitResults(input: String, maxResults: Int): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        val currentSplit = mutableListOf<String>()
+        
+        // 回溯函数
+        fun backtrack(start: Int) {
+            // 如果已经处理完整个输入，添加当前拆分结果
+            if (start >= input.length) {
+                results.add(currentSplit.toList())
+                return
+            }
+            
+            // 如果已经找到足够多的结果，提前返回
+            if (results.size >= maxResults) {
+                return
+            }
+            
+            // 尝试从当前位置开始的所有可能音节
+            for (end in start + 1..input.length) {
+                val syllable = input.substring(start, end)
+                if (PINYIN_SYLLABLES.contains(syllable)) {
+                    currentSplit.add(syllable)
+                    backtrack(end)
+                    currentSplit.removeAt(currentSplit.size - 1)
+                }
+            }
+        }
+        
+        backtrack(0)
+        return results
+    }
 } 
