@@ -590,13 +590,10 @@ class PinyinQueryEngine {
     
     /**
      * 查询动态音节候选词
-     * 处理未完成的拼音输入，如"shenjingb"，将其拆分为完整音节+剩余字母
+     * 处理未完成的拼音输入，将输入拆分为完整音节+剩余字母
+     * 例如：shenjingb -> 神经病
      */
-    private suspend fun queryDynamicSyllable(
-        input: String, 
-        limit: Int,
-        needExplain: Boolean
-    ): PinyinQueryResult = withContext(Dispatchers.IO) {
+    suspend fun queryDynamicSyllable(input: String, limit: Int, needExplain: Boolean = false): PinyinQueryResult = withContext(Dispatchers.IO) {
         val explanation = StringBuilder()
         val candidates = mutableListOf<PinyinCandidate>()
         
@@ -631,8 +628,81 @@ class PinyinQueryEngine {
         try {
             val realm = ShenjiApplication.realm
             
+            // 检查是否所有音节都是单个字符，即全部是首字母缩写的情况 (如 wxh)
+            val isAllSingleChar = syllables.all { it.length == 1 }
+            
+            if (isAllSingleChar) {
+                // 全部是首字母缩写的情况，按照首字母缩写整体处理
+                val initialLetters = syllables.joinToString("")
+                
+                if (needExplain) {
+                    explanation.append("2. 检测到全部是单字母: ${syllables.joinToString(" + ")}\n")
+                    explanation.append("3. 按首字母缩写处理: $initialLetters\n")
+                    explanation.append("4. 查询条件: initialLetters = '$initialLetters'\n")
+                }
+                
+                // 查询完全匹配首字母缩写的词条
+                val query = realm.query<Entry>("initialLetters == $0", initialLetters)
+                
+                val entries = query.find()
+                    .sortedByDescending { it.frequency }
+                    .take(limit)
+                
+                if (needExplain) {
+                    explanation.append("- 匹配结果: ${entries.size}个\n")
+                }
+                
+                // 转换为候选词
+                val seenWords = mutableSetOf<String>()
+                entries.forEach { entry ->
+                    if (seenWords.add(entry.word)) {
+                        candidates.add(
+                            PinyinCandidate(
+                                word = entry.word,
+                                pinyin = entry.pinyin,
+                                initialLetters = entry.initialLetters,
+                                frequency = entry.frequency,
+                                type = entry.type,
+                                matchType = MatchType.ACRONYM
+                            )
+                        )
+                    }
+                }
+                
+                // 如果没有完全匹配的结果，尝试前缀匹配
+                if (candidates.isEmpty() && initialLetters.length > 1) {
+                    if (needExplain) {
+                        explanation.append("5. 无完全匹配结果，尝试前缀匹配: initialLetters BEGINSWITH '$initialLetters'\n")
+                    }
+                    
+                    val prefixQuery = realm.query<Entry>("initialLetters BEGINSWITH $0", initialLetters)
+                    
+                    val prefixEntries = prefixQuery.find()
+                        .sortedByDescending { it.frequency }
+                        .take(limit)
+                    
+                    if (needExplain) {
+                        explanation.append("- 前缀匹配结果: ${prefixEntries.size}个\n")
+                    }
+                    
+                    prefixEntries.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            candidates.add(
+                                PinyinCandidate(
+                                    word = entry.word,
+                                    pinyin = entry.pinyin,
+                                    initialLetters = entry.initialLetters,
+                                    frequency = entry.frequency,
+                                    type = entry.type,
+                                    matchType = MatchType.ACRONYM
+                                )
+                            )
+                        }
+                    }
+                }
+            } 
             // 查询策略1：如果最后一个元素是单字符，作为词首字母缩写来查询
-            if (syllables.last().length == 1) {
+            else if (syllables.last().length == 1) {
                 // 前面部分拼成拼音字符串（带空格）
                 val completeSyllables = syllables.dropLast(1)
                 val lastChar = syllables.last()
@@ -670,6 +740,7 @@ class PinyinQueryEngine {
                                 PinyinCandidate(
                                     word = entry.word,
                                     pinyin = entry.pinyin,
+                                    initialLetters = entry.initialLetters,
                                     frequency = entry.frequency,
                                     type = entry.type,
                                     matchType = MatchType.SYLLABLE_SPLIT
@@ -703,6 +774,7 @@ class PinyinQueryEngine {
                                 PinyinCandidate(
                                     word = entry.word,
                                     pinyin = entry.pinyin,
+                                    initialLetters = entry.initialLetters,
                                     frequency = entry.frequency,
                                     type = entry.type,
                                     matchType = MatchType.INITIAL_LETTER
@@ -743,6 +815,7 @@ class PinyinQueryEngine {
                             PinyinCandidate(
                                 word = entry.word,
                                 pinyin = entry.pinyin,
+                                initialLetters = entry.initialLetters,
                                 frequency = entry.frequency,
                                 type = entry.type,
                                 matchType = MatchType.SYLLABLE_SPLIT
