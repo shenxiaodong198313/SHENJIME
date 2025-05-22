@@ -236,6 +236,7 @@ class CheckResultAdapter : RecyclerView.Adapter<CheckResultAdapter.ViewHolder>()
         private val statusTextView: TextView = view.findViewById(R.id.checkStatusTextView)
         private val detailsTextView: TextView = view.findViewById(R.id.checkDetailsTextView)
         private val durationTextView: TextView = view.findViewById(R.id.checkDurationTextView)
+        private val expandIconImageView: View = view.findViewById(R.id.expandIconImageView)
         
         fun bind(result: SystemChecker.CheckResult) {
             nameTextView.text = result.checkName
@@ -251,12 +252,19 @@ class CheckResultAdapter : RecyclerView.Adapter<CheckResultAdapter.ViewHolder>()
             detailsTextView.text = result.details
             durationTextView.text = "${result.duration} ms"
             
-            // 设置点击展开/收起详情
+            // 默认显示详情
+            detailsTextView.visibility = View.VISIBLE
+            // 隐藏展开图标，因为默认已展开
+            expandIconImageView.visibility = View.GONE
+            
+            // 仍保留点击收起的功能
             itemView.setOnClickListener {
                 if (detailsTextView.visibility == View.VISIBLE) {
                     detailsTextView.visibility = View.GONE
+                    expandIconImageView.visibility = View.VISIBLE
                 } else {
                     detailsTextView.visibility = View.VISIBLE
+                    expandIconImageView.visibility = View.GONE
                 }
             }
         }
