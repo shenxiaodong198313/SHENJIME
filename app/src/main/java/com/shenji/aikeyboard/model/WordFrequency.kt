@@ -7,4 +7,14 @@ package com.shenji.aikeyboard.model
 data class WordFrequency(
     val word: String,
     val frequency: Int = 0
-) 
+) : Comparable<WordFrequency> {
+    
+    override fun compareTo(other: WordFrequency): Int {
+        // 按频率降序排列
+        return other.frequency - frequency
+    }
+    
+    override fun toString(): String {
+        return "$word(频率:$frequency)"
+    }
+} 

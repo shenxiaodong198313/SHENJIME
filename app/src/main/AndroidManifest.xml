@@ -50,10 +50,17 @@
             android:name=".ui.LogDetailActivity"
             android:exported="false" />
             
-        <!-- 词典管理活动 -->
+        <!-- 词典管理菜单活动 -->
         <activity
-            android:name=".ui.DictionaryManagerActivity"
-            android:exported="false" />
+            android:name=".ui.dictionary.DictionaryMenuActivity"
+            android:exported="false"
+            android:label="词典管理中心" />
+            
+        <!-- Realm词典列表活动 -->
+        <activity
+            android:name=".ui.dictionary.DictionaryListActivity"
+            android:exported="false"
+            android:label="词典列表" />
             
         <!-- 词典详情活动 -->
         <activity
@@ -64,6 +71,12 @@
         <activity
             android:name=".ui.DictionaryLogsActivity"
             android:exported="false" />
+            
+        <!-- Trie树构建活动 -->
+        <activity
+            android:name=".ui.trie.TrieBuildActivity"
+            android:exported="false"
+            android:label="构建双Trie数据" />
             
         <!-- 输入测试活动 -->
         <activity

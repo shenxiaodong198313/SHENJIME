@@ -112,7 +112,22 @@
 
 
 
-
+# 修订后的双Trie开发方案
+1. 整体架构设计（更新）
+TrieNode类：构建Trie树的基本节点
+PinyinTrie类：拼音Trie树实现
+TrieBuilder服务：负责构建、管理、导出Trie树
+TrieBuildActivity：可视化构建进度和导出功能
+MemoryMonitor：监控内存使用情况
+TrieManager：应用启动时快速加载预构建Trie文件
+2. 实现流程（更新）
+创建Trie数据结构
+实现从词典到Trie的构建流程
+开发构建进度可视化界面
+实现内存使用统计
+新增：添加Trie导出功能
+新增：实现预构建Trie加载功能
+新增：打包预构建Trie到app中
 
 # 以下是对当前项目的整体总结，内容涵盖词典数据库、分词器、候选词等核心模块。
 

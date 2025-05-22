@@ -8,4 +8,8 @@
     <cache-path name="cache" path="." />
     <!-- 应用内文件目录 -->
     <files-path name="files" path="." />
+    <external-files-path name="tries" path="tries" />
+    <external-files-path name="logs" path="logs" />
+    <files-path name="internal_tries" path="tries" />
+    <files-path name="internal_dictionaries" path="dictionaries" />
 </paths> 

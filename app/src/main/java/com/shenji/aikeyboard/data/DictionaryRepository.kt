@@ -982,6 +982,21 @@ class DictionaryRepository {
             emptyList()
         }
     }
+
+    /**
+     * 获取所有单字
+     * 用于构建Trie树
+     */
+    fun getAllChars(): List<Entry> {
+        return try {
+            realm.query<Entry>("type == $0", "chars")
+                .find()
+                .toList()
+        } catch (e: Exception) {
+            Timber.e(e, "获取所有单字失败")
+            emptyList()
+        }
+    }
 }
 
 /**

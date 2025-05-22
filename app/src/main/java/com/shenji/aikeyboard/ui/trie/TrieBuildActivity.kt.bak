@@ -1,0 +1,339 @@
+package com.shenji.aikeyboard.ui.trie
+
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.view.View
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
+import androidx.lifecycle.lifecycleScope
+import com.shenji.aikeyboard.BuildConfig
+import com.shenji.aikeyboard.R
+import com.shenji.aikeyboard.data.trie.PinyinTrie
+import com.shenji.aikeyboard.data.trie.TrieBuilder
+import com.shenji.aikeyboard.data.trie.TrieManager
+import com.shenji.aikeyboard.databinding.ActivityTrieBuildBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
+import java.io.File
+
+/**
+ * Trie树构建界面
+ * 用于可视化构建、导出和管理Trie树
+ */
+class TrieBuildActivity : AppCompatActivity() {
+    
+    private lateinit var binding: ActivityTrieBuildBinding
+    private lateinit var trieBuilder: TrieBuilder
+    
+    // 保存当前构建的Trie树
+    private var charsTrie: PinyinTrie? = null
+    private var baseTrie: PinyinTrie? = null
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityTrieBuildBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        
+        // 初始化Trie构建器
+        trieBuilder = TrieBuilder(this)
+        
+        // 设置点击事件
+        setupClickListeners()
+        
+        // 初始状态设置
+        binding.baseStatusText.text = "状态: 将在下一版本实现"
+        binding.baseFileInfo.text = "文件信息: 未实现"
+        binding.buildBaseButton.isEnabled = false
+        binding.exportBaseButton.isEnabled = false
+        
+        // 更新界面状态
+        lifecycleScope.launch {
+            updateCharsTrieState()
+            updateMemoryInfo()
+        }
+    }
+    
+    /**
+     * 设置按钮点击事件
+     */
+    private fun setupClickListeners() {
+        // 构建单字词典Trie
+        binding.buildCharsButton.setOnClickListener {
+            buildCharsTrie()
+        }
+        
+        // 导出单字词典Trie
+        binding.exportCharsButton.setOnClickListener {
+            exportTrie(TrieBuilder.TrieType.CHARS)
+        }
+        
+        // 构建基础词典Trie (暂未实现)
+        binding.buildBaseButton.setOnClickListener {
+            Toast.makeText(this, "基础词典Trie构建功能将在下一版本实现", Toast.LENGTH_SHORT).show()
+        }
+        
+        // 导出基础词典Trie (暂未实现)
+        binding.exportBaseButton.setOnClickListener {
+            Toast.makeText(this, "基础词典Trie导出功能将在下一版本实现", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 构建单字词典Trie
+     */
+    private fun buildCharsTrie() {
+        // 显示进度条
+        binding.charsProgress.visibility = View.VISIBLE
+        binding.charsProgressText.visibility = View.VISIBLE
+        binding.buildCharsButton.isEnabled = false
+        
+        lifecycleScope.launch {
+            try {
+                // 构建Trie
+                charsTrie = trieBuilder.buildCharsTrie { progress, message ->
+                    withContext(Dispatchers.Main) {
+                        binding.charsProgress.progress = (progress * 100).toInt()
+                        binding.charsProgressText.text = message
+                    }
+                }
+                
+                // 保存到本地存储
+                if (charsTrie != null && !charsTrie!!.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        binding.charsProgressText.text = "正在保存Trie树..."
+                    }
+                    
+                    trieBuilder.saveTrie(
+                        charsTrie!!,
+                        TrieBuilder.TrieType.CHARS
+                    ) { progress, message ->
+                        withContext(Dispatchers.Main) {
+                            binding.charsProgress.progress = (progress * 100).toInt()
+                            binding.charsProgressText.text = message
+                        }
+                    }
+                    
+                    // 设置到TrieManager
+                    TrieManager.instance.setTrie(charsTrie!!, TrieBuilder.TrieType.CHARS)
+                    
+                    // 更新UI
+                    withContext(Dispatchers.Main) {
+                        binding.exportCharsButton.isEnabled = true
+                        Toast.makeText(this@TrieBuildActivity, "单字词典Trie构建成功", Toast.LENGTH_SHORT).show()
+                    }
+                    
+                    // 更新状态界面
+                    lifecycleScope.launch {
+                        updateCharsTrieState()
+                        updateMemoryInfo()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        binding.charsProgressText.text = "构建失败: Trie为空"
+                        Toast.makeText(this@TrieBuildActivity, "构建失败: Trie为空", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "构建单字词典Trie失败")
+                withContext(Dispatchers.Main) {
+                    binding.charsProgressText.text = "构建失败: ${e.message}"
+                    Toast.makeText(this@TrieBuildActivity, "构建失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                withContext(Dispatchers.Main) {
+                    binding.buildCharsButton.isEnabled = true
+                }
+            }
+        }
+    }
+    
+    /**
+     * 更新单字词典Trie状态
+     */
+    private suspend fun updateCharsTrieState() {
+        val isLoaded = TrieManager.instance.charsTrieLoaded.first()
+        val stats = TrieManager.instance.charsTrieStats.first()
+        
+        withContext(Dispatchers.Main) {
+            if (isLoaded && stats != null) {
+                binding.charsStatusText.text = "状态: 已加载"
+                binding.exportCharsButton.isEnabled = true
+            } else {
+                // 检查是否存在Trie文件
+                val exists = trieBuilder.isTrieFileExists(TrieBuilder.TrieType.CHARS)
+                if (exists) {
+                    binding.charsStatusText.text = "状态: 已构建但未加载"
+                    binding.charsFileInfo.text = "文件信息: ${trieBuilder.getTrieFileInfo(TrieBuilder.TrieType.CHARS)}"
+                } else {
+                    binding.charsStatusText.text = "状态: 未构建"
+                    binding.charsFileInfo.text = "文件信息: 未构建"
+                }
+                binding.exportCharsButton.isEnabled = exists
+            }
+        }
+    }
+    
+    /**
+     * 更新内存使用信息
+     */
+    private suspend fun updateMemoryInfo() {
+        val charsStats = TrieManager.instance.charsTrieStats.first()
+        val baseStats = TrieManager.instance.baseTrieStats.first()
+        
+        val memoryText = StringBuilder()
+        
+        if (charsStats != null) {
+            memoryText.append("单字词典Trie:\n")
+            memoryText.append(charsStats.getFormattedStats())
+        }
+        
+        if (baseStats != null) {
+            if (memoryText.isNotEmpty()) {
+                memoryText.append("\n\n")
+            }
+            memoryText.append("基础词典Trie:\n")
+            memoryText.append(baseStats.getFormattedStats())
+        }
+        
+        if (memoryText.isEmpty()) {
+            memoryText.append("未加载Trie树")
+        }
+        
+        withContext(Dispatchers.Main) {
+            binding.memoryInfoText.text = memoryText.toString()
+        }
+    }
+    
+    /**
+     * 导出Trie树
+     */
+    private fun exportTrie(type: TrieBuilder.TrieType) {
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.Main) {
+                    // 显示进度
+                    when (type) {
+                        TrieBuilder.TrieType.CHARS -> {
+                            binding.charsProgress.visibility = View.VISIBLE
+                            binding.charsProgressText.visibility = View.VISIBLE
+                            binding.exportCharsButton.isEnabled = false
+                        }
+                        TrieBuilder.TrieType.BASE -> {
+                            binding.baseProgress.visibility = View.VISIBLE
+                            binding.baseProgressText.visibility = View.VISIBLE
+                            binding.exportBaseButton.isEnabled = false
+                        }
+                    }
+                }
+                
+                val trie = when (type) {
+                    TrieBuilder.TrieType.CHARS -> {
+                        charsTrie ?: TrieManager.instance.charsTrieLoaded.first().let {
+                            if (it) {
+                                // 尝试从文件加载
+                                trieBuilder.loadTrie(type)
+                            } else {
+                                null
+                            }
+                        }
+                    }
+                    TrieBuilder.TrieType.BASE -> {
+                        baseTrie ?: TrieManager.instance.baseTrieLoaded.first().let {
+                            if (it) {
+                                // 尝试从文件加载
+                                trieBuilder.loadTrie(type)
+                            } else {
+                                null
+                            }
+                        }
+                    }
+                }
+                
+                if (trie == null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@TrieBuildActivity, "导出失败: Trie未构建", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+                
+                // 获取进度显示视图
+                val progressView = when (type) {
+                    TrieBuilder.TrieType.CHARS -> Pair(binding.charsProgress, binding.charsProgressText)
+                    TrieBuilder.TrieType.BASE -> Pair(binding.baseProgress, binding.baseProgressText)
+                }
+                
+                // 导出Trie
+                val exportFile = trieBuilder.exportTrie(trie, type) { progress, message ->
+                    withContext(Dispatchers.Main) {
+                        progressView.first.progress = (progress * 100).toInt()
+                        progressView.second.text = message
+                    }
+                }
+                
+                // 导出成功，询问是否分享
+                withContext(Dispatchers.Main) {
+                    when (type) {
+                        TrieBuilder.TrieType.CHARS -> binding.exportCharsButton.isEnabled = true
+                        TrieBuilder.TrieType.BASE -> binding.exportBaseButton.isEnabled = true
+                    }
+                    
+                    AlertDialog.Builder(this@TrieBuildActivity)
+                        .setTitle("导出成功")
+                        .setMessage("Trie文件已导出到:\n${exportFile.absolutePath}\n\n是否分享此文件?")
+                        .setPositiveButton("分享") { _, _ ->
+                            shareFile(exportFile)
+                        }
+                        .setNegativeButton("关闭", null)
+                        .show()
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "导出Trie失败")
+                withContext(Dispatchers.Main) {
+                    when (type) {
+                        TrieBuilder.TrieType.CHARS -> {
+                            binding.charsProgressText.text = "导出失败: ${e.message}"
+                            binding.exportCharsButton.isEnabled = true
+                        }
+                        TrieBuilder.TrieType.BASE -> {
+                            binding.baseProgressText.text = "导出失败: ${e.message}"
+                            binding.exportBaseButton.isEnabled = true
+                        }
+                    }
+                    Toast.makeText(this@TrieBuildActivity, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    
+    /**
+     * 分享文件
+     */
+    private fun shareFile(file: File) {
+        try {
+            val uri = FileProvider.getUriForFile(
+                this,
+                "${applicationContext.packageName}.fileprovider",
+                file
+            )
+            
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/octet-stream"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            }
+            
+            startActivity(Intent.createChooser(intent, "分享Trie文件"))
+            
+        } catch (e: Exception) {
+            Timber.e(e, "分享文件失败")
+            Toast.makeText(this, "分享文件失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+} 

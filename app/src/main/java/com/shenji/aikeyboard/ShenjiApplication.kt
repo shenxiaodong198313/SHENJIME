@@ -9,10 +9,14 @@ import com.shenji.aikeyboard.data.CandidateManager
 import com.shenji.aikeyboard.data.DictionaryManager
 import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.data.Entry
+import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.logger.CrashReportingTree
 import com.shenji.aikeyboard.pinyin.PinyinQueryEngine
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -44,8 +48,14 @@ class ShenjiApplication : Application() {
         val pinyinQueryEngine by lazy {
             PinyinQueryEngine.getInstance()
         }
+        
+        // Trie树管理器
+        val trieManager by lazy {
+            TrieManager.instance
+        }
     }
     
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
         
@@ -91,6 +101,16 @@ class ShenjiApplication : Application() {
             } catch (e: Exception) {
                 logStartupMessage("初始化词典管理器失败: ${e.message}")
                 Timber.e(e, "初始化词典管理器失败")
+            }
+            
+            // 初始化Trie树管理器
+            try {
+                logStartupMessage("开始初始化Trie树管理器")
+                trieManager.init()
+                logStartupMessage("Trie树管理器初始化完成")
+            } catch (e: Exception) {
+                logStartupMessage("初始化Trie树管理器失败: ${e.message}")
+                Timber.e(e, "初始化Trie树管理器失败")
             }
             
             // 延迟2秒后在后台线程启动词典加载，避免启动卡顿

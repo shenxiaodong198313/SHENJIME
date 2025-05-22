@@ -1,6 +1,7 @@
 package com.shenji.aikeyboard.keyboard
 
 import com.shenji.aikeyboard.ShenjiApplication
+import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.model.WordFrequency
 import com.shenji.aikeyboard.pinyin.PinyinQueryEngine
 import com.shenji.aikeyboard.pinyin.PinyinSplitter
@@ -19,6 +20,9 @@ class PinyinIMEAdapter {
     // 拼音分词器
     private val pinyinSplitter = PinyinSplitter.getInstance()
     
+    // Trie树管理器
+    private val trieManager = ShenjiApplication.trieManager
+    
     /**
      * 获取候选词列表（异步方法）
      * 
@@ -28,6 +32,7 @@ class PinyinIMEAdapter {
      */
     suspend fun getCandidates(input: String, limit: Int = 20): List<WordFrequency> = withContext(Dispatchers.IO) {
         try {
+            // 使用标准拼音查询引擎
             val result = pinyinQueryEngine.query(input, limit, false)
             
             // 将标准模块的PinyinCandidate转换为输入法使用的WordFrequency
@@ -38,8 +43,25 @@ class PinyinIMEAdapter {
                 )
             }
         } catch (e: Exception) {
-            Timber.e(e, "获取候选词异常")
+            Timber.e(e, "获取候选词异常: ${e.message}")
             emptyList()
+        }
+    }
+    
+    /**
+     * 使用Trie树查询候选词（异步方法）
+     * 
+     * @param input 用户输入的拼音前缀
+     * @param limit 返回候选词数量限制
+     * @return 候选词列表
+     */
+    fun getTrieCandidates(input: String, limit: Int = 20): List<WordFrequency> {
+        try {
+            // 使用Trie树进行前缀查询
+            return trieManager.searchCharsByPrefix(input, limit)
+        } catch (e: Exception) {
+            Timber.e(e, "Trie树查询异常: ${e.message}")
+            return emptyList()
         }
     }
     
@@ -50,13 +72,7 @@ class PinyinIMEAdapter {
      * @return 分词结果（音节列表）
      */
     fun splitPinyin(input: String): List<String> {
-        return try {
-            // 直接使用PinyinSplitter而不是查询引擎
-            pinyinSplitter.splitPinyin(input)
-        } catch (e: Exception) {
-            Timber.e(e, "拼音分词异常")
-            emptyList()
-        }
+        return pinyinSplitter.splitPinyin(input)
     }
     
     companion object {

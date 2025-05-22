@@ -119,12 +119,12 @@ class MainActivity : AppCompatActivity() {
         try {
             Log.d("MainActivity", "开始打开词典管理")
             Timber.d("打开词典管理")
-            val intent = Intent(this, DictionaryManagerActivity::class.java)
+            val intent = Intent(this, com.shenji.aikeyboard.ui.dictionary.DictionaryMenuActivity::class.java)
             Log.d("MainActivity", "创建Intent: ${intent}")
             startActivity(intent)
-            Log.d("MainActivity", "词典管理Activity启动完成")
+            Log.d("MainActivity", "词典管理菜单Activity启动完成")
         } catch (e: Exception) {
-            Log.e("MainActivity", "打开词典管理失败: ${e.message}", e)
+            Log.e("MainActivity", "打开词典管理菜单失败: ${e.message}", e)
             Toast.makeText(this, "无法打开词典管理: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }

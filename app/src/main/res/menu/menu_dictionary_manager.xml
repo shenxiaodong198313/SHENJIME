@@ -1,1 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?><menu xmlns:android="http://schemas.android.com/apk/res/android"    xmlns:app="http://schemas.android.com/apk/res-auto">        <item        android:id="@+id/action_db_info"        android:icon="@android:drawable/ic_menu_view"        android:title="数据库详情"        app:showAsAction="ifRoom" />        <item        android:id="@+id/action_settings"        android:icon="@android:drawable/ic_menu_manage"        android:title="设置"        app:showAsAction="always" />    </menu>  
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <item
+        android:id="@+id/action_db_info"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="数据库详情"
+        app:showAsAction="ifRoom" />
+        
+    <item
+        android:id="@+id/action_build_trie"
+        android:icon="@android:drawable/ic_menu_compass"
+        android:title="构建双Trie数据"
+        app:showAsAction="ifRoom" />
+        
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="设置"
+        app:showAsAction="always" />
+</menu>  
