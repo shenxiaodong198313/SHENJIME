@@ -3246,6 +3246,8 @@ id base_file_info
 id base_progress
 id base_progress_text
 id base_status_text
+id base_trie_loaded_status
+id base_trie_stats
 id baseline
 id beginOnFirstDraw
 id beginning
@@ -3301,6 +3303,8 @@ id chars_file_info
 id chars_progress
 id chars_progress_text
 id chars_status_text
+id chars_trie_loaded_status
+id chars_trie_stats
 id checkDetailsTextView
 id checkDurationTextView
 id checkNameTextView
@@ -3498,6 +3502,8 @@ id linear
 id listMode
 id list_item
 id loadMoreProgress
+id load_base_trie_button
+id load_chars_trie_button
 id log_viewer_button
 id logs_text_view
 id m3_side_sheet
@@ -3841,6 +3847,8 @@ id tv_word
 id unchecked
 id uniform
 id unlabeled
+id unload_base_trie_button
+id unload_chars_trie_button
 id up
 id useLogo
 id verification_code_button

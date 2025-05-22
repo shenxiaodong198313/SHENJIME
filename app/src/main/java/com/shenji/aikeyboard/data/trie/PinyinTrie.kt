@@ -128,4 +128,15 @@ class PinyinTrie : Serializable {
             return root.children.isEmpty()
         }
     }
+    
+    /**
+     * 反序列化后重新初始化transient字段
+     */
+    private fun readObject(inputStream: java.io.ObjectInputStream) {
+        inputStream.defaultReadObject()
+        // 反序列化后重新初始化lock
+        val lockField = PinyinTrie::class.java.getDeclaredField("lock")
+        lockField.isAccessible = true
+        lockField.set(this, ReentrantReadWriteLock())
+    }
 } 

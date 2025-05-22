@@ -197,6 +197,106 @@
                 android:text="内存使用"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+                
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="单字Trie加载状态: "
+                    android:textStyle="bold" />
+                    
+                <TextView
+                    android:id="@+id/chars_trie_loaded_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="未加载"
+                    android:textColor="#F44336" />
+            </LinearLayout>
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="基础词典Trie加载状态: "
+                    android:textStyle="bold" />
+                    
+                <TextView
+                    android:id="@+id/base_trie_loaded_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="未加载"
+                    android:textColor="#F44336" />
+            </LinearLayout>
+            
+            <TextView
+                android:id="@+id/chars_trie_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="单字Trie统计: 未加载" />
+                
+            <TextView
+                android:id="@+id/base_trie_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="基础词典Trie统计: 未加载" />
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+                
+                <Button
+                    android:id="@+id/load_chars_trie_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:text="加载单字Trie" />
+                    
+                <Button
+                    android:id="@+id/unload_chars_trie_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:text="卸载单字Trie" />
+            </LinearLayout>
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+                
+                <Button
+                    android:id="@+id/load_base_trie_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:text="加载基础Trie" />
+                    
+                <Button
+                    android:id="@+id/unload_base_trie_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:text="卸载基础Trie" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/memory_info_text"

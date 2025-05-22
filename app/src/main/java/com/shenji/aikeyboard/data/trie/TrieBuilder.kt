@@ -10,8 +10,6 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 /**
  * Trie树构建器
@@ -92,19 +90,17 @@ class TrieBuilder(private val context: Context) {
             // 确保目录存在
             file.parentFile?.mkdirs()
             
-            // 使用GZIP压缩以减小文件大小
+            // 直接使用ObjectOutputStream，不再使用GZIP压缩
             FileOutputStream(file).use { fos ->
-                GZIPOutputStream(fos).use { gzos ->
-                    ObjectOutputStream(gzos).use { oos ->
-                        oos.writeObject(trie)
-                    }
+                ObjectOutputStream(fos).use { oos ->
+                    oos.writeObject(trie)
                 }
             }
             
             Timber.d("Trie保存成功: ${file.path}, 文件大小: ${file.length() / 1024}KB")
             return file
         } catch (e: Exception) {
-            Timber.e(e, "Trie保存失败")
+            Timber.e(e, "Trie保存失败: ${e.message}")
             throw e
         }
     }
@@ -128,26 +124,63 @@ class TrieBuilder(private val context: Context) {
         }
         
         try {
-            // 使用GZIP解压缩
+            // 尝试多种方式读取文件，兼容旧格式
+            return tryLoadWithDirectObjectStream(file) ?: tryLoadWithGZIP(file)
+        } catch (e: Exception) {
+            Timber.e(e, "Trie加载失败: ${e.message}", e)
+            return null
+        }
+    }
+    
+    /**
+     * 尝试使用直接的ObjectInputStream加载
+     */
+    private fun tryLoadWithDirectObjectStream(file: File): PinyinTrie? {
+        return try {
             FileInputStream(file).use { fis ->
-                GZIPInputStream(fis).use { gzis ->
-                    ObjectInputStream(gzis).use { ois ->
-                        val trie = ois.readObject() as PinyinTrie
-                        
-                        // 验证Trie树是否为空
-                        if (trie.isEmpty()) {
-                            Timber.w("加载的Trie树为空")
-                            return null
-                        }
-                        
-                        Timber.d("Trie加载成功: ${file.path}")
-                        return trie
+                ObjectInputStream(fis).use { ois ->
+                    val trie = ois.readObject() as PinyinTrie
+                    
+                    // 验证Trie树是否为空
+                    if (trie.isEmpty()) {
+                        Timber.w("加载的Trie树为空")
+                        null
+                    } else {
+                        Timber.d("使用标准ObjectInputStream加载Trie成功: ${file.path}")
+                        trie
                     }
                 }
             }
         } catch (e: Exception) {
-            Timber.e(e, "Trie加载失败")
-            return null
+            Timber.d("标准ObjectInputStream加载失败: ${e.message}, 尝试其他方式")
+            null
+        }
+    }
+    
+    /**
+     * 尝试使用GZIP解压缩加载（兼容旧格式）
+     */
+    private fun tryLoadWithGZIP(file: File): PinyinTrie? {
+        return try {
+            FileInputStream(file).use { fis ->
+                java.util.zip.GZIPInputStream(fis).use { gis ->
+                    ObjectInputStream(gis).use { ois ->
+                        val trie = ois.readObject() as PinyinTrie
+                        
+                        // 验证Trie树是否为空
+                        if (trie.isEmpty()) {
+                            Timber.w("加载的GZIP Trie树为空")
+                            null
+                        } else {
+                            Timber.d("使用GZIP加载Trie成功: ${file.path}")
+                            trie
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "GZIP加载失败: ${e.message}")
+            null
         }
     }
 } 

@@ -10,10 +10,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.data.trie.TrieBuilder
+import com.shenji.aikeyboard.data.trie.TrieManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -52,8 +56,21 @@ class TrieBuildActivity : AppCompatActivity() {
     // 内存信息
     private lateinit var memoryInfoText: TextView
     
+    // 新增: Trie内存加载状态UI元素
+    private lateinit var charsTrieLoadedStatus: TextView
+    private lateinit var baseTrieLoadedStatus: TextView
+    private lateinit var charsTrieStats: TextView
+    private lateinit var baseTrieStats: TextView
+    private lateinit var loadCharsTrieButton: Button
+    private lateinit var unloadCharsTrieButton: Button
+    private lateinit var loadBaseTrieButton: Button
+    private lateinit var unloadBaseTrieButton: Button
+    
     // Trie树构建器
     private lateinit var trieBuilder: TrieBuilder
+    
+    // Trie树管理器
+    private val trieManager = TrieManager.instance
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +91,9 @@ class TrieBuildActivity : AppCompatActivity() {
         
         // 刷新Trie文件状态
         refreshTrieStatus()
+        
+        // 监听Trie内存加载状态
+        observeTrieLoadingState()
     }
     
     /**
@@ -103,6 +123,16 @@ class TrieBuildActivity : AppCompatActivity() {
         
         // 内存信息
         memoryInfoText = findViewById(R.id.memory_info_text)
+        
+        // 新增: Trie内存加载状态UI
+        charsTrieLoadedStatus = findViewById(R.id.chars_trie_loaded_status)
+        baseTrieLoadedStatus = findViewById(R.id.base_trie_loaded_status)
+        charsTrieStats = findViewById(R.id.chars_trie_stats)
+        baseTrieStats = findViewById(R.id.base_trie_stats)
+        loadCharsTrieButton = findViewById(R.id.load_chars_trie_button)
+        unloadCharsTrieButton = findViewById(R.id.unload_chars_trie_button)
+        loadBaseTrieButton = findViewById(R.id.load_base_trie_button)
+        unloadBaseTrieButton = findViewById(R.id.unload_base_trie_button)
     }
     
     /**
@@ -128,6 +158,130 @@ class TrieBuildActivity : AppCompatActivity() {
         exportBaseButton.setOnClickListener {
             exportTrie(TrieBuilder.TrieType.BASE)
         }
+        
+        // 新增: 内存加载/卸载按钮
+        loadCharsTrieButton.setOnClickListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val success = trieManager.loadTrieToMemory(TrieBuilder.TrieType.CHARS)
+                withContext(Dispatchers.Main) {
+                    if (success) {
+                        Toast.makeText(this@TrieBuildActivity, "单字Trie树加载成功", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this@TrieBuildActivity, "单字Trie树加载失败", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+        
+        unloadCharsTrieButton.setOnClickListener {
+            trieManager.unloadTrie(TrieBuilder.TrieType.CHARS)
+            Toast.makeText(this, "单字Trie树已卸载", Toast.LENGTH_SHORT).show()
+        }
+        
+        loadBaseTrieButton.setOnClickListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val success = trieManager.loadTrieToMemory(TrieBuilder.TrieType.BASE)
+                withContext(Dispatchers.Main) {
+                    if (success) {
+                        Toast.makeText(this@TrieBuildActivity, "基础词典Trie树加载成功", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this@TrieBuildActivity, "基础词典Trie树加载失败", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+        
+        unloadBaseTrieButton.setOnClickListener {
+            trieManager.unloadTrie(TrieBuilder.TrieType.BASE)
+            Toast.makeText(this, "基础词典Trie树已卸载", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 监听Trie内存加载状态
+     */
+    private fun observeTrieLoadingState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // 监控单字Trie加载状态
+                launch {
+                    trieManager.isTrieLoaded(TrieBuilder.TrieType.CHARS).let { isLoaded ->
+                        updateCharsTrieLoadStatus(isLoaded)
+                    }
+                }
+                
+                // 监控基础词典Trie加载状态
+                launch {
+                    trieManager.isTrieLoaded(TrieBuilder.TrieType.BASE).let { isLoaded ->
+                        updateBaseTrieLoadStatus(isLoaded)
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * 更新单字Trie加载状态显示
+     */
+    private fun updateCharsTrieLoadStatus(isLoaded: Boolean) {
+        runOnUiThread {
+            if (isLoaded) {
+                charsTrieLoadedStatus.text = "已加载"
+                charsTrieLoadedStatus.setTextColor(getColor(R.color.teal_700))
+                
+                // 更新统计信息
+                val stats = trieManager.getTrieMemoryStats(TrieBuilder.TrieType.CHARS)
+                if (stats != null) {
+                    val statsText = "节点数: ${stats.nodeCount}, 词条数: ${stats.wordCount}, " +
+                            "估计内存: ${formatFileSize(trieManager.getTrieMemoryUsage(TrieBuilder.TrieType.CHARS))}"
+                    charsTrieStats.text = "单字Trie统计: $statsText"
+                } else {
+                    charsTrieStats.text = "单字Trie统计: 无数据"
+                }
+                
+                loadCharsTrieButton.isEnabled = false
+                unloadCharsTrieButton.isEnabled = true
+            } else {
+                charsTrieLoadedStatus.text = "未加载"
+                charsTrieLoadedStatus.setTextColor(getColor(android.R.color.holo_red_light))
+                charsTrieStats.text = "单字Trie统计: 未加载"
+                
+                loadCharsTrieButton.isEnabled = trieManager.isTrieFileExists(TrieBuilder.TrieType.CHARS)
+                unloadCharsTrieButton.isEnabled = false
+            }
+        }
+    }
+    
+    /**
+     * 更新基础词典Trie加载状态显示
+     */
+    private fun updateBaseTrieLoadStatus(isLoaded: Boolean) {
+        runOnUiThread {
+            if (isLoaded) {
+                baseTrieLoadedStatus.text = "已加载"
+                baseTrieLoadedStatus.setTextColor(getColor(R.color.teal_700))
+                
+                // 更新统计信息
+                val stats = trieManager.getTrieMemoryStats(TrieBuilder.TrieType.BASE)
+                if (stats != null) {
+                    val statsText = "节点数: ${stats.nodeCount}, 词条数: ${stats.wordCount}, " +
+                            "估计内存: ${formatFileSize(trieManager.getTrieMemoryUsage(TrieBuilder.TrieType.BASE))}"
+                    baseTrieStats.text = "基础词典Trie统计: $statsText"
+                } else {
+                    baseTrieStats.text = "基础词典Trie统计: 无数据"
+                }
+                
+                loadBaseTrieButton.isEnabled = false
+                unloadBaseTrieButton.isEnabled = true
+            } else {
+                baseTrieLoadedStatus.text = "未加载"
+                baseTrieLoadedStatus.setTextColor(getColor(android.R.color.holo_red_light))
+                baseTrieStats.text = "基础词典Trie统计: 未加载"
+                
+                loadBaseTrieButton.isEnabled = trieManager.isTrieFileExists(TrieBuilder.TrieType.BASE)
+                unloadBaseTrieButton.isEnabled = false
+            }
+        }
     }
     
     /**
@@ -135,9 +289,9 @@ class TrieBuildActivity : AppCompatActivity() {
      */
     private fun refreshTrieStatus() {
         try {
-            // 检查单字Trie树
-            val charsFile = File(filesDir, "trie/chars_trie.dat")
-            if (charsFile.exists()) {
+            // 检查单字Trie树 - 使用与TrieManager相同的路径检查
+            if (trieManager.isTrieFileExists(TrieBuilder.TrieType.CHARS)) {
+                val charsFile = File(filesDir, "trie/chars_trie.dat")
                 val lastModified = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                     .format(Date(charsFile.lastModified()))
                 val fileSize = formatFileSize(charsFile.length())
@@ -145,15 +299,17 @@ class TrieBuildActivity : AppCompatActivity() {
                 charsStatusText.text = "状态: 已构建"
                 charsFileInfo.text = "文件信息: $fileSize, 更新于 $lastModified"
                 exportCharsButton.isEnabled = true
+                loadCharsTrieButton.isEnabled = !trieManager.isTrieLoaded(TrieBuilder.TrieType.CHARS)
             } else {
                 charsStatusText.text = "状态: 未构建"
                 charsFileInfo.text = "文件信息: 未构建"
                 exportCharsButton.isEnabled = false
+                loadCharsTrieButton.isEnabled = false
             }
             
-            // 检查基础词典Trie树
-            val baseFile = File(filesDir, "trie/base_trie.dat")
-            if (baseFile.exists()) {
+            // 检查基础词典Trie树 - 使用与TrieManager相同的路径检查
+            if (trieManager.isTrieFileExists(TrieBuilder.TrieType.BASE)) {
+                val baseFile = File(filesDir, "trie/base_trie.dat")
                 val lastModified = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                     .format(Date(baseFile.lastModified()))
                 val fileSize = formatFileSize(baseFile.length())
@@ -161,16 +317,22 @@ class TrieBuildActivity : AppCompatActivity() {
                 baseStatusText.text = "状态: 已构建"
                 baseFileInfo.text = "文件信息: $fileSize, 更新于 $lastModified"
                 exportBaseButton.isEnabled = true
+                loadBaseTrieButton.isEnabled = !trieManager.isTrieLoaded(TrieBuilder.TrieType.BASE)
             } else {
                 baseStatusText.text = "状态: 未构建"
                 baseFileInfo.text = "文件信息: 未构建"
                 exportBaseButton.isEnabled = false
+                loadBaseTrieButton.isEnabled = false
             }
+            
+            // 更新内存加载状态
+            updateCharsTrieLoadStatus(trieManager.isTrieLoaded(TrieBuilder.TrieType.CHARS))
+            updateBaseTrieLoadStatus(trieManager.isTrieLoaded(TrieBuilder.TrieType.BASE))
             
             // 更新内存使用情况
             updateMemoryInfo()
         } catch (e: Exception) {
-            Timber.e(e, "刷新Trie树状态失败")
+            Timber.e(e, "刷新Trie树状态失败: ${e.message}")
             Toast.makeText(this, "刷新状态失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
@@ -274,13 +436,15 @@ class TrieBuildActivity : AppCompatActivity() {
                     TrieBuilder.TrieType.BASE -> "base_trie.dat"
                 }
                 
-                val srcFile = File(filesDir, "trie/$fileName")
-                if (!srcFile.exists()) {
+                // 使用TrieManager的方法检查文件是否存在
+                if (!trieManager.isTrieFileExists(type)) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(this@TrieBuildActivity, "Trie树文件不存在", Toast.LENGTH_SHORT).show()
                     }
                     return@launch
                 }
+                
+                val srcFile = File(filesDir, "trie/$fileName")
                 
                 // 导出到下载目录
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
@@ -303,7 +467,7 @@ class TrieBuildActivity : AppCompatActivity() {
                     ).show()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "导出Trie树失败")
+                Timber.e(e, "导出Trie树失败: ${e.message}")
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@TrieBuildActivity, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
                 }

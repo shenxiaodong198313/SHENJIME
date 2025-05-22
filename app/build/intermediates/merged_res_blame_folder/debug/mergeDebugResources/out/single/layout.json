@@ -1,15 +1,15 @@
 [
     {
-        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_dictionary_logs.xml",
-        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_logs.xml"
-    },
-    {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_dictionary_detail.xml",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_detail.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_dictionary_menu.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dictionary_menu.xml"
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_dictionary_logs.xml",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_logs.xml"
+    },
+    {
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_dictionary_list.xml",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_list.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\fragment_permission_check.xml",
@@ -34,10 +34,6 @@
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\item_dictionary_group_header.xml",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\item_dictionary_group_header.xml"
-    },
-    {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_dictionary_list.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_dictionary_list.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\fragment_log_viewer.xml",
@@ -72,6 +68,10 @@
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\item_dictionary_log.xml"
     },
     {
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_dictionary_menu.xml",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_menu.xml"
+    },
+    {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\item_candidate.xml",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\item_candidate.xml"
     },
@@ -82,6 +82,10 @@
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_fragment_container.xml",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_fragment_container.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_trie_build.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_trie_build.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\dialog_export_settings.xml",
