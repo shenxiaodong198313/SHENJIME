@@ -192,7 +192,7 @@ class PinyinQueryEngine {
         // 返回结果对象，应用limit限制
         PinyinQueryResult(
             inputType = InputType.INITIAL_LETTER,
-            candidates = candidates.take(limit),
+            candidates = sortCandidatesByLength(candidates, limit),
             syllables = listOf(),
             explanation = explanation.toString()
         )
@@ -323,7 +323,7 @@ class PinyinQueryEngine {
         // 返回结果对象，应用limit限制
         PinyinQueryResult(
             inputType = InputType.PINYIN_SYLLABLE,
-            candidates = candidates.take(limit),
+            candidates = sortCandidatesByLength(candidates, limit),
             syllables = fuzzySyllables,
             explanation = explanation.toString()
         )
@@ -512,10 +512,10 @@ class PinyinQueryEngine {
         // 返回结果对象
         PinyinQueryResult(
             inputType = InputType.SYLLABLE_SPLIT,
-            candidates = currentCandidates,
-            syllables = usedSyllables,
+            candidates = sortCandidatesByLength(currentCandidates, limit),
+            syllables = if (successIndex >= 0) allSplitResults[successIndex] else emptyList(),
             allSyllableSplits = allSplitResults,
-            usedSplitIndex = usedIndex,
+            usedSplitIndex = successIndex,
             explanation = explanation.toString()
         )
     }
@@ -582,7 +582,7 @@ class PinyinQueryEngine {
         // 返回结果对象，应用limit限制
         PinyinQueryResult(
             inputType = InputType.ACRONYM,
-            candidates = candidates.take(limit),
+            candidates = sortCandidatesByLength(candidates, limit),
             syllables = listOf(),
             explanation = explanation.toString()
         )
@@ -759,10 +759,10 @@ class PinyinQueryEngine {
             }
         }
         
-        // 返回结果对象，应用limit限制
+        // 返回结果对象，应用limit限制和词长排序（短词优先）
         PinyinQueryResult(
             inputType = InputType.DYNAMIC_SYLLABLE,
-            candidates = candidates.take(limit),
+            candidates = sortCandidatesByLength(candidates, limit),
             syllables = syllables,
             explanation = explanation.toString()
         )
@@ -831,5 +831,16 @@ class PinyinQueryEngine {
         }
         
         return result
+    }
+    
+    /**
+     * 对候选词列表按照词长排序（短词优先）
+     * 
+     * @param candidates 候选词列表
+     * @param limit 返回数量限制
+     * @return 排序后的候选词列表
+     */
+    private fun sortCandidatesByLength(candidates: List<PinyinCandidate>, limit: Int): List<PinyinCandidate> {
+        return candidates.sortedBy { it.word.length }.take(limit)
     }
 } 

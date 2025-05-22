@@ -54,7 +54,11 @@ object CandidateComparator {
         if (a.matchType != b.matchType)
             return a.matchType.compareTo(b.matchType)
         
-        // 3. 词频 + 长度奖励
+        // 3. 词长优先（短词优先）
+        if (a.word.length != b.word.length)
+            return b.word.length.compareTo(a.word.length)  // 反向比较，使短词排在前面
+        
+        // 4. 词频 + 长度奖励（仅在词长相同时比较）
         val scoreA = a.frequency + a.lengthBonus
         val scoreB = b.frequency + b.lengthBonus
         return scoreB.compareTo(scoreA)
