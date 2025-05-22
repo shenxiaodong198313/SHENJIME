@@ -43,12 +43,38 @@ class TrieBuilder(private val context: Context) {
             
             progressCallback(10, "获取到${totalCount}个单字，开始构建")
             
+            // 统计数据
+            var processedCount = 0
+            var skipCount = 0
+            var multiPinyinCount = 0
+            var totalPinyinCount = 0
+            
             // 插入所有单字到Trie树
             chars.forEachIndexed { index, entry ->
-                val pinyin = entry.pinyin?.lowercase() ?: return@forEachIndexed
+                // 获取并处理拼音
+                val pinyin = entry.pinyin?.lowercase()
+                if (pinyin.isNullOrBlank()) {
+                    skipCount++
+                    return@forEachIndexed
+                }
+                
+                // 拆分多音字情况
+                val pinyinList = pinyin.split(",").filter { it.isNotBlank() }
+                if (pinyinList.size > 1) {
+                    multiPinyinCount++
+                }
+                
+                if (pinyinList.isEmpty()) {
+                    skipCount++
+                    return@forEachIndexed
+                }
+                
+                totalPinyinCount += pinyinList.size
+                processedCount++
+                
                 // 为每个拼音创建Trie路径
-                pinyin.split(",").forEach { p -> 
-                    trie.insert(p, entry.word, entry.frequency ?: 0)
+                pinyinList.forEach { p -> 
+                    trie.insert(p.trim(), entry.word, entry.frequency ?: 0)
                 }
                 
                 // 每处理100个单字更新一次进度
@@ -62,7 +88,14 @@ class TrieBuilder(private val context: Context) {
             
             // 获取内存统计信息
             val stats = trie.getMemoryStats()
-            progressCallback(100, "完成: ${stats.toString()}")
+            
+            // 打印详细的构建统计信息
+            val statsSummary = "单字总数: $totalCount, 实际处理: $processedCount, " +
+                      "跳过: $skipCount, 多音字: $multiPinyinCount, " +
+                      "拼音总数: $totalPinyinCount"
+            Timber.d("Trie构建统计: $statsSummary")
+            
+            progressCallback(100, "完成: ${stats.toString()} ($statsSummary)")
             
             return@withContext trie
         } catch (e: Exception) {

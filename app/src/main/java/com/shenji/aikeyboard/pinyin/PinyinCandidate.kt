@@ -24,7 +24,10 @@ data class PinyinCandidate(
     val type: String = "",
     
     // 匹配类型
-    val matchType: MatchType = MatchType.UNKNOWN
+    val matchType: MatchType = MatchType.UNKNOWN,
+    
+    // 查询来源
+    val querySource: QuerySource = QuerySource.UNKNOWN
 ) {
     companion object {
         /**
@@ -32,16 +35,18 @@ data class PinyinCandidate(
          * 
          * @param entry 词条对象
          * @param matchType 匹配类型
+         * @param source 查询来源
          * @return 候选词对象
          */
-        fun fromEntry(entry: Entry, matchType: MatchType): PinyinCandidate {
+        fun fromEntry(entry: Entry, matchType: MatchType, source: QuerySource = QuerySource.REALM_DATABASE): PinyinCandidate {
             return PinyinCandidate(
                 word = entry.word,
                 pinyin = entry.pinyin,
                 initialLetters = entry.initialLetters,
                 frequency = entry.frequency,
                 type = entry.type,
-                matchType = matchType
+                matchType = matchType,
+                querySource = source
             )
         }
     }
@@ -51,6 +56,11 @@ data class PinyinCandidate(
      * 用于测试工具或调试目的
      */
     fun toDisplayText(): String {
-        return "$word (拼音: $pinyin, 词频: $frequency, 词典: $type)"
+        val source = when(querySource) {
+            QuerySource.REALM_DATABASE -> "数据库"
+            QuerySource.TRIE_INDEX -> "Trie树"
+            QuerySource.UNKNOWN -> "未知"
+        }
+        return "$word (拼音: $pinyin, 词频: $frequency, 类型: $type, 来源: $source)"
     }
 } 

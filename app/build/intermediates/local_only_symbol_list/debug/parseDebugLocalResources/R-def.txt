@@ -183,6 +183,7 @@ id progressBar
 id progressBarLoading
 id progressText
 id query_condition_text_view
+id query_process_text
 id query_process_text_view
 id realm_dict_button
 id realm_dict_card

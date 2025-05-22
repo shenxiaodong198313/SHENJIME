@@ -40,5 +40,15 @@ enum class InputType {
      * 处理未完成的拼音输入，将输入拆分为完整音节+剩余字母
      * 例如：shenjingb -> 神经病
      */
-    DYNAMIC_SYLLABLE
+    DYNAMIC_SYLLABLE,
+    
+    /**
+     * 中文输入
+     */
+    CHINESE,
+    
+    /**
+     * 错误类型
+     */
+    ERROR
 } 

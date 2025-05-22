@@ -23,6 +23,10 @@ class PinyinTestViewModel : ViewModel() {
     // 拼音查询引擎
     private val pinyinQueryEngine = PinyinQueryEngine.getInstance()
     
+    // 当前查询结果，用于统计来源信息
+    var currentQueryResult: PinyinQueryResult? = null
+        private set
+    
     // 输入状态流，用于防抖处理
     private val _inputFlow = MutableStateFlow("")
     val inputFlow: StateFlow<String> = _inputFlow
@@ -67,7 +71,9 @@ class PinyinTestViewModel : ViewModel() {
     data class CandidateStats(
         val totalCount: Int = 0,
         val singleCharCount: Int = 0,
-        val phraseCount: Int = 0
+        val phraseCount: Int = 0,
+        val fromTrieCount: Int = 0,    // 从Trie树获取的候选词数量
+        val fromDatabaseCount: Int = 0 // 从数据库获取的候选词数量
     )
 
     init {
@@ -148,17 +154,23 @@ class PinyinTestViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 // 只处理当前输入的部分
+                currentInput = input
+                
                 if (currentInput.isEmpty()) {
                     clearInput()
                     return@launch
                 }
-
+                
                 // 使用标准化模块查询，只查询当前输入的拼音部分
                 val queryResult = pinyinQueryEngine.query(currentInput, 20, true)
+                
+                // 保存当前查询结果
+                currentQueryResult = queryResult
                 
                 // 更新UI数据
                 updateUIWithQueryResult(queryResult)
                 
+                Timber.d("查询处理完成: 找到${queryResult.candidates.size}个候选词")
             } catch (e: Exception) {
                 Timber.e(e, "处理输入异常")
                 _matchRule.value = "处理异常: ${e.message}"
@@ -168,7 +180,7 @@ class PinyinTestViewModel : ViewModel() {
             }
         }
     }
-    
+
     /**
      * 更新UI显示
      */
@@ -249,6 +261,13 @@ class PinyinTestViewModel : ViewModel() {
      * 将标准模块的PinyinCandidate转换为UI使用的Candidate模型
      */
     private fun convertToCandidateModel(pinyinCandidate: PinyinCandidate): Candidate {
+        // 获取来源字符串
+        val sourceStr = when (pinyinCandidate.querySource) {
+            com.shenji.aikeyboard.pinyin.QuerySource.TRIE_INDEX -> "Trie树"
+            com.shenji.aikeyboard.pinyin.QuerySource.REALM_DATABASE -> "数据库"
+            else -> "未知"
+        }
+        
         return Candidate(
             word = pinyinCandidate.word,
             pinyin = pinyinCandidate.pinyin,
@@ -261,7 +280,8 @@ class PinyinTestViewModel : ViewModel() {
                 com.shenji.aikeyboard.pinyin.MatchType.SYLLABLE_SPLIT -> Candidate.MatchType.SYLLABLE_SPLIT
                 com.shenji.aikeyboard.pinyin.MatchType.ACRONYM -> Candidate.MatchType.ACRONYM
                 else -> Candidate.MatchType.UNKNOWN
-            }
+            },
+            source = sourceStr
         )
     }
     
@@ -272,10 +292,17 @@ class PinyinTestViewModel : ViewModel() {
         val singleCharCount = candidates.count { it.word.length == 1 }
         val phraseCount = candidates.count { it.word.length > 1 }
         
+        // 计算不同来源的候选词数量
+        val result = currentQueryResult // 获取当前查询结果
+        val fromTrieCount = result?.candidates?.count { it.querySource == com.shenji.aikeyboard.pinyin.QuerySource.TRIE_INDEX } ?: 0
+        val fromDatabaseCount = result?.candidates?.count { it.querySource == com.shenji.aikeyboard.pinyin.QuerySource.REALM_DATABASE } ?: 0
+        
         _candidateStats.value = CandidateStats(
             totalCount = candidates.size,
             singleCharCount = singleCharCount,
-            phraseCount = phraseCount
+            phraseCount = phraseCount,
+            fromTrieCount = fromTrieCount,
+            fromDatabaseCount = fromDatabaseCount
         )
     }
 } 

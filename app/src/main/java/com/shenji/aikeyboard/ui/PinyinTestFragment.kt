@@ -198,6 +198,24 @@ class PinyinTestFragment : Fragment() {
         // 观察候选词统计
         viewModel.candidateStats.observe(viewLifecycleOwner) { stats ->
             candidateStatsTextView.text = "候选词统计: 总计${stats.totalCount}个 (单字${stats.singleCharCount}个, 词组${stats.phraseCount}个)"
+            
+            // 添加来源信息到查询过程区域下方
+            val querySourceInfo = "来源: Trie树${stats.fromTrieCount}个, 数据库${stats.fromDatabaseCount}个"
+            
+            // 在查询过程下方的区域显示来源信息
+            queryProcessTextView.let {
+                val currentText = it.text.toString()
+                
+                // 检查是否已经包含来源信息，避免重复添加
+                if (!currentText.contains("来源: Trie树")) {
+                    // 如果有查询过程，添加换行后再显示来源信息
+                    if (currentText.isNotEmpty()) {
+                        it.text = "$currentText\n\n$querySourceInfo"
+                    } else {
+                        it.text = querySourceInfo
+                    }
+                }
+            }
         }
         
         // 观察候选词列表

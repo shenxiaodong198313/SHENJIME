@@ -69,8 +69,8 @@ class CandidateAdapter : ListAdapter<Candidate, CandidateAdapter.ViewHolder>(Can
                 else -> candidate.type
             }
             
-            // 组合显示信息
-            tvSource.text = "${typeText} (${matchTypeText}) 词频: ${candidate.frequency}"
+            // 组合显示信息，添加来源信息
+            tvSource.text = "${typeText} (${matchTypeText}) 词频: ${candidate.frequency} 来源: ${candidate.source}"
             tvFrequency.text = candidate.frequency.toString()
         }
     }

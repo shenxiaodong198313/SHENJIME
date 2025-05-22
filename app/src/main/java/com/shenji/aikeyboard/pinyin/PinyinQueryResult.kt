@@ -31,7 +31,10 @@ data class PinyinQueryResult(
     val isError: Boolean = false,
     
     // 错误信息（如果有）
-    val errorMessage: String = ""
+    val errorMessage: String = "",
+    
+    // 查询结果来源
+    val querySource: QuerySource = QuerySource.UNKNOWN
 ) {
     companion object {
         /**
@@ -50,7 +53,7 @@ data class PinyinQueryResult(
          */
         fun error(errorMessage: String): PinyinQueryResult {
             return PinyinQueryResult(
-                inputType = InputType.UNKNOWN,
+                inputType = InputType.ERROR,
                 candidates = emptyList(),
                 isError = true,
                 errorMessage = errorMessage
@@ -85,6 +88,27 @@ data class PinyinQueryResult(
         val singleCharCount = candidates.count { it.word.length == 1 }
         val phraseCount = candidates.count { it.word.length > 1 }
         
-        return "总计${candidates.size}个 (单字${singleCharCount}个, 词组${phraseCount}个)"
+        // 添加来源统计
+        val fromTrie = candidates.count { it.querySource == QuerySource.TRIE_INDEX }
+        val fromDB = candidates.count { it.querySource == QuerySource.REALM_DATABASE }
+        
+        return "总计${candidates.size}个 (单字${singleCharCount}个, 词组${phraseCount}个), 来源: Trie树 ${fromTrie}个, 数据库 ${fromDB}个"
+    }
+    
+    /**
+     * 获取格式化的候选词列表
+     * 用于测试工具的显示
+     */
+    fun getFormattedCandidates(): String {
+        if (candidates.isEmpty()) {
+            return "无候选词"
+        }
+        
+        val sb = StringBuilder()
+        candidates.forEachIndexed { index, candidate ->
+            sb.append("${index + 1}. ${candidate.toDisplayText()}\n")
+        }
+        
+        return sb.toString()
     }
 } 

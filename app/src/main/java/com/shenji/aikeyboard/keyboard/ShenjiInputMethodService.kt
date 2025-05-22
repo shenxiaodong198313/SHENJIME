@@ -70,6 +70,9 @@ class ShenjiInputMethodService : InputMethodService() {
     // 长按删除键的延迟时间（毫秒）
     private val DELETE_INITIAL_DELAY = 400L  // 长按后首次触发的延迟
     private val DELETE_REPEAT_DELAY = 50L   // 连续触发的间隔
+    
+    // 查询过程文本区域
+    private lateinit var queryProcessText: TextView
 
     override fun onCreate() {
         super.onCreate()
@@ -101,6 +104,9 @@ class ShenjiInputMethodService : InputMethodService() {
             appIcon = keyboardView.findViewById(R.id.app_icon)
             // 初始化工具栏
             toolbarView = keyboardView.findViewById(R.id.toolbar_view)
+            
+            // 初始化查询过程文本区域
+            queryProcessText = keyboardView.findViewById(R.id.query_process_text)
             
             // 设置展开按钮点击事件
             expandCandidatesButton.setOnClickListener {
@@ -268,6 +274,7 @@ class ShenjiInputMethodService : InputMethodService() {
             if (composingText.isEmpty()) {
                 // 如果拼音为空，清空拼音显示并隐藏候选词区域
                 updatePinyinDisplay("")
+                clearQueryProcessInfo()
                 hideCandidates()
                 
                 // 结束组合文本状态
@@ -326,9 +333,10 @@ class ShenjiInputMethodService : InputMethodService() {
             // 重置组合文本
             composingText.clear()
             
-            // 清空拼音显示区域
+            // 清空拼音显示区域和查询过程信息
             if (areViewComponentsInitialized()) {
                 pinyinDisplay.text = ""
+                clearQueryProcessInfo()
                 hideCandidates()
                 
                 // 重置候选词滚动位置
@@ -412,6 +420,30 @@ class ShenjiInputMethodService : InputMethodService() {
     private fun updatePinyinDisplay(pinyin: String) {
         if (::pinyinDisplay.isInitialized) {
             pinyinDisplay.text = pinyin
+        }
+    }
+    
+    // 更新查询过程信息显示
+    private fun updateQueryProcessInfo(sourceInfo: String) {
+        if (::queryProcessText.isInitialized) {
+            // 确保查询过程文本视图可见
+            queryProcessText.visibility = View.VISIBLE
+            
+            // 如果现有内容不为空，添加换行
+            val existingText = queryProcessText.text
+            
+            if (existingText.isNotEmpty()) {
+                queryProcessText.text = "$existingText\n$sourceInfo"
+            } else {
+                queryProcessText.text = sourceInfo
+            }
+        }
+    }
+    
+    // 清空查询过程信息
+    private fun clearQueryProcessInfo() {
+        if (::queryProcessText.isInitialized) {
+            queryProcessText.text = ""
         }
     }
     
@@ -510,9 +542,19 @@ class ShenjiInputMethodService : InputMethodService() {
             // 设置候选词容器内边距与拼音区域一致
             candidatesView.setPadding(0, candidatesView.paddingTop, candidatesView.paddingRight, candidatesView.paddingBottom)
             
-            // 添加每个候选词按钮
+            // 创建一个水平的LinearLayout来放置候选词
+            val candidatesRow = LinearLayout(this)
+            candidatesRow.orientation = LinearLayout.HORIZONTAL
+            candidatesRow.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            
+            // 添加每个候选词按钮到水平布局
             wordList.forEachIndexed { index, word ->
                 val candidateText = TextView(this)
+                
+                // 显示候选词文本
                 candidateText.text = word.word
                 
                 // 使用TextView而不是Button以减少默认样式的影响
@@ -547,15 +589,18 @@ class ShenjiInputMethodService : InputMethodService() {
                     commitText(word.word)
                 }
                 
-                // 添加到候选词容器
-                candidatesView.addView(candidateText)
+                // 添加到候选词行
+                candidatesRow.addView(candidateText)
             }
+            
+            // 将候选词行添加到候选词视图
+            candidatesView.addView(candidatesRow)
             
             // 重置水平滚动位置到起始位置
             keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
             
             // 记录日志，确认候选词视图状态
-            Timber.d("候选词容器可见性: ${candidatesContainer.visibility == View.VISIBLE}")
+            Timber.d("候选词容器可见性: ${this.candidatesContainer.visibility == View.VISIBLE}")
             Timber.d("默认候选词视图可见性: ${defaultCandidatesView.visibility == View.VISIBLE}")
             Timber.d("候选词视图子项数量: ${candidatesView.childCount}")
             

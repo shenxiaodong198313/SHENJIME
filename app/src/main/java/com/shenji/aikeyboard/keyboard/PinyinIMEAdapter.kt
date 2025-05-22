@@ -32,16 +32,51 @@ class PinyinIMEAdapter {
      */
     suspend fun getCandidates(input: String, limit: Int = 20): List<WordFrequency> = withContext(Dispatchers.IO) {
         try {
-            // 使用标准拼音查询引擎
-            val result = pinyinQueryEngine.query(input, limit, false)
+            val resultList = mutableListOf<WordFrequency>()
             
-            // 将标准模块的PinyinCandidate转换为输入法使用的WordFrequency
-            return@withContext result.candidates.map { candidate ->
-                WordFrequency(
-                    word = candidate.word,
-                    frequency = candidate.frequency
-                )
+            // 1. 首先尝试使用Trie树查询单字（如果Trie树已加载）
+            if (trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieBuilder.TrieType.CHARS)) {
+                val trieResults = getTrieCandidates(input, limit)
+                if (trieResults.isNotEmpty()) {
+                    Timber.d("从Trie树获取到${trieResults.size}个候选词")
+                    resultList.addAll(trieResults)
+                }
             }
+            
+            // 2. 如果Trie树结果不足或未加载Trie树，使用标准化拼音查询引擎查询数据库
+            if (resultList.size < limit) {
+                // 设置剩余需要的候选词数量
+                val remainingLimit = limit - resultList.size
+                
+                val dbResult = pinyinQueryEngine.query(input, remainingLimit, false)
+                
+                // 将标准模块的PinyinCandidate转换为输入法使用的WordFrequency
+                val dbCandidates = dbResult.candidates.map { candidate ->
+                    WordFrequency(
+                        word = candidate.word,
+                        frequency = candidate.frequency,
+                        source = "数据库"
+                    )
+                }
+                
+                // 避免重复添加已经从Trie树获取的词
+                val existingWords = resultList.map { it.word }.toSet()
+                dbCandidates.forEach { candidate ->
+                    if (candidate.word !in existingWords) {
+                        resultList.add(candidate)
+                    }
+                }
+                
+                Timber.d("从数据库获取到${dbCandidates.size}个候选词，合并后总计${resultList.size}个")
+            }
+            
+            // 如果resultList数量多于limit，只取前limit个
+            if (resultList.size > limit) {
+                return@withContext resultList.take(limit)
+            }
+            
+            // 返回结果，按词频排序
+            return@withContext resultList.sortedByDescending { it.frequency }
         } catch (e: Exception) {
             Timber.e(e, "获取候选词异常: ${e.message}")
             emptyList()
@@ -58,7 +93,12 @@ class PinyinIMEAdapter {
     fun getTrieCandidates(input: String, limit: Int = 20): List<WordFrequency> {
         try {
             // 使用Trie树进行前缀查询
-            return trieManager.searchCharsByPrefix(input, limit)
+            val trieResults = trieManager.searchCharsByPrefix(input, limit)
+            // 标记来源为Trie树
+            return trieResults.map { 
+                // 添加额外的来源信息
+                WordFrequency(it.word, it.frequency, source = "Trie树") 
+            }
         } catch (e: Exception) {
             Timber.e(e, "Trie树查询异常: ${e.message}")
             return emptyList()

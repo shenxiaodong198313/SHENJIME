@@ -21,7 +21,10 @@ data class Candidate(
     val type: String = "",
     
     // 匹配类型
-    val matchType: MatchType = MatchType.UNKNOWN
+    val matchType: MatchType = MatchType.UNKNOWN,
+    
+    // 数据来源
+    val source: String = ""
 ) {
     /**
      * 匹配类型

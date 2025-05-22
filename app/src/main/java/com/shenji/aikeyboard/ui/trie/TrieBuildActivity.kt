@@ -166,6 +166,10 @@ class TrieBuildActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (success) {
                         Toast.makeText(this@TrieBuildActivity, "单字Trie树加载成功", Toast.LENGTH_SHORT).show()
+                        // 立即更新UI状态，而不是等待下一个生命周期
+                        updateCharsTrieLoadStatus(true)
+                        // 更新内存使用情况
+                        updateMemoryInfo()
                     } else {
                         Toast.makeText(this@TrieBuildActivity, "单字Trie树加载失败", Toast.LENGTH_SHORT).show()
                     }
@@ -176,6 +180,10 @@ class TrieBuildActivity : AppCompatActivity() {
         unloadCharsTrieButton.setOnClickListener {
             trieManager.unloadTrie(TrieBuilder.TrieType.CHARS)
             Toast.makeText(this, "单字Trie树已卸载", Toast.LENGTH_SHORT).show()
+            // 立即更新UI状态
+            updateCharsTrieLoadStatus(false)
+            // 更新内存使用情况
+            updateMemoryInfo()
         }
         
         loadBaseTrieButton.setOnClickListener {
@@ -184,6 +192,10 @@ class TrieBuildActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (success) {
                         Toast.makeText(this@TrieBuildActivity, "基础词典Trie树加载成功", Toast.LENGTH_SHORT).show()
+                        // 立即更新UI状态
+                        updateBaseTrieLoadStatus(true)
+                        // 更新内存使用情况
+                        updateMemoryInfo()
                     } else {
                         Toast.makeText(this@TrieBuildActivity, "基础词典Trie树加载失败", Toast.LENGTH_SHORT).show()
                     }
@@ -194,6 +206,10 @@ class TrieBuildActivity : AppCompatActivity() {
         unloadBaseTrieButton.setOnClickListener {
             trieManager.unloadTrie(TrieBuilder.TrieType.BASE)
             Toast.makeText(this, "基础词典Trie树已卸载", Toast.LENGTH_SHORT).show()
+            // 立即更新UI状态
+            updateBaseTrieLoadStatus(false)
+            // 更新内存使用情况
+            updateMemoryInfo()
         }
     }
     
@@ -385,6 +401,9 @@ class TrieBuildActivity : AppCompatActivity() {
                 // 保存Trie树
                 val file = trieBuilder.saveTrie(trie, TrieBuilder.TrieType.CHARS)
                 
+                // 自动尝试加载到内存
+                val loadSuccess = trieManager.loadTrieToMemory(TrieBuilder.TrieType.CHARS)
+                
                 // 更新UI
                 withContext(Dispatchers.Main) {
                     val lastModified = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
@@ -403,8 +422,17 @@ class TrieBuildActivity : AppCompatActivity() {
                     buildCharsButton.isEnabled = true
                     exportCharsButton.isEnabled = true
                     
+                    // 更新内存加载状态
+                    if (loadSuccess) {
+                        updateCharsTrieLoadStatus(true)
+                        Toast.makeText(this@TrieBuildActivity, "单字Trie树已自动加载到内存", Toast.LENGTH_SHORT).show()
+                    }
+                    
                     // 更新内存信息
                     updateMemoryInfo()
+                    
+                    // 刷新整体状态
+                    refreshTrieStatus()
                 }
             } catch (e: Exception) {
                 Timber.e(e, "构建单字Trie树失败")

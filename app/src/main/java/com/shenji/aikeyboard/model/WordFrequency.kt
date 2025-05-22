@@ -6,7 +6,8 @@ package com.shenji.aikeyboard.model
  */
 data class WordFrequency(
     val word: String,
-    val frequency: Int = 0
+    val frequency: Int = 0,
+    val source: String = "数据库" // 默认来源是数据库
 ) : Comparable<WordFrequency> {
     
     override fun compareTo(other: WordFrequency): Int {
@@ -15,6 +16,6 @@ data class WordFrequency(
     }
     
     override fun toString(): String {
-        return "$word(频率:$frequency)"
+        return "$word(频率:$frequency, 来源:$source)"
     }
 } 

@@ -176,7 +176,8 @@ class PinyinQueryEngine {
                             pinyin = entry.pinyin,
                             frequency = entry.frequency,
                             type = entry.type,
-                            matchType = MatchType.INITIAL_LETTER
+                            matchType = MatchType.INITIAL_LETTER,
+                            querySource = QuerySource.REALM_DATABASE
                         )
                     )
                 }

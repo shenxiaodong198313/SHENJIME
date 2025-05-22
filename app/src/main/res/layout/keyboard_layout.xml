@@ -67,6 +67,20 @@
             </LinearLayout>
         </RelativeLayout>
 
+        <!-- 查询过程信息显示区域 - 新增 -->
+        <TextView
+            android:id="@+id/query_process_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:background="#F0F0F0"
+            android:textColor="#666666"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
         <!-- 工具栏 - 默认显示，在输入拼音时隐藏，选择候选词后再显示 -->
         <LinearLayout
             android:id="@+id/toolbar_view"
