@@ -1,18 +1,13 @@
 package com.shenji.aikeyboard.ui.trie
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.os.Bundle
 import android.os.Environment
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.Lifecycle
@@ -30,6 +25,13 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.appcompat.app.AlertDialog
+import kotlinx.coroutines.CompletableDeferred
+import android.widget.ScrollView
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.view.ViewGroup
 
 /**
  * Trie树构建Activity
@@ -166,7 +168,7 @@ class TrieBuildActivity : AppCompatActivity() {
         
         // 构建基础词典Trie树
         buildBaseButton.setOnClickListener {
-            buildBaseTrie()
+            Toast.makeText(this, "基础词典Trie树构建功能尚未实现", Toast.LENGTH_SHORT).show()
         }
         
         // 导出基础词典Trie树
@@ -478,273 +480,6 @@ class TrieBuildActivity : AppCompatActivity() {
     }
     
     /**
-     * 构建基础词典Trie树
-     */
-    private fun buildBaseTrie() {
-        // 显示进度条
-        baseProgress.visibility = View.VISIBLE
-        baseProgressText.visibility = View.VISIBLE
-        baseProgress.progress = 0
-        
-        // 禁用构建按钮
-        buildBaseButton.isEnabled = false
-        
-        // 创建构建状态对话框
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("基础词典Trie树构建状态")
-        val statusView = layoutInflater.inflate(R.layout.dialog_build_status, null)
-        val statusText = statusView.findViewById<TextView>(R.id.build_status_text)
-        val memoryText = statusView.findViewById<TextView>(R.id.memory_usage_text)
-        statusText.text = "准备构建基础词典Trie树..."
-        builder.setView(statusView)
-        builder.setCancelable(false)
-        builder.setNegativeButton("后台构建") { dialog, _ ->
-            dialog.dismiss()
-        }
-        val dialog = builder.create()
-        dialog.show()
-        
-        // 更新内存使用状态的定时器
-        val memoryUpdateTimer = java.util.Timer()
-        memoryUpdateTimer.scheduleAtFixedRate(object : java.util.TimerTask() {
-            override fun run() {
-                runOnUiThread {
-                    val runtime = Runtime.getRuntime()
-                    val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
-                    val totalMemory = runtime.totalMemory() / (1024 * 1024)
-                    val maxMemory = runtime.maxMemory() / (1024 * 1024)
-                    memoryText.text = "内存使用: ${usedMemory}MB / ${totalMemory}MB (最大: ${maxMemory}MB)"
-                }
-            }
-        }, 0, 1000) // 每秒更新一次内存使用情况
-        
-        // 创建错误记录器
-        val errorRecords = mutableListOf<String>()
-        
-        // 开始构建
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                // 更新状态
-                withContext(Dispatchers.Main) {
-                    baseStatusText.text = "状态: 正在构建..."
-                    statusText.text = "正在初始化构建环境..."
-                }
-                
-                // 构建基础词典Trie树
-                val trie = trieBuilder.buildBaseTrie { progress, message ->
-                    // 更新进度
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        baseProgress.progress = progress
-                        baseProgressText.text = message
-                        statusText.text = message
-                        
-                        // 如果消息中包含"异常"或"错误"，记录到错误列表
-                        if (message.contains("异常") || message.contains("错误") || progress < 0) {
-                            val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
-                            val errorRecord = "[$timestamp] $message"
-                            errorRecords.add(errorRecord)
-                            Timber.e("构建错误: $errorRecord")
-                        }
-                    }
-                }
-                
-                // 保存Trie树
-                val file = trieBuilder.saveTrie(trie, TrieBuilder.TrieType.BASE)
-                
-                // 自动尝试加载到内存
-                val loadSuccess = trieManager.loadTrieToMemory(TrieBuilder.TrieType.BASE)
-                
-                // 停止内存更新定时器
-                memoryUpdateTimer.cancel()
-                
-                // 更新UI
-                withContext(Dispatchers.Main) {
-                    val lastModified = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                        .format(Date(file.lastModified()))
-                    val fileSize = formatFileSize(file.length())
-                    
-                    baseStatusText.text = "状态: 构建完成"
-                    baseFileInfo.text = "文件信息: $fileSize, 更新于 $lastModified"
-                    
-                    // 关闭状态对话框
-                    dialog.dismiss()
-                    
-                    // 显示构建完成对话框
-                    val successDialogBuilder = AlertDialog.Builder(this@TrieBuildActivity)
-                    successDialogBuilder.setTitle("构建完成")
-                    val message = StringBuilder()
-                    message.append("基础词典Trie树构建成功！\n\n")
-                    message.append("文件大小: $fileSize\n")
-                    message.append("更新时间: $lastModified\n\n")
-                    
-                    if (errorRecords.isNotEmpty()) {
-                        message.append("构建过程中有${errorRecords.size}个警告/错误，可在日志中查看详情。\n")
-                    }
-                    
-                    if (loadSuccess) {
-                        message.append("Trie树已自动加载到内存。")
-                    } else {
-                        message.append("Trie树未能自动加载到内存，可手动加载。")
-                    }
-                    
-                    successDialogBuilder.setMessage(message.toString())
-                    successDialogBuilder.setPositiveButton("确定") { _, _ -> }
-                    
-                    if (errorRecords.isNotEmpty()) {
-                        successDialogBuilder.setNeutralButton("查看错误日志") { _, _ ->
-                            showBuildErrorLog(errorRecords)
-                        }
-                    }
-                    
-                    successDialogBuilder.setNegativeButton("查看详细日志") { _, _ ->
-                        showBuildDetailLog()
-                    }
-                    
-                    successDialogBuilder.show()
-                    
-                    Toast.makeText(this@TrieBuildActivity, "基础词典Trie树构建成功", Toast.LENGTH_SHORT).show()
-                    
-                    // 隐藏进度条
-                    baseProgress.visibility = View.INVISIBLE
-                    baseProgressText.visibility = View.INVISIBLE
-                    
-                    // 启用按钮
-                    buildBaseButton.isEnabled = true
-                    exportBaseButton.isEnabled = true
-                    
-                    // 更新内存加载状态
-                    if (loadSuccess) {
-                        updateBaseTrieLoadStatus(true)
-                        Toast.makeText(this@TrieBuildActivity, "基础词典Trie树已自动加载到内存", Toast.LENGTH_SHORT).show()
-                    }
-                    
-                    // 更新内存信息
-                    updateMemoryInfo()
-                    
-                    // 刷新整体状态
-                    refreshTrieStatus()
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "构建基础词典Trie树失败")
-                
-                // 停止内存更新定时器
-                memoryUpdateTimer.cancel()
-                
-                // 记录错误
-                val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
-                val errorRecord = "[$timestamp] 严重错误: ${e.message}"
-                errorRecords.add(errorRecord)
-                errorRecords.add("详细堆栈: ${e.stackTraceToString()}")
-                
-                // 更新UI
-                withContext(Dispatchers.Main) {
-                    baseStatusText.text = "状态: 构建失败"
-                    baseProgressText.text = "错误: ${e.message}"
-                    
-                    // 关闭状态对话框
-                    dialog.dismiss()
-                    
-                    // 显示错误对话框
-                    val errorDialogBuilder = AlertDialog.Builder(this@TrieBuildActivity)
-                    errorDialogBuilder.setTitle("构建失败")
-                    errorDialogBuilder.setMessage("基础词典Trie树构建失败: ${e.message}\n\n查看详细日志以获取更多信息。")
-                    errorDialogBuilder.setPositiveButton("确定") { _, _ -> }
-                    errorDialogBuilder.setNegativeButton("查看错误日志") { _, _ ->
-                        showBuildErrorLog(errorRecords)
-                    }
-                    errorDialogBuilder.setNeutralButton("查看详细日志") { _, _ ->
-                        showBuildDetailLog()
-                    }
-                    errorDialogBuilder.show()
-                    
-                    Toast.makeText(this@TrieBuildActivity, "构建失败: ${e.message}", Toast.LENGTH_SHORT).show()
-                    
-                    // 隐藏进度条
-                    baseProgress.visibility = View.INVISIBLE
-                    
-                    // 启用按钮
-                    buildBaseButton.isEnabled = true
-                }
-            }
-        }
-    }
-    
-    /**
-     * 显示构建过程中的错误日志
-     */
-    private fun showBuildErrorLog(errorRecords: List<String>) {
-        val errorLogBuilder = AlertDialog.Builder(this)
-        errorLogBuilder.setTitle("构建错误日志")
-        
-        val scrollView = ScrollView(this)
-        val textView = TextView(this)
-        textView.setPadding(20, 20, 20, 20)
-        textView.textSize = 14f
-        textView.setTextIsSelectable(true)
-        
-        val errorLog = StringBuilder()
-        errorLog.append("基础词典Trie树构建错误日志 - ${java.util.Date()}\n\n")
-        
-        errorRecords.forEach { errorRecord ->
-            errorLog.append("$errorRecord\n\n")
-        }
-        
-        textView.text = errorLog.toString()
-        scrollView.addView(textView)
-        
-        errorLogBuilder.setView(scrollView)
-        errorLogBuilder.setPositiveButton("关闭") { dialog, _ -> dialog.dismiss() }
-        errorLogBuilder.setNeutralButton("复制到剪贴板") { _, _ ->
-            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("Trie构建错误日志", errorLog.toString())
-            clipboard.setPrimaryClip(clip)
-            Toast.makeText(this, "日志已复制到剪贴板", Toast.LENGTH_SHORT).show()
-        }
-        
-        errorLogBuilder.show()
-    }
-    
-    /**
-     * 显示详细构建日志
-     */
-    private fun showBuildDetailLog() {
-        try {
-            val logFile = File(filesDir, "logs/base_trie_build_log.txt")
-            if (!logFile.exists()) {
-                Toast.makeText(this, "找不到详细日志文件", Toast.LENGTH_SHORT).show()
-                return
-            }
-            
-            val logContent = logFile.readText()
-            
-            val detailLogBuilder = AlertDialog.Builder(this)
-            detailLogBuilder.setTitle("详细构建日志")
-            
-            val scrollView = ScrollView(this)
-            val textView = TextView(this)
-            textView.setPadding(20, 20, 20, 20)
-            textView.textSize = 14f
-            textView.setTextIsSelectable(true)
-            textView.text = logContent
-            scrollView.addView(textView)
-            
-            detailLogBuilder.setView(scrollView)
-            detailLogBuilder.setPositiveButton("关闭") { dialog, _ -> dialog.dismiss() }
-            detailLogBuilder.setNeutralButton("复制到剪贴板") { _, _ ->
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText("Trie构建详细日志", logContent)
-                clipboard.setPrimaryClip(clip)
-                Toast.makeText(this, "日志已复制到剪贴板", Toast.LENGTH_SHORT).show()
-            }
-            
-            detailLogBuilder.show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "读取日志文件失败: ${e.message}", Toast.LENGTH_SHORT).show()
-            Timber.e(e, "读取详细日志文件失败")
-        }
-    }
-    
-    /**
      * 导出Trie树到外部存储
      */
     private fun exportTrie(type: TrieBuilder.TrieType) {
@@ -765,6 +500,36 @@ class TrieBuildActivity : AppCompatActivity() {
                 
                 val srcFile = File(filesDir, "trie/$fileName")
                 
+                // 显示导出选项对话框
+                withContext(Dispatchers.Main) {
+                    val options = arrayOf("导出到下载目录", "导出为应用内预构建文件")
+                    
+                    AlertDialog.Builder(this@TrieBuildActivity)
+                        .setTitle("选择导出方式")
+                        .setItems(options) { _, which ->
+                            when (which) {
+                                0 -> exportToDownloads(type, srcFile)
+                                1 -> exportToAssets(type, srcFile)
+                            }
+                        }
+                        .setNegativeButton("取消", null)
+                        .show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "准备导出Trie树失败: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@TrieBuildActivity, "导出准备失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    
+    /**
+     * 导出到下载目录
+     */
+    private fun exportToDownloads(type: TrieBuilder.TrieType, srcFile: File) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
                 // 导出到下载目录
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 val exportFileName = "${type.name.lowercase()}_trie_$timestamp.dat"
@@ -786,11 +551,156 @@ class TrieBuildActivity : AppCompatActivity() {
                     ).show()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "导出Trie树失败: ${e.message}")
+                Timber.e(e, "导出Trie树到下载目录失败: ${e.message}")
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@TrieBuildActivity, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+    
+    /**
+     * 导出为应用内预构建文件
+     */
+    private fun exportToAssets(type: TrieBuilder.TrieType, srcFile: File) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 获取项目assets/trie目录
+                val assetsDir = findAssetsDirectory()
+                if (assetsDir == null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@TrieBuildActivity,
+                            "无法找到项目assets目录，请确认在开发环境中运行",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    return@launch
+                }
+                
+                // 确保trie目录存在
+                val trieDir = File(assetsDir, "trie")
+                if (!trieDir.exists()) {
+                    trieDir.mkdirs()
+                }
+                
+                // 目标文件名
+                val fileName = when (type) {
+                    TrieBuilder.TrieType.CHARS -> "chars_trie.dat"
+                    TrieBuilder.TrieType.BASE -> "base_trie.dat"
+                }
+                
+                // 目标文件路径
+                val destFile = File(trieDir, fileName)
+                
+                // 如果已经存在，先询问是否覆盖
+                if (destFile.exists()) {
+                    val shouldOverwrite = withContext(Dispatchers.Main) {
+                        val result = CompletableDeferred<Boolean>()
+                        
+                        AlertDialog.Builder(this@TrieBuildActivity)
+                            .setTitle("文件已存在")
+                            .setMessage("预构建文件 $fileName 已存在，是否覆盖？")
+                            .setPositiveButton("覆盖") { _, _ -> result.complete(true) }
+                            .setNegativeButton("取消") { _, _ -> result.complete(false) }
+                            .show()
+                            
+                        result.await()
+                    }
+                    
+                    if (!shouldOverwrite) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@TrieBuildActivity, "导出已取消", Toast.LENGTH_SHORT).show()
+                        }
+                        return@launch
+                    }
+                }
+                
+                // 复制文件
+                srcFile.inputStream().use { input ->
+                    destFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                withContext(Dispatchers.Main) {
+                    val alertDialog = AlertDialog.Builder(this@TrieBuildActivity)
+                        .setTitle("导出成功")
+                        .setMessage(
+                            "已将 $fileName 导出到项目assets目录：\n\n" +
+                            "${destFile.absolutePath}\n\n" +
+                            "请注意:\n" +
+                            "1. 需要重新编译应用才能使用此预构建文件\n" +
+                            "2. 预构建文件会随应用一起分发给所有用户"
+                        )
+                        .setPositiveButton("确定", null)
+                        .create()
+                    
+                    alertDialog.show()
+                    
+                    // 让消息框更宽一些
+                    alertDialog.getWindow()?.setLayout(
+                        (resources.displayMetrics.widthPixels * 0.9).toInt(),
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "导出Trie树到assets目录失败: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@TrieBuildActivity, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    
+    /**
+     * 查找项目的assets目录
+     * 这个方法只在开发环境中有效，因为它尝试在项目目录结构中定位assets目录
+     */
+    private fun findAssetsDirectory(): File? {
+        try {
+            // 从当前应用目录开始向上查找
+            var currentDir = File(applicationInfo.sourceDir).parentFile
+            
+            // 最多向上查找5层
+            for (i in 0..5) {
+                if (currentDir == null) break
+                
+                // 尝试查找标准Android项目结构中的assets目录
+                val possiblePaths = listOf(
+                    File(currentDir, "app/src/main/assets"),
+                    File(currentDir, "src/main/assets"),
+                    File(currentDir, "main/assets"),
+                    File(currentDir, "assets")
+                )
+                
+                for (path in possiblePaths) {
+                    if (path.exists() && path.isDirectory) {
+                        Timber.d("找到assets目录: ${path.absolutePath}")
+                        return path
+                    }
+                }
+                
+                // 向上一级目录
+                currentDir = currentDir.parentFile
+            }
+            
+            // 如果找不到，尝试使用应用程序包名作为目录名
+            val appNameDir = File(Environment.getExternalStorageDirectory(), "AIkeyboard/SHENJI")
+            val assetsDir = File(appNameDir, "app/src/main/assets")
+            
+            if (appNameDir.exists() || appNameDir.mkdirs()) {
+                if (assetsDir.exists() || assetsDir.mkdirs()) {
+                    Timber.d("创建assets目录: ${assetsDir.absolutePath}")
+                    return assetsDir
+                }
+            }
+            
+            Timber.w("无法找到项目assets目录")
+            return null
+        } catch (e: Exception) {
+            Timber.e(e, "查找assets目录失败")
+            return null
         }
     }
     

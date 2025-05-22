@@ -4,6 +4,10 @@ import android.content.Context
 import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.model.WordFrequency
 import timber.log.Timber
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.ObjectInputStream
 
 /**
  * Trie树管理器
@@ -43,6 +47,14 @@ class TrieManager private constructor() {
      */
     private fun loadTries() {
         val context = ShenjiApplication.appContext
+        
+        // 首先尝试从assets加载预构建Trie
+        if (loadPrebuiltTries(context)) {
+            Timber.d("成功从assets加载预构建Trie文件")
+            return
+        }
+        
+        // 如果assets中没有预构建文件，则尝试加载用户构建的文件
         val builder = TrieBuilder(context)
         
         // 尝试加载单字Trie树
@@ -77,6 +89,110 @@ class TrieManager private constructor() {
         } catch (e: Exception) {
             Timber.e(e, "加载基础词典Trie树失败")
             isBaseTrieLoaded = false
+        }
+    }
+    
+    /**
+     * 从assets目录加载预构建的Trie文件
+     * @param context 上下文对象
+     * @return 是否成功加载了任何预构建文件
+     */
+    private fun loadPrebuiltTries(context: Context): Boolean {
+        var anySuccess = false
+        
+        try {
+            // 检查assets中是否存在预构建的单字Trie
+            if (isAssetFileExists(context, "trie/chars_trie.dat")) {
+                val charsTrie = loadTrieFromAssets(context, "trie/chars_trie.dat")
+                if (charsTrie != null) {
+                    this.charsTrie = charsTrie
+                    isCharsTrieLoaded = true
+                    anySuccess = true
+                    
+                    val stats = charsTrie.getMemoryStats()
+                    Timber.d("成功从assets加载预构建单字Trie: $stats")
+                }
+            }
+            
+            // 检查assets中是否存在预构建的基础词典Trie
+            if (isAssetFileExists(context, "trie/base_trie.dat")) {
+                val baseTrie = loadTrieFromAssets(context, "trie/base_trie.dat")
+                if (baseTrie != null) {
+                    this.baseTrie = baseTrie
+                    isBaseTrieLoaded = true
+                    anySuccess = true
+                    
+                    val stats = baseTrie.getMemoryStats()
+                    Timber.d("成功从assets加载预构建基础词典Trie: $stats")
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "从assets加载预构建Trie失败")
+        }
+        
+        return anySuccess
+    }
+    
+    /**
+     * 检查assets中是否存在指定文件
+     */
+    private fun isAssetFileExists(context: Context, fileName: String): Boolean {
+        return try {
+            val inputStream = context.assets.open(fileName)
+            inputStream.close()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * 从assets加载Trie文件
+     */
+    private fun loadTrieFromAssets(context: Context, assetPath: String): PinyinTrie? {
+        return try {
+            context.assets.open(assetPath).use { inputStream ->
+                // 先复制到临时文件，因为assets中的文件可能很大
+                val tempFile = File(context.cacheDir, "temp_trie_${System.currentTimeMillis()}.dat")
+                copyInputStreamToFile(inputStream, tempFile)
+                
+                // 从临时文件加载
+                try {
+                    val trie = ObjectInputStream(tempFile.inputStream()).use { ois ->
+                        ois.readObject() as PinyinTrie
+                    }
+                    
+                    // 验证Trie树是否为空
+                    if (trie.isEmpty()) {
+                        Timber.w("从assets加载的Trie树为空: $assetPath")
+                        null
+                    } else {
+                        trie
+                    }
+                } finally {
+                    // 清理临时文件
+                    if (tempFile.exists()) {
+                        tempFile.delete()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "从assets加载Trie文件失败: $assetPath")
+            null
+        }
+    }
+    
+    /**
+     * 将输入流复制到文件
+     */
+    private fun copyInputStreamToFile(inputStream: InputStream, file: File) {
+        FileOutputStream(file).use { outputStream ->
+            val buffer = ByteArray(4 * 1024) // 4KB buffer
+            var read: Int
+            while (inputStream.read(buffer).also { read = it } != -1) {
+                outputStream.write(buffer, 0, read)
+            }
+            outputStream.flush()
         }
     }
     
