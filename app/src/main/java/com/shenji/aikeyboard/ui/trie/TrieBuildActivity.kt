@@ -32,6 +32,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.view.ViewGroup
+import android.widget.EditText
 
 /**
  * Trie树构建Activity
@@ -168,7 +169,7 @@ class TrieBuildActivity : AppCompatActivity() {
         
         // 构建基础词典Trie树
         buildBaseButton.setOnClickListener {
-            Toast.makeText(this, "基础词典Trie树构建功能尚未实现", Toast.LENGTH_SHORT).show()
+            showBuildBaseTrieSettingsDialog()
         }
         
         // 导出基础词典Trie树
@@ -784,6 +785,178 @@ class TrieBuildActivity : AppCompatActivity() {
                 }
                 
                 testResultText.text = resultBuilder.toString()
+            }
+        }
+    }
+    
+    /**
+     * 显示构建基础词典Trie树的设置对话框
+     */
+    private fun showBuildBaseTrieSettingsDialog() {
+        // 创建一个AlertDialog.Builder
+        val dialogView = layoutInflater.inflate(R.layout.dialog_build_trie_settings, null)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("基础词典Trie树构建设置")
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+        
+        // 获取对话框中的控件
+        val etBatchSize = dialogView.findViewById<EditText>(R.id.etBatchSize)
+        val etNumWorkers = dialogView.findViewById<EditText>(R.id.etNumWorkers)
+        
+        // 设置默认值
+        val availableProcessors = Runtime.getRuntime().availableProcessors()
+        val defaultWorkers = if (availableProcessors > 2) availableProcessors - 1 else 2
+        
+        etBatchSize.setText("1000")
+        etNumWorkers.setText(defaultWorkers.toString())
+        
+        // 设置按钮
+        dialogView.findViewById<Button>(R.id.btnCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialogView.findViewById<Button>(R.id.btnStart).setOnClickListener {
+            // 获取用户输入的参数
+            val batchSizeText = etBatchSize.text.toString()
+            val numWorkersText = etNumWorkers.text.toString()
+            
+            // 验证输入
+            if (batchSizeText.isBlank() || numWorkersText.isBlank()) {
+                Toast.makeText(this, "请填写所有参数", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            try {
+                val batchSize = batchSizeText.toInt()
+                val numWorkers = numWorkersText.toInt()
+                
+                // 验证参数合理性
+                if (batchSize <= 0 || batchSize > 10000) {
+                    Toast.makeText(this, "批量大小应在1-10000之间", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                
+                if (numWorkers <= 0 || numWorkers > availableProcessors * 2) {
+                    Toast.makeText(this, "工作线程数应在1-${availableProcessors * 2}之间", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                
+                // 关闭对话框
+                dialog.dismiss()
+                
+                // 开始构建
+                buildBaseTrie(batchSize, numWorkers)
+            } catch (e: NumberFormatException) {
+                Toast.makeText(this, "请输入有效的数字", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        // 显示对话框
+        dialog.show()
+    }
+    
+    /**
+     * 构建基础词典Trie树
+     */
+    private fun buildBaseTrie(batchSize: Int, numWorkers: Int) {
+        // 显示进度条
+        baseProgress.visibility = View.VISIBLE
+        baseProgressText.visibility = View.VISIBLE
+        baseProgress.progress = 0
+        
+        // 禁用构建按钮
+        buildBaseButton.isEnabled = false
+        
+        // 开始构建
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 更新状态
+                withContext(Dispatchers.Main) {
+                    baseStatusText.text = "状态: 正在构建..."
+                    baseProgressText.text = "准备中..."
+                }
+                
+                // 添加日志记录，便于调试
+                Timber.d("开始构建基础词典Trie树，批量大小: $batchSize, 工作线程数: $numWorkers")
+                
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@TrieBuildActivity, 
+                        "开始构建，批次大小: $batchSize, 线程数: $numWorkers", 
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                
+                // 创建临时的TrieBuilder实例，并传入自定义参数
+                val customTrieBuilder = TrieBuilder(this@TrieBuildActivity, batchSize, numWorkers)
+                
+                // 构建基础词典Trie树
+                val trie = customTrieBuilder.buildBaseTrie { progress, message ->
+                    // 确保在主线程更新UI，使用lifecycleScope.launch而不是直接更新
+                    // 这样可以避免在异步回调中直接更新UI
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        try {
+                            baseProgress.progress = progress
+                            baseProgressText.text = message
+                        } catch (e: Exception) {
+                            Timber.e(e, "更新进度UI时发生错误")
+                        }
+                    }
+                }
+                
+                // 保存Trie树
+                val file = customTrieBuilder.saveTrie(trie, TrieBuilder.TrieType.BASE)
+                
+                // 自动尝试加载到内存
+                val loadSuccess = trieManager.loadTrieToMemory(TrieBuilder.TrieType.BASE)
+                
+                // 更新UI
+                withContext(Dispatchers.Main) {
+                    val lastModified = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        .format(Date(file.lastModified()))
+                    val fileSize = formatFileSize(file.length())
+                    
+                    baseStatusText.text = "状态: 构建完成"
+                    baseFileInfo.text = "文件信息: $fileSize, 更新于 $lastModified"
+                    Toast.makeText(this@TrieBuildActivity, "基础词典Trie树构建成功", Toast.LENGTH_SHORT).show()
+                    
+                    // 隐藏进度条
+                    baseProgress.visibility = View.INVISIBLE
+                    baseProgressText.visibility = View.INVISIBLE
+                    
+                    // 启用按钮
+                    buildBaseButton.isEnabled = true
+                    exportBaseButton.isEnabled = true
+                    
+                    // 更新内存加载状态
+                    if (loadSuccess) {
+                        updateBaseTrieLoadStatus(true)
+                        Toast.makeText(this@TrieBuildActivity, "基础词典Trie树已自动加载到内存", Toast.LENGTH_SHORT).show()
+                    }
+                    
+                    // 更新内存信息
+                    updateMemoryInfo()
+                    
+                    // 刷新整体状态
+                    refreshTrieStatus()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "构建基础词典Trie树失败")
+                
+                // 更新UI
+                withContext(Dispatchers.Main) {
+                    baseStatusText.text = "状态: 构建失败"
+                    baseProgressText.text = "错误: ${e.message}"
+                    Toast.makeText(this@TrieBuildActivity, "构建失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    
+                    // 隐藏进度条
+                    baseProgress.visibility = View.INVISIBLE
+                    
+                    // 启用按钮
+                    buildBaseButton.isEnabled = true
+                }
             }
         }
     }

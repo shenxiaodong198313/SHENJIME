@@ -3260,6 +3260,7 @@ id bounceBoth
 id bounceEnd
 id bounceStart
 id btnBuildTrie
+id btnCancel
 id btnClearLogs
 id btnCopyInfo
 id btnCopyLog
@@ -3269,6 +3270,7 @@ id btnDictManager
 id btnExportRealm
 id btnLogs
 id btnRebuildRealm
+id btnStart
 id btn_back
 id btn_enable_ime
 id btn_fuzzy_pinyin
@@ -4025,6 +4027,7 @@ layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
 layout dialog_build_status
+layout dialog_build_trie_settings
 layout dialog_database_info
 layout dialog_dictionary_settings
 layout dialog_export_settings

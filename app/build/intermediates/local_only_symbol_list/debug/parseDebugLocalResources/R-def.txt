@@ -67,6 +67,7 @@ id base_status_text
 id base_trie_loaded_status
 id base_trie_stats
 id btnBuildTrie
+id btnCancel
 id btnClearLogs
 id btnCopyInfo
 id btnCopyLog
@@ -76,6 +77,7 @@ id btnDictManager
 id btnExportRealm
 id btnLogs
 id btnRebuildRealm
+id btnStart
 id btn_back
 id btn_enable_ime
 id btn_fuzzy_pinyin
@@ -298,6 +300,7 @@ layout activity_main
 layout activity_system_check
 layout activity_trie_build
 layout dialog_build_status
+layout dialog_build_trie_settings
 layout dialog_database_info
 layout dialog_dictionary_settings
 layout dialog_export_settings

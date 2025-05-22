@@ -19,7 +19,11 @@ import java.util.concurrent.atomic.AtomicInteger
  * Trie树构建器
  * 负责从词典构建Trie树并提供序列化/反序列化功能
  */
-class TrieBuilder(private val context: Context) {
+class TrieBuilder(
+    private val context: Context,
+    private val customBatchSize: Int = 300,  // 默认批量大小
+    private val customNumWorkers: Int = -1   // 默认使用自动计算的线程数
+) {
 
     // 词典仓库，用于获取词语数据
     private val repository = DictionaryRepository()
@@ -134,7 +138,7 @@ class TrieBuilder(private val context: Context) {
             Timber.d("获取到${totalCount}个基础词条")
             
             // 分批加载并处理词条，减小内存压力
-            val batchSize = 300  // 减小批量大小，避免内存压力
+            val batchSize = customBatchSize  // 使用自定义批量大小
             val totalBatches = (totalCount + batchSize - 1) / batchSize
             
             // 统计数据
@@ -145,9 +149,16 @@ class TrieBuilder(private val context: Context) {
             
             // 获取可用处理器核心数
             val availableProcessors = Runtime.getRuntime().availableProcessors()
-            val actualCores = if (availableProcessors > 2) availableProcessors - 1 else 2  // 保留一个核心给系统
+            // 使用自定义线程数，如果没有指定则使用自动计算的线程数
+            val actualCores = if (customNumWorkers > 0) {
+                customNumWorkers
+            } else {
+                if (availableProcessors > 2) availableProcessors - 1 else 2  // 保留一个核心给系统
+            }
+            
             Timber.d("检测到${availableProcessors}个处理器核心，将使用${actualCores}个核心进行处理")
             logFile.appendText("检测到${availableProcessors}个处理器核心，将使用${actualCores}个核心进行处理\n")
+            logFile.appendText("批量大小设置为: $batchSize\n\n")
             
             try {
                 // 分批处理所有基础词条
