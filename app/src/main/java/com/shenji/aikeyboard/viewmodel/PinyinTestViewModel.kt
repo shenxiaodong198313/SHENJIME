@@ -218,8 +218,31 @@ class PinyinTestViewModel : ViewModel() {
                 // 更新UI数据
                 _candidates.value = candidates
                 
-                // 更新候选词统计
-                updateCandidateStats(candidates)
+                // 直接从候选词列表统计来源信息，而不是从currentQueryResult中
+                val fromTrieCount = candidates.count { it.source.contains("Trie") }
+                val fromDatabaseCount = candidates.count { it.source.contains("数据库") }
+                
+                _candidateStats.value = CandidateStats(
+                    totalCount = candidates.size,
+                    singleCharCount = candidates.count { it.word.length == 1 },
+                    phraseCount = candidates.count { it.word.length > 1 },
+                    fromTrieCount = fromTrieCount,
+                    fromDatabaseCount = fromDatabaseCount
+                )
+                
+                // 在查询过程末尾添加真实的来源统计
+                val existingExplanation = _queryProcess.value ?: ""
+                val sourceInfo = "\n\n来源: Trie树${fromTrieCount}个, 数据库${fromDatabaseCount}个"
+                
+                // 替换掉原有的来源统计行（如果有）
+                val finalExplanation = if (existingExplanation.contains("来源: Trie树")) {
+                    val pattern = Regex("来源: Trie树\\d+个, 数据库\\d+个")
+                    existingExplanation.replace(pattern, "来源: Trie树${fromTrieCount}个, 数据库${fromDatabaseCount}个")
+                } else {
+                    existingExplanation + sourceInfo
+                }
+                
+                _queryProcess.value = finalExplanation
                 
                 Timber.d("查询处理完成: 找到${candidates.size}个候选词")
             } catch (e: Exception) {

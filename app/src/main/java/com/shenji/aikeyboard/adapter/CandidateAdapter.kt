@@ -51,7 +51,18 @@ class CandidateAdapter : ListAdapter<Candidate, CandidateAdapter.ViewHolder>(Can
         fun bind(candidate: Candidate, position: Int) {
             tvRank.text = position.toString()
             tvWord.text = candidate.word
-            tvPinyin.text = "拼音: ${candidate.pinyin}"
+            
+            // 修改拼音显示逻辑，避免显示为"拼音: "
+            val pinyinText = if (candidate.pinyin.isNotEmpty()) {
+                "拼音: ${candidate.pinyin}"
+            } else {
+                if (candidate.word.length == 1) {
+                    "单字"
+                } else {
+                    "词组"
+                }
+            }
+            tvPinyin.text = pinyinText
             
             // 根据匹配类型显示不同标签
             val matchTypeText = when (candidate.matchType) {
@@ -70,7 +81,7 @@ class CandidateAdapter : ListAdapter<Candidate, CandidateAdapter.ViewHolder>(Can
             }
             
             // 组合显示信息，添加来源信息
-            tvSource.text = "${typeText} (${matchTypeText}) 词频: ${candidate.frequency} 来源: ${candidate.source}"
+            tvSource.text = "${typeText} ${if (matchTypeText.isNotEmpty()) "($matchTypeText)" else ""} 词频: ${candidate.frequency} 来源: ${candidate.source}"
             tvFrequency.text = candidate.frequency.toString()
         }
     }
