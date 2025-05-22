@@ -161,16 +161,67 @@ class PinyinTestViewModel : ViewModel() {
                     return@launch
                 }
                 
-                // 使用标准化模块查询，只查询当前输入的拼音部分
-                val queryResult = pinyinQueryEngine.query(currentInput, 20, true)
+                // 先通过标准查询引擎获取输入分析和查询过程等信息
+                val queryResult = pinyinQueryEngine.query(currentInput, 0, true)
                 
-                // 保存当前查询结果
-                currentQueryResult = queryResult
+                // 保存查询结果的元数据，用于UI显示
+                _inputType.value = queryResult.inputType
+                _matchRule.value = when (queryResult.inputType) {
+                    InputType.INITIAL_LETTER -> "单字符首字母匹配"
+                    InputType.PINYIN_SYLLABLE -> "单音节拼音匹配"
+                    InputType.SYLLABLE_SPLIT -> "拼音音节拆分匹配"
+                    InputType.ACRONYM -> "首字母缩写匹配"
+                    InputType.DYNAMIC_SYLLABLE -> "动态音节识别匹配"
+                    else -> "未知匹配方式"
+                }
+                _syllableSplit.value = queryResult.syllables
+                _queryCondition.value = getQueryConditionText(queryResult)
+                _queryProcess.value = queryResult.explanation
+                
+                // 现在使用PinyinIMEAdapter获取候选词，与键盘使用相同的查询逻辑
+                val pinyinAdapter = com.shenji.aikeyboard.keyboard.PinyinIMEAdapter.getInstance()
+                val wordFrequencyList = pinyinAdapter.getCandidates(currentInput, 20)
+                
+                // 将WordFrequency转换为Candidate对象
+                val candidates = wordFrequencyList.map { wordFreq ->
+                    val source = wordFreq.source ?: ""
+                    val querySource = when {
+                        source.contains("Trie") -> com.shenji.aikeyboard.pinyin.QuerySource.TRIE_INDEX
+                        else -> com.shenji.aikeyboard.pinyin.QuerySource.REALM_DATABASE
+                    }
+                    
+                    // 创建PinyinCandidate对象（用于统计来源）
+                    val pinyinCandidate = PinyinCandidate(
+                        word = wordFreq.word,
+                        pinyin = "",  // 这些字段不重要，只需要保留word和querySource
+                        frequency = wordFreq.frequency,
+                        type = "",
+                        querySource = querySource
+                    )
+                    
+                    // 保存到当前查询结果中，用于统计
+                    currentQueryResult = currentQueryResult?.copy(
+                        candidates = (currentQueryResult?.candidates ?: emptyList()) + pinyinCandidate
+                    )
+                    
+                    // 返回UI使用的Candidate对象
+                    Candidate(
+                        word = wordFreq.word,
+                        pinyin = "",  // 暂时为空，之后可以从数据库获取完整信息
+                        frequency = wordFreq.frequency,
+                        type = "",
+                        matchType = Candidate.MatchType.UNKNOWN,
+                        source = if (source.contains("Trie")) "Trie树" else "数据库"
+                    )
+                }
                 
                 // 更新UI数据
-                updateUIWithQueryResult(queryResult)
+                _candidates.value = candidates
                 
-                Timber.d("查询处理完成: 找到${queryResult.candidates.size}个候选词")
+                // 更新候选词统计
+                updateCandidateStats(candidates)
+                
+                Timber.d("查询处理完成: 找到${candidates.size}个候选词")
             } catch (e: Exception) {
                 Timber.e(e, "处理输入异常")
                 _matchRule.value = "处理异常: ${e.message}"
@@ -180,41 +231,12 @@ class PinyinTestViewModel : ViewModel() {
             }
         }
     }
-
+    
     /**
-     * 更新UI显示
+     * 获取查询条件文本
      */
-    private fun updateUIWithQueryResult(result: PinyinQueryResult) {
-        // 1. 更新输入类型
-        _inputType.value = result.inputType
-        
-        // 2. 设置匹配规则文本描述
-        _matchRule.value = when (result.inputType) {
-            InputType.INITIAL_LETTER -> "单字符首字母匹配"
-            InputType.PINYIN_SYLLABLE -> "单音节拼音匹配"
-            InputType.SYLLABLE_SPLIT -> "拼音音节拆分匹配"
-            InputType.ACRONYM -> "首字母缩写匹配"
-            InputType.DYNAMIC_SYLLABLE -> "动态音节识别匹配"
-            else -> "未知匹配方式"
-        }
-        
-        // 3. 更新音节拆分结果
-        _syllableSplit.value = result.syllables
-        
-        // 4. 如果有多种拆分结果，显示所有可能的拆分方式
-        val allSplitsDescription = if (result.allSyllableSplits.isNotEmpty() && result.inputType == InputType.SYLLABLE_SPLIT) {
-            val sb = StringBuilder()
-            result.allSyllableSplits.forEachIndexed { index, syllables ->
-                val markerSymbol = if (index == result.usedSplitIndex) "* " else ""
-                sb.append("${markerSymbol}方案${index + 1}: ${syllables.joinToString("+")}\n")
-            }
-            "可能的拆分方案:\n$sb"
-        } else {
-            ""
-        }
-        
-        // 5. 更新查询条件
-        _queryCondition.value = when (result.inputType) {
+    private fun getQueryConditionText(result: PinyinQueryResult): String {
+        return when (result.inputType) {
             InputType.INITIAL_LETTER -> "初始字母 = ${result.syllables.firstOrNull() ?: ""}"
             InputType.PINYIN_SYLLABLE -> "拼音音节 = ${result.syllables.firstOrNull() ?: ""}"
             InputType.SYLLABLE_SPLIT -> {
@@ -239,50 +261,6 @@ class PinyinTestViewModel : ViewModel() {
             }
             else -> "无法解析输入"
         }
-        
-        // 6. 更新查询过程，添加多种拆分结果的描述
-        _queryProcess.value = if (allSplitsDescription.isNotEmpty()) {
-            "$allSplitsDescription\n${result.explanation}"
-        } else {
-            result.explanation
-        }
-        
-        // 7. 转换并更新候选词
-        val candidates = result.candidates.map { pinyinCandidate ->
-            convertToCandidateModel(pinyinCandidate)
-        }
-        _candidates.value = candidates
-        
-        // 8. 更新候选词统计
-        updateCandidateStats(candidates)
-    }
-    
-    /**
-     * 将标准模块的PinyinCandidate转换为UI使用的Candidate模型
-     */
-    private fun convertToCandidateModel(pinyinCandidate: PinyinCandidate): Candidate {
-        // 获取来源字符串
-        val sourceStr = when (pinyinCandidate.querySource) {
-            com.shenji.aikeyboard.pinyin.QuerySource.TRIE_INDEX -> "Trie树"
-            com.shenji.aikeyboard.pinyin.QuerySource.REALM_DATABASE -> "数据库"
-            else -> "未知"
-        }
-        
-        return Candidate(
-            word = pinyinCandidate.word,
-            pinyin = pinyinCandidate.pinyin,
-            type = pinyinCandidate.type,
-            frequency = pinyinCandidate.frequency,
-            initialLetters = pinyinCandidate.initialLetters,
-            matchType = when (pinyinCandidate.matchType) {
-                com.shenji.aikeyboard.pinyin.MatchType.INITIAL_LETTER -> Candidate.MatchType.INITIAL_LETTER
-                com.shenji.aikeyboard.pinyin.MatchType.PINYIN_SYLLABLE -> Candidate.MatchType.PINYIN_PREFIX
-                com.shenji.aikeyboard.pinyin.MatchType.SYLLABLE_SPLIT -> Candidate.MatchType.SYLLABLE_SPLIT
-                com.shenji.aikeyboard.pinyin.MatchType.ACRONYM -> Candidate.MatchType.ACRONYM
-                else -> Candidate.MatchType.UNKNOWN
-            },
-            source = sourceStr
-        )
     }
     
     /**

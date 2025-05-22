@@ -6,6 +6,5 @@ package com.shenji.aikeyboard.pinyin
  */
 enum class QuerySource {
     REALM_DATABASE, // 从Realm数据库查询
-    TRIE_INDEX,     // 从Trie树索引查询
-    UNKNOWN        // 未知来源
+    TRIE_INDEX      // 从Trie树索引查询
 } 

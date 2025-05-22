@@ -27,7 +27,7 @@ data class PinyinCandidate(
     val matchType: MatchType = MatchType.UNKNOWN,
     
     // 查询来源
-    val querySource: QuerySource = QuerySource.UNKNOWN
+    val querySource: QuerySource = QuerySource.REALM_DATABASE
 ) {
     companion object {
         /**
@@ -59,7 +59,6 @@ data class PinyinCandidate(
         val source = when(querySource) {
             QuerySource.REALM_DATABASE -> "数据库"
             QuerySource.TRIE_INDEX -> "Trie树"
-            QuerySource.UNKNOWN -> "未知"
         }
         return "$word (拼音: $pinyin, 词频: $frequency, 类型: $type, 来源: $source)"
     }

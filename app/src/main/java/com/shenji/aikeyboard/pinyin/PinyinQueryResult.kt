@@ -34,7 +34,7 @@ data class PinyinQueryResult(
     val errorMessage: String = "",
     
     // 查询结果来源
-    val querySource: QuerySource = QuerySource.UNKNOWN
+    val querySource: QuerySource = QuerySource.REALM_DATABASE
 ) {
     companion object {
         /**
