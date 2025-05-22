@@ -84,6 +84,8 @@ id btn_set_default_ime
 id btn_system_check
 id build_base_button
 id build_chars_button
+id build_progress
+id build_status_text
 id buttonContainer
 id candidate_stats_text_view
 id candidates_container
@@ -174,6 +176,7 @@ id mainButtonContainer
 id mainContainer
 id memory_card
 id memory_info_text
+id memory_usage_text
 id permission_check_button
 id permission_status_text_view
 id pinyin_container
@@ -222,7 +225,12 @@ id switch_select_all
 id switch_z_zh
 id tab_layout
 id tableModules
+id test_base_trie_button
+id test_card
+id test_chars_trie_button
 id test_edit_text
+id test_input
+id test_result_text
 id titleText
 id title_text
 id title_text_view
@@ -289,6 +297,7 @@ layout activity_log_detail
 layout activity_main
 layout activity_system_check
 layout activity_trie_build
+layout dialog_build_status
 layout dialog_database_info
 layout dialog_dictionary_settings
 layout dialog_export_settings

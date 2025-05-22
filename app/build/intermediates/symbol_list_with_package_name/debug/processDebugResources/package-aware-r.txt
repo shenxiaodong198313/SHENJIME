@@ -3277,6 +3277,8 @@ id btn_set_default_ime
 id btn_system_check
 id build_base_button
 id build_chars_button
+id build_progress
+id build_status_text
 id buttonContainer
 id buttonPanel
 id cache_measures
@@ -3536,6 +3538,7 @@ id material_value_index
 id matrix
 id memory_card
 id memory_info_text
+id memory_usage_text
 id message
 id middle
 id mini
@@ -3763,7 +3766,12 @@ id tag_transition_group
 id tag_unhandled_key_event_manager
 id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
+id test_base_trie_button
+id test_card
+id test_chars_trie_button
 id test_edit_text
+id test_input
+id test_result_text
 id text
 id text2
 id textEnd
@@ -4016,6 +4024,7 @@ layout design_navigation_menu
 layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
+layout dialog_build_status
 layout dialog_database_info
 layout dialog_dictionary_settings
 layout dialog_export_settings

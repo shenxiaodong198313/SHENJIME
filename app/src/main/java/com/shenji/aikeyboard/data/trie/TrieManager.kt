@@ -62,7 +62,7 @@ class TrieManager private constructor() {
             isCharsTrieLoaded = false
         }
         
-        // 尝试加载基础词典Trie树（暂未实现）
+        // 尝试加载基础词典Trie树
         try {
             baseTrie = builder.loadTrie(TrieBuilder.TrieType.BASE)
             
@@ -198,6 +198,42 @@ class TrieManager private constructor() {
             return results.map { WordFrequency(it.word, it.frequency) }
         } catch (e: Exception) {
             Timber.e(e, "单字Trie树查询失败: $prefix")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 根据拼音前缀查询基础词典
+     * @param prefix 拼音前缀（无空格）或首字母缩写
+     * @param limit 返回结果的最大数量
+     * @return 匹配的词语列表，按频率排序
+     */
+    fun searchBaseByPrefix(prefix: String, limit: Int = 10): List<WordFrequency> {
+        if (!isInitialized) init()
+        
+        if (baseTrie == null || !isBaseTrieLoaded) {
+            Timber.w("基础词典Trie树未加载，无法查询")
+            return emptyList()
+        }
+        
+        try {
+            val startTime = System.currentTimeMillis()
+            
+            // 统一处理为小写
+            val normalizedPrefix = prefix.lowercase().trim()
+            
+            // 从Trie树查询结果
+            val results = baseTrie!!.searchByPrefix(normalizedPrefix, limit)
+            
+            // 转换为WordFrequency对象
+            val wordFrequencies = results.map { WordFrequency(it.word, it.frequency) }
+            
+            val endTime = System.currentTimeMillis()
+            Timber.d("基础词典Trie查询'$normalizedPrefix'，找到${results.size}个结果，耗时${endTime - startTime}ms")
+            
+            return wordFrequencies
+        } catch (e: Exception) {
+            Timber.e(e, "基础词典Trie树查询失败: $prefix")
             return emptyList()
         }
     }

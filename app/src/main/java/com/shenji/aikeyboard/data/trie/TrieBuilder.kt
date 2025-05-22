@@ -4,12 +4,16 @@ import android.content.Context
 import com.shenji.aikeyboard.data.DictionaryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Trie树构建器
@@ -100,6 +104,213 @@ class TrieBuilder(private val context: Context) {
             return@withContext trie
         } catch (e: Exception) {
             Timber.e(e, "构建单字Trie树失败")
+            progressCallback(-1, "构建失败: ${e.message}")
+            throw e
+        }
+    }
+    
+    /**
+     * 构建基础词典Trie树
+     * @param progressCallback 进度回调函数
+     * @return 构建完成的PinyinTrie对象
+     */
+    suspend fun buildBaseTrie(progressCallback: (Int, String) -> Unit): PinyinTrie = withContext(Dispatchers.IO) {
+        val trie = PinyinTrie()
+        
+        try {
+            progressCallback(0, "开始从基础词典构建Trie树")
+            Timber.d("开始构建基础词典Trie树")
+            
+            // 创建临时异常日志文件，记录构建过程中的所有异常
+            val logDir = File(context.filesDir, "logs")
+            logDir.mkdirs()
+            val logFile = File(logDir, "base_trie_build_log.txt")
+            logFile.createNewFile()
+            logFile.writeText("基础词典Trie树构建日志 - ${java.util.Date()}\n\n")
+            
+            // 获取基础词典词条数量
+            val totalCount = repository.getEntryCountByType("base")
+            progressCallback(5, "获取到${totalCount}个基础词条数量")
+            Timber.d("获取到${totalCount}个基础词条")
+            
+            // 分批加载并处理词条，减小内存压力
+            val batchSize = 300  // 减小批量大小，避免内存压力
+            val totalBatches = (totalCount + batchSize - 1) / batchSize
+            
+            // 统计数据
+            var processedCount = 0
+            var skipCount = 0
+            var totalPinyinCount = 0
+            var errorCount = 0
+            
+            // 获取可用处理器核心数
+            val availableProcessors = Runtime.getRuntime().availableProcessors()
+            val actualCores = if (availableProcessors > 2) availableProcessors - 1 else 2  // 保留一个核心给系统
+            Timber.d("检测到${availableProcessors}个处理器核心，将使用${actualCores}个核心进行处理")
+            logFile.appendText("检测到${availableProcessors}个处理器核心，将使用${actualCores}个核心进行处理\n")
+            
+            try {
+                // 分批处理所有基础词条
+                for (batchIndex in 0 until totalBatches) {
+                    val offset = batchIndex * batchSize
+                    
+                    try {
+                        // 日志记录当前批次开始处理
+                        Timber.d("开始处理批次 ${batchIndex+1}/${totalBatches}，偏移量: $offset")
+                        logFile.appendText("开始处理批次 ${batchIndex+1}/${totalBatches}，偏移量: $offset\n")
+                        
+                        // 获取当前批次的词条
+                        val entries = repository.getEntriesByTypeOrderedByFrequency("base", offset, batchSize)
+                        
+                        // 周期性释放内存，减轻内存压力
+                        if (batchIndex % 5 == 0) {
+                            System.gc()
+                        }
+                        
+                        // 使用多线程并行处理词条，提高性能
+                        val batchProcessedCount = AtomicInteger(0)
+                        val batchSkipCount = AtomicInteger(0)
+                        val batchPinyinCount = AtomicInteger(0)
+                        val batchErrorCount = AtomicInteger(0)
+                        
+                        // 使用协程进行并行处理
+                        coroutineScope {
+                            val chunks = entries.chunked((entries.size / actualCores) + 1)
+                            val jobs = chunks.map { chunk ->
+                                launch {
+                                    for (entry in chunk) {
+                                        try {
+                                            // 获取并处理拼音
+                                            val pinyin = entry.pinyin?.lowercase()
+                                            if (pinyin.isNullOrBlank()) {
+                                                batchSkipCount.incrementAndGet()
+                                                continue
+                                            }
+                                            
+                                            // 移除拼音中的空格，以便在Trie中连续匹配
+                                            val pinyinNoSpace = pinyin.replace(" ", "")
+                                            if (pinyinNoSpace.isBlank()) {
+                                                batchSkipCount.incrementAndGet()
+                                                continue
+                                            }
+                                            
+                                            batchPinyinCount.incrementAndGet()
+                                            batchProcessedCount.incrementAndGet()
+                                            
+                                            // 插入完整拼音（无空格）
+                                            trie.insert(pinyinNoSpace, entry.word, entry.frequency ?: 0)
+                                            
+                                            // 同时插入首字母缩写，如"bei jing"的"bj"
+                                            val initialLetters = entry.initialLetters
+                                            if (!initialLetters.isNullOrBlank()) {
+                                                trie.insert(initialLetters, entry.word, entry.frequency ?: 0)
+                                            }
+                                        } catch (e: Exception) {
+                                            // 记录词条处理过程中的异常
+                                            batchErrorCount.incrementAndGet()
+                                            val errorMsg = "处理词条'${entry.word}'(${entry.pinyin})时异常: ${e.message}"
+                                            Timber.e(e, errorMsg)
+                                            logFile.appendText("$errorMsg\n${e.stackTraceToString()}\n\n")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 累加批次统计数据
+                        processedCount += batchProcessedCount.get()
+                        skipCount += batchSkipCount.get()
+                        totalPinyinCount += batchPinyinCount.get()
+                        errorCount += batchErrorCount.get()
+                        
+                        // 更新进度
+                        val progress = 5 + (batchIndex * 90) / totalBatches
+                        val progressMessage = "已处理 ${processedCount}/${totalCount} 个基础词条 (批次 ${batchIndex+1}/${totalBatches})"
+                        progressCallback(progress, progressMessage)
+                        
+                        // 记录批次处理结果
+                        val batchResult = "批次${batchIndex+1}处理完成: 处理${batchProcessedCount.get()}个, " +
+                                "跳过${batchSkipCount.get()}个, 异常${batchErrorCount.get()}个"
+                        Timber.d(batchResult)
+                        logFile.appendText("$batchResult\n")
+                        
+                        // 检查内存使用情况并记录
+                        val runtime = Runtime.getRuntime()
+                        val usedMemoryMB = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+                        val totalMemoryMB = runtime.totalMemory() / (1024 * 1024)
+                        val memoryInfo = "内存使用: ${usedMemoryMB}MB / ${totalMemoryMB}MB"
+                        Timber.d(memoryInfo)
+                        logFile.appendText("$memoryInfo\n\n")
+                        
+                    } catch (e: Exception) {
+                        // 捕获并记录批次处理过程中的异常
+                        errorCount++
+                        val batchErrorMsg = "处理批次${batchIndex+1}时发生异常: ${e.message}"
+                        Timber.e(e, batchErrorMsg)
+                        logFile.appendText("$batchErrorMsg\n${e.stackTraceToString()}\n\n")
+                        
+                        // 继续处理下一批次，而不是中断整个构建过程
+                        progressCallback(
+                            5 + (batchIndex * 90) / totalBatches,
+                            "批次${batchIndex+1}异常，继续处理下一批次..."
+                        )
+                        
+                        // 短暂延迟，让系统有时间恢复
+                        kotlinx.coroutines.delay(500)
+                    }
+                }
+            } catch (e: Exception) {
+                // 捕获并记录整个批次循环中的异常
+                val criticalError = "构建过程中发生严重异常: ${e.message}"
+                Timber.e(e, criticalError)
+                logFile.appendText("$criticalError\n${e.stackTraceToString()}\n\n")
+                progressCallback(95, "构建过程中发生严重异常，尝试保存已处理部分")
+            }
+            
+            progressCallback(95, "基础词典Trie树构建完成，正在优化内存")
+            Timber.d("基础词典构建完成，正在优化内存")
+            
+            // 手动触发垃圾回收，优化内存使用
+            System.gc()
+            
+            // 获取内存统计信息
+            val stats = trie.getMemoryStats()
+            
+            // 打印详细的构建统计信息
+            val statsSummary = "基础词条总数: $totalCount, 实际处理: $processedCount, " +
+                      "跳过: $skipCount, 拼音总数: $totalPinyinCount, 错误: $errorCount"
+            Timber.d("基础词典Trie构建统计: $statsSummary")
+            
+            // 记录最终构建结果
+            logFile.appendText("\n最终构建结果:\n")
+            logFile.appendText("$statsSummary\n")
+            logFile.appendText("Trie树统计: ${stats.toString()}\n")
+            logFile.appendText("构建完成时间: ${java.util.Date()}\n")
+            
+            progressCallback(100, "完成: ${stats.toString()} ($statsSummary)")
+            
+            return@withContext trie
+        } catch (e: Exception) {
+            val criticalError = "构建基础词典Trie树失败: ${e.message}"
+            Timber.e(e, criticalError)
+            
+            // 记录关键错误到错误日志文件
+            try {
+                val errorLogFile = File(context.filesDir, "logs/base_trie_critical_error.txt")
+                errorLogFile.parentFile?.mkdirs()
+                errorLogFile.writeText("基础词典Trie树构建关键错误 - ${java.util.Date()}\n\n")
+                errorLogFile.appendText("$criticalError\n${e.stackTraceToString()}\n\n")
+                errorLogFile.appendText("系统信息:\n")
+                errorLogFile.appendText("可用处理器: ${Runtime.getRuntime().availableProcessors()}\n")
+                errorLogFile.appendText("最大内存: ${Runtime.getRuntime().maxMemory() / (1024*1024)}MB\n")
+                errorLogFile.appendText("已分配内存: ${Runtime.getRuntime().totalMemory() / (1024*1024)}MB\n")
+                errorLogFile.appendText("空闲内存: ${Runtime.getRuntime().freeMemory() / (1024*1024)}MB\n")
+                errorLogFile.appendText("Android版本: ${android.os.Build.VERSION.SDK_INT}\n")
+                errorLogFile.appendText("设备型号: ${android.os.Build.MODEL}\n")
+            } catch (logError: Exception) {
+                Timber.e(logError, "无法写入错误日志文件")
+            }
+            
             progressCallback(-1, "构建失败: ${e.message}")
             throw e
         }
