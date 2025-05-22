@@ -82,6 +82,12 @@ class MainActivity : AppCompatActivity() {
                 openInputMethodSettings()
             }
             
+            // 添加系统检查入口
+            binding.mainButtonContainer?.findViewById<Button>(R.id.btn_system_check)?.setOnClickListener {
+                Log.d("MainActivity", "btn_system_check 按钮被点击")
+                openSystemCheck()
+            }
+            
             Log.d("MainActivity", "所有按钮监听器设置完成")
         } catch (e: Exception) {
             Log.e("MainActivity", "设置UI元素失败: ${e.message}", e)
@@ -148,6 +154,20 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "打开输入法设置失败: ${e.message}", e)
             Toast.makeText(this, "无法打开输入法设置: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 打开系统检查
+     */
+    private fun openSystemCheck() {
+        try {
+            Timber.d("打开系统检查")
+            val intent = Intent(this, SystemCheckActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开系统检查失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开系统检查: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 } 

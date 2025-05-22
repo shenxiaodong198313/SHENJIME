@@ -3262,6 +3262,7 @@ id btn_enable_ime
 id btn_fuzzy_pinyin
 id btn_ime_settings
 id btn_set_default_ime
+id btn_system_check
 id buttonContainer
 id buttonPanel
 id cache_measures
@@ -3282,6 +3283,10 @@ id center_vertical
 id chain
 id chain2
 id chains
+id checkDetailsTextView
+id checkDurationTextView
+id checkNameTextView
+id checkStatusTextView
 id check_all_permissions_button
 id checkbox
 id checked
@@ -3322,6 +3327,7 @@ id default_activity_button
 id default_candidates_view
 id deltaRelative
 id dependency_ordering
+id descriptionText
 id design_bottom_sheet
 id design_menu_item_action_area
 id design_menu_item_action_area_stub
@@ -3361,6 +3367,7 @@ id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
 id exitUntilCollapsed
+id expandIconImageView
 id expand_activities_button
 id expand_candidates_button
 id expanded_menu
@@ -3593,6 +3600,7 @@ id postLayout
 id pressed
 id progressBar
 id progressBarLoading
+id progressText
 id progress_circular
 id progress_horizontal
 id query_condition_text_view
@@ -3607,6 +3615,7 @@ id request_permission_button
 id request_sms_permission_button
 id request_storage_permission_button
 id restart
+id resultsRecyclerView
 id reverse
 id reverseSawtooth
 id right
@@ -3616,6 +3625,7 @@ id right_side
 id right_to_left
 id rounded
 id row_index_key
+id runCheckButton
 id rvDictionaryModules
 id rvEntries
 id rvLogs
@@ -3643,6 +3653,7 @@ id search_voice_btn
 id select_dialog_listview
 id selected
 id selection_type
+id shareReportButton
 id sharedValueSet
 id sharedValueUnset
 id shimmerDictName
@@ -3686,6 +3697,7 @@ id startToEnd
 id startVertical
 id staticLayout
 id staticPostLayout
+id statusText
 id status_text_view
 id stop
 id stretch
@@ -3736,6 +3748,7 @@ id textinput_suffix_text
 id time
 id title
 id titleDividerNoCustom
+id titleText
 id title_template
 id title_text_view
 id toggle
@@ -3936,6 +3949,7 @@ layout activity_fuzzy_pinyin_settings
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
+layout activity_system_check
 layout custom_dialog
 layout design_bottom_navigation_item
 layout design_bottom_sheet_dialog
@@ -3961,6 +3975,7 @@ layout fragment_verification_code
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout item_candidate
+layout item_check_result
 layout item_debug_stage
 layout item_debug_weight
 layout item_dictionary_entry
@@ -5560,4 +5575,5 @@ styleable ViewStubCompat android_id android_layout android_inflatedId
 styleable ViewTransition android_id SharedValue SharedValueId clearsTag duration ifTagNotSet ifTagSet motionInterpolator motionTarget onStateTransition pathMotionArc setsTag transitionDisable upDuration viewTransitionMode
 styleable include constraintSet
 xml accessibility_service_config
+xml file_paths
 xml method

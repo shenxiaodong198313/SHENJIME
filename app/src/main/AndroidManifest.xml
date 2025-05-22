@@ -95,6 +95,11 @@
         <activity
             android:name=".ui.PermissionCheckActivity"
             android:exported="false" />
+            
+        <!-- 系统检查活动 -->
+        <activity
+            android:name=".ui.SystemCheckActivity"
+            android:exported="false" />
 
         <!-- 移动调试工具活动 -->
         <activity
@@ -153,6 +158,17 @@
             android:name=".settings.FuzzyPinyinSettingsActivity"
             android:label="模糊拼音设置"
             android:exported="false" />
+            
+        <!-- FileProvider配置 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.shenji.aikeyboard.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

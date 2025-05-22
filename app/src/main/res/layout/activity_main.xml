@@ -54,9 +54,16 @@
                 app:layout_constraintTop_toBottomOf="@+id/tvTitle">
 
                 <Button
+                    android:id="@+id/btn_system_check"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="系统检查" />
+                
+                <Button
                     android:id="@+id/btnLogs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
                     android:text="@string/view_logs" />
 
                 <Button

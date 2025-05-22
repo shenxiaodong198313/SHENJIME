@@ -69,6 +69,7 @@ id btn_enable_ime
 id btn_fuzzy_pinyin
 id btn_ime_settings
 id btn_set_default_ime
+id btn_system_check
 id buttonContainer
 id candidate_stats_text_view
 id candidates_container
@@ -76,6 +77,10 @@ id candidates_recycler_view
 id candidates_scroll_view
 id candidates_view
 id cardStats
+id checkDetailsTextView
+id checkDurationTextView
+id checkNameTextView
+id checkStatusTextView
 id check_all_permissions_button
 id clear_button
 id clear_logs_button
@@ -83,9 +88,11 @@ id copy_logs_button
 id copy_result_button
 id current_input_text_view
 id default_candidates_view
+id descriptionText
 id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
+id expandIconImageView
 id expand_candidates_button
 id fragment_container
 id input_edit_text
@@ -144,16 +151,20 @@ id pinyin_display
 id pinyin_test_button
 id progressBar
 id progressBarLoading
+id progressText
 id query_condition_text_view
 id query_process_text_view
 id refresh_logs_button
 id request_permission_button
 id request_sms_permission_button
 id request_storage_permission_button
+id resultsRecyclerView
+id runCheckButton
 id rvDictionaryModules
 id rvEntries
 id rvLogs
 id rvShimmerModules
+id shareReportButton
 id shimmerDictName
 id shimmerDictType
 id shimmerEntryCount
@@ -164,6 +175,7 @@ id shimmerStatCard
 id simulate_button
 id split_result_text_view
 id stage_text_view
+id statusText
 id status_text_view
 id switch_an_ang
 id switch_c_ch
@@ -176,6 +188,7 @@ id switch_z_zh
 id tab_layout
 id tableModules
 id test_edit_text
+id titleText
 id title_text_view
 id toolbar
 id toolbar_view
@@ -225,6 +238,7 @@ layout activity_fuzzy_pinyin_settings
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
+layout activity_system_check
 layout dialog_database_info
 layout dialog_export_settings
 layout fragment_log_viewer
@@ -232,6 +246,7 @@ layout fragment_permission_check
 layout fragment_pinyin_test
 layout fragment_verification_code
 layout item_candidate
+layout item_check_result
 layout item_debug_stage
 layout item_debug_weight
 layout item_dictionary_entry
@@ -333,4 +348,5 @@ style Theme.AIKeyboard
 style Theme.AIKeyboard.PopupOverlay
 style Theme.SHENJI
 xml accessibility_service_config
+xml file_paths
 xml method

@@ -112,6 +112,11 @@
             android:name="com.shenji.aikeyboard.ui.PermissionCheckActivity"
             android:exported="false" />
 
+        <!-- 系统检查活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.SystemCheckActivity"
+            android:exported="false" />
+
         <!-- 移动调试工具活动 -->
         <activity
             android:name="com.shenji.aikeyboard.ui.MobileDebugActivity"
@@ -172,6 +177,16 @@
             android:exported="false"
             android:label="模糊拼音设置" />
 
+        <!-- FileProvider配置 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.shenji.aikeyboard.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.shenji.aikeyboard.androidx-startup"
