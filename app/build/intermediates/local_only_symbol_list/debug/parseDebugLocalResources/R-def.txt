@@ -54,16 +54,19 @@ drawable keyboard_space_key_bg
 drawable keyboard_special_key_bg
 id accessibility_settings_button
 id action_db_info
-id action_logs
+id action_settings
 id app_icon
 id app_name_display
+id btnBuildTrie
 id btnClearLogs
 id btnCopyInfo
 id btnCopyLog
 id btnCopyLogs
 id btnDevTools
 id btnDictManager
+id btnExportRealm
 id btnLogs
+id btnRebuildRealm
 id btn_back
 id btn_enable_ime
 id btn_fuzzy_pinyin
@@ -89,6 +92,8 @@ id copy_result_button
 id current_input_text_view
 id default_candidates_view
 id descriptionText
+id divider1
+id divider2
 id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
@@ -192,6 +197,7 @@ id titleText
 id title_text_view
 id toolbar
 id toolbar_view
+id tvBuildTrieDesc
 id tvDatabaseSize
 id tvDbEntryCount
 id tvDbFileName
@@ -203,6 +209,7 @@ id tvDictName
 id tvDictType
 id tvEmpty
 id tvEntryCount
+id tvExportRealmDesc
 id tvFrequency
 id tvGroupCount
 id tvGroupTitle
@@ -214,6 +221,7 @@ id tvModuleCount
 id tvModuleListTitle
 id tvNoLogs
 id tvPinyin
+id tvRebuildRealmDesc
 id tvTitle
 id tvTotalEntries
 id tvWord
@@ -240,6 +248,7 @@ layout activity_log_detail
 layout activity_main
 layout activity_system_check
 layout dialog_database_info
+layout dialog_dictionary_settings
 layout dialog_export_settings
 layout fragment_log_viewer
 layout fragment_permission_check

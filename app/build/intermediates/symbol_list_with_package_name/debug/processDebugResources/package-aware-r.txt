@@ -3210,12 +3210,12 @@ id action_context_bar
 id action_db_info
 id action_divider
 id action_image
-id action_logs
 id action_menu_divider
 id action_menu_presenter
 id action_mode_bar
 id action_mode_bar_stub
 id action_mode_close_button
+id action_settings
 id action_text
 id actions
 id activity_chooser_view_content
@@ -3250,13 +3250,16 @@ id bounce
 id bounceBoth
 id bounceEnd
 id bounceStart
+id btnBuildTrie
 id btnClearLogs
 id btnCopyInfo
 id btnCopyLog
 id btnCopyLogs
 id btnDevTools
 id btnDictManager
+id btnExportRealm
 id btnLogs
+id btnRebuildRealm
 id btn_back
 id btn_enable_ime
 id btn_fuzzy_pinyin
@@ -3341,6 +3344,8 @@ id disableIntraAutoTransition
 id disablePostScroll
 id disableScroll
 id disjoint
+id divider1
+id divider2
 id dragAnticlockwise
 id dragClockwise
 id dragDown
@@ -3766,6 +3771,7 @@ id transition_position
 id transition_scene_layoutid_cache
 id transition_transform
 id triangle
+id tvBuildTrieDesc
 id tvDatabaseSize
 id tvDbEntryCount
 id tvDbFileName
@@ -3777,6 +3783,7 @@ id tvDictName
 id tvDictType
 id tvEmpty
 id tvEntryCount
+id tvExportRealmDesc
 id tvFrequency
 id tvGroupCount
 id tvGroupTitle
@@ -3788,6 +3795,7 @@ id tvModuleCount
 id tvModuleListTitle
 id tvNoLogs
 id tvPinyin
+id tvRebuildRealmDesc
 id tvTitle
 id tvTotalEntries
 id tvWord
@@ -3967,6 +3975,7 @@ layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
 layout dialog_database_info
+layout dialog_dictionary_settings
 layout dialog_export_settings
 layout fragment_log_viewer
 layout fragment_permission_check

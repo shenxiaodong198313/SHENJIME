@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shenji.aikeyboard.R
+import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.data.DictionaryManager
 import com.shenji.aikeyboard.data.DictionaryModule
 import com.shenji.aikeyboard.data.DictionaryRepository
@@ -24,6 +25,13 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.text.NumberFormat
 import android.content.Context
+import android.os.Environment
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import android.os.Handler
+import android.os.Looper
 
 /**
  * 词典管理Activity
@@ -75,12 +83,12 @@ class DictionaryManagerActivity : AppCompatActivity() {
                 finish()
                 true
             }
-            R.id.action_logs -> {
-                openDictionaryLogs()
-                true
-            }
             R.id.action_db_info -> {
                 showDatabaseInfo()
+                true
+            }
+            R.id.action_settings -> {
+                showSettingsDialog()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -301,14 +309,314 @@ class DictionaryManagerActivity : AppCompatActivity() {
     }
     
     /**
-     * 打开词典日志页面
+     * 显示设置对话框
      */
-    private fun openDictionaryLogs() {
-        val intent = Intent(this, DictionaryLogsActivity::class.java)
-        startActivity(intent)
+    private fun showSettingsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_dictionary_settings, null)
+        
+        // 创建对话框
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setTitle("词典设置")
+            .setNegativeButton("关闭") { d, _ -> d.dismiss() }
+            .create()
+        
+        // 设置按钮点击事件
+        dialogView.findViewById<Button>(R.id.btnRebuildRealm).setOnClickListener {
+            dialog.dismiss()
+            confirmRebuildRealm()
+        }
+        
+        dialogView.findViewById<Button>(R.id.btnExportRealm).setOnClickListener {
+            dialog.dismiss()
+            exportRealmToExternalStorage()
+        }
+        
+        dialogView.findViewById<Button>(R.id.btnBuildTrie).setOnClickListener {
+            dialog.dismiss()
+            showTrieNotImplementedMessage()
+        }
+        
+        // 显示对话框
+        dialog.show()
     }
     
+    /**
+     * 确认重构Realm数据库
+     */
+    private fun confirmRebuildRealm() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("重构Realm数据库")
+            .setMessage("这将清空现有数据库并从YAML词典重新导入所有数据，这个过程可能需要几分钟。确定要继续吗？")
+            .setPositiveButton("确定") { _, _ ->
+                rebuildRealmFromYaml()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
     
+    /**
+     * 从YAML词典重新构建Realm数据库
+     */
+    private fun rebuildRealmFromYaml() {
+        // 显示进度对话框
+        val progressDialog = android.app.ProgressDialog(this).apply {
+            setTitle("正在重构数据库")
+            setMessage("正在从YAML词典重新导入数据，请稍候...")
+            setCancelable(false)
+            setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL)
+            max = 100
+            show()
+        }
+        
+        // 启动后台任务
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 获取词典类型列表
+                val dictTypes = getDictionaryDefaultTypes()
+                val totalDicts = dictTypes.size
+                var currentDict = 0
+                
+                // 创建新的Realm配置
+                val config = io.realm.kotlin.RealmConfiguration.Builder(schema = setOf(
+                    com.shenji.aikeyboard.data.Entry::class
+                ))
+                    .directory(ShenjiApplication.instance.filesDir.path + "/dictionaries")
+                    .name("shenji_dict.realm")
+                    .deleteRealmIfMigrationNeeded()
+                    .build()
+                
+                // 删除现有数据库
+                withContext(Dispatchers.Main) {
+                    progressDialog.setMessage("正在清除现有数据库...")
+                }
+                io.realm.kotlin.Realm.deleteRealm(config)
+                
+                // 创建新的数据库
+                val newRealm = io.realm.kotlin.Realm.open(config)
+                
+                // 从YAML词典导入数据
+                for (dictType in dictTypes) {
+                    currentDict++
+                    withContext(Dispatchers.Main) {
+                        progressDialog.setMessage("正在导入 $dictType 词典 ($currentDict/$totalDicts)...")
+                        progressDialog.progress = (currentDict - 1) * 100 / totalDicts
+                    }
+                    
+                    try {
+                        // 从assets加载YAML词典
+                        val dictFile = "cn_dicts/${dictType}.dict.yaml"
+                        val inputStream = assets.open(dictFile)
+                        val reader = inputStream.bufferedReader()
+                        var line: String?
+                        var count = 0
+                        val totalLines = reader.readLines().size
+                        inputStream.reset()
+                        
+                        // 分批导入，每次1000条
+                        val batchSize = 1000
+                        var entries = mutableListOf<com.shenji.aikeyboard.data.Entry>()
+                        
+                        reader.useLines { lines ->
+                            lines.forEach { line ->
+                                if (line.isNotBlank() && !line.startsWith("#")) {
+                                    val parts = line.trim().split("\t")
+                                    if (parts.size >= 2) {
+                                        val word = parts[0]
+                                        val pinyin = parts[1]
+                                        val frequency = if (parts.size >= 3) parts[2].toIntOrNull() ?: 100 else 100
+                                        
+                                        val entry = com.shenji.aikeyboard.data.Entry().apply {
+                                            id = "${dictType}_${word}_${System.currentTimeMillis()}_${count}"
+                                            this.word = word
+                                            this.pinyin = pinyin
+                                            this.frequency = frequency
+                                            this.type = dictType
+                                            this.initialLetters = generateInitialLetters(pinyin)
+                                        }
+                                        
+                                        entries.add(entry)
+                                        count++
+                                        
+                                        // 分批写入
+                                        if (entries.size >= batchSize) {
+                                            newRealm.writeBlocking {
+                                                entries.forEach { copyToRealm(it) }
+                                            }
+                                            entries.clear()
+                                            
+                                            // 更新进度
+                                            val dictProgress = count * 100 / totalLines
+                                            val overallProgress = ((currentDict - 1) * 100 + dictProgress) / totalDicts
+                                            withContext(Dispatchers.Main) {
+                                                progressDialog.progress = overallProgress
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 写入剩余条目
+                        if (entries.isNotEmpty()) {
+                            newRealm.writeBlocking {
+                                entries.forEach { copyToRealm(it) }
+                            }
+                            entries.clear()
+                        }
+                        
+                        inputStream.close()
+                    } catch (e: Exception) {
+                        Timber.e(e, "导入词典 $dictType 失败")
+                        withContext(Dispatchers.Main) {
+                            progressDialog.setMessage("导入 $dictType 词典失败: ${e.message}")
+                            android.os.Handler(Looper.getMainLooper()).postDelayed({
+                                progressDialog.setMessage("继续导入其他词典...")
+                            }, 2000)
+                        }
+                    }
+                }
+                
+                // 关闭新数据库
+                newRealm.close()
+                
+                // 重新初始化应用中的Realm实例
+                try {
+                    // 先关闭当前实例
+                    newRealm.close()
+                    
+                    // 使用新配置重新打开数据库
+                    val realmInstance = io.realm.kotlin.Realm.open(config)
+                    
+                    // 使用反射重新初始化ShenjiApplication.realm
+                    val companionClass = ShenjiApplication::class.java.getDeclaredField("Companion").get(null)
+                    val realmField = companionClass.javaClass.getDeclaredField("realm")
+                    realmField.isAccessible = true
+                    realmField.set(companionClass, realmInstance)
+                } catch (e: Exception) {
+                    Timber.e(e, "重新初始化Realm实例失败")
+                }
+                
+                // 重新初始化词典管理器
+                com.shenji.aikeyboard.data.DictionaryManager.init()
+                
+                withContext(Dispatchers.Main) {
+                    progressDialog.dismiss()
+                    // 显示成功消息
+                    androidx.appcompat.app.AlertDialog.Builder(this@DictionaryManagerActivity)
+                        .setTitle("操作成功")
+                        .setMessage("Realm数据库重构完成，共导入${dictTypes.size}个词典。")
+                        .setPositiveButton("确定") { _, _ ->
+                            // 刷新UI
+                            loadDictionaryStats()
+                        }
+                        .show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "重构Realm数据库失败")
+                withContext(Dispatchers.Main) {
+                    progressDialog.dismiss()
+                    // 显示错误消息
+                    androidx.appcompat.app.AlertDialog.Builder(this@DictionaryManagerActivity)
+                        .setTitle("操作失败")
+                        .setMessage("重构Realm数据库失败: ${e.message}")
+                        .setPositiveButton("确定", null)
+                        .show()
+                }
+            }
+        }
+    }
+    
+    /**
+     * 导出Realm实例到外部存储
+     */
+    private fun exportRealmToExternalStorage() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 显示进度对话框
+                val progressDialog = withContext(Dispatchers.Main) {
+                    android.app.ProgressDialog(this@DictionaryManagerActivity).apply {
+                        setTitle("导出数据库")
+                        setMessage("正在导出Realm数据库文件，请稍候...")
+                        setCancelable(false)
+                        setProgressStyle(android.app.ProgressDialog.STYLE_SPINNER)
+                        show()
+                    }
+                }
+                
+                // 源数据库文件
+                val sourceFile = dictionaryRepository.getDictionaryFile()
+                
+                // 目标目录
+                val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val appDir = File(downloadDir, "ShenjiKeyboard")
+                if (!appDir.exists()) {
+                    appDir.mkdirs()
+                }
+                
+                // 创建目标文件，添加时间戳
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                val destFile = File(appDir, "shenji_dict_${timestamp}.realm")
+                
+                // 复制文件
+                sourceFile.inputStream().use { input ->
+                    destFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                withContext(Dispatchers.Main) {
+                    progressDialog.dismiss()
+                    // 显示成功消息
+                    androidx.appcompat.app.AlertDialog.Builder(this@DictionaryManagerActivity)
+                        .setTitle("导出成功")
+                        .setMessage("数据库已导出到：${destFile.absolutePath}")
+                        .setPositiveButton("确定", null)
+                        .show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "导出Realm数据库失败")
+                withContext(Dispatchers.Main) {
+                    // 显示错误消息
+                    androidx.appcompat.app.AlertDialog.Builder(this@DictionaryManagerActivity)
+                        .setTitle("导出失败")
+                        .setMessage("导出Realm数据库失败: ${e.message}")
+                        .setPositiveButton("确定", null)
+                        .show()
+                }
+            }
+        }
+    }
+    
+    /**
+     * 显示Trie构建功能未实现消息
+     */
+    private fun showTrieNotImplementedMessage() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("功能开发中")
+            .setMessage("构建双Trie数据功能正在开发中，敬请期待。")
+            .setPositiveButton("确定", null)
+            .show()
+    }
+    
+    /**
+     * 获取默认词典类型列表
+     */
+    private fun getDictionaryDefaultTypes(): List<String> {
+        return listOf(
+            "chars", "base", "correlation", "associational", 
+            "compatible", "corrections", "place", "people", "poetry"
+        )
+    }
+    
+    /**
+     * 生成首字母缩写
+     */
+    private fun generateInitialLetters(pinyin: String): String {
+        return pinyin.split(" ")
+            .filter { it.isNotEmpty() }
+            .joinToString("") { it.first().toString() }
+    }
     
     /**
      * 格式化数字为带千位分隔符的字符串
@@ -335,7 +643,7 @@ class DictionaryManagerActivity : AppCompatActivity() {
         // 取消监控任务
         dictionaryMonitoringJob?.cancel()
     }
-
+    
     /**
      * 显示数据库详情对话框
      */
