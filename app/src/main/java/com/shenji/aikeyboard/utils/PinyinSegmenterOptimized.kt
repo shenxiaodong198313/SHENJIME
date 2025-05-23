@@ -1,11 +1,108 @@
 package com.shenji.aikeyboard.utils
 
+import android.util.LruCache
+import timber.log.Timber
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicInteger
+
 /**
  * 优化的拼音音节与分词管理器
  * 基于最长匹配优先原则实现拼音字符串的音节切分与分词
  * 解决了如 "nihao" 被错误分割为 "n + i + hao" 而不是 "ni + hao" 的问题
+ * 
+ * 新增功能：
+ * - 智能LRU缓存机制
+ * - 性能监控和统计
+ * - 内存使用优化
+ * - 详细的调试信息
  */
 object PinyinSegmenterOptimized {
+    
+    // ==================== 缓存和性能监控 ====================
+    
+    /**
+     * 拆分结果缓存
+     * 使用LRU策略，缓存最近使用的拆分结果
+     */
+    private val splitCache = LruCache<String, List<String>>(300) // 缓存300个最近结果
+    
+    /**
+     * 性能统计数据
+     */
+    data class PerformanceStats(
+        val totalRequests: Long = 0,           // 总请求数
+        val cacheHits: Long = 0,               // 缓存命中数
+        val cacheMisses: Long = 0,             // 缓存未命中数
+        val totalSplitTime: Long = 0,          // 总拆分耗时(纳秒)
+        val averageSplitTime: Double = 0.0,    // 平均拆分耗时(毫秒)
+        val cacheHitRate: Double = 0.0,        // 缓存命中率
+        val maxInputLength: Int = 0,           // 处理过的最大输入长度
+        val cacheSize: Int = 0                 // 当前缓存大小
+    ) {
+        override fun toString(): String {
+            return """
+                |拼音拆分性能统计:
+                |  总请求数: $totalRequests
+                |  缓存命中: $cacheHits (${String.format("%.1f", cacheHitRate)}%)
+                |  缓存未命中: $cacheMisses
+                |  平均耗时: ${String.format("%.2f", averageSplitTime)}ms
+                |  最大输入长度: $maxInputLength
+                |  当前缓存大小: $cacheSize/300
+            """.trimMargin()
+        }
+    }
+    
+    // 性能计数器
+    private val totalRequests = AtomicLong(0)
+    private val cacheHits = AtomicLong(0)
+    private val cacheMisses = AtomicLong(0)
+    private val totalSplitTime = AtomicLong(0)
+    private val maxInputLength = AtomicInteger(0)
+    
+    /**
+     * 获取性能统计信息
+     */
+    fun getPerformanceStats(): PerformanceStats {
+        val requests = totalRequests.get()
+        val hits = cacheHits.get()
+        val misses = cacheMisses.get()
+        val totalTime = totalSplitTime.get()
+        
+        return PerformanceStats(
+            totalRequests = requests,
+            cacheHits = hits,
+            cacheMisses = misses,
+            totalSplitTime = totalTime,
+            averageSplitTime = if (misses > 0) totalTime / 1_000_000.0 / misses else 0.0,
+            cacheHitRate = if (requests > 0) hits * 100.0 / requests else 0.0,
+            maxInputLength = maxInputLength.get(),
+            cacheSize = splitCache.size()
+        )
+    }
+    
+    /**
+     * 重置性能统计
+     */
+    fun resetPerformanceStats() {
+        totalRequests.set(0)
+        cacheHits.set(0)
+        cacheMisses.set(0)
+        totalSplitTime.set(0)
+        maxInputLength.set(0)
+        splitCache.evictAll()
+        Timber.d("拼音拆分性能统计已重置")
+    }
+    
+    /**
+     * 清空缓存
+     */
+    fun clearCache() {
+        splitCache.evictAll()
+        Timber.d("拼音拆分缓存已清空")
+    }
+    
+    // ==================== 原有的音节数据 ====================
+    
     // 声母表（23个）
     private val smb = arrayOf(
         "b", "p", "m", "f",
@@ -82,17 +179,85 @@ object PinyinSegmenterOptimized {
         set
     }
 
+    // ==================== 主要接口方法 ====================
+
     /**
      * 将汉语拼音连写字符串分割成音节List
+     * 带缓存优化的主入口方法
      */
     fun cut(s: String): List<String> {
+        // 输入预处理和验证
+        if (s.isBlank()) {
+            return emptyList()
+        }
+        
+        val cleanInput = s.trim().lowercase()
+        if (cleanInput.isEmpty()) {
+            return emptyList()
+        }
+        
+        // 更新统计信息
+        totalRequests.incrementAndGet()
+        
+        // 更新最大输入长度记录
+        if (cleanInput.length > maxInputLength.get()) {
+            maxInputLength.set(cleanInput.length)
+        }
+        
+        // 检查缓存
+        splitCache.get(cleanInput)?.let { cachedResult ->
+            cacheHits.incrementAndGet()
+            Timber.v("拼音拆分缓存命中: '$cleanInput' -> ${cachedResult.joinToString("+")}")
+            return cachedResult
+        }
+        
+        // 缓存未命中，执行实际拆分
+        cacheMisses.incrementAndGet()
+        val startTime = System.nanoTime()
+        
+        try {
+            val result = performSplit(cleanInput)
+            val endTime = System.nanoTime()
+            val splitTime = endTime - startTime
+            totalSplitTime.addAndGet(splitTime)
+            
+            // 缓存结果
+            splitCache.put(cleanInput, result)
+            
+            // 记录调试信息
+            val splitTimeMs = splitTime / 1_000_000.0
+            Timber.v("拼音拆分完成: '$cleanInput' -> ${result.joinToString("+")} (耗时: ${String.format("%.2f", splitTimeMs)}ms)")
+            
+            // 定期输出性能统计（每100次请求）
+            if (totalRequests.get() % 100 == 0L) {
+                Timber.d(getPerformanceStats().toString())
+            }
+            
+            return result
+            
+        } catch (e: Exception) {
+            Timber.e(e, "拼音拆分异常: '$cleanInput'")
+            // 异常情况下返回原输入
+            return listOf(cleanInput)
+        }
+    }
+    
+    /**
+     * 执行实际的拆分逻辑
+     * 从原有的cut方法中提取出来
+     */
+    private fun performSplit(s: String): List<String> {
         val list = cutWithWholeSyllablePriority(s, 0)
-        if (list == null || list.isEmpty()) return listOf(s)
+        if (list == null || list.isEmpty()) {
+            return listOf(s)
+        }
         if (list.last().isEmpty()) {
             return list.dropLast(1)
         }
         return list
     }
+
+    // ==================== 原有的拆分算法 ====================
 
     // 优先整体音节分割
     private fun cutWithWholeSyllablePriority(s: String, index: Int): List<String>? {

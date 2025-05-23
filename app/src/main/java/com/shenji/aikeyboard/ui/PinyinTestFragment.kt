@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Button
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +19,8 @@ import com.shenji.aikeyboard.adapter.CandidateAdapter
 import com.shenji.aikeyboard.model.Candidate
 import com.shenji.aikeyboard.pinyin.InputType
 import com.shenji.aikeyboard.viewmodel.PinyinTestViewModel
+import com.shenji.aikeyboard.utils.PinyinSegmenterOptimized
+import com.shenji.aikeyboard.utils.PinyinCacheTestHelper
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
@@ -28,6 +31,7 @@ import timber.log.Timber
 /**
  * 拼音测试Fragment - 用于测试拼音分词和候选词查询
  * 使用标准化拼音查询模块
+ * 新增功能：拼音拆分性能监控
  */
 class PinyinTestFragment : Fragment() {
 
@@ -43,6 +47,12 @@ class PinyinTestFragment : Fragment() {
     private lateinit var copyResultButton: View
     private lateinit var clearButton: View
     
+    // 性能监控相关UI组件
+    private lateinit var performanceStatsTextView: TextView
+    private lateinit var resetPerformanceButton: Button
+    private lateinit var clearCacheButton: Button
+    private lateinit var runCacheTestButton: Button
+    
     private val candidateAdapter = CandidateAdapter()
 
     override fun onCreateView(
@@ -56,19 +66,16 @@ class PinyinTestFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        // 初始化ViewModel
-        viewModel = ViewModelProvider(this)[PinyinTestViewModel::class.java]
-        
-        // 初始化视图
         initViews(view)
-        
-        // 设置监听器
+        initViewModel()
+        setupRecyclerView()
         setupListeners()
-        
-        // 设置观察者
         observeViewModel()
+        
+        // 初始化性能监控显示
+        updatePerformanceStats()
     }
-    
+
     private fun initViews(view: View) {
         inputEditText = view.findViewById(R.id.input_edit_text)
         currentInputTextView = view.findViewById(R.id.current_input_text_view)
@@ -81,11 +88,22 @@ class PinyinTestFragment : Fragment() {
         copyResultButton = view.findViewById(R.id.copy_result_button)
         clearButton = view.findViewById(R.id.clear_button)
         
-        // 设置RecyclerView
+        // 性能监控相关UI组件
+        performanceStatsTextView = view.findViewById(R.id.performance_stats_text_view)
+        resetPerformanceButton = view.findViewById(R.id.reset_performance_button)
+        clearCacheButton = view.findViewById(R.id.clear_cache_button)
+        runCacheTestButton = view.findViewById(R.id.run_cache_test_button)
+    }
+
+    private fun initViewModel() {
+        viewModel = ViewModelProvider(this)[PinyinTestViewModel::class.java]
+    }
+
+    private fun setupRecyclerView() {
         candidatesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         candidatesRecyclerView.adapter = candidateAdapter
     }
-    
+
     @OptIn(FlowPreview::class)
     private fun setupListeners() {
         // 输入框文本变化监听
@@ -101,6 +119,9 @@ class PinyinTestFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) {
                 // 将文本发送到ViewModel
                 viewModel.updateInput(s.toString())
+                
+                // 更新性能统计显示
+                updatePerformanceStats()
             }
         })
         
@@ -117,6 +138,8 @@ class PinyinTestFragment : Fragment() {
                 if (input.isNotEmpty()) {
                     try {
                         viewModel.processInput(input)
+                        // 处理完成后更新性能统计
+                        updatePerformanceStats()
                     } catch (e: Exception) {
                         Timber.e(e, "处理拼音输入异常")
                     }
@@ -128,11 +151,29 @@ class PinyinTestFragment : Fragment() {
         clearButton.setOnClickListener {
             inputEditText.setText("")
             viewModel.clearInput()
+            updatePerformanceStats()
         }
         
         // 复制结果按钮点击事件
         copyResultButton.setOnClickListener {
             copyTestResult()
+        }
+        
+        // 性能监控按钮事件
+        resetPerformanceButton.setOnClickListener {
+            PinyinSegmenterOptimized.resetPerformanceStats()
+            updatePerformanceStats()
+            Timber.d("性能统计已重置")
+        }
+        
+        clearCacheButton.setOnClickListener {
+            PinyinSegmenterOptimized.clearCache()
+            updatePerformanceStats()
+            Timber.d("拼音拆分缓存已清空")
+        }
+        
+        runCacheTestButton.setOnClickListener {
+            runCachePerformanceTest()
         }
 
         // 当点击候选词时模拟输入法中选择候选词的行为
@@ -162,7 +203,52 @@ class PinyinTestFragment : Fragment() {
             inputEditText.setSelection(confirmedText.length)
         }
     }
-    
+
+    /**
+     * 更新性能统计显示
+     */
+    private fun updatePerformanceStats() {
+        try {
+            val stats = PinyinSegmenterOptimized.getPerformanceStats()
+            performanceStatsTextView.text = stats.toString()
+        } catch (e: Exception) {
+            Timber.e(e, "更新性能统计显示失败")
+            performanceStatsTextView.text = "性能统计获取失败: ${e.message}"
+        }
+    }
+
+    /**
+     * 运行缓存性能测试
+     */
+    private fun runCachePerformanceTest() {
+        lifecycleScope.launch {
+            try {
+                // 禁用测试按钮，防止重复点击
+                runCacheTestButton.isEnabled = false
+                runCacheTestButton.text = "测试中..."
+                
+                // 显示测试开始信息
+                performanceStatsTextView.text = "正在运行缓存性能测试，请稍候..."
+                
+                // 执行测试
+                val testResult = PinyinCacheTestHelper.runCachePerformanceTest()
+                
+                // 显示测试结果
+                performanceStatsTextView.text = testResult
+                
+                Timber.d("缓存性能测试完成")
+                
+            } catch (e: Exception) {
+                Timber.e(e, "缓存性能测试失败")
+                performanceStatsTextView.text = "缓存性能测试失败: ${e.message}"
+            } finally {
+                // 恢复测试按钮
+                runCacheTestButton.isEnabled = true
+                runCacheTestButton.text = "运行缓存性能测试"
+            }
+        }
+    }
+
     private fun observeViewModel() {
         // 观察输入类型
         viewModel.inputType.observe(viewLifecycleOwner) { type ->

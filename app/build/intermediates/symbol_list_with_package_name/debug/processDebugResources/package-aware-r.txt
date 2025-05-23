@@ -3319,6 +3319,7 @@ id checked
 id chronometer
 id circle_center
 id clear_button
+id clear_cache_button
 id clear_logs_button
 id clear_text
 id clip_horizontal
@@ -3624,6 +3625,7 @@ id path
 id pathRelative
 id peekHeight
 id percent
+id performance_stats_text_view
 id permission_check_button
 id permission_status_text_view
 id pin
@@ -3652,6 +3654,7 @@ id report_drawn
 id request_permission_button
 id request_sms_permission_button
 id request_storage_permission_button
+id reset_performance_button
 id restart
 id resultsRecyclerView
 id reverse
@@ -3664,6 +3667,7 @@ id right_to_left
 id rounded
 id row_index_key
 id runCheckButton
+id run_cache_test_button
 id rvDictionaryModules
 id rvEntries
 id rvLogs

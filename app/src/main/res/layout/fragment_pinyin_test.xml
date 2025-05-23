@@ -145,6 +145,88 @@
 
         </androidx.cardview.widget.CardView>
 
+        <!-- 性能监控区域 -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="性能监控"
+                        android:textColor="#333333"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/reset_performance_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:layout_marginEnd="8dp"
+                        android:backgroundTint="#FF9800"
+                        android:text="重置统计"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        android:minHeight="0dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp" />
+
+                    <Button
+                        android:id="@+id/clear_cache_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:backgroundTint="#F44336"
+                        android:text="清空缓存"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        android:minHeight="0dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp" />
+
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/run_cache_test_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:backgroundTint="#2196F3"
+                    android:text="运行缓存性能测试"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/performance_stats_text_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#F9F9F9"
+                    android:padding="8dp"
+                    android:textColor="#555555"
+                    android:textIsSelectable="true"
+                    android:textSize="12sp"
+                    android:typeface="monospace"
+                    android:text="拼音拆分性能统计:\n  总请求数: 0\n  缓存命中: 0 (0.0%)\n  缓存未命中: 0\n  平均耗时: 0.00ms\n  最大输入长度: 0\n  当前缓存大小: 0/300" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
         <!-- 候选词区域 -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"

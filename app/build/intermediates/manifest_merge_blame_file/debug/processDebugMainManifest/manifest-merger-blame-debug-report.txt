@@ -10,46 +10,46 @@
 10
 11    <!-- 写入外部存储权限（日志写入） -->
 12    <uses-permission
-12-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:7:5-8:38
+12-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:7:5-8:38
 13        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-13-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:7:22-78
+13-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:7:22-78
 14        android:maxSdkVersion="32" />
-14-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:8:9-35
+14-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:8:9-35
 15    <!-- Android 10+需要此权限 -->
 16    <uses-permission
-16-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:10:5-11:38
+16-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:10:5-11:38
 17        android:name="android.permission.READ_EXTERNAL_STORAGE"
-17-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:10:22-77
+17-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:10:22-77
 18        android:maxSdkVersion="32" />
-18-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:11:9-35
+18-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:11:9-35
 19    <!-- Android 13+需要新的存储权限 -->
 20    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-20-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:13:5-76
-20-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:13:22-73
+20-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:13:5-76
+20-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:13:22-73
 21    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-21-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:14:5-75
-21-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:14:22-72
+21-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:14:5-75
+21-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:14:22-72
 22    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-22-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:15:5-75
-22-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:15:22-72
+22-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:15:5-75
+22-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:15:22-72
 23
 24    <!-- 验证码自动填写相关权限 -->
 25    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-25-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:18:5-70
-25-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:18:22-67
+25-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:18:5-70
+25-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:18:22-67
 26    <uses-permission android:name="android.permission.READ_SMS" />
-26-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:19:5-67
-26-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:19:22-64
+26-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:19:5-67
+26-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:19:22-64
 27
 28    <!-- Android 10+ 需要特殊权限 -->
 29    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-29-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:22:5-23:40
-29-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:22:22-79
+29-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:22:5-23:40
+29-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:22:22-79
 30
 31    <!-- 添加获取应用使用统计的权限 -->
 32    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
-32-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:26:5-114
-32-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:26:22-75
+32-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:26:5-114
+32-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:26:22-75
 33
 34    <permission
 34-->[androidx.core:core:1.13.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\118d7831f976d8e16b03deb1db82f739\transformed\core-1.13.0\AndroidManifest.xml:22:5-24:47
@@ -63,279 +63,279 @@
 38-->[androidx.core:core:1.13.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\118d7831f976d8e16b03deb1db82f739\transformed\core-1.13.0\AndroidManifest.xml:26:22-94
 39
 40    <application
-40-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:28:5-186:19
+40-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:28:5-186:19
 41        android:name="com.shenji.aikeyboard.ShenjiApplication"
-41-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:29:9-42
+41-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:29:9-42
 42        android:allowBackup="true"
-42-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:30:9-35
+42-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:30:9-35
 43        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 43-->[androidx.core:core:1.13.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\118d7831f976d8e16b03deb1db82f739\transformed\core-1.13.0\AndroidManifest.xml:28:18-86
 44        android:debuggable="true"
 45        android:extractNativeLibs="false"
 46        android:icon="@mipmap/ic_launcher"
-46-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:31:9-43
+46-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:31:9-43
 47        android:label="@string/app_name"
-47-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:32:9-41
+47-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:32:9-41
 48        android:largeHeap="true"
-48-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:35:9-33
+48-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:35:9-33
 49        android:roundIcon="@mipmap/ic_launcher_round"
-49-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:33:9-54
+49-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:33:9-54
 50        android:supportsRtl="true"
-50-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:34:9-35
+50-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:34:9-35
 51        android:theme="@style/Theme.SHENJI" >
-51-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:36:9-44
+51-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:36:9-44
 52
 53        <!-- 主活动 -->
 54        <activity
-54-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:39:9-46:20
+54-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:39:9-46:20
 55            android:name="com.shenji.aikeyboard.ui.MainActivity"
-55-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:40:13-44
+55-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:40:13-44
 56            android:exported="true" >
-56-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:41:13-36
+56-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:41:13-36
 57            <intent-filter>
-57-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:42:13-45:29
+57-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:42:13-45:29
 58                <action android:name="android.intent.action.MAIN" />
-58-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:43:17-69
-58-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:43:25-66
+58-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:43:17-69
+58-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:43:25-66
 59
 60                <category android:name="android.intent.category.LAUNCHER" />
-60-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:44:17-77
-60-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:44:27-74
+60-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:44:17-77
+60-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:44:27-74
 61            </intent-filter>
 62        </activity>
 63
 64        <!-- 日志详情活动 -->
 65        <activity
-65-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:49:9-51:40
+65-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:49:9-51:40
 66            android:name="com.shenji.aikeyboard.ui.LogDetailActivity"
-66-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:50:13-49
+66-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:50:13-49
 67            android:exported="false" />
-67-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:51:13-37
+67-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:51:13-37
 68
 69        <!-- 词典管理菜单活动 -->
 70        <activity
-70-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:54:9-57:38
+70-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:54:9-57:38
 71            android:name="com.shenji.aikeyboard.ui.dictionary.DictionaryMenuActivity"
-71-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:55:13-65
+71-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:55:13-65
 72            android:exported="false"
-72-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:56:13-37
+72-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:56:13-37
 73            android:label="词典管理中心" />
-73-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:57:13-35
+73-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:57:13-35
 74
 75        <!-- Realm词典列表活动 -->
 76        <activity
-76-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:60:9-63:36
+76-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:60:9-63:36
 77            android:name="com.shenji.aikeyboard.ui.dictionary.DictionaryListActivity"
-77-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:61:13-65
+77-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:61:13-65
 78            android:exported="false"
-78-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:62:13-37
+78-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:62:13-37
 79            android:label="词典列表" />
-79-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:63:13-33
+79-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:63:13-33
 80
 81        <!-- 词典详情活动 -->
 82        <activity
-82-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:66:9-68:40
+82-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:66:9-68:40
 83            android:name="com.shenji.aikeyboard.ui.DictionaryDetailActivity"
-83-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:67:13-56
+83-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:67:13-56
 84            android:exported="false" />
-84-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:68:13-37
+84-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:68:13-37
 85
 86        <!-- 词典日志活动 -->
 87        <activity
-87-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:71:9-73:40
+87-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:71:9-73:40
 88            android:name="com.shenji.aikeyboard.ui.DictionaryLogsActivity"
-88-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:72:13-54
+88-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:72:13-54
 89            android:exported="false" />
-89-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:73:13-37
+89-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:73:13-37
 90
 91        <!-- Trie树构建活动 -->
 92        <activity
-92-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:76:9-79:41
+92-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:76:9-79:41
 93            android:name="com.shenji.aikeyboard.ui.trie.TrieBuildActivity"
-93-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:77:13-54
+93-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:77:13-54
 94            android:exported="false"
-94-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:78:13-37
+94-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:78:13-37
 95            android:label="构建双Trie数据" />
-95-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:79:13-38
+95-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:79:13-38
 96
 97        <!-- 输入测试活动 -->
 98        <activity
-98-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:82:9-85:71
+98-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:82:9-85:71
 99            android:name="com.shenji.aikeyboard.ui.InputTestActivity"
-99-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:83:13-49
+99-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:83:13-49
 100            android:exported="false"
-100-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:84:13-37
+100-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:84:13-37
 101            android:windowSoftInputMode="stateVisible|adjustResize" />
-101-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:85:13-68
+101-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:85:13-68
 102
 103        <!-- 开发工具活动 -->
 104        <activity
-104-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:88:9-90:39
+104-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:88:9-90:39
 105            android:name="com.shenji.aikeyboard.ui.DevToolsActivity"
-105-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:89:13-48
+105-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:89:13-48
 106            android:exported="true" />
-106-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:90:13-36
+106-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:90:13-36
 107
 108        <!-- 拼音测试活动 -->
 109        <activity
-109-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:93:9-95:40
+109-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:93:9-95:40
 110            android:name="com.shenji.aikeyboard.ui.PinyinTestActivity"
-110-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:94:13-50
+110-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:94:13-50
 111            android:exported="false" />
-111-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:95:13-37
+111-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:95:13-37
 112
 113        <!-- 日志查看活动 -->
 114        <activity
-114-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:98:9-100:40
+114-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:98:9-100:40
 115            android:name="com.shenji.aikeyboard.ui.LogViewerActivity"
-115-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:99:13-49
+115-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:99:13-49
 116            android:exported="false" />
-116-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:100:13-37
+116-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:100:13-37
 117
 118        <!-- 验证码测试活动 -->
 119        <activity
-119-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:103:9-105:40
+119-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:103:9-105:40
 120            android:name="com.shenji.aikeyboard.ui.VerificationCodeActivity"
-120-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:104:13-56
+120-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:104:13-56
 121            android:exported="false" />
-121-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:105:13-37
+121-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:105:13-37
 122
 123        <!-- 权限检查活动 -->
 124        <activity
-124-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:108:9-110:40
+124-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:108:9-110:40
 125            android:name="com.shenji.aikeyboard.ui.PermissionCheckActivity"
-125-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:109:13-55
+125-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:109:13-55
 126            android:exported="false" />
-126-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:110:13-37
+126-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:110:13-37
 127
 128        <!-- 系统检查活动 -->
 129        <activity
-129-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:113:9-115:40
+129-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:113:9-115:40
 130            android:name="com.shenji.aikeyboard.ui.SystemCheckActivity"
-130-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:114:13-51
+130-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:114:13-51
 131            android:exported="false" />
-131-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:115:13-37
+131-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:115:13-37
 132
 133        <!-- 移动调试工具活动 -->
 134        <activity
-134-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:118:9-122:58
+134-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:118:9-122:58
 135            android:name="com.shenji.aikeyboard.ui.MobileDebugActivity"
-135-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:119:13-51
+135-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:119:13-51
 136            android:exported="false"
-136-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:120:13-37
+136-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:120:13-37
 137            android:label="@string/mobile_debug_title"
-137-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:121:13-55
+137-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:121:13-55
 138            android:windowSoftInputMode="adjustResize" />
-138-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:122:13-55
+138-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:122:13-55
 139
 140        <!-- 音节测试活动 -->
 141        <activity
-141-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:125:9-129:58
+141-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:125:9-129:58
 142            android:name="com.shenji.aikeyboard.ui.SyllableTestActivity"
-142-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:126:13-52
+142-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:126:13-52
 143            android:exported="false"
-143-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:127:13-37
+143-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:127:13-37
 144            android:label="音节测试工具"
-144-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:128:13-35
+144-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:128:13-35
 145            android:windowSoftInputMode="adjustResize" />
-145-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:129:13-55
+145-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:129:13-55
 146
 147        <!-- 输入法服务 -->
 148        <service
-148-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:132:9-143:19
+148-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:132:9-143:19
 149            android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"
-149-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:133:13-62
+149-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:133:13-62
 150            android:exported="true"
-150-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:136:13-36
+150-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:136:13-36
 151            android:label="@string/ime_name"
-151-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:134:13-45
+151-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:134:13-45
 152            android:permission="android.permission.BIND_INPUT_METHOD" >
-152-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:135:13-70
+152-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:135:13-70
 153            <intent-filter>
-153-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:137:13-139:29
+153-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:137:13-139:29
 154                <action android:name="android.view.InputMethod" />
-154-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:138:17-67
-154-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:138:25-64
+154-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:138:17-67
+154-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:138:25-64
 155            </intent-filter>
 156
 157            <meta-data
-157-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:140:13-142:50
+157-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:140:13-142:50
 158                android:name="android.view.im"
-158-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:141:17-47
+158-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:141:17-47
 159                android:resource="@xml/method" />
-159-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:142:17-47
+159-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:142:17-47
 160        </service>
 161
 162        <!-- 无障碍服务 - 用于自动填写验证码 -->
 163        <service
-163-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:146:9-157:19
+163-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:146:9-157:19
 164            android:name="com.shenji.aikeyboard.utils.AutofillAccessibilityService"
-164-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:147:13-63
+164-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:147:13-63
 165            android:exported="true"
-165-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:150:13-36
+165-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:150:13-36
 166            android:label="神机键盘验证码自动填写"
-166-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:148:13-40
+166-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:148:13-40
 167            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
-167-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:149:13-79
+167-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:149:13-79
 168            <intent-filter>
-168-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:151:13-153:29
+168-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:151:13-153:29
 169                <action android:name="android.accessibilityservice.AccessibilityService" />
-169-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:152:17-92
-169-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:152:25-89
+169-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:152:17-92
+169-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:152:25-89
 170            </intent-filter>
 171
 172            <meta-data
-172-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:154:13-156:72
+172-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:154:13-156:72
 173                android:name="android.accessibilityservice"
-173-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:155:17-60
+173-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:155:17-60
 174                android:resource="@xml/accessibility_service_config" />
-174-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:156:17-69
+174-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:156:17-69
 175        </service>
 176
 177        <!-- 输入法设置活动 -->
 178        <activity
-178-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:160:9-167:20
+178-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:160:9-167:20
 179            android:name="com.shenji.aikeyboard.settings.InputMethodSettingsActivity"
-179-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:161:13-65
+179-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:161:13-65
 180            android:exported="true"
-180-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:163:13-36
+180-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:163:13-36
 181            android:label="@string/ime_settings" >
-181-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:162:13-49
+181-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:162:13-49
 182            <intent-filter>
-182-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:164:13-166:29
+182-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:164:13-166:29
 183                <action android:name="android.intent.action.MAIN" />
-183-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:43:17-69
-183-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:43:25-66
+183-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:43:17-69
+183-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:43:25-66
 184            </intent-filter>
 185        </activity>
 186
 187        <!-- 模糊拼音设置 -->
 188        <activity
-188-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:170:9-173:40
+188-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:170:9-173:40
 189            android:name="com.shenji.aikeyboard.settings.FuzzyPinyinSettingsActivity"
-189-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:171:13-65
+189-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:171:13-65
 190            android:exported="false"
-190-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:173:13-37
+190-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:173:13-37
 191            android:label="模糊拼音设置" />
-191-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:172:13-35
+191-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:172:13-35
 192
 193        <!-- FileProvider配置 -->
 194        <provider
-194-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:176:9-184:20
+194-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:176:9-184:20
 195            android:name="androidx.core.content.FileProvider"
-195-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:177:13-62
+195-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:177:13-62
 196            android:authorities="com.shenji.aikeyboard.fileprovider"
-196-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:178:13-69
+196-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:178:13-69
 197            android:exported="false"
-197-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:179:13-37
+197-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:179:13-37
 198            android:grantUriPermissions="true" >
-198-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:180:13-47
+198-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:180:13-47
 199            <meta-data
-199-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:181:13-183:54
+199-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:181:13-183:54
 200                android:name="android.support.FILE_PROVIDER_PATHS"
-200-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:182:17-67
+200-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:182:17-67
 201                android:resource="@xml/file_paths" />
-201-->C:\ProjectD\SHENJI\app\src\main\AndroidManifest.xml:183:17-51
+201-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:183:17-51
 202        </provider>
 203        <provider
 203-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\cf721ffb421b3c31b2c21eff9c138d18\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20

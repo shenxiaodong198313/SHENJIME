@@ -109,6 +109,7 @@ id checkNameTextView
 id checkStatusTextView
 id check_all_permissions_button
 id clear_button
+id clear_cache_button
 id clear_logs_button
 id copy_logs_button
 id copy_result_button
@@ -179,6 +180,7 @@ id mainContainer
 id memory_card
 id memory_info_text
 id memory_usage_text
+id performance_stats_text_view
 id permission_check_button
 id permission_status_text_view
 id pinyin_container
@@ -196,8 +198,10 @@ id refresh_logs_button
 id request_permission_button
 id request_sms_permission_button
 id request_storage_permission_button
+id reset_performance_button
 id resultsRecyclerView
 id runCheckButton
+id run_cache_test_button
 id rvDictionaryModules
 id rvEntries
 id rvLogs
