@@ -20,7 +20,7 @@ import timber.log.Timber
 class QueryConsistencyChecker {
     
     // 候选词管理器（输入法使用）
-    private val candidateManager = CandidateManager(DictionaryRepository())
+    private val candidateManager = CandidateManager()
     
     // 拼音测试ViewModel（测试工具使用）
     private val testViewModel = PinyinTestViewModel()

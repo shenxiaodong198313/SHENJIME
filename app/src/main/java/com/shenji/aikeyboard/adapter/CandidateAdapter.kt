@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.model.Candidate
+import com.shenji.aikeyboard.model.MatchType
 
 /**
  * 候选词列表适配器
@@ -65,12 +66,13 @@ class CandidateAdapter : ListAdapter<Candidate, CandidateAdapter.ViewHolder>(Can
             tvPinyin.text = pinyinText
             
             // 根据匹配类型显示不同标签
-            val matchTypeText = when (candidate.matchType) {
-                Candidate.MatchType.PINYIN_PREFIX -> "拼音"
-                Candidate.MatchType.INITIAL_LETTER -> "首字母"
-                Candidate.MatchType.SYLLABLE_SPLIT -> "音节"
-                Candidate.MatchType.ACRONYM -> "缩写"
-                else -> ""
+            val matchTypeText = when (candidate.source.matchType) {
+                MatchType.EXACT -> "精确"
+                MatchType.PREFIX -> "前缀"
+                MatchType.FUZZY -> "模糊"
+                MatchType.ACRONYM -> "缩写"
+                MatchType.MIXED -> "混合"
+                MatchType.PREDICTION -> "预测"
             }
             
             val typeText = when (candidate.type) {
@@ -81,7 +83,8 @@ class CandidateAdapter : ListAdapter<Candidate, CandidateAdapter.ViewHolder>(Can
             }
             
             // 组合显示信息，添加来源信息
-            tvSource.text = "${typeText} ${if (matchTypeText.isNotEmpty()) "($matchTypeText)" else ""} 词频: ${candidate.frequency} 来源: ${candidate.source}"
+            val sourceInfo = "${candidate.source.generator.name} L${candidate.source.layer}"
+            tvSource.text = "${typeText} (${matchTypeText}) 权重: ${String.format("%.2f", candidate.finalWeight)} 来源: ${sourceInfo}"
             tvFrequency.text = candidate.frequency.toString()
         }
     }

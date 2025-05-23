@@ -330,30 +330,37 @@ object PinyinSegmenterOptimized {
         dp[0] = true // 空字符串可以被拆分
         
         for (i in 1..n) {
-            // 优化：从长到短尝试音节，优先最长匹配
-            for (j in maxOf(0, i - 6) until i) { // 最长音节不超过6个字符
+            // 修复：从短到长尝试音节，确保能找到所有可能的拆分
+            for (j in i - 1 downTo maxOf(0, i - 6)) { // 最长音节不超过6个字符
                 if (dp[j]) {
                     // 优化：避免重复substring，直接检查字符匹配
                     if (isValidSyllableOptimized(s, j, i)) {
                         dp[i] = true
                         prev[i] = j
-                        break // 找到第一个（最长的）匹配就停止
+                        break // 找到第一个匹配就停止（这样会优先选择较长的音节）
                     }
                 }
             }
         }
         
-        if (!dp[n]) return emptyList()
+        if (!dp[n]) {
+            // 如果DP失败，记录调试信息
+            Timber.d("DP拆分失败: '$s'")
+            return emptyList()
+        }
         
         // 回溯构建结果
         val result = mutableListOf<String>()
         var pos = n
         while (pos > 0) {
             val start = prev[pos]
-            result.add(0, s.substring(start, pos))
+            val syllable = s.substring(start, pos)
+            result.add(0, syllable)
             pos = start
         }
         
+        // 记录拆分结果
+        Timber.d("DP拆分成功: '$s' -> ${result.joinToString("+")}")
         return result
     }
     

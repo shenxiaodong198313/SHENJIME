@@ -1,0 +1,29 @@
+{
+    "terminal.integrated.defaultProfile.windows": "Cygwin",
+    "terminal.integrated.profiles.windows": {
+        "Cygwin": {
+            "path": "C:\\cygwin64\\bin\\mintty.exe",
+            "args": ["-i", "/Cygwin-Terminal.ico", "-"],
+            "icon": "terminal-bash"
+        },
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell"
+        },
+        "Command Prompt": {
+            "path": [
+                "${env:windir}\\Sysnative\\cmd.exe",
+                "${env:windir}\\System32\\cmd.exe"
+            ],
+            "args": [],
+            "icon": "terminal-cmd"
+        },
+        "Git Bash": {
+            "source": "Git Bash"
+        }
+    },
+    "terminal.integrated.automationProfile.windows": {
+        "path": "C:\\cygwin64\\bin\\mintty.exe",
+        "args": ["-i", "/Cygwin-Terminal.ico", "-"]
+    }
+} 

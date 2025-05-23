@@ -4,6 +4,7 @@ import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.data.CandidateManager
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.model.WordFrequency
+import com.shenji.aikeyboard.model.Candidate
 import com.shenji.aikeyboard.pinyin.PinyinQueryEngine
 import com.shenji.aikeyboard.pinyin.UnifiedPinyinSplitter
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +37,16 @@ class PinyinIMEAdapter {
             Timber.d("PinyinIMEAdapter: 开始查询候选词，输入='$input', 限制=$limit")
             
             // 使用CandidateManager的公共方法generateCandidates
-            val result = candidateManager.generateCandidates(input, limit)
+            val candidates = candidateManager.generateCandidates(input, limit)
+            
+            // 将Candidate转换为WordFrequency
+            val result = candidates.map { candidate ->
+                WordFrequency(
+                    word = candidate.word,
+                    frequency = candidate.frequency,
+                    source = "${candidate.source.generator.name}_L${candidate.source.layer}"
+                )
+            }
             
             Timber.d("PinyinIMEAdapter: 获取到${result.size}个候选词")
             

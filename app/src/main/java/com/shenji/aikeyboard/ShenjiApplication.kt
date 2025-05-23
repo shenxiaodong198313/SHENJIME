@@ -41,7 +41,7 @@ class ShenjiApplication : Application() {
             
         // 候选词管理器单例
         val candidateManager by lazy {
-            CandidateManager(DictionaryRepository())
+            CandidateManager()
         }
         
         // 标准化的拼音查询引擎

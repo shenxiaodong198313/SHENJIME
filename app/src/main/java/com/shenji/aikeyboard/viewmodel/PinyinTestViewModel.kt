@@ -19,6 +19,11 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.shenji.aikeyboard.model.CandidateBuilder
+import com.shenji.aikeyboard.model.CandidateWeight
+import com.shenji.aikeyboard.model.CandidateSource
+import com.shenji.aikeyboard.model.GeneratorType
+import com.shenji.aikeyboard.model.MatchType
 
 /**
  * 拼音测试工具的ViewModel，处理核心业务逻辑
@@ -27,7 +32,7 @@ import kotlinx.coroutines.withContext
 class PinyinTestViewModel : ViewModel() {
 
     // 候选词管理器
-    private val candidateManager = CandidateManager(DictionaryRepository())
+    private val candidateManager = CandidateManager()
     
     // 词典仓库
     private val dictionaryRepository = DictionaryRepository()
@@ -271,20 +276,36 @@ class PinyinTestViewModel : ViewModel() {
                 val entries = dictionaryRepository.queryByWord(wordFreq.word)
                 if (entries.isNotEmpty()) {
                     val entry = entries.first()
-                    Candidate(
-                        word = entry.word,
-                        pinyin = entry.pinyin,
-                        frequency = entry.frequency,
-                        type = entry.type
-                    )
+                    CandidateBuilder()
+                        .word(entry.word)
+                        .pinyin(entry.pinyin)
+                        .initialLetters(entry.initialLetters)
+                        .frequency(entry.frequency)
+                        .type(entry.type)
+                        .weight(CandidateWeight.default(entry.frequency))
+                        .source(CandidateSource(
+                            generator = GeneratorType.EXACT_MATCH,
+                            matchType = MatchType.EXACT,
+                            layer = 1,
+                            confidence = 1.0f
+                        ))
+                        .build()
                 } else {
                     // 如果查询不到，使用默认值
-                    Candidate(
-                        word = wordFreq.word,
-                        pinyin = "",
-                        frequency = wordFreq.frequency,
-                        type = "unknown"
-                    )
+                    CandidateBuilder()
+                        .word(wordFreq.word)
+                        .pinyin("")
+                        .initialLetters("")
+                        .frequency(wordFreq.frequency)
+                        .type("unknown")
+                        .weight(CandidateWeight.default(wordFreq.frequency))
+                        .source(CandidateSource(
+                            generator = GeneratorType.EXACT_MATCH,
+                            matchType = MatchType.EXACT,
+                            layer = 1,
+                            confidence = 0.5f
+                        ))
+                        .build()
                 }
             }
             

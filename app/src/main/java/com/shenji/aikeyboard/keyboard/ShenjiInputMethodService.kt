@@ -255,7 +255,7 @@ class ShenjiInputMethodService : InputMethodService() {
         // 添加字母到拼音组合中
         composingText.append(letter)
         
-        // 更新输入框中显示的拼音
+        // 输入框显示原始拼音（不带空格）
         currentInputConnection?.setComposingText(composingText, 1)
         
         // 显示候选词区域并获取候选词（包含拼音分段显示）
@@ -277,7 +277,7 @@ class ShenjiInputMethodService : InputMethodService() {
                 // 结束组合文本状态
                 currentInputConnection?.finishComposingText()
             } else {
-                // 更新输入框中显示的拼音
+                // 输入框显示原始拼音（不带空格）
                 currentInputConnection?.setComposingText(composingText, 1)
                 
                 // 获取候选词并更新拼音显示（包含分段）
@@ -508,32 +508,47 @@ class ShenjiInputMethodService : InputMethodService() {
     
     /**
      * 更新拼音显示，包含分段拆分结果
+     * 只更新键盘上的拼音显示区域，不影响输入框
      */
     private fun updatePinyinDisplayWithSegmentation(input: String) {
         try {
+            Timber.d("开始更新键盘拼音显示，输入: '$input'")
+            
             // 获取分段拆分结果
             val pinyinAdapter = PinyinIMEAdapter.getInstance()
             val syllables = pinyinAdapter.splitPinyin(input)
             
+            Timber.d("拼音拆分结果: ${syllables.joinToString("+")}")
+            
             // 如果有分段结果，显示分段后的拼音（带空格）
             val displayText = if (syllables.isNotEmpty() && syllables.size > 1) {
-                syllables.joinToString(" ")
+                val segmentedText = syllables.joinToString(" ")
+                Timber.d("键盘显示分段拼音: '$segmentedText'")
+                segmentedText
             } else {
                 // 如果没有分段结果或只有一个音节，显示原始输入
+                Timber.d("键盘显示原始拼音: '$input'")
                 input
             }
             
-            // 更新拼音显示
+            // 更新键盘上的拼音显示区域
             if (::pinyinDisplay.isInitialized) {
                 pinyinDisplay.text = displayText
-                Timber.d("更新拼音显示: '$input' -> '$displayText'")
+                Timber.d("键盘拼音显示已更新: '$input' -> '$displayText'")
+                
+                // 强制刷新UI
+                pinyinDisplay.invalidate()
+                pinyinDisplay.requestLayout()
+            } else {
+                Timber.e("pinyinDisplay未初始化，无法更新显示")
             }
             
         } catch (e: Exception) {
-            Timber.e(e, "更新拼音显示失败: ${e.message}")
+            Timber.e(e, "更新键盘拼音显示失败: ${e.message}")
             // 如果分段失败，回退到显示原始输入
             if (::pinyinDisplay.isInitialized) {
                 pinyinDisplay.text = input
+                Timber.d("回退到原始输入显示: '$input'")
             }
         }
     }

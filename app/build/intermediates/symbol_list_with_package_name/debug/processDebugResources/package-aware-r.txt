@@ -3272,11 +3272,14 @@ id btnLogs
 id btnRebuildRealm
 id btnStart
 id btn_back
+id btn_clear
+id btn_copy
 id btn_enable_ime
 id btn_fuzzy_pinyin
 id btn_ime_settings
 id btn_set_default_ime
 id btn_system_check
+id btn_test
 id build_base_button
 id build_chars_button
 id build_progress
@@ -3395,6 +3398,7 @@ id enterAlwaysCollapsed
 id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
+id et_input
 id exitUntilCollapsed
 id expandIconImageView
 id expand_activities_button
@@ -3445,6 +3449,7 @@ id immediateStop
 id included
 id indeterminate
 id info
+id input_debug_button
 id input_edit_text
 id invisible
 id inward
@@ -3855,6 +3860,7 @@ id tv_file_size
 id tv_frequency
 id tv_pinyin
 id tv_rank
+id tv_results
 id tv_source
 id tv_stage_results
 id tv_stage_title
@@ -4010,6 +4016,7 @@ layout activity_dictionary_manager
 layout activity_dictionary_menu
 layout activity_fragment_container
 layout activity_fuzzy_pinyin_settings
+layout activity_input_debug
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main

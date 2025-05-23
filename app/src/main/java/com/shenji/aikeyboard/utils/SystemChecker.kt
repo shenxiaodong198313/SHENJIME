@@ -27,7 +27,7 @@ import io.realm.kotlin.types.RealmObject
 class SystemChecker(private val context: Context) {
 
     private val dictionaryRepository = DictionaryRepository()
-    private val candidateManager = CandidateManager(dictionaryRepository)
+    private val candidateManager = CandidateManager()
     private val pinyinSplitter = PinyinSplitterOptimized()
     
     // 检查结果日志

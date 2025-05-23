@@ -128,6 +128,13 @@
             android:label="音节测试工具"
             android:windowSoftInputMode="adjustResize" />
             
+        <!-- 输入调试活动 -->
+        <activity
+            android:name=".ui.InputDebugActivity"
+            android:exported="false"
+            android:label="输入调试工具"
+            android:windowSoftInputMode="adjustResize" />
+            
         <!-- 输入法服务 -->
         <service
             android:name=".keyboard.ShenjiInputMethodService"

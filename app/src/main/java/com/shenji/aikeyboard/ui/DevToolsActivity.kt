@@ -60,6 +60,7 @@ class DevToolsActivity : AppCompatActivity() {
     private lateinit var logViewerButton: Button
     private lateinit var verificationCodeButton: Button
     private lateinit var permissionCheckButton: Button
+    private lateinit var inputDebugButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +75,7 @@ class DevToolsActivity : AppCompatActivity() {
         logViewerButton = findViewById(R.id.log_viewer_button)
         verificationCodeButton = findViewById(R.id.verification_code_button)
         permissionCheckButton = findViewById(R.id.permission_check_button)
+        inputDebugButton = findViewById(R.id.input_debug_button)
         
         // 设置按钮点击监听器
         pinyinTestButton.setOnClickListener {
@@ -90,6 +92,10 @@ class DevToolsActivity : AppCompatActivity() {
         
         permissionCheckButton.setOnClickListener {
             startToolActivity(PermissionCheckActivity::class.java)
+        }
+        
+        inputDebugButton.setOnClickListener {
+            startToolActivity(InputDebugActivity::class.java)
         }
     }
     
