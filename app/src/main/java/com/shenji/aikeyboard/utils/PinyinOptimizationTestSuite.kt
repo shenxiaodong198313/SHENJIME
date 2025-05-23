@@ -63,6 +63,13 @@ object PinyinOptimizationTestSuite {
         "长拼音" to mapOf(
             "zhonghuarenmingongheguo" to listOf("zhong", "hua", "ren", "min", "gong", "he", "guo"),
             "shehuizhuyihexinjiazhi" to listOf("she", "hui", "zhu", "yi", "he", "xin", "jia", "zhi")
+        ),
+        
+        // 新增：分段匹配测试用例
+        "分段匹配" to mapOf(
+            "wofaxianshujukuyouwenti" to listOf("wo", "fa", "xian", "shu", "ju", "ku", "you", "wen", "ti"),
+            "nihaoshijiehenmeihao" to listOf("ni", "hao", "shi", "jie", "hen", "mei", "hao"),
+            "zhongguorenmindaxuexue" to listOf("zhong", "guo", "ren", "min", "da", "xue", "xue")
         )
     )
     
@@ -253,7 +260,52 @@ object PinyinOptimizationTestSuite {
         // 自测试
         result.selfTestPassed = UnifiedPinyinSplitter.runSelfTest()
         
+        // 新增：分段匹配测试
+        result.segmentedSplitWorking = runSegmentedSplitTest()
+        
         return result
+    }
+    
+    /**
+     * 分段匹配专项测试
+     */
+    private fun runSegmentedSplitTest(): Boolean {
+        val segmentTestCases = mapOf(
+            "wofaxianshujukuyouwenti" to 3, // 至少应该分为3个分段
+            "nihaoshijiehenmeihao" to 2,    // 至少应该分为2个分段
+            "zhongguorenmindaxuexue" to 2   // 至少应该分为2个分段
+        )
+        
+        var allPassed = true
+        
+        for ((input, expectedMinSegments) in segmentTestCases) {
+            try {
+                // 测试分段拆分
+                val segments = UnifiedPinyinSplitter.splitIntoSegments(input)
+                
+                if (segments.size < expectedMinSegments) {
+                    Timber.e("分段拆分测试失败: '$input' 期望至少 $expectedMinSegments 个分段, 实际 ${segments.size} 个")
+                    allPassed = false
+                } else {
+                    Timber.d("分段拆分测试通过: '$input' -> ${segments.size} 个分段")
+                }
+                
+                // 测试分段选项
+                val segmentOptions = UnifiedPinyinSplitter.getSegmentedSplitOptions(input)
+                if (segmentOptions.isEmpty()) {
+                    Timber.e("分段选项测试失败: '$input' 没有返回任何分段选项")
+                    allPassed = false
+                } else {
+                    Timber.d("分段选项测试通过: '$input' -> ${segmentOptions.size} 种选项")
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "分段拆分测试异常: '$input'")
+                allPassed = false
+            }
+        }
+        
+        return allPassed
     }
     
     /**
@@ -301,6 +353,7 @@ object PinyinOptimizationTestSuite {
         report.appendLine("  音节验证: ${if (result.architectureTestResult.validationWorking) "✅" else "❌"}")
         report.appendLine("  性能监控: ${if (result.architectureTestResult.performanceMonitoringWorking) "✅" else "❌"}")
         report.appendLine("  自测试: ${if (result.architectureTestResult.selfTestPassed) "✅" else "❌"}")
+        report.appendLine("  分段拆分: ${if (result.architectureTestResult.segmentedSplitWorking) "✅" else "❌"}")
         report.appendLine()
         
         // 总体评估
@@ -406,14 +459,16 @@ object PinyinOptimizationTestSuite {
         var initialsWorking: Boolean = false,
         var normalizationWorking: Boolean = false,
         var performanceMonitoringWorking: Boolean = false,
-        var selfTestPassed: Boolean = false
+        var selfTestPassed: Boolean = false,
+        var segmentedSplitWorking: Boolean = false
     ) {
         fun allTestsPassed(): Boolean {
             return mainInterfaceWorking && multipleInterfaceWorking && 
                    dynamicInterfaceWorking && smartInterfaceWorking &&
                    validationWorking && syllableCountCorrect &&
                    initialsWorking && normalizationWorking &&
-                   performanceMonitoringWorking && selfTestPassed
+                   performanceMonitoringWorking && selfTestPassed &&
+                   segmentedSplitWorking
         }
     }
 } 

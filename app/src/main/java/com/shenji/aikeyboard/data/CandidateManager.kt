@@ -253,6 +253,12 @@ class CandidateManager(private val repository: DictionaryRepository) {
             }
             
             InputStage.SYLLABLE_SPLIT -> {
+                // 检查是否是长句子输入（需要分段处理）
+                if (input.length > 12) {
+                    Timber.d("检测到长句子输入，启用分段匹配: '$input'")
+                    return queryWithSegmentedMatching(input, limit)
+                }
+                
                 // 拆分音节
                 val syllables = pinyinSplitter.split(input)
                 
@@ -282,6 +288,99 @@ class CandidateManager(private val repository: DictionaryRepository) {
             
             else -> emptyList()
         }
+    }
+    
+    /**
+     * 分段匹配查询 - 新增功能
+     * 处理长句子拼音输入，将其分段后分别查询候选词
+     */
+    private suspend fun queryWithSegmentedMatching(input: String, limit: Int): List<WordFrequency> {
+        val realm = ShenjiApplication.realm
+        
+        // 获取分段拆分方案
+        val segmentOptions = pinyinSplitter.getSegmentedSplitOptions(input)
+        
+        if (segmentOptions.isEmpty()) {
+            Timber.d("无法获取分段方案，回退到普通拆分")
+            return emptyList()
+        }
+        
+        Timber.d("获取到 ${segmentOptions.size} 种分段方案")
+        
+        val allCandidates = mutableListOf<WordFrequency>()
+        val seenWords = mutableSetOf<String>()
+        
+        // 尝试每种分段方案
+        for ((index, segments) in segmentOptions.withIndex()) {
+            Timber.d("尝试分段方案 ${index + 1}: ${segments.map { it.joinToString("+") }}")
+            
+            // 为每个分段查询候选词
+            for ((segmentIndex, segment) in segments.withIndex()) {
+                val segmentPinyin = segment.joinToString(" ")
+                Timber.d("  查询分段 ${segmentIndex + 1}: '$segmentPinyin'")
+                
+                // 精确匹配
+                val exactMatches = realm.query<Entry>("pinyin == $0", segmentPinyin).find()
+                    .sortedByDescending { it.frequency }
+                
+                exactMatches.forEach { entry ->
+                    if (seenWords.add(entry.word)) {
+                        // 为分段匹配的词条添加权重加成
+                        val bonus = when {
+                            segment.size == 1 -> 1.5 // 单字加成
+                            segment.size == 2 -> 2.0 // 双字词加成
+                            segment.size >= 3 -> 2.5 // 多字词加成
+                            else -> 1.0
+                        }
+                        allCandidates.add(WordFrequency(entry.word, (entry.frequency * bonus).toInt()))
+                        Timber.v("    找到精确匹配: ${entry.word} (权重: ${(entry.frequency * bonus).toInt()})")
+                    }
+                }
+                
+                // 如果精确匹配结果不足，尝试前缀匹配
+                if (exactMatches.isEmpty() && segment.size <= 2) {
+                    val prefixMatches = realm.query<Entry>("pinyin BEGINSWITH $0", segmentPinyin).find()
+                        .sortedByDescending { it.frequency }
+                        .take(3) // 限制前缀匹配的数量
+                    
+                    prefixMatches.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            // 前缀匹配的权重稍低
+                            allCandidates.add(WordFrequency(entry.word, entry.frequency / 2))
+                            Timber.v("    找到前缀匹配: ${entry.word} (权重: ${entry.frequency / 2})")
+                        }
+                    }
+                }
+                
+                // 如果是单音节，也查询单字词典
+                if (segment.size == 1) {
+                    val singleCharMatches = realm.query<Entry>(
+                        "type == $0 AND pinyin == $1", 
+                        "chars", segmentPinyin
+                    ).find().sortedByDescending { it.frequency }
+                    
+                    singleCharMatches.forEach { entry ->
+                        if (seenWords.add(entry.word)) {
+                            allCandidates.add(WordFrequency(entry.word, entry.frequency * 2)) // 单字优先
+                            Timber.v("    找到单字匹配: ${entry.word}")
+                        }
+                    }
+                }
+            }
+            
+            // 如果已经找到足够的候选词，可以提前结束
+            if (allCandidates.size >= limit * 2) {
+                break
+            }
+        }
+        
+        // 按权重排序并返回结果
+        val result = allCandidates
+            .sortedByDescending { it.frequency }
+            .take(limit)
+        
+        Timber.d("分段匹配完成，共找到 ${result.size} 个候选词")
+        return result
     }
     
     /**

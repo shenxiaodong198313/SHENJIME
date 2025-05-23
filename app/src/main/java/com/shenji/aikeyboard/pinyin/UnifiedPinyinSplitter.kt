@@ -113,6 +113,62 @@ object UnifiedPinyinSplitter {
         return partialSplit(cleanInput)
     }
     
+    /**
+     * 分段拆分 - 新增功能
+     * 将长拼音字符串拆分为多个独立的词组片段
+     * 适用于句子级别的拼音输入
+     * 
+     * @param input 输入的拼音字符串
+     * @return 分段拆分结果，每个元素是一个词组的音节列表
+     */
+    fun splitIntoSegments(input: String): List<List<String>> {
+        val cleanInput = input.trim().lowercase().replace(" ", "")
+        if (cleanInput.isEmpty()) return emptyList()
+        
+        // 如果输入较短（≤6字符），直接使用普通拆分
+        if (cleanInput.length <= 6) {
+            val result = split(cleanInput)
+            return if (result.isNotEmpty()) listOf(result) else emptyList()
+        }
+        
+        // 长输入使用分段策略
+        return performSegmentedSplit(cleanInput)
+    }
+    
+    /**
+     * 获取分段拆分的候选方案
+     * 返回多种可能的分段方式
+     * 
+     * @param input 输入的拼音字符串
+     * @return 多种分段方案，每个方案包含多个词组
+     */
+    fun getSegmentedSplitOptions(input: String): List<List<List<String>>> {
+        val cleanInput = input.trim().lowercase().replace(" ", "")
+        if (cleanInput.isEmpty()) return emptyList()
+        
+        val options = mutableListOf<List<List<String>>>()
+        
+        // 主要分段方案
+        val primarySegments = splitIntoSegments(cleanInput)
+        if (primarySegments.isNotEmpty()) {
+            options.add(primarySegments)
+        }
+        
+        // 备选分段方案：更细粒度的分割
+        val fineGrainedSegments = performFineGrainedSplit(cleanInput)
+        if (fineGrainedSegments.isNotEmpty() && fineGrainedSegments != primarySegments) {
+            options.add(fineGrainedSegments)
+        }
+        
+        // 备选方案：按固定长度分段
+        val fixedLengthSegments = performFixedLengthSplit(cleanInput)
+        if (fixedLengthSegments.isNotEmpty() && !options.contains(fixedLengthSegments)) {
+            options.add(fixedLengthSegments)
+        }
+        
+        return options
+    }
+    
     // ==================== 辅助功能 ====================
     
     /**
@@ -253,6 +309,168 @@ object UnifiedPinyinSplitter {
         return result
     }
     
+    /**
+     * 执行分段拆分的核心逻辑
+     */
+    private fun performSegmentedSplit(input: String): List<List<String>> {
+        val segments = mutableListOf<List<String>>()
+        var pos = 0
+        
+        while (pos < input.length) {
+            val segment = findNextSegment(input, pos)
+            if (!segment.isEmpty()) {
+                segments.add(segment.syllables)
+                pos = segment.endPos
+            } else {
+                // 无法找到有效分段，尝试单字符处理
+                val remaining = input.substring(pos)
+                val fallbackSplit = partialSplit(remaining)
+                if (fallbackSplit.isNotEmpty()) {
+                    segments.add(fallbackSplit)
+                }
+                break
+            }
+        }
+        
+        return segments
+    }
+    
+    /**
+     * 查找下一个有效的词组分段
+     */
+    private fun findNextSegment(input: String, startPos: Int): SegmentResult {
+        if (startPos >= input.length) return SegmentResult.empty()
+        
+        // 尝试不同长度的分段，优先较长的分段
+        for (segmentLength in minOf(input.length - startPos, 12) downTo 2) {
+            val candidate = input.substring(startPos, startPos + segmentLength)
+            val syllables = split(candidate)
+            
+            // 检查是否是有效的词组分段
+            if (syllables.isNotEmpty() && isValidSegment(syllables)) {
+                return SegmentResult(syllables, startPos + segmentLength)
+            }
+        }
+        
+        // 如果没找到合适的分段，尝试单个音节
+        for (syllableLength in minOf(input.length - startPos, 6) downTo 1) {
+            val candidate = input.substring(startPos, startPos + syllableLength)
+            if (isValidSyllable(candidate)) {
+                return SegmentResult(listOf(candidate), startPos + syllableLength)
+            }
+        }
+        
+        return SegmentResult.empty()
+    }
+    
+    /**
+     * 检查是否是有效的词组分段
+     */
+    private fun isValidSegment(syllables: List<String>): Boolean {
+        // 基本检查：所有音节都有效
+        if (syllables.any { !isValidSyllable(it) }) {
+            return false
+        }
+        
+        // 长度检查：合理的词组长度（1-4个音节）
+        if (syllables.size > 4) {
+            return false
+        }
+        
+        // 可以添加更多的词组有效性检查
+        // 例如：检查是否是常见的词组模式
+        
+        return true
+    }
+    
+    /**
+     * 执行细粒度分段拆分
+     */
+    private fun performFineGrainedSplit(input: String): List<List<String>> {
+        val segments = mutableListOf<List<String>>()
+        var pos = 0
+        
+        while (pos < input.length) {
+            // 优先寻找较短的分段（1-2个音节）
+            val segment = findShortSegment(input, pos)
+            if (!segment.isEmpty()) {
+                segments.add(segment.syllables)
+                pos = segment.endPos
+            } else {
+                // 处理剩余字符
+                val remaining = input.substring(pos, minOf(pos + 3, input.length))
+                val syllables = partialSplit(remaining)
+                if (syllables.isNotEmpty()) {
+                    segments.add(syllables)
+                    pos += remaining.length
+                } else {
+                    pos++
+                }
+            }
+        }
+        
+        return segments
+    }
+    
+    /**
+     * 查找短分段（1-2个音节）
+     */
+    private fun findShortSegment(input: String, startPos: Int): SegmentResult {
+        if (startPos >= input.length) return SegmentResult.empty()
+        
+        // 优先尝试2个音节的组合
+        for (segmentLength in minOf(input.length - startPos, 6) downTo 2) {
+            val candidate = input.substring(startPos, startPos + segmentLength)
+            val syllables = split(candidate)
+            
+            if (syllables.isNotEmpty() && syllables.size <= 2) {
+                return SegmentResult(syllables, startPos + segmentLength)
+            }
+        }
+        
+        // 尝试单个音节
+        for (syllableLength in minOf(input.length - startPos, 4) downTo 1) {
+            val candidate = input.substring(startPos, startPos + syllableLength)
+            if (isValidSyllable(candidate)) {
+                return SegmentResult(listOf(candidate), startPos + syllableLength)
+            }
+        }
+        
+        return SegmentResult.empty()
+    }
+    
+    /**
+     * 按固定长度执行分段拆分
+     */
+    private fun performFixedLengthSplit(input: String): List<List<String>> {
+        val segments = mutableListOf<List<String>>()
+        var pos = 0
+        val segmentSize = 6 // 每段大约6个字符
+        
+        while (pos < input.length) {
+            val endPos = minOf(pos + segmentSize, input.length)
+            val segment = input.substring(pos, endPos)
+            val syllables = split(segment)
+            
+            if (syllables.isNotEmpty()) {
+                segments.add(syllables)
+                pos = endPos
+            } else {
+                // 如果无法拆分，尝试更短的片段
+                val shorterSegment = input.substring(pos, minOf(pos + 3, input.length))
+                val shorterSyllables = partialSplit(shorterSegment)
+                if (shorterSyllables.isNotEmpty()) {
+                    segments.add(shorterSyllables)
+                    pos += shorterSegment.length
+                } else {
+                    pos++
+                }
+            }
+        }
+        
+        return segments
+    }
+    
     // ==================== 兼容性接口 ====================
     
     /**
@@ -315,8 +533,38 @@ object UnifiedPinyinSplitter {
             }
         }
         
+        // 测试分段拆分功能
+        val segmentTestCases = mapOf(
+            "wofaxianwenti" to 2, // 应该分为2-4个分段
+            "nihaoshijie" to 2
+        )
+        
+        for ((input, expectedMinSegments) in segmentTestCases) {
+            val segments = splitIntoSegments(input)
+            if (segments.size < expectedMinSegments) {
+                Timber.e("分段拆分测试失败: '$input' 期望至少 $expectedMinSegments 个分段, 实际 ${segments.size} 个")
+                allPassed = false
+            }
+        }
+        
         Timber.i("统一拼音拆分器自测${if (allPassed) "通过" else "失败"}")
         return allPassed
+    }
+    
+    // ==================== 数据类定义 ====================
+    
+    /**
+     * 分段结果数据类
+     */
+    private data class SegmentResult(
+        val syllables: List<String>,
+        val endPos: Int
+    ) {
+        fun isEmpty(): Boolean = syllables.isEmpty()
+        
+        companion object {
+            fun empty(): SegmentResult = SegmentResult(emptyList(), 0)
+        }
     }
 } 
  

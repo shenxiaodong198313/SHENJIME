@@ -140,9 +140,11 @@ class PinyinTestFragment : Fragment() {
                 // 处理输入
                 if (input.isNotEmpty()) {
                     try {
-                        viewModel.processInput(input)
-                        // 处理完成后更新性能统计
-                        updatePerformanceStats()
+                        lifecycleScope.launch {
+                            viewModel.processInput(input)
+                            // 处理完成后更新性能统计
+                            updatePerformanceStats()
+                        }
                     } catch (e: Exception) {
                         Timber.e(e, "处理拼音输入异常")
                     }
@@ -307,6 +309,23 @@ class PinyinTestFragment : Fragment() {
                 splitResultTextView.text = "音节拆分: 无法拆分"
             } else {
                 splitResultTextView.text = "音节拆分: ${syllables.joinToString(" + ")}"
+            }
+        }
+        
+        // 新增：观察分段拆分结果
+        viewModel.segmentedSplit.observe(viewLifecycleOwner) { segments ->
+            if (segments.isNotEmpty()) {
+                val segmentText = StringBuilder()
+                segmentText.append("分段拆分:\n")
+                segments.forEachIndexed { index, segment ->
+                    segmentText.append("  分段${index + 1}: ${segment.joinToString(" + ")}\n")
+                }
+                
+                // 如果有分段拆分结果，显示在音节拆分下方
+                val currentSplitText = splitResultTextView.text.toString()
+                if (!currentSplitText.contains("分段拆分:")) {
+                    splitResultTextView.text = "$currentSplitText\n\n$segmentText"
+                }
             }
         }
         

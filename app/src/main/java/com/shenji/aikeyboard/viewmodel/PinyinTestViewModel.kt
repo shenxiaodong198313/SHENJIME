@@ -9,18 +9,30 @@ import com.shenji.aikeyboard.pinyin.InputType
 import com.shenji.aikeyboard.pinyin.PinyinCandidate
 import com.shenji.aikeyboard.pinyin.PinyinQueryEngine
 import com.shenji.aikeyboard.pinyin.PinyinQueryResult
+import com.shenji.aikeyboard.pinyin.UnifiedPinyinSplitter
+import com.shenji.aikeyboard.data.CandidateManager
+import com.shenji.aikeyboard.data.DictionaryRepository
+import com.shenji.aikeyboard.ShenjiApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 拼音测试工具的ViewModel，处理核心业务逻辑
- * 使用标准化拼音查询模块进行处理
+ * 使用统一拼音拆分器和候选词管理器
  */
 class PinyinTestViewModel : ViewModel() {
 
-    // 拼音查询引擎
+    // 候选词管理器
+    private val candidateManager = CandidateManager(DictionaryRepository())
+    
+    // 词典仓库
+    private val dictionaryRepository = DictionaryRepository()
+    
+    // 拼音查询引擎（保留用于兼容）
     private val pinyinQueryEngine = PinyinQueryEngine.getInstance()
     
     // 当前查询结果，用于统计来源信息
@@ -48,6 +60,10 @@ class PinyinTestViewModel : ViewModel() {
     // 音节拆分结果
     private val _syllableSplit = MutableLiveData<List<String>>()
     val syllableSplit: LiveData<List<String>> = _syllableSplit
+    
+    // 新增：观察分段拆分结果
+    private val _segmentedSplit = MutableLiveData<List<List<String>>>()
+    val segmentedSplit: LiveData<List<List<String>>> = _segmentedSplit
 
     // 查询条件
     private val _queryCondition = MutableLiveData<String>()
@@ -147,110 +163,149 @@ class PinyinTestViewModel : ViewModel() {
     }
 
     /**
-     * 处理输入，执行分词和查询操作
-     * 只处理当前输入的拼音部分，不包括已确认的文本
+     * 处理输入并生成候选词
      */
-    fun processInput(input: String) {
-        viewModelScope.launch {
-            try {
-                // 只处理当前输入的部分
-                currentInput = input
-                
-                if (currentInput.isEmpty()) {
-                    clearInput()
-                    return@launch
+    suspend fun processInput(input: String) = withContext(Dispatchers.IO) {
+        try {
+            val normalizedInput = input.trim().lowercase()
+            
+            if (normalizedInput.isEmpty()) {
+                clearResults()
+                return@withContext
+            }
+            
+            // 分类输入类型
+            val type = classifyInput(normalizedInput)
+            withContext(Dispatchers.Main) {
+                _inputType.value = type
+            }
+            
+            // 生成匹配规则描述
+            val rule = generateMatchRule(normalizedInput, type)
+            withContext(Dispatchers.Main) {
+                _matchRule.value = rule
+            }
+            
+            // 执行音节拆分
+            val syllables = when (type) {
+                InputType.SYLLABLE_SPLIT -> {
+                    UnifiedPinyinSplitter.split(normalizedInput)
                 }
-                
-                // 先通过标准查询引擎获取输入分析和查询过程等信息
-                val queryResult = pinyinQueryEngine.query(currentInput, 0, true)
-                
-                // 保存查询结果的元数据，用于UI显示
-                _inputType.value = queryResult.inputType
-                _matchRule.value = when (queryResult.inputType) {
-                    InputType.INITIAL_LETTER -> "单字符首字母匹配"
-                    InputType.PINYIN_SYLLABLE -> "单音节拼音匹配"
-                    InputType.SYLLABLE_SPLIT -> "拼音音节拆分匹配"
-                    InputType.ACRONYM -> "首字母缩写匹配"
-                    InputType.DYNAMIC_SYLLABLE -> "动态音节识别匹配"
-                    else -> "未知匹配方式"
+                else -> emptyList()
+            }
+            
+            withContext(Dispatchers.Main) {
+                _syllableSplit.value = syllables
+            }
+            
+            // 新增：执行分段拆分（对于长输入）
+            val segments = if (normalizedInput.length > 12) {
+                UnifiedPinyinSplitter.splitIntoSegments(normalizedInput)
+            } else {
+                emptyList()
+            }
+            
+            withContext(Dispatchers.Main) {
+                _segmentedSplit.value = segments
+            }
+            
+            // 生成查询条件描述
+            val condition = generateQueryCondition(normalizedInput, type, syllables, segments)
+            withContext(Dispatchers.Main) {
+                _queryCondition.value = condition
+            }
+            
+            // 开始查询过程记录
+            val processBuilder = StringBuilder()
+            
+            // 记录拆分过程
+            if (syllables.isNotEmpty()) {
+                processBuilder.append("音节拆分结果: ${syllables.joinToString(" + ")}\n")
+            }
+            
+            // 记录分段拆分过程
+            if (segments.isNotEmpty()) {
+                processBuilder.append("分段拆分结果:\n")
+                segments.forEachIndexed { index, segment ->
+                    processBuilder.append("  分段${index + 1}: ${segment.joinToString(" + ")}\n")
                 }
-                _syllableSplit.value = queryResult.syllables
-                _queryCondition.value = getQueryConditionText(queryResult)
-                _queryProcess.value = queryResult.explanation
-                
-                // 现在使用PinyinIMEAdapter获取候选词，与键盘使用相同的查询逻辑
-                val pinyinAdapter = com.shenji.aikeyboard.keyboard.PinyinIMEAdapter.getInstance()
-                val wordFrequencyList = pinyinAdapter.getCandidates(currentInput, 20)
-                
-                // 将WordFrequency转换为Candidate对象
-                val candidates = wordFrequencyList.map { wordFreq ->
-                    val source = wordFreq.source ?: ""
-                    val querySource = when {
-                        source.contains("Trie") -> com.shenji.aikeyboard.pinyin.QuerySource.TRIE_INDEX
-                        else -> com.shenji.aikeyboard.pinyin.QuerySource.REALM_DATABASE
+                processBuilder.append("\n")
+            }
+            
+            // 查询候选词
+            val startTime = System.currentTimeMillis()
+            val candidates = candidateManager.generateCandidates(normalizedInput, 20)
+            val queryTime = System.currentTimeMillis() - startTime
+            
+            // 记录查询过程
+            processBuilder.append("查询耗时: ${queryTime}ms\n")
+            processBuilder.append("找到候选词: ${candidates.size}个\n")
+            
+            if (segments.isNotEmpty()) {
+                processBuilder.append("\n分段匹配详情:\n")
+                segments.forEachIndexed { index, segment ->
+                    val segmentPinyin = segment.joinToString(" ")
+                    processBuilder.append("  分段${index + 1} '$segmentPinyin' 的候选词:\n")
+                    
+                    // 这里可以添加每个分段的具体匹配结果
+                    val segmentCandidates = candidates.filter { candidate ->
+                        // 简单的匹配逻辑，实际可能需要更复杂的判断
+                        segment.any { syllable -> 
+                            candidate.word.length <= segment.size * 2 // 粗略估计
+                        }
+                    }.take(3)
+                    
+                    segmentCandidates.forEach { candidate ->
+                        processBuilder.append("    - ${candidate.word} (权重: ${candidate.frequency})\n")
                     }
-                    
-                    // 创建PinyinCandidate对象（用于统计来源）
-                    val pinyinCandidate = PinyinCandidate(
-                        word = wordFreq.word,
-                        pinyin = "",  // 这些字段不重要，只需要保留word和querySource
-                        frequency = wordFreq.frequency,
-                        type = "",
-                        querySource = querySource
+                }
+            }
+            
+            withContext(Dispatchers.Main) {
+                _queryProcess.value = processBuilder.toString()
+            }
+            
+            // 转换为Candidate对象
+            val candidateList = candidates.map { wordFreq ->
+                // 查询完整的词条信息
+                val entries = dictionaryRepository.queryByWord(wordFreq.word)
+                if (entries.isNotEmpty()) {
+                    val entry = entries.first()
+                    Candidate(
+                        word = entry.word,
+                        pinyin = entry.pinyin,
+                        frequency = entry.frequency,
+                        type = entry.type
                     )
-                    
-                    // 保存到当前查询结果中，用于统计
-                    currentQueryResult = currentQueryResult?.copy(
-                        candidates = (currentQueryResult?.candidates ?: emptyList()) + pinyinCandidate
-                    )
-                    
-                    // 返回UI使用的Candidate对象
+                } else {
+                    // 如果查询不到，使用默认值
                     Candidate(
                         word = wordFreq.word,
-                        pinyin = "",  // 暂时为空，之后可以从数据库获取完整信息
+                        pinyin = "",
                         frequency = wordFreq.frequency,
-                        type = "",
-                        matchType = Candidate.MatchType.UNKNOWN,
-                        source = if (source.contains("Trie")) "Trie树" else "数据库"
+                        type = "unknown"
                     )
                 }
-                
-                // 更新UI数据
-                _candidates.value = candidates
-                
-                // 直接从候选词列表统计来源信息，而不是从currentQueryResult中
-                val fromTrieCount = candidates.count { it.source.contains("Trie") }
-                val fromDatabaseCount = candidates.count { it.source.contains("数据库") }
-                
-                _candidateStats.value = CandidateStats(
-                    totalCount = candidates.size,
-                    singleCharCount = candidates.count { it.word.length == 1 },
-                    phraseCount = candidates.count { it.word.length > 1 },
-                    fromTrieCount = fromTrieCount,
-                    fromDatabaseCount = fromDatabaseCount
-                )
-                
-                // 在查询过程末尾添加真实的来源统计
-                val existingExplanation = _queryProcess.value ?: ""
-                val sourceInfo = "\n\n来源: Trie树${fromTrieCount}个, 数据库${fromDatabaseCount}个"
-                
-                // 替换掉原有的来源统计行（如果有）
-                val finalExplanation = if (existingExplanation.contains("来源: Trie树")) {
-                    val pattern = Regex("来源: Trie树\\d+个, 数据库\\d+个")
-                    existingExplanation.replace(pattern, "来源: Trie树${fromTrieCount}个, 数据库${fromDatabaseCount}个")
-                } else {
-                    existingExplanation + sourceInfo
-                }
-                
-                _queryProcess.value = finalExplanation
-                
-                Timber.d("查询处理完成: 找到${candidates.size}个候选词")
-            } catch (e: Exception) {
-                Timber.e(e, "处理输入异常")
-                _matchRule.value = "处理异常: ${e.message}"
-                _queryProcess.value = "处理异常: ${e.message}"
-                _candidates.value = emptyList()
-                _candidateStats.value = CandidateStats()
+            }
+            
+            // 统计候选词信息
+            val stats = CandidateStats(
+                totalCount = candidateList.size,
+                singleCharCount = candidateList.count { it.word.length == 1 },
+                phraseCount = candidateList.count { it.word.length > 1 },
+                fromTrieCount = 0, // 暂时设为0，因为当前主要使用数据库
+                fromDatabaseCount = candidateList.size
+            )
+            
+            withContext(Dispatchers.Main) {
+                _candidates.value = candidateList
+                _candidateStats.value = stats
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "处理输入异常: $input")
+            withContext(Dispatchers.Main) {
+                _queryProcess.value = "处理输入时发生异常: ${e.message}"
             }
         }
     }
@@ -305,5 +360,82 @@ class PinyinTestViewModel : ViewModel() {
             fromTrieCount = fromTrieCount,
             fromDatabaseCount = fromDatabaseCount
         )
+    }
+
+    /**
+     * 生成查询条件描述
+     */
+    private fun generateQueryCondition(
+        input: String, 
+        type: InputType, 
+        syllables: List<String>,
+        segments: List<List<String>>
+    ): String {
+        return when (type) {
+            InputType.INITIAL_LETTER -> "首字母查询 = $input"
+            InputType.ACRONYM -> "首字母缩写查询 = $input"
+            InputType.PINYIN_SYLLABLE -> "拼音音节查询 = $input"
+            InputType.SYLLABLE_SPLIT -> {
+                if (segments.isNotEmpty()) {
+                    val segmentDescriptions = segments.mapIndexed { index, segment ->
+                        "分段${index + 1}: ${segment.joinToString(" ")}"
+                    }
+                    "分段匹配查询:\n${segmentDescriptions.joinToString("\n")}"
+                } else if (syllables.isNotEmpty()) {
+                    "音节拆分查询 = ${syllables.joinToString(" ")}"
+                } else {
+                    "音节拆分查询 = 无法拆分"
+                }
+            }
+            else -> "未知查询类型"
+        }
+    }
+    
+    /**
+     * 清除结果
+     */
+    private suspend fun clearResults() {
+        withContext(Dispatchers.Main) {
+            _candidates.value = emptyList()
+            _matchRule.value = ""
+            _syllableSplit.value = emptyList()
+            _segmentedSplit.value = emptyList()
+            _queryCondition.value = ""
+            _queryProcess.value = ""
+            _candidateStats.value = CandidateStats()
+            _inputType.value = InputType.UNKNOWN
+        }
+    }
+    
+    /**
+     * 分类输入类型
+     */
+    private fun classifyInput(input: String): InputType {
+        return when {
+            input.isEmpty() -> InputType.UNKNOWN
+            input.length == 1 && input.matches(Regex("[a-z]")) -> InputType.INITIAL_LETTER
+            input.all { it in 'a'..'z' } && input.length <= 4 && !UnifiedPinyinSplitter.isValidSyllable(input) -> InputType.ACRONYM
+            UnifiedPinyinSplitter.isValidSyllable(input) -> InputType.PINYIN_SYLLABLE
+            else -> InputType.SYLLABLE_SPLIT
+        }
+    }
+    
+    /**
+     * 生成匹配规则描述
+     */
+    private fun generateMatchRule(input: String, type: InputType): String {
+        return when (type) {
+            InputType.INITIAL_LETTER -> "单字符首字母匹配"
+            InputType.ACRONYM -> "首字母缩写匹配"
+            InputType.PINYIN_SYLLABLE -> "单音节拼音匹配"
+            InputType.SYLLABLE_SPLIT -> {
+                if (input.length > 12) {
+                    "长句子分段拆分匹配"
+                } else {
+                    "拼音音节拆分匹配"
+                }
+            }
+            else -> "未知匹配方式"
+        }
     }
 } 

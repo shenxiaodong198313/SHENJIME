@@ -258,10 +258,7 @@ class ShenjiInputMethodService : InputMethodService() {
         // 更新输入框中显示的拼音
         currentInputConnection?.setComposingText(composingText, 1)
         
-        // 更新拼音显示
-        updatePinyinDisplay(composingText.toString())
-        
-        // 显示候选词区域并获取候选词
+        // 显示候选词区域并获取候选词（包含拼音分段显示）
         loadCandidates(composingText.toString())
     }
     
@@ -283,8 +280,7 @@ class ShenjiInputMethodService : InputMethodService() {
                 // 更新输入框中显示的拼音
                 currentInputConnection?.setComposingText(composingText, 1)
                 
-                // 更新拼音显示和候选词
-                updatePinyinDisplay(composingText.toString())
+                // 获取候选词并更新拼音显示（包含分段）
                 loadCandidates(composingText.toString())
             }
         } else {
@@ -473,6 +469,9 @@ class ShenjiInputMethodService : InputMethodService() {
                         val pinyinAdapter = PinyinIMEAdapter.getInstance()
                         val result = pinyinAdapter.getCandidates(input, 20)
                         
+                        // 获取分段拆分结果并更新拼音显示
+                        updatePinyinDisplayWithSegmentation(input)
+                        
                         if (result.isNotEmpty()) {
                             // 更新成员变量
                             candidates = result
@@ -503,6 +502,38 @@ class ShenjiInputMethodService : InputMethodService() {
                 }
             } catch (e: Exception) {
                 Timber.e(e, "启动候选词获取任务失败: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * 更新拼音显示，包含分段拆分结果
+     */
+    private fun updatePinyinDisplayWithSegmentation(input: String) {
+        try {
+            // 获取分段拆分结果
+            val pinyinAdapter = PinyinIMEAdapter.getInstance()
+            val syllables = pinyinAdapter.splitPinyin(input)
+            
+            // 如果有分段结果，显示分段后的拼音（带空格）
+            val displayText = if (syllables.isNotEmpty() && syllables.size > 1) {
+                syllables.joinToString(" ")
+            } else {
+                // 如果没有分段结果或只有一个音节，显示原始输入
+                input
+            }
+            
+            // 更新拼音显示
+            if (::pinyinDisplay.isInitialized) {
+                pinyinDisplay.text = displayText
+                Timber.d("更新拼音显示: '$input' -> '$displayText'")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "更新拼音显示失败: ${e.message}")
+            // 如果分段失败，回退到显示原始输入
+            if (::pinyinDisplay.isInitialized) {
+                pinyinDisplay.text = input
             }
         }
     }
