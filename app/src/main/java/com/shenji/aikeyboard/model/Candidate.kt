@@ -106,7 +106,10 @@ enum class GeneratorType {
     FUZZY_MATCH,        // 模糊匹配生成器
     SMART_SUGGESTION,   // 智能联想生成器
     CONTEXT_PREDICTION, // 上下文预测生成器
-    USER_LEARNING       // 用户学习生成器
+    USER_LEARNING,      // 用户学习生成器
+    COMBINATION,        // 组合生成器
+    PROGRESSIVE,        // 渐进生成器
+    PARTIAL             // 部分匹配生成器
 }
 
 /**
@@ -118,7 +121,9 @@ enum class MatchType {
     FUZZY,              // 模糊匹配
     ACRONYM,            // 首字母匹配
     MIXED,              // 混合匹配
-    PREDICTION          // 预测匹配
+    PREDICTION,         // 预测匹配
+    PARTIAL,            // 部分匹配
+    COMBINATION         // 组合匹配
 }
 
 /**

@@ -18,6 +18,7 @@ import com.shenji.aikeyboard.pinyin.InputType
 import com.shenji.aikeyboard.pinyin.PinyinSplitter
 import io.realm.kotlin.Realm
 import com.shenji.aikeyboard.engine.InputMethodEngine
+import com.shenji.aikeyboard.engine.CombinationCandidateGenerator
 
 // 调试信息类型别名，方便外部引用
 typealias DebugInfo = StagedDictionaryRepository.DebugInfo
@@ -34,6 +35,11 @@ class CandidateManager {
     
     // 旧的查询逻辑组件
     private val dictionaryRepository = DictionaryRepository()
+    private val stagedDictionaryRepository = StagedDictionaryRepository()
+    
+    // 组合候选词生成器
+    private val combinationGenerator = CombinationCandidateGenerator(dictionaryRepository)
+    
     // UnifiedPinyinSplitter是object，不需要实例化
     
     /**
@@ -104,6 +110,11 @@ class CandidateManager {
             // 4. 拼音拆分查询
             if (normalizedInput.length >= 3) {
                 candidates.addAll(queryPinyinSplit(normalizedInput, limit))
+            }
+            
+            // 5. 组合候选词生成（针对长输入且候选词不足的情况）
+            if (normalizedInput.length >= 6 && candidates.size < 3) {
+                candidates.addAll(queryCombination(normalizedInput, limit))
             }
             
             // 去重并排序
@@ -214,6 +225,35 @@ class CandidateManager {
                     confidence = 0.85f
                 ))
                 .build()
+        }
+    }
+    
+    /**
+     * 组合候选词查询
+     */
+    private suspend fun queryCombination(input: String, limit: Int): List<Candidate> {
+        return try {
+            Timber.d("开始组合候选词查询: '$input'")
+            
+            // 使用拼音拆分器获取音节
+            val syllables = UnifiedPinyinSplitter.split(input)
+            if (syllables.isEmpty()) {
+                Timber.d("拼音拆分失败，无法进行组合查询")
+                return emptyList()
+            }
+            
+            Timber.d("拆分音节: ${syllables.joinToString(" ")}")
+            
+            // 使用组合候选词生成器
+            val combinationCandidates = combinationGenerator.generateCombinationCandidates(syllables, limit)
+            
+            Timber.d("组合候选词生成完成: ${combinationCandidates.size} 个")
+            
+            return combinationCandidates
+            
+        } catch (e: Exception) {
+            Timber.e(e, "组合候选词查询失败: $input")
+            emptyList()
         }
     }
     

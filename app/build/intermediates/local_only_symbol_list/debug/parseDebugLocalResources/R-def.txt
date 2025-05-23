@@ -299,6 +299,7 @@ id unload_base_trie_button
 id unload_chars_trie_button
 id verification_code_button
 id view_pager
+layout activity_combination_test
 layout activity_dev_tools
 layout activity_dev_tools_new
 layout activity_dictionary_detail

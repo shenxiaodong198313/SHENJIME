@@ -73,6 +73,8 @@ class CandidateAdapter : ListAdapter<Candidate, CandidateAdapter.ViewHolder>(Can
                 MatchType.ACRONYM -> "缩写"
                 MatchType.MIXED -> "混合"
                 MatchType.PREDICTION -> "预测"
+                MatchType.PARTIAL -> "部分"
+                MatchType.COMBINATION -> "组合"
             }
             
             val typeText = when (candidate.type) {

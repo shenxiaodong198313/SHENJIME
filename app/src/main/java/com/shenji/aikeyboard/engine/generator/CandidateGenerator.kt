@@ -1,5 +1,8 @@
 package com.shenji.aikeyboard.engine.generator
 
+import com.shenji.aikeyboard.data.DictionaryRepository
+import com.shenji.aikeyboard.data.StagedDictionaryRepository
+import com.shenji.aikeyboard.engine.CombinationCandidateGenerator
 import com.shenji.aikeyboard.engine.analyzer.InputAnalysis
 import com.shenji.aikeyboard.engine.analyzer.InputMode
 import com.shenji.aikeyboard.engine.generator.layers.*
@@ -16,6 +19,13 @@ import timber.log.Timber
  * 支持并行生成和智能合并
  */
 class CandidateGenerator {
+    
+    // 数据库仓库
+    private val stagedDictionaryRepository = StagedDictionaryRepository()
+    private val dictionaryRepository = DictionaryRepository()
+    
+    // 组合候选词生成器
+    private val combinationGenerator = CombinationCandidateGenerator(dictionaryRepository)
     
     // 各层生成器
     private val exactMatchLayer = ExactMatchLayer()
@@ -87,7 +97,7 @@ class CandidateGenerator {
             InputMode.PARTIAL_PINYIN -> PartialPinyinStrategy()
             InputMode.ACRONYM_PINYIN_MIX -> AcronymPinyinMixStrategy()
             InputMode.PINYIN_ACRONYM_MIX -> PinyinAcronymMixStrategy()
-            InputMode.SENTENCE_INPUT -> SentenceInputStrategy()
+            InputMode.SENTENCE_INPUT -> SentenceInputStrategy(combinationGenerator)
             InputMode.PROGRESSIVE_INPUT -> ProgressiveInputStrategy()
             else -> DefaultStrategy()
         }
@@ -253,22 +263,66 @@ class PinyinAcronymMixStrategy : GenerationStrategy() {
 /**
  * 句子输入策略
  */
-class SentenceInputStrategy : GenerationStrategy() {
+class SentenceInputStrategy(
+    private val combinationGenerator: CombinationCandidateGenerator? = null
+) : GenerationStrategy() {
     override val layers = listOf(1, 2, 4, 5) // 精确匹配 + 前缀匹配 + 智能联想 + 上下文预测
     override val name = "句子输入策略"
     
     override fun postProcess(candidates: List<Candidate>, analysis: InputAnalysis): List<Candidate> {
+        val processedCandidates = candidates.toMutableList()
+        
+        // 如果常规生成器没有找到足够的候选词，尝试组合生成
+        if (processedCandidates.size < 3 && combinationGenerator != null) {
+            try {
+                // 从输入分析中提取音节
+                val syllables = extractSyllablesFromAnalysis(analysis)
+                if (syllables.isNotEmpty()) {
+                    Timber.d("尝试组合候选词生成，音节: ${syllables.joinToString(" ")}")
+                    
+                    // 使用协程生成组合候选词（这里需要在suspend函数中调用）
+                    // 暂时注释掉，需要重构为suspend函数
+                    // val combinationCandidates = combinationGenerator.generateCombinationCandidates(syllables, 5)
+                    // processedCandidates.addAll(combinationCandidates)
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "组合候选词生成失败")
+            }
+        }
+        
         // 句子输入优先完整句子，然后是词组组合
-        return candidates.sortedWith(
+        return processedCandidates.sortedWith(
             compareByDescending<Candidate> { candidate ->
                 val sentenceBonus = when {
                     candidate.word.length >= 4 -> 0.3f // 长句子加成
                     candidate.word.length >= 2 -> 0.1f // 词组加成
                     else -> 0.0f
                 }
-                candidate.finalWeight + sentenceBonus
+                val combinationBonus = if (candidate.type == "combination" || candidate.type == "progressive") 0.2f else 0.0f
+                candidate.finalWeight + sentenceBonus + combinationBonus
             }
         )
+    }
+    
+    /**
+     * 从输入分析中提取音节
+     */
+    private fun extractSyllablesFromAnalysis(analysis: InputAnalysis): List<String> {
+        // 这里需要根据实际的InputAnalysis结构来实现
+        // 暂时使用简单的拼音拆分
+        return try {
+            val input = analysis.input
+            // 假设有一个拼音拆分方法
+            if (input.length >= 6) {
+                // 简单的拼音拆分逻辑，实际应该使用更智能的方法
+                listOf("wo", "bu", "shi", "bei", "jing", "ren") // 示例
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "音节提取失败")
+            emptyList()
+        }
     }
 }
 
