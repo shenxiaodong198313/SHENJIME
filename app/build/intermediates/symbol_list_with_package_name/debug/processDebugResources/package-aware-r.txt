@@ -3249,6 +3249,7 @@ id base_status_text
 id base_trie_loaded_status
 id base_trie_stats
 id baseline
+id batch_test_button
 id beginOnFirstDraw
 id beginning
 id bestChoice
@@ -3661,6 +3662,7 @@ id request_sms_permission_button
 id request_storage_permission_button
 id reset_performance_button
 id restart
+id result_text_view
 id resultsRecyclerView
 id reverse
 id reverseSawtooth
@@ -3779,6 +3781,7 @@ id tag_unhandled_key_event_manager
 id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
 id test_base_trie_button
+id test_button
 id test_card
 id test_chars_trie_button
 id test_edit_text
@@ -4020,6 +4023,7 @@ layout activity_input_debug
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
+layout activity_pinyin_test
 layout activity_system_check
 layout activity_trie_build
 layout custom_dialog

@@ -66,6 +66,7 @@ id base_progress_text
 id base_status_text
 id base_trie_loaded_status
 id base_trie_stats
+id batch_test_button
 id btnBuildTrie
 id btnCancel
 id btnClearLogs
@@ -204,6 +205,7 @@ id request_permission_button
 id request_sms_permission_button
 id request_storage_permission_button
 id reset_performance_button
+id result_text_view
 id resultsRecyclerView
 id runCheckButton
 id run_cache_test_button
@@ -238,6 +240,7 @@ id switch_z_zh
 id tab_layout
 id tableModules
 id test_base_trie_button
+id test_button
 id test_card
 id test_chars_trie_button
 id test_edit_text
@@ -309,6 +312,7 @@ layout activity_input_debug
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
+layout activity_pinyin_test
 layout activity_system_check
 layout activity_trie_build
 layout dialog_build_status

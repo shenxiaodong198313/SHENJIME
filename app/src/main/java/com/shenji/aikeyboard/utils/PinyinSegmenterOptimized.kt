@@ -148,51 +148,116 @@ object PinyinSegmenterOptimized {
     // 整体认读音节和所有合法音节集合（包含所有主流输入法支持的音节）
     private val syllableSet: Set<String> by lazy {
         val set = mutableSetOf<String>()
-        // 1. 整体认读音节
+        
+        // 1. 完整的汉语拼音音节表（标准版）
         set.addAll(listOf(
-            "zhi", "chi", "shi", "ri", "zi", "ci", "si",
-            "yi", "ya", "yo", "ye", "yao", "you", "yan", "yin", "yang", "ying", "yuan", "yun", "yue",
-            "wu", "wa", "wo", "wai", "wei", "wan", "wen", "weng",
-            "yu", "yue", "yuan", "yun"
+            // 零声母音节
+            "a", "ai", "an", "ang", "ao",
+            "o", "ou", 
+            "e", "en", "eng", "er",
+            "i", "ia", "ie", "iao", "iu", "iong", "in", "ing",
+            "u", "ua", "uo", "uai", "ui", "uan", "un", "uang", "ung",
+            "ü", "üe", "üan", "ün",
+            // v替代ü的写法
+            "v", "ve", "van", "vn",
+            
+            // 整体认读音节
+            "zhi", "chi", "shi", "ri", "zi", "ci", "si", 
+            "yi", "wu", "yu", "ye", "yue", "yuan", "yin", "yun", "ying",
+            
+            // 声母 b
+            "ba", "bo", "bai", "bei", "bao", "ban", "ben", "bang", "beng", 
+            "bi", "bie", "biao", "bian", "bin", "bing", "bu",
+            
+            // 声母 p  
+            "pa", "po", "pai", "pao", "pou", "pan", "pen", "pei", "pang", "peng",
+            "pi", "pie", "piao", "pian", "pin", "ping", "pu",
+            
+            // 声母 m
+            "ma", "mo", "me", "mai", "mao", "mou", "man", "men", "mei", "mang", "meng",
+            "mi", "mie", "miao", "miu", "mian", "min", "ming", "mu",
+            
+            // 声母 f
+            "fa", "fo", "fei", "fou", "fan", "fen", "fang", "feng", "fu",
+            
+            // 声母 d
+            "da", "de", "dai", "dei", "dao", "dou", "dan", "dang", "den", "deng",
+            "di", "die", "diao", "diu", "dian", "ding", "dong", "du", "duan", "dun", "dui", "duo",
+            
+            // 声母 t
+            "ta", "te", "tai", "tao", "tou", "tan", "tang", "teng",
+            "ti", "tie", "tiao", "tian", "ting", "tong", "tu", "tuan", "tun", "tui", "tuo",
+            
+            // 声母 n
+            "na", "nai", "nei", "nao", "ne", "nen", "nan", "nang", "neng",
+            "ni", "nie", "niao", "niu", "nian", "nin", "niang", "ning", "nong", "nou", 
+            "nu", "nuan", "nun", "nuo", "nü", "nüe",
+            
+            // 声母 l
+            "la", "le", "lo", "lai", "lei", "lao", "lou", "lan", "lang", "leng",
+            "li", "lia", "lie", "liao", "liu", "lian", "lin", "liang", "ling", "long",
+            "lu", "luo", "luan", "lun", "lü", "lüe",
+            
+            // 声母 g
+            "ga", "ge", "gai", "gei", "gao", "gou", "gan", "gen", "gang", "geng", "gong",
+            "gu", "gua", "guai", "guan", "guang", "gui", "gun", "guo",
+            
+            // 声母 k
+            "ka", "ke", "kai", "kao", "kou", "kan", "ken", "kang", "keng", "kong",
+            "ku", "kua", "kuai", "kuan", "kuang", "kui", "kun", "kuo",
+            
+            // 声母 h
+            "ha", "he", "hai", "han", "hei", "hao", "hou", "hen", "hang", "heng", "hong",
+            "hu", "hua", "huai", "huan", "hui", "huo", "hun", "huang",
+            
+            // 声母 j
+            "ji", "jia", "jie", "jiao", "jiu", "jian", "jin", "jiang", "jing", "jiong",
+            "ju", "juan", "jun", "jue",
+            
+            // 声母 q
+            "qi", "qia", "qie", "qiao", "qiu", "qian", "qin", "qiang", "qing", "qiong",
+            "qu", "quan", "qun", "que",
+            
+            // 声母 x
+            "xi", "xia", "xie", "xiao", "xiu", "xian", "xin", "xiang", "xing", "xiong",
+            "xu", "xuan", "xun", "xue",
+            
+            // 声母 zh
+            "zha", "zhe", "zhi", "zhai", "zhao", "zhou", "zhan", "zhen", "zhang", "zheng", "zhong",
+            "zhu", "zhua", "zhuai", "zhuan", "zhuang", "zhun", "zhui", "zhuo",
+            
+            // 声母 ch
+            "cha", "che", "chi", "chai", "chao", "chou", "chan", "chen", "chang", "cheng", "chong",
+            "chu", "chua", "chuai", "chuan", "chuang", "chun", "chui", "chuo",
+            
+            // 声母 sh
+            "sha", "she", "shi", "shai", "shao", "shou", "shan", "shen", "shang", "sheng",
+            "shu", "shua", "shuai", "shuan", "shuang", "shun", "shui", "shuo",
+            
+            // 声母 r
+            "re", "ri", "rao", "rou", "ran", "ren", "rang", "reng", "rong",
+            "ru", "rui", "ruan", "run", "ruo",
+            
+            // 声母 z
+            "za", "ze", "zi", "zai", "zao", "zan", "zou", "zang", "zei", "zen", "zeng", "zong",
+            "zu", "zuan", "zun", "zui", "zuo",
+            
+            // 声母 c
+            "ca", "ce", "ci", "cai", "cao", "cou", "can", "cen", "cang", "ceng", "cong",
+            "cu", "cuan", "cun", "cui", "cuo",
+            
+            // 声母 s
+            "sa", "se", "si", "sai", "sao", "sou", "san", "sen", "sang", "seng", "song",
+            "su", "suan", "sun", "sui", "suo",
+            
+            // 声母 y
+            "ya", "yao", "you", "yan", "yang", "yu", "ye", "yue", "yuan", "yi", "yin", "yun", "ying", "yo", "yong",
+            
+            // 声母 w
+            "wa", "wo", "wai", "wei", "wan", "wen", "wang", "weng", "wu"
         ))
-        // 2. 声母+韵母组合
-        for (sm in smb) {
-            for (ym in ymbmax) {
-                set.add(sm + ym)
-            }
-        }
-        // 3. 独立成字韵母
-        for (ym in ymbmin) {
-            set.add(ym)
-        }
-        // 4. 补充常见简拼音节
-        set.addAll(listOf("a", "o", "e", "ai", "ei", "ao", "ou", "an", "en", "ang", "eng", "er", "i", "u", "v"))
-        // 5. 补充用户提供的完整音节表
-        set.addAll(listOf(
-            "b", "ba", "bo", "bai", "bei", "bao", "ban", "ben", "bang", "beng", "bi", "bie", "biao", "bian", "bin", "bing", "bu",
-            "p", "pa", "po", "pai", "pao", "pou", "pan", "pen", "pei", "pang", "peng", "pi", "pie", "piao", "pian", "pin", "ping", "pu",
-            "m", "ma", "mo", "me", "mai", "mao", "mou", "man", "men", "mei", "mang", "meng", "mi", "mie", "miao", "miu", "mian", "min", "ming", "mu",
-            "f", "fa", "fo", "fei", "fou", "fan", "fen", "fang", "feng", "fu",
-            "d", "da", "de", "dai", "dei", "dao", "dou", "dan", "dang", "den", "deng", "di", "die", "diao", "diu", "dian", "ding", "dong", "du", "duan", "dun", "dui", "duo",
-            "t", "ta", "te", "tai", "tao", "tou", "tan", "tang", "teng", "ti", "tie", "tiao", "tian", "ting", "tong", "tu", "tuan", "tun", "tui", "tuo",
-            "n", "na", "nai", "nei", "nao", "ne", "nen", "nan", "nang", "neng", "ni", "nie", "niao", "niu", "nian", "nin", "niang", "ning", "nong", "nou", "nu", "nuan", "nun", "nuo", "nü", "nüe",
-            "l", "la", "le", "lo", "lai", "lei", "lao", "lou", "lan", "lang", "leng", "li", "lia", "lie", "liao", "liu", "lian", "lin", "liang", "ling", "long", "lu", "luo", "lou", "luan", "lun", "lü", "lüe",
-            "g", "ga", "ge", "gai", "gei", "gao", "gou", "gan", "gen", "gang", "geng", "gong", "gu", "gua", "guai", "guan", "guang", "gui", "guo",
-            "k", "ka", "ke", "kai", "kao", "kou", "kan", "ken", "kang", "keng", "kong", "ku", "kua", "kuai", "kuan", "kuang", "kui", "kun", "kuo",
-            "h", "ha", "he", "hai", "han", "hei", "hao", "hou", "hen", "hang", "heng", "hong", "hu", "hua", "huai", "huan", "hui", "huo", "hun", "huang",
-            "j", "ji", "jia", "jie", "jiao", "jiu", "jian", "jin", "jiang", "jing", "jiong", "ju", "juan", "jun", "jue",
-            "q", "qi", "qia", "qie", "qiao", "qiu", "qian", "qin", "qiang", "qing", "qiong", "qu", "quan", "qun", "que",
-            "x", "xi", "xia", "xie", "xiao", "xiu", "xian", "xin", "xiang", "xing", "xiong", "xu", "xuan", "xun", "xue",
-            "zh", "zha", "zhe", "zhi", "zhai", "zhao", "zhou", "zhan", "zhen", "zhang", "zheng", "zhong", "zhu", "zhua", "zhuai", "zhuan", "zhuang", "zhun", "zhui", "zhuo",
-            "ch", "cha", "che", "chi", "chai", "chao", "chou", "chan", "chen", "chang", "cheng", "chong", "chu", "chua", "chuai", "chuan", "chuang", "chun", "chui", "chuo",
-            "sh", "sha", "she", "shi", "shai", "shao", "shou", "shan", "shen", "shang", "sheng", "shu", "shua", "shuai", "shuan", "shuang", "shun", "shui", "shuo",
-            "r", "re", "ri", "rao", "rou", "ran", "ren", "rang", "reng", "rong", "ru", "rui", "ruan", "run", "ruo",
-            "z", "za", "ze", "zi", "zai", "zao", "zan", "zou", "zang", "zei", "zen", "zeng", "zong", "zu", "zuan", "zun", "zui", "zuo",
-            "c", "ca", "ce", "ci", "cai", "cao", "cou", "can", "cen", "cang", "ceng", "cong", "cu", "cuan", "cun", "cui", "cuo",
-            "s", "sa", "se", "si", "sai", "sao", "sou", "san", "sen", "sang", "seng", "song", "su", "suan", "sun", "sui", "suo",
-            "y", "ya", "yao", "you", "yan", "yang", "yu", "ye", "yue", "yuan", "yi", "yin", "yun", "ying", "yo", "yong",
-            "w", "wa", "wo", "wai", "wei", "wan", "wen", "wang", "weng", "wu"
-        ))
+        
+        Timber.d("拼音音节集合初始化完成，共 ${set.size} 个音节")
         set
     }
     
@@ -330,8 +395,9 @@ object PinyinSegmenterOptimized {
         dp[0] = true // 空字符串可以被拆分
         
         for (i in 1..n) {
-            // 修复：从短到长尝试音节，确保能找到所有可能的拆分
-            for (j in i - 1 downTo maxOf(0, i - 6)) { // 最长音节不超过6个字符
+            // 修复：从长到短尝试音节，确保优先选择最长的音节
+            for (len in minOf(i, 6) downTo 1) { // 最长音节不超过6个字符
+                val j = i - len
                 if (dp[j]) {
                     // 优化：避免重复substring，直接检查字符匹配
                     if (isValidSyllableOptimized(s, j, i)) {
@@ -509,5 +575,45 @@ object PinyinSegmenterOptimized {
      */
     fun getValidSyllables(): Set<String> {
         return syllableSet
+    }
+
+    /**
+     * 测试拼音拆分功能
+     * 用于调试和验证算法正确性
+     */
+    fun testSplit(input: String): String {
+        val result = cut(input)
+        val isValid = result.all { isValidSyllable(it) }
+        val reconstructed = result.joinToString("")
+        val isComplete = reconstructed == input.lowercase()
+        
+        return """
+            |测试输入: '$input'
+            |拆分结果: ${result.joinToString(" + ")}
+            |音节有效性: ${if (isValid) "✓ 全部有效" else "✗ 包含无效音节"}
+            |完整性检查: ${if (isComplete) "✓ 完整" else "✗ 不完整"}
+            |重构结果: '$reconstructed'
+        """.trimMargin()
+    }
+    
+    /**
+     * 批量测试常见拼音
+     */
+    fun runBatchTest(): String {
+        val testCases = listOf(
+            "wo", "shi", "bei", "jing", "ren",
+            "nihao", "beijing", "zhongguo",
+            "woshibeijingren", "nihaoshijie"
+        )
+        
+        val results = StringBuilder()
+        results.appendLine("=== 拼音拆分批量测试 ===")
+        
+        testCases.forEach { testCase ->
+            results.appendLine(testSplit(testCase))
+            results.appendLine()
+        }
+        
+        return results.toString()
     }
 } 
