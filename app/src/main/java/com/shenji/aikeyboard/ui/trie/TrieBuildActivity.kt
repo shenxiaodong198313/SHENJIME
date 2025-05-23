@@ -805,11 +805,13 @@ class TrieBuildActivity : AppCompatActivity() {
         val etBatchSize = dialogView.findViewById<EditText>(R.id.etBatchSize)
         val etNumWorkers = dialogView.findViewById<EditText>(R.id.etNumWorkers)
         
-        // 设置默认值
+        // 设置默认值 - 更保守的默认值，减少内存占用和处理压力
         val availableProcessors = Runtime.getRuntime().availableProcessors()
-        val defaultWorkers = if (availableProcessors > 2) availableProcessors - 1 else 2
+        // 减少默认线程数，避免过多线程竞争
+        val defaultWorkers = if (availableProcessors > 3) availableProcessors / 2 else 1
         
-        etBatchSize.setText("1000")
+        // 减小默认批量大小，减轻内存压力
+        etBatchSize.setText("500")
         etNumWorkers.setText(defaultWorkers.toString())
         
         // 设置按钮
@@ -832,14 +834,14 @@ class TrieBuildActivity : AppCompatActivity() {
                 val batchSize = batchSizeText.toInt()
                 val numWorkers = numWorkersText.toInt()
                 
-                // 验证参数合理性
-                if (batchSize <= 0 || batchSize > 10000) {
-                    Toast.makeText(this, "批量大小应在1-10000之间", Toast.LENGTH_SHORT).show()
+                // 验证参数合理性，添加更保守的上限
+                if (batchSize <= 0 || batchSize > 5000) {
+                    Toast.makeText(this, "批量大小应在1-5000之间", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
                 
-                if (numWorkers <= 0 || numWorkers > availableProcessors * 2) {
-                    Toast.makeText(this, "工作线程数应在1-${availableProcessors * 2}之间", Toast.LENGTH_SHORT).show()
+                if (numWorkers <= 0 || numWorkers > availableProcessors) {
+                    Toast.makeText(this, "工作线程数应在1-${availableProcessors}之间", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
                 
@@ -861,6 +863,9 @@ class TrieBuildActivity : AppCompatActivity() {
      * 构建基础词典Trie树
      */
     private fun buildBaseTrie(batchSize: Int, numWorkers: Int) {
+        // 提前进行垃圾回收，释放内存
+        System.gc()
+        
         // 显示进度条
         baseProgress.visibility = View.VISIBLE
         baseProgressText.visibility = View.VISIBLE
@@ -868,6 +873,16 @@ class TrieBuildActivity : AppCompatActivity() {
         
         // 禁用构建按钮
         buildBaseButton.isEnabled = false
+        
+        // 提示用户构建可能需要几分钟，并保持屏幕开启
+        Toast.makeText(
+            this@TrieBuildActivity,
+            "构建过程可能需要几分钟，请保持应用在前台",
+            Toast.LENGTH_LONG
+        ).show()
+        
+        // 保持屏幕常亮，避免休眠导致构建中断
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         
         // 开始构建
         lifecycleScope.launch(Dispatchers.IO) {
@@ -892,16 +907,27 @@ class TrieBuildActivity : AppCompatActivity() {
                 // 创建临时的TrieBuilder实例，并传入自定义参数
                 val customTrieBuilder = TrieBuilder(this@TrieBuildActivity, batchSize, numWorkers)
                 
+                // 设置进度更新的延迟计数器，减少UI更新频率
+                var progressUpdateCounter = 0
+                
                 // 构建基础词典Trie树
                 val trie = customTrieBuilder.buildBaseTrie { progress, message ->
-                    // 确保在主线程更新UI，使用lifecycleScope.launch而不是直接更新
-                    // 这样可以避免在异步回调中直接更新UI
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        try {
-                            baseProgress.progress = progress
-                            baseProgressText.text = message
-                        } catch (e: Exception) {
-                            Timber.e(e, "更新进度UI时发生错误")
+                    // 限制UI更新频率，避免过多的UI线程负担
+                    progressUpdateCounter++
+                    if (progress == -1 || progress == 100 || progress % 5 == 0 || progressUpdateCounter % 10 == 0) {
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            try {
+                                baseProgress.progress = progress
+                                baseProgressText.text = message
+                                
+                                // 在关键进度点保持唤醒CPU
+                                if (progress % 20 == 0) {
+                                    // 更新内存信息，同时也起到唤醒CPU的作用
+                                    updateMemoryInfo()
+                                }
+                            } catch (e: Exception) {
+                                Timber.e(e, "更新进度UI时发生错误")
+                            }
                         }
                     }
                 }
@@ -909,11 +935,17 @@ class TrieBuildActivity : AppCompatActivity() {
                 // 保存Trie树
                 val file = customTrieBuilder.saveTrie(trie, TrieBuilder.TrieType.BASE)
                 
+                // 再次进行垃圾回收，为加载Trie腾出内存
+                System.gc()
+                
                 // 自动尝试加载到内存
                 val loadSuccess = trieManager.loadTrieToMemory(TrieBuilder.TrieType.BASE)
                 
                 // 更新UI
                 withContext(Dispatchers.Main) {
+                    // 恢复屏幕自动休眠
+                    window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    
                     val lastModified = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                         .format(Date(file.lastModified()))
                     val fileSize = formatFileSize(file.length())
@@ -947,6 +979,9 @@ class TrieBuildActivity : AppCompatActivity() {
                 
                 // 更新UI
                 withContext(Dispatchers.Main) {
+                    // 恢复屏幕自动休眠
+                    window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    
                     baseStatusText.text = "状态: 构建失败"
                     baseProgressText.text = "错误: ${e.message}"
                     Toast.makeText(this@TrieBuildActivity, "构建失败: ${e.message}", Toast.LENGTH_SHORT).show()

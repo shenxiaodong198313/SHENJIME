@@ -137,8 +137,22 @@ class TrieBuilder(
             progressCallback(5, "获取到${totalCount}个基础词条数量")
             Timber.d("获取到${totalCount}个基础词条")
             
+            // 检查总内存可用情况
+            val runtime = Runtime.getRuntime()
+            val maxMemory = runtime.maxMemory() / (1024 * 1024)
+            Timber.d("设备最大可用内存: ${maxMemory}MB")
+            logFile.appendText("设备最大可用内存: ${maxMemory}MB\n")
+            
+            // 根据可用内存调整参数
+            var adjustedBatchSize = customBatchSize
+            if (maxMemory < 200 && adjustedBatchSize > 200) {
+                adjustedBatchSize = 200
+                Timber.d("检测到内存较小，自动调整批量大小为: $adjustedBatchSize")
+                logFile.appendText("内存较小，自动调整批量大小为: $adjustedBatchSize\n")
+            }
+            
             // 分批加载并处理词条，减小内存压力
-            val batchSize = customBatchSize  // 使用自定义批量大小
+            val batchSize = adjustedBatchSize  // 使用调整后的批量大小
             val totalBatches = (totalCount + batchSize - 1) / batchSize
             
             // 统计数据
@@ -160,12 +174,31 @@ class TrieBuilder(
             logFile.appendText("检测到${availableProcessors}个处理器核心，将使用${actualCores}个核心进行处理\n")
             logFile.appendText("批量大小设置为: $batchSize\n\n")
             
+            // 添加自动暂停和恢复机制
+            var lastPauseTime = System.currentTimeMillis()
+            val pauseInterval = 5000L // 每5秒钟暂停一次，让系统有喘息机会
+            var batchesProcessedSinceLastPause = 0
+            
             try {
                 // 分批处理所有基础词条
                 for (batchIndex in 0 until totalBatches) {
                     val offset = batchIndex * batchSize
                     
                     try {
+                        // 检查是否需要暂停
+                        batchesProcessedSinceLastPause++
+                        val currentTime = System.currentTimeMillis()
+                        if (batchesProcessedSinceLastPause >= 3 && currentTime - lastPauseTime > pauseInterval) {
+                            // 让系统短暂休息，减轻CPU负担，避免过热
+                            Timber.d("暂停200ms让系统有喘息机会")
+                            kotlinx.coroutines.delay(200) // 短暂暂停
+                            lastPauseTime = currentTime
+                            batchesProcessedSinceLastPause = 0
+                            
+                            // 释放一部分内存
+                            System.gc()
+                        }
+                        
                         // 日志记录当前批次开始处理
                         Timber.d("开始处理批次 ${batchIndex+1}/${totalBatches}，偏移量: $offset")
                         logFile.appendText("开始处理批次 ${batchIndex+1}/${totalBatches}，偏移量: $offset\n")
@@ -174,7 +207,7 @@ class TrieBuilder(
                         val entries = repository.getEntriesByTypeOrderedByFrequency("base", offset, batchSize)
                         
                         // 周期性释放内存，减轻内存压力
-                        if (batchIndex % 5 == 0) {
+                        if (batchIndex % 3 == 0) {
                             System.gc()
                         }
                         
@@ -221,7 +254,11 @@ class TrieBuilder(
                                             batchErrorCount.incrementAndGet()
                                             val errorMsg = "处理词条'${entry.word}'(${entry.pinyin})时异常: ${e.message}"
                                             Timber.e(e, errorMsg)
-                                            logFile.appendText("$errorMsg\n${e.stackTraceToString()}\n\n")
+                                            
+                                            // 为防止日志文件过大，只记录每批次的前10个错误
+                                            if (batchErrorCount.get() <= 10) {
+                                                logFile.appendText("$errorMsg\n${e.stackTraceToString()}\n\n")
+                                            }
                                         }
                                     }
                                 }
@@ -253,6 +290,19 @@ class TrieBuilder(
                         Timber.d(memoryInfo)
                         logFile.appendText("$memoryInfo\n\n")
                         
+                        // 每10个批次，检查一次内存使用率，如果超过80%，则尝试释放内存
+                        if (batchIndex % 10 == 9) {
+                            val usedRatio = usedMemoryMB.toDouble() / maxMemory.toDouble()
+                            if (usedRatio > 0.8) {
+                                Timber.w("内存使用率超过80%，尝试释放内存")
+                                logFile.appendText("警告: 内存使用率${(usedRatio * 100).toInt()}%，尝试释放内存\n")
+                                
+                                // 强制垃圾回收
+                                System.gc()
+                                kotlinx.coroutines.delay(500) // 给GC一些时间
+                            }
+                        }
+                        
                     } catch (e: Exception) {
                         // 捕获并记录批次处理过程中的异常
                         errorCount++
@@ -267,6 +317,10 @@ class TrieBuilder(
                         )
                         
                         // 短暂延迟，让系统有时间恢复
+                        kotlinx.coroutines.delay(1000)
+                        
+                        // 强制垃圾回收
+                        System.gc()
                         kotlinx.coroutines.delay(500)
                     }
                 }
@@ -283,6 +337,7 @@ class TrieBuilder(
             
             // 手动触发垃圾回收，优化内存使用
             System.gc()
+            kotlinx.coroutines.delay(1000) // 给GC一些时间
             
             // 获取内存统计信息
             val stats = trie.getMemoryStats()
