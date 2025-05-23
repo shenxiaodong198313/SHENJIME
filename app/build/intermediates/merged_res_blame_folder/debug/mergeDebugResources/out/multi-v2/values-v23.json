@@ -4,7 +4,7 @@
             "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-2:/values-v23/values-v23.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-4\\34d9bb80440e1acfb573b0d7a667ce42\\transformed\\appcompat-1.7.0\\res\\values-v23\\values-v23.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\47273312db2f584221da6b2134a5208a\\transformed\\appcompat-1.7.0\\res\\values-v23\\values-v23.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,20,34,35,36,39,43,44,45,46",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -15,26 +15,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-4\\b43958dc0f7d3b79ccaaba8f2d23215c\\transformed\\material-1.11.0\\res\\values-v23\\values-v23.xml",
-                    "from": {
-                        "startLines": "2,5,9,13,16,19,22,25,28,32",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,271,413,574,784,991,1198,1401,1603,1868",
-                        "endLines": "4,8,12,15,18,21,24,27,31,35",
-                        "endColumns": "10,10,10,10,10,10,10,10,10,10",
-                        "endOffsets": "266,408,569,779,986,1193,1396,1598,1863,2136"
-                    },
-                    "to": {
-                        "startLines": "53,56,60,64,67,70,73,76,79,83",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "3382,3598,3740,3901,4111,4318,4525,4728,4930,5195",
-                        "endLines": "55,59,63,66,69,72,75,78,82,86",
-                        "endColumns": "10,10,10,10,10,10,10,10,10,10",
-                        "endOffsets": "3593,3735,3896,4106,4313,4520,4723,4925,5190,5463"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-4\\b5231189aa90fc767cc70259e3a7f1e5\\transformed\\cardview-1.0.0\\res\\values-v23\\values-v23.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\0adc4d30725a3183bdd2ce5f5efb361f\\transformed\\cardview-1.0.0\\res\\values-v23\\values-v23.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -50,6 +31,25 @@
                         "endLines": "52",
                         "endColumns": "12",
                         "endOffsets": "3377"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\492af13c4a655a9d2b14a56ac5c4861f\\transformed\\material-1.11.0\\res\\values-v23\\values-v23.xml",
+                    "from": {
+                        "startLines": "2,5,9,13,16,19,22,25,28,32",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,271,413,574,784,991,1198,1401,1603,1868",
+                        "endLines": "4,8,12,15,18,21,24,27,31,35",
+                        "endColumns": "10,10,10,10,10,10,10,10,10,10",
+                        "endOffsets": "266,408,569,779,986,1193,1396,1598,1863,2136"
+                    },
+                    "to": {
+                        "startLines": "53,56,60,64,67,70,73,76,79,83",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "3382,3598,3740,3901,4111,4318,4525,4728,4930,5195",
+                        "endLines": "55,59,63,66,69,72,75,78,82,86",
+                        "endColumns": "10,10,10,10,10,10,10,10,10,10",
+                        "endOffsets": "3593,3735,3896,4106,4313,4520,4723,4925,5190,5463"
                     }
                 }
             ]

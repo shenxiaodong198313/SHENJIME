@@ -104,6 +104,45 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/reinit_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/trie_card">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="数据库重新初始化"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="从词典源文件重新构建数据库，应用性能优化和新的索引结构"
+                android:textColor="#757575" />
+
+            <Button
+                android:id="@+id/reinit_db_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="重新初始化数据库"
+                android:backgroundTint="#FF5722" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -111,6 +150,6 @@
         android:text="注：双Trie树索引可以提高拼音查询速度约10倍，特别是单字查询"
         android:textColor="#4CAF50"
         android:textStyle="italic"
-        app:layout_constraintTop_toBottomOf="@id/trie_card" />
+        app:layout_constraintTop_toBottomOf="@id/reinit_card" />
 
 </androidx.constraintlayout.widget.ConstraintLayout> 

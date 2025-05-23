@@ -444,7 +444,7 @@ class SystemChecker(private val context: Context) {
             details.appendLine("写入存储权限: ${if (hasWritePermission) "已授予" else "未授予"}")
             
             // 2. 检查源数据库文件是否存在
-            val sourceFile = dictionaryRepository.getDictionaryFile()
+            val sourceFile = ShenjiApplication.instance.getDictionaryFile()
             val sourceFileExists = sourceFile.exists()
             val sourceFileSize = if (sourceFileExists) dictionaryRepository.formatFileSize(sourceFile.length()) else "0 B"
             

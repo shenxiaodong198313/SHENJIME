@@ -4,7 +4,7 @@ import android.content.Context
 import android.widget.TextView
 import com.shenji.aikeyboard.data.CandidateManager
 import com.shenji.aikeyboard.data.CandidateWeight
-import com.shenji.aikeyboard.data.DebugInfo
+// import com.shenji.aikeyboard.data.DebugInfo  // 移除这个导入，因为DebugInfo类在被注释的文件中
 import com.shenji.aikeyboard.model.Candidate
 import com.shenji.aikeyboard.model.WordFrequency
 import kotlinx.coroutines.CoroutineScope

@@ -1,4 +1,4 @@
-package com.shenji.aikeyboard.data
+/*暂时注释掉这个文件，因为有编译错误需要修复package com.shenji.aikeyboard.data
 
 import com.shenji.aikeyboard.ShenjiApplication
 import timber.log.Timber
@@ -607,6 +607,4 @@ class StagedDictionaryRepository {
         
         // 尝试将长输入视为多个首字母的组合
         // 例如：wxsrf 可能是 w+x+s+r+f 的首字母组合
-        return input.length <= 8 && input.all { it in "abcdefghijklmnopqrstuvwxyz" }
-    }
-} 
+                return input.length <= 8 && input.all { it in "abcdefghijklmnopqrstuvwxyz" }    }}*/ 

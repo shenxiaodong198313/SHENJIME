@@ -9,7 +9,7 @@ import android.util.AttributeSet
 import android.view.View
 import com.shenji.aikeyboard.data.CandidateWeight
 import com.shenji.aikeyboard.data.DictionaryRepository
-import com.shenji.aikeyboard.data.StagedDictionaryRepository
+// import com.shenji.aikeyboard.data.StagedDictionaryRepository
 import com.shenji.aikeyboard.model.WordFrequency
 import timber.log.Timber
 

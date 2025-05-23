@@ -17,6 +17,8 @@ import io.realm.kotlin.RealmConfiguration
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -37,7 +39,6 @@ class ShenjiApplication : Application() {
             private set
             
         lateinit var realm: Realm
-            private set
             
         // 候选词管理器单例
         val candidateManager by lazy {
@@ -113,19 +114,24 @@ class ShenjiApplication : Application() {
                 Timber.e(e, "初始化Trie树管理器失败")
             }
             
-            // 延迟2秒后在后台线程启动词典加载，避免启动卡顿
+            // 延迟2秒后在后台线程启动词典加载和缓存预热，避免启动卡顿
             Handler(Looper.getMainLooper()).postDelayed({
-                Thread {
+                GlobalScope.launch(Dispatchers.IO) {
                     try {
                         // 让应用界面先完全显示，再开始加载词典
-                        Thread.sleep(2000)
-                        logStartupMessage("开始延迟加载词典数据")
-                        // 不再需要显式调用loadCharsFromRealm，在init()中已处理词典加载
+                        delay(2000)
+                        logStartupMessage("开始延迟加载词典数据和缓存预热")
+                        
+                        // 预热数据库缓存
+                        val repository = DictionaryRepository()
+                        repository.warmupCache()
+                        logStartupMessage("缓存预热完成")
+                        
                     } catch (e: Exception) {
                         logStartupMessage("延迟加载词典失败: ${e.message}")
                         Timber.e(e, "延迟加载词典失败")
                     }
-                }.start()
+                }
             }, 3000)
             
             logStartupMessage("应用初始化完成")

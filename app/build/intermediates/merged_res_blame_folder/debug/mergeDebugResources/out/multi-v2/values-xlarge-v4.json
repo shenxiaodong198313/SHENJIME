@@ -4,7 +4,7 @@
             "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-2:/values-xlarge-v4/values-xlarge-v4.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-4\\34d9bb80440e1acfb573b0d7a667ce42\\transformed\\appcompat-1.7.0\\res\\values-xlarge-v4\\values-xlarge-v4.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\47273312db2f584221da6b2134a5208a\\transformed\\appcompat-1.7.0\\res\\values-xlarge-v4\\values-xlarge-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7",
                         "startColumns": "4,4,4,4,4,4",

@@ -3656,6 +3656,8 @@ id realm_dict_button
 id realm_dict_card
 id rectangles
 id refresh_logs_button
+id reinit_card
+id reinit_db_button
 id report_drawn
 id request_permission_button
 id request_sms_permission_button

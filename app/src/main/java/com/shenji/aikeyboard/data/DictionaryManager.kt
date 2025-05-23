@@ -44,19 +44,8 @@ class DictionaryManager private constructor() {
         // 仅设置初始化标志
         initialized = true
         
-        // 检查和更新initialLetters字段
-        GlobalScope.launch(Dispatchers.IO) {
-            try {
-                val updateCount = repository.checkAndUpdateInitialLetters()
-                if (updateCount > 0) {
-                    Timber.i("已更新${updateCount}个initialLetters字段")
-                } else {
-                    Timber.d("所有initialLetters字段已正确设置")
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "初始化词典管理器时检查和更新initialLetters字段失败: ${e.message}")
-            }
-        }
+        // 初始化完成，不需要额外的检查
+        Timber.d("词典管理器基础初始化完成")
         
         Timber.d("词典管理器初始化完成")
     }

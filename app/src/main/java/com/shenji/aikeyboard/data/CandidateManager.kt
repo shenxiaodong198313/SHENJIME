@@ -21,7 +21,7 @@ import com.shenji.aikeyboard.engine.InputMethodEngine
 import com.shenji.aikeyboard.engine.CombinationCandidateGenerator
 
 // 调试信息类型别名，方便外部引用
-typealias DebugInfo = StagedDictionaryRepository.DebugInfo
+// typealias DebugInfo = StagedDictionaryRepository.DebugInfo
 
 /**
  * 候选词管理器 - 临时修复版本
@@ -35,7 +35,7 @@ class CandidateManager {
     
     // 旧的查询逻辑组件
     private val dictionaryRepository = DictionaryRepository()
-    private val stagedDictionaryRepository = StagedDictionaryRepository()
+    // private val stagedDictionaryRepository = StagedDictionaryRepository()
     
     // 组合候选词生成器
     private val combinationGenerator = CombinationCandidateGenerator(dictionaryRepository)
@@ -132,99 +132,119 @@ class CandidateManager {
     }
     
     /**
-     * 单字母查询
+     * 单字母查询 - 优化版
      */
     private suspend fun querySingleLetter(input: String, limit: Int): List<Candidate> {
-        val wordFreqs = dictionaryRepository.searchBasicEntries(input, limit, listOf("chars"))
-        return wordFreqs.map { wordFreq ->
-            CandidateBuilder()
-                .word(wordFreq.word)
-                .pinyin("")
-                .initialLetters(input)
-                .frequency(wordFreq.frequency)
-                .type("chars")
-                .weight(CandidateWeight.default(wordFreq.frequency))
-                .source(CandidateSource(
-                    generator = GeneratorType.EXACT_MATCH,
-                    matchType = MatchType.EXACT,
-                    layer = 1,
-                    confidence = 1.0f
-                ))
-                .build()
+        return try {
+            val wordFreqs = dictionaryRepository.searchBasicEntries(input, limit, listOf("chars"))
+            wordFreqs.map { wordFreq ->
+                CandidateBuilder()
+                    .word(wordFreq.word)
+                    .pinyin("")
+                    .initialLetters(input)
+                    .frequency(wordFreq.frequency)
+                    .type("chars")
+                    .weight(CandidateWeight.default(wordFreq.frequency))
+                    .source(CandidateSource(
+                        generator = GeneratorType.EXACT_MATCH,
+                        matchType = MatchType.EXACT,
+                        layer = 1,
+                        confidence = 1.0f
+                    ))
+                    .build()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "单字母查询失败: $input")
+            emptyList()
         }
     }
     
     /**
-     * 缩写查询
+     * 缩写查询 - 优化版
      */
     private suspend fun queryAcronym(input: String, limit: Int): List<Candidate> {
-        val wordFreqs = dictionaryRepository.searchByInitialLetters(input, limit)
-        return wordFreqs.map { wordFreq ->
-            CandidateBuilder()
-                .word(wordFreq.word)
-                .pinyin("")
-                .initialLetters(input)
-                .frequency(wordFreq.frequency)
-                .type("acronym")
-                .weight(CandidateWeight.default(wordFreq.frequency))
-                .source(CandidateSource(
-                    generator = GeneratorType.EXACT_MATCH,
-                    matchType = MatchType.ACRONYM,
-                    layer = 1,
-                    confidence = 0.9f
-                ))
-                .build()
+        return try {
+            val wordFreqs = dictionaryRepository.searchByInitialLetters(input, limit)
+            wordFreqs.map { wordFreq ->
+                CandidateBuilder()
+                    .word(wordFreq.word)
+                    .pinyin("")
+                    .initialLetters(input)
+                    .frequency(wordFreq.frequency)
+                    .type("acronym")
+                    .weight(CandidateWeight.default(wordFreq.frequency))
+                    .source(CandidateSource(
+                        generator = GeneratorType.EXACT_MATCH,
+                        matchType = MatchType.ACRONYM,
+                        layer = 1,
+                        confidence = 0.9f
+                    ))
+                    .build()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "缩写查询失败: $input")
+            emptyList()
         }
     }
     
     /**
-     * 拼音查询
+     * 拼音查询 - 优化版
      */
     private suspend fun queryPinyin(input: String, limit: Int): List<Candidate> {
-        val wordFreqs = dictionaryRepository.searchBasicEntries(input, limit)
-        return wordFreqs.map { wordFreq ->
-            CandidateBuilder()
-                .word(wordFreq.word)
-                .pinyin(input)
-                .initialLetters("")
-                .frequency(wordFreq.frequency)
-                .type("pinyin")
-                .weight(CandidateWeight.default(wordFreq.frequency))
-                .source(CandidateSource(
-                    generator = GeneratorType.EXACT_MATCH,
-                    matchType = MatchType.EXACT,
-                    layer = 1,
-                    confidence = 0.95f
-                ))
-                .build()
+        return try {
+            val wordFreqs = dictionaryRepository.searchBasicEntries(input, limit)
+            wordFreqs.map { wordFreq ->
+                CandidateBuilder()
+                    .word(wordFreq.word)
+                    .pinyin(input)
+                    .initialLetters("")
+                    .frequency(wordFreq.frequency)
+                    .type("pinyin")
+                    .weight(CandidateWeight.default(wordFreq.frequency))
+                    .source(CandidateSource(
+                        generator = GeneratorType.EXACT_MATCH,
+                        matchType = MatchType.EXACT,
+                        layer = 1,
+                        confidence = 0.95f
+                    ))
+                    .build()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "拼音查询失败: $input")
+            emptyList()
         }
     }
     
     /**
-     * 拼音拆分查询
+     * 拼音拆分查询 - 优化版
      */
     private suspend fun queryPinyinSplit(input: String, limit: Int): List<Candidate> {
-        val syllables = UnifiedPinyinSplitter.split(input)
-        if (syllables.isEmpty()) return emptyList()
-        
-        val spacedPinyin = syllables.joinToString(" ")
-        val wordFreqs = dictionaryRepository.searchBasicEntries(spacedPinyin, limit)
-        
-        return wordFreqs.map { wordFreq ->
-            CandidateBuilder()
-                .word(wordFreq.word)
-                .pinyin(spacedPinyin)
-                .initialLetters("")
-                .frequency(wordFreq.frequency)
-                .type("split")
-                .weight(CandidateWeight.default(wordFreq.frequency))
-                .source(CandidateSource(
-                    generator = GeneratorType.EXACT_MATCH,
-                    matchType = MatchType.EXACT,
-                    layer = 1,
-                    confidence = 0.85f
-                ))
-                .build()
+        return try {
+            val syllables = UnifiedPinyinSplitter.split(input)
+            if (syllables.isEmpty()) return emptyList()
+            
+            val spacedPinyin = syllables.joinToString(" ")
+            val wordFreqs = dictionaryRepository.searchBasicEntries(spacedPinyin, limit)
+            
+            wordFreqs.map { wordFreq ->
+                CandidateBuilder()
+                    .word(wordFreq.word)
+                    .pinyin(spacedPinyin)
+                    .initialLetters("")
+                    .frequency(wordFreq.frequency)
+                    .type("split")
+                    .weight(CandidateWeight.default(wordFreq.frequency))
+                    .source(CandidateSource(
+                        generator = GeneratorType.EXACT_MATCH,
+                        matchType = MatchType.EXACT,
+                        layer = 1,
+                        confidence = 0.85f
+                    ))
+                    .build()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "拼音拆分查询失败: $input")
+            emptyList()
         }
     }
     

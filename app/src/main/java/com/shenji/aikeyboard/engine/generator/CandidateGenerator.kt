@@ -1,7 +1,7 @@
 package com.shenji.aikeyboard.engine.generator
 
 import com.shenji.aikeyboard.data.DictionaryRepository
-import com.shenji.aikeyboard.data.StagedDictionaryRepository
+// import com.shenji.aikeyboard.data.StagedDictionaryRepository
 import com.shenji.aikeyboard.engine.CombinationCandidateGenerator
 import com.shenji.aikeyboard.engine.analyzer.InputAnalysis
 import com.shenji.aikeyboard.engine.analyzer.InputMode
@@ -21,7 +21,7 @@ import timber.log.Timber
 class CandidateGenerator {
     
     // 数据库仓库
-    private val stagedDictionaryRepository = StagedDictionaryRepository()
+    // private val stagedDictionaryRepository = StagedDictionaryRepository()
     private val dictionaryRepository = DictionaryRepository()
     
     // 组合候选词生成器
