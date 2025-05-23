@@ -253,17 +253,17 @@ class CandidateManager(private val repository: DictionaryRepository) {
             }
             
             InputStage.SYLLABLE_SPLIT -> {
-                // 检查是否是长句子输入（需要分段处理）
-                if (input.length > 12) {
-                    Timber.d("检测到长句子输入，启用分段匹配: '$input'")
-                    return queryWithSegmentedMatching(input, limit)
-                }
-                
                 // 拆分音节
                 val syllables = pinyinSplitter.split(input)
                 
                 if (syllables.isEmpty()) {
                     return@queryUsingTestToolLogic emptyList()
+                }
+                
+                // 对于所有音节拆分输入，都尝试分段匹配
+                if (syllables.size > 1) {
+                    Timber.d("检测到多音节输入，启用分段匹配: '$input' -> ${syllables.joinToString("+")}")
+                    return queryWithSegmentedMatching(input, limit)
                 }
                 
                 // 将音节连接为完整的拼音字符串（带空格）
@@ -291,10 +291,10 @@ class CandidateManager(private val repository: DictionaryRepository) {
     }
     
     /**
-     * 分段匹配查询 - 新增功能
-     * 处理长句子拼音输入，将其分段后分别查询候选词
+     * 分段匹配查询 - 公共方法
+     * 处理长句子拼音输入，将其分段后分别查询候选词，并组合成完整句子
      */
-    private suspend fun queryWithSegmentedMatching(input: String, limit: Int): List<WordFrequency> {
+    suspend fun queryWithSegmentedMatching(input: String, limit: Int): List<WordFrequency> {
         val realm = ShenjiApplication.realm
         
         // 获取分段拆分方案
@@ -310,45 +310,44 @@ class CandidateManager(private val repository: DictionaryRepository) {
         val allCandidates = mutableListOf<WordFrequency>()
         val seenWords = mutableSetOf<String>()
         
-        // 尝试每种分段方案
+        // 尝试每种分段方案，生成句子组合
         for ((index, segments) in segmentOptions.withIndex()) {
             Timber.d("尝试分段方案 ${index + 1}: ${segments.map { it.joinToString("+") }}")
             
-            // 为每个分段查询候选词
+            // 为每个分段查询最佳候选词
+            val segmentCandidates = mutableListOf<List<WordFrequency>>()
+            
             for ((segmentIndex, segment) in segments.withIndex()) {
                 val segmentPinyin = segment.joinToString(" ")
                 Timber.d("  查询分段 ${segmentIndex + 1}: '$segmentPinyin'")
                 
+                val segmentResults = mutableListOf<WordFrequency>()
+                
                 // 精确匹配
                 val exactMatches = realm.query<Entry>("pinyin == $0", segmentPinyin).find()
                     .sortedByDescending { it.frequency }
+                    .take(3) // 每个分段取前3个候选词
                 
                 exactMatches.forEach { entry ->
-                    if (seenWords.add(entry.word)) {
-                        // 为分段匹配的词条添加权重加成
-                        val bonus = when {
-                            segment.size == 1 -> 1.5 // 单字加成
-                            segment.size == 2 -> 2.0 // 双字词加成
-                            segment.size >= 3 -> 2.5 // 多字词加成
-                            else -> 1.0
-                        }
-                        allCandidates.add(WordFrequency(entry.word, (entry.frequency * bonus).toInt()))
-                        Timber.v("    找到精确匹配: ${entry.word} (权重: ${(entry.frequency * bonus).toInt()})")
+                    val bonus = when {
+                        segment.size == 1 -> 1.5 // 单字加成
+                        segment.size == 2 -> 2.0 // 双字词加成
+                        segment.size >= 3 -> 2.5 // 多字词加成
+                        else -> 1.0
                     }
+                    segmentResults.add(WordFrequency(entry.word, (entry.frequency * bonus).toInt()))
+                    Timber.v("    找到精确匹配: ${entry.word} (权重: ${(entry.frequency * bonus).toInt()})")
                 }
                 
                 // 如果精确匹配结果不足，尝试前缀匹配
                 if (exactMatches.isEmpty() && segment.size <= 2) {
                     val prefixMatches = realm.query<Entry>("pinyin BEGINSWITH $0", segmentPinyin).find()
                         .sortedByDescending { it.frequency }
-                        .take(3) // 限制前缀匹配的数量
+                        .take(2) // 限制前缀匹配的数量
                     
                     prefixMatches.forEach { entry ->
-                        if (seenWords.add(entry.word)) {
-                            // 前缀匹配的权重稍低
-                            allCandidates.add(WordFrequency(entry.word, entry.frequency / 2))
-                            Timber.v("    找到前缀匹配: ${entry.word} (权重: ${entry.frequency / 2})")
-                        }
+                        segmentResults.add(WordFrequency(entry.word, entry.frequency / 2))
+                        Timber.v("    找到前缀匹配: ${entry.word} (权重: ${entry.frequency / 2})")
                     }
                 }
                 
@@ -357,19 +356,22 @@ class CandidateManager(private val repository: DictionaryRepository) {
                     val singleCharMatches = realm.query<Entry>(
                         "type == $0 AND pinyin == $1", 
                         "chars", segmentPinyin
-                    ).find().sortedByDescending { it.frequency }
+                    ).find().sortedByDescending { it.frequency }.take(2)
                     
                     singleCharMatches.forEach { entry ->
-                        if (seenWords.add(entry.word)) {
-                            allCandidates.add(WordFrequency(entry.word, entry.frequency * 2)) // 单字优先
-                            Timber.v("    找到单字匹配: ${entry.word}")
-                        }
+                        segmentResults.add(WordFrequency(entry.word, entry.frequency * 2)) // 单字优先
+                        Timber.v("    找到单字匹配: ${entry.word}")
                     }
                 }
+                
+                segmentCandidates.add(segmentResults)
             }
             
+            // 生成句子组合
+            generateSentenceCombinations(segmentCandidates, allCandidates, seenWords, limit)
+            
             // 如果已经找到足够的候选词，可以提前结束
-            if (allCandidates.size >= limit * 2) {
+            if (allCandidates.size >= limit) {
                 break
             }
         }
@@ -379,8 +381,79 @@ class CandidateManager(private val repository: DictionaryRepository) {
             .sortedByDescending { it.frequency }
             .take(limit)
         
-        Timber.d("分段匹配完成，共找到 ${result.size} 个候选词")
+        Timber.d("分段匹配完成，共找到 ${result.size} 个候选词（包含句子组合）")
         return result
+    }
+    
+    /**
+     * 生成句子组合
+     * 将多个分段的候选词组合成完整句子
+     */
+    private fun generateSentenceCombinations(
+        segmentCandidates: List<List<WordFrequency>>,
+        allCandidates: MutableList<WordFrequency>,
+        seenWords: MutableSet<String>,
+        limit: Int
+    ) {
+        if (segmentCandidates.isEmpty()) return
+        
+        // 如果只有一个分段，直接添加该分段的候选词
+        if (segmentCandidates.size == 1) {
+            segmentCandidates[0].forEach { candidate ->
+                if (seenWords.add(candidate.word)) {
+                    allCandidates.add(candidate)
+                }
+            }
+            return
+        }
+        
+        // 生成所有可能的组合（限制组合数量避免爆炸）
+        val maxCombinationsPerSegment = 2 // 每个分段最多取2个候选词进行组合
+        
+        fun generateCombinations(
+            segmentIndex: Int,
+            currentCombination: List<WordFrequency>,
+            currentText: String,
+            currentWeight: Int
+        ) {
+            if (segmentIndex >= segmentCandidates.size) {
+                // 完成一个组合
+                if (seenWords.add(currentText) && allCandidates.size < limit * 2) {
+                    // 计算组合权重（取平均值并加上长度奖励）
+                    val avgWeight = currentWeight / segmentCandidates.size
+                    val lengthBonus = currentText.length * 100 // 长句子奖励
+                    val finalWeight = avgWeight + lengthBonus
+                    
+                    allCandidates.add(WordFrequency(currentText, finalWeight))
+                    Timber.d("生成句子组合: '$currentText' (权重: $finalWeight)")
+                }
+                return
+            }
+            
+            // 为当前分段选择候选词
+            val currentSegmentCandidates = segmentCandidates[segmentIndex]
+                .take(maxCombinationsPerSegment)
+            
+            for (candidate in currentSegmentCandidates) {
+                val newText = if (currentText.isEmpty()) candidate.word else currentText + candidate.word
+                val newWeight = currentWeight + candidate.frequency
+                val newCombination = currentCombination + candidate
+                
+                generateCombinations(segmentIndex + 1, newCombination, newText, newWeight)
+            }
+        }
+        
+        // 开始生成组合
+        generateCombinations(0, emptyList(), "", 0)
+        
+        // 同时添加单个分段的候选词（作为备选）
+        segmentCandidates.forEach { segmentList ->
+            segmentList.take(1).forEach { candidate -> // 每个分段只取最佳候选词
+                if (seenWords.add(candidate.word)) {
+                    allCandidates.add(candidate)
+                }
+            }
+        }
     }
     
     /**
