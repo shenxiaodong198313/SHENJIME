@@ -8,6 +8,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import io.realm.kotlin.ext.query
+import com.shenji.aikeyboard.pinyin.UnifiedPinyinSplitter
+import com.shenji.aikeyboard.pinyin.InputType
+import com.shenji.aikeyboard.pinyin.PinyinSplitter
+import io.realm.kotlin.Realm
 
 // 调试信息类型别名，方便外部引用
 typealias DebugInfo = StagedDictionaryRepository.DebugInfo
@@ -60,7 +64,7 @@ class CandidateManager(private val repository: DictionaryRepository) {
     val optimizationStatus: OptimizationStatus get() = currentOptimizationStatus
     
     // 拼音分词器
-    private val pinyinSplitter = PinyinSplitterOptimized()
+    private val pinyinSplitter = UnifiedPinyinSplitter
     
     /**
      * 根据输入生成候选词
@@ -250,7 +254,7 @@ class CandidateManager(private val repository: DictionaryRepository) {
             
             InputStage.SYLLABLE_SPLIT -> {
                 // 拆分音节
-                val syllables = pinyinSplitter.splitPinyin(input)
+                val syllables = pinyinSplitter.split(input)
                 
                 if (syllables.isEmpty()) {
                     return@queryUsingTestToolLogic emptyList()
@@ -343,14 +347,14 @@ class CandidateManager(private val repository: DictionaryRepository) {
      * 验证是否为有效的拼音音节
      */
     private fun isValidPinyin(input: String): Boolean {
-        return pinyinSplitter.getPinyinSyllables().contains(input)
+        return pinyinSplitter.isValidSyllable(input)
     }
     
     /**
      * 判断是否可以拆分为有效音节
      */
     private fun canSplitToValidSyllables(input: String): Boolean {
-        val result = pinyinSplitter.splitPinyin(input)
+        val result = pinyinSplitter.split(input)
         return result.isNotEmpty()
     }
     

@@ -19,8 +19,9 @@ import com.shenji.aikeyboard.adapter.CandidateAdapter
 import com.shenji.aikeyboard.model.Candidate
 import com.shenji.aikeyboard.pinyin.InputType
 import com.shenji.aikeyboard.viewmodel.PinyinTestViewModel
-import com.shenji.aikeyboard.utils.PinyinSegmenterOptimized
+import com.shenji.aikeyboard.pinyin.UnifiedPinyinSplitter
 import com.shenji.aikeyboard.utils.PinyinCacheTestHelper
+import com.shenji.aikeyboard.utils.PinyinOptimizationTestSuite
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
@@ -52,6 +53,7 @@ class PinyinTestFragment : Fragment() {
     private lateinit var resetPerformanceButton: Button
     private lateinit var clearCacheButton: Button
     private lateinit var runCacheTestButton: Button
+    private lateinit var runFullTestSuiteButton: Button
     
     private val candidateAdapter = CandidateAdapter()
 
@@ -93,6 +95,7 @@ class PinyinTestFragment : Fragment() {
         resetPerformanceButton = view.findViewById(R.id.reset_performance_button)
         clearCacheButton = view.findViewById(R.id.clear_cache_button)
         runCacheTestButton = view.findViewById(R.id.run_cache_test_button)
+        runFullTestSuiteButton = view.findViewById(R.id.run_full_test_suite_button)
     }
 
     private fun initViewModel() {
@@ -161,19 +164,23 @@ class PinyinTestFragment : Fragment() {
         
         // 性能监控按钮事件
         resetPerformanceButton.setOnClickListener {
-            PinyinSegmenterOptimized.resetPerformanceStats()
+            UnifiedPinyinSplitter.resetPerformanceStats()
             updatePerformanceStats()
             Timber.d("性能统计已重置")
         }
         
         clearCacheButton.setOnClickListener {
-            PinyinSegmenterOptimized.clearCache()
+            UnifiedPinyinSplitter.clearCache()
             updatePerformanceStats()
             Timber.d("拼音拆分缓存已清空")
         }
         
         runCacheTestButton.setOnClickListener {
             runCachePerformanceTest()
+        }
+
+        runFullTestSuiteButton.setOnClickListener {
+            runFullTestSuite()
         }
 
         // 当点击候选词时模拟输入法中选择候选词的行为
@@ -209,7 +216,7 @@ class PinyinTestFragment : Fragment() {
      */
     private fun updatePerformanceStats() {
         try {
-            val stats = PinyinSegmenterOptimized.getPerformanceStats()
+            val stats = UnifiedPinyinSplitter.getPerformanceStats()
             performanceStatsTextView.text = stats.toString()
         } catch (e: Exception) {
             Timber.e(e, "更新性能统计显示失败")
@@ -245,6 +252,38 @@ class PinyinTestFragment : Fragment() {
                 // 恢复测试按钮
                 runCacheTestButton.isEnabled = true
                 runCacheTestButton.text = "运行缓存性能测试"
+            }
+        }
+    }
+
+    /**
+     * 运行完整测试套件
+     */
+    private fun runFullTestSuite() {
+        lifecycleScope.launch {
+            try {
+                // 禁用测试按钮，防止重复点击
+                runFullTestSuiteButton.isEnabled = false
+                runFullTestSuiteButton.text = "测试中..."
+                
+                // 显示测试开始信息
+                performanceStatsTextView.text = "正在运行完整测试套件，请稍候...\n这可能需要几秒钟时间。"
+                
+                // 执行完整测试套件
+                val testResult = PinyinOptimizationTestSuite.runFullTestSuite()
+                
+                // 显示测试结果
+                performanceStatsTextView.text = testResult.comprehensiveReport
+                
+                Timber.d("完整测试套件完成")
+                
+            } catch (e: Exception) {
+                Timber.e(e, "完整测试套件失败")
+                performanceStatsTextView.text = "完整测试套件失败: ${e.message}"
+            } finally {
+                // 恢复测试按钮
+                runFullTestSuiteButton.isEnabled = true
+                runFullTestSuiteButton.text = "运行完整测试套件"
             }
         }
     }

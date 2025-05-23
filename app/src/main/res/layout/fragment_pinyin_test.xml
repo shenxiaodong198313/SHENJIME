@@ -211,6 +211,16 @@
                     android:textColor="#FFFFFF"
                     android:textSize="14sp" />
 
+                <Button
+                    android:id="@+id/run_full_test_suite_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:backgroundTint="#9C27B0"
+                    android:text="运行完整测试套件"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+
                 <TextView
                     android:id="@+id/performance_stats_text_view"
                     android:layout_width="match_parent"
