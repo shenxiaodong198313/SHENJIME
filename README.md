@@ -289,4 +289,159 @@ TrieManager：应用启动时快速加载预构建Trie文件
 - `SyllableSplitStrategy` 音节拆分策略
 - `SyllableSplitStrategyOptimized` 优化版音节拆分策略
 
-所有这些功能已集成到更高效、更统一的分阶段查询系统中。 
+所有这些功能已集成到更高效、更统一的分阶段查询系统中。
+
+## Trie预编译工具包
+
+### 概述
+
+本项目提供了完整的Trie预编译工具包，用于将YAML格式的词典文件转换为高性能的二进制Trie数据文件。该工具包支持声调去除、词频筛选、Java兼容格式等功能。
+
+### 工具特性
+
+- **声调处理**：自动去除拼音中的声调符号（如：zhōng → zhong）
+- **词频筛选**：支持按百分比筛选高频词汇（如：保留最高频50%的词条）
+- **格式兼容**：生成Java ObjectInputStream兼容的二进制格式
+- **性能优化**：支持并行加载和内存映射，查询响应时间1-3ms
+- **多版本支持**：向后兼容多种数据格式
+
+### 核心文件
+
+| 文件名 | 功能说明 |
+|--------|----------|
+| `build_java_compatible_trie.py` | 主要构建脚本，生成Java兼容的Trie文件 |
+| `TrieManager.kt` | Java端Trie管理器，支持多版本格式加载 |
+| `PinyinTrie.kt` | Trie数据结构实现 |
+
+### 使用方法
+
+#### 1. 基础用法
+
+```bash
+# 构建基础词典Trie（保留50%高频词）
+python build_java_compatible_trie.py
+
+# 自定义输入输出路径
+python build_java_compatible_trie.py \
+  --input "app/src/main/assets/cn_dicts/base.dict.yaml" \
+  --output "app/src/main/assets/trie/base_trie.dat" \
+  --percentage 0.5
+```
+
+#### 2. 批量构建多个词典
+
+```bash
+# 构建关联词典（30%高频词）
+python build_java_compatible_trie.py \
+  --input "app/src/main/assets/cn_dicts/correlation.dict.yaml" \
+  --output "app/src/main/assets/trie/correlation_trie.dat" \
+  --percentage 0.3
+
+# 构建联想词典（30%高频词）
+python build_java_compatible_trie.py \
+  --input "app/src/main/assets/cn_dicts/associational.dict.yaml" \
+  --output "app/src/main/assets/trie/associational_trie.dat" \
+  --percentage 0.3
+
+# 构建诗词词典（30%高频词）
+python build_java_compatible_trie.py \
+  --input "app/src/main/assets/cn_dicts/poetry.dict.yaml" \
+  --output "app/src/main/assets/trie/poetry_trie.dat" \
+  --percentage 0.3
+```
+
+#### 3. 验证生成的文件
+
+```bash
+# 验证文件格式和内容
+python -c "
+import struct
+with open('app/src/main/assets/trie/base_trie.dat', 'rb') as f:
+    version = struct.unpack('>i', f.read(4))[0]
+    count = struct.unpack('>i', f.read(4))[0]
+    print(f'版本: {version}, 拼音条目数: {count}')
+"
+```
+
+### 技术实现
+
+#### 数据格式（版本3）
+
+```
+[4字节] 版本号 (3)
+[4字节] 拼音条目数量
+对于每个拼音条目:
+  [4字节] 拼音长度
+  [N字节] 拼音内容 (UTF-8)
+  [4字节] 词语数量
+  对于每个词语:
+    [4字节] 词语长度
+    [N字节] 词语内容 (UTF-8)
+    [4字节] 词频
+```
+
+#### Java端加载
+
+```kotlin
+// 在TrieManager中自动识别并加载
+val trieManager = TrieManager.getInstance(context)
+trieManager.init() // 自动加载所有预编译Trie文件
+
+// 查询使用
+val results = trieManager.searchByPrefix(TrieBuilder.TrieType.BASE, "zh", 20)
+```
+
+### 性能指标
+
+| 指标 | 基础词典 | 说明 |
+|------|----------|------|
+| 原始词条数 | 780,654 | 完整词典大小 |
+| 筛选后词条数 | 390,309 | 保留50%高频词 |
+| Trie节点数 | 697,397 | 内存中节点数量 |
+| 文件大小 | 10.63MB | 压缩后二进制文件 |
+| 加载时间 | 4.7秒 | 并行加载耗时 |
+| 查询响应 | 1-3ms | 单次查询耗时 |
+
+### 故障排除
+
+#### 常见问题
+
+1. **内存不足**：减少筛选百分比或分批处理
+2. **编码错误**：确保输入文件为UTF-8编码
+3. **Java兼容性**：使用版本3格式，避免Python pickle
+
+#### 调试模式
+
+```python
+# 启用详细日志
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+# 验证中间结果
+python build_java_compatible_trie.py --debug --verify
+```
+
+### 扩展开发
+
+#### 添加新词典类型
+
+1. 在`TrieBuilder.TrieType`枚举中添加新类型
+2. 在`TrieManager.getTypeString()`中添加映射
+3. 使用构建脚本生成对应的Trie文件
+
+#### 自定义筛选逻辑
+
+```python
+def custom_filter(entries, percentage):
+    # 自定义筛选逻辑
+    # 例如：按词长度和频率综合排序
+    sorted_entries = sorted(entries, 
+        key=lambda x: (x[2], -len(x[0])), reverse=True)
+    return sorted_entries[:int(len(entries) * percentage)]
+```
+
+### 更新历史
+
+- **v3.0**: 引入简化二进制格式，提升Java兼容性
+- **v2.0**: 支持Java序列化格式
+- **v1.0**: 初始版本，基础Trie构建功能 
