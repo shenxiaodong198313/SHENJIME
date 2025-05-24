@@ -53,6 +53,44 @@
                 android:textColor="@android:color/darker_gray"
                 android:layout_marginBottom="24dp" />
 
+            <!-- 预编译状态卡片 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/prebuilt_status_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp"
+                app:cardBackgroundColor="@color/colorPrecompiledBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="当前预编译词典状态"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/teal_700"
+                        android:layout_marginBottom="12dp" />
+
+                    <TextView
+                        android:id="@+id/prebuilt_status_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="正在检查预编译词典状态..."
+                        android:textSize="13sp"
+                        android:fontFamily="monospace"
+                        android:textColor="@android:color/black" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
             <!-- 词典卡片将动态添加到这里 -->
 
             <!-- 内存信息卡片 -->

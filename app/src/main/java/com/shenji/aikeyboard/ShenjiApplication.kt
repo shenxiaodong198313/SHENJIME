@@ -91,55 +91,9 @@ class ShenjiApplication : MultiDexApplication() {
                 logStartupMessage("RELEASE模式：使用CrashReportingTree")
             }
             
-            // 初始化数据库和词典 - 使用try-catch包装
-            try {
-                logStartupMessage("开始初始化Realm数据库")
-                initRealm()
-                logStartupMessage("Realm数据库初始化完成")
-            } catch (e: Exception) {
-                logStartupMessage("初始化Realm数据库失败: ${e.message}")
-                Timber.e(e, "初始化Realm数据库失败")
-            }
-            
-            // 初始化词典管理器，但延迟加载词典
-            try {
-                logStartupMessage("开始初始化词典管理器")
-                DictionaryManager.init()
-                logStartupMessage("词典管理器初始化完成")
-            } catch (e: Exception) {
-                logStartupMessage("初始化词典管理器失败: ${e.message}")
-                Timber.e(e, "初始化词典管理器失败")
-            }
-            
-            // 初始化Trie树管理器
-            try {
-                logStartupMessage("开始初始化Trie树管理器")
-                trieManager.init()
-                logStartupMessage("Trie树管理器初始化完成")
-            } catch (e: Exception) {
-                logStartupMessage("初始化Trie树管理器失败: ${e.message}")
-                Timber.e(e, "初始化Trie树管理器失败")
-            }
-            
-            // 延迟2秒后在后台线程启动词典加载和缓存预热，避免启动卡顿
-            Handler(Looper.getMainLooper()).postDelayed({
-                GlobalScope.launch(Dispatchers.IO) {
-                    try {
-                        // 让应用界面先完全显示，再开始加载词典
-                        delay(2000)
-                        logStartupMessage("开始延迟加载词典数据和缓存预热")
-                        
-                        // 预热数据库缓存
-                        val repository = DictionaryRepository()
-                        repository.warmupCache()
-                        logStartupMessage("缓存预热完成")
-                        
-                    } catch (e: Exception) {
-                        logStartupMessage("延迟加载词典失败: ${e.message}")
-                        Timber.e(e, "延迟加载词典失败")
-                    }
-                }
-            }, 3000)
+            // 只进行最基本的初始化，其他工作移到SplashActivity中进行
+            // 这样可以避免Application启动时的长时间阻塞
+            logStartupMessage("基础初始化完成，详细初始化将在启动页中进行")
             
             logStartupMessage("应用初始化完成")
             Timber.d("应用初始化完成")
@@ -234,7 +188,7 @@ class ShenjiApplication : MultiDexApplication() {
         }
     }
     
-    private fun initRealm() {
+    fun initRealm() {
         try {
             // 确保词典目录存在
             val internalDir = File(filesDir, "dictionaries")

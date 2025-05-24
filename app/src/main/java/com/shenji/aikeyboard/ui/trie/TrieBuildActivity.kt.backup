@@ -85,6 +85,9 @@ class TrieBuildActivity : AppCompatActivity() {
         // 初始化UI组件
         initViews()
         
+        // 创建预编译状态卡片
+        createPrebuiltStatusCard()
+        
         // 创建所有词典卡片
         createDictionaryCards()
         
@@ -129,11 +132,53 @@ class TrieBuildActivity : AppCompatActivity() {
         mainContainer = findViewById(R.id.main_container)
         memoryCard = findViewById(R.id.memory_card)
         memoryInfoText = findViewById(R.id.memory_info_text)
-        prebuiltStatusCard = findViewById(R.id.prebuilt_status_card)
-        prebuiltStatusText = findViewById(R.id.prebuilt_status_text)
+    }
+    
+    /**
+     * 创建预编译状态卡片
+     */
+    private fun createPrebuiltStatusCard() {
+        // 创建预编译状态卡片
+        prebuiltStatusCard = CardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 32)
+            }
+            radius = 16f
+            cardElevation = 8f
+            setCardBackgroundColor(getColor(R.color.colorPrecompiledBackground))
+        }
         
-        // 初始化预编译状态
-        updatePrebuiltStatus()
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 24, 32, 24)
+        }
+        
+        // 标题
+        val titleText = TextView(this).apply {
+            text = "当前预编译词典状态"
+            textSize = 18f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(getColor(R.color.teal_700))
+            setPadding(0, 0, 0, 16)
+        }
+        
+        // 状态文本
+        prebuiltStatusText = TextView(this).apply {
+            text = "正在检查预编译词典状态..."
+            textSize = 13f
+            setTextColor(getColor(android.R.color.black))
+            typeface = android.graphics.Typeface.MONOSPACE
+        }
+        
+        container.addView(titleText)
+        container.addView(prebuiltStatusText)
+        prebuiltStatusCard.addView(container)
+        
+        // 将预编译状态卡片添加到主容器的顶部（在内存卡片之前）
+        mainContainer.addView(prebuiltStatusCard, 0)
     }
     
     /**
@@ -144,8 +189,8 @@ class TrieBuildActivity : AppCompatActivity() {
             val card = createDictionaryCard(trieType)
             dictCards[trieType] = card
             
-            // 添加到主容器
-            mainContainer.addView(card.card, mainContainer.childCount - 1) // 在内存卡片之前插入
+            // 添加到主容器（在内存卡片之前插入）
+            mainContainer.addView(card.card, mainContainer.childCount - 1)
         }
     }
     
@@ -688,16 +733,7 @@ class TrieBuildActivity : AppCompatActivity() {
         }
     }
     
-    /**
-     * 刷新所有状态
-     */
-    private fun refreshAllStatus() {
-        for (trieType in TrieBuilder.TrieType.values()) {
-            refreshTrieStatus(trieType)
-        }
-        updateMemoryInfo()
-        updatePrebuiltStatus()
-    }
+            /**     * 刷新所有状态     */    private fun refreshAllStatus() {        // 更新预编译状态        updatePrebuiltStatus()                for (trieType in TrieBuilder.TrieType.values()) {            refreshTrieStatus(trieType)        }        updateMemoryInfo()    }
     
     /**
      * 刷新单个Trie状态
@@ -1023,90 +1059,4 @@ class TrieBuildActivity : AppCompatActivity() {
                 }
                 
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@TrieBuildActivity, "诊断失败: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
-    
-    /**
-     * 更新预编译状态显示
-     */
-    private fun updatePrebuiltStatus() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val statusBuilder = StringBuilder()
-                statusBuilder.append("=== 预编译词典文件状态 ===\n\n")
-                
-                // 检查所有9个词典的预编译文件状态
-                for (trieType in TrieBuilder.TrieType.values()) {
-                    val displayName = getDisplayName(trieType)
-                    val typeString = getTypeString(trieType)
-                    val assetPath = "trie/${typeString}_trie.dat"
-                    
-                    // 检查assets中是否存在预编译文件
-                    val hasPrebuiltFile = isAssetFileExists(this@TrieBuildActivity, assetPath)
-                    
-                    // 检查内存加载状态
-                    val isLoadedInMemory = trieManager.isTrieLoaded(trieType)
-                    
-                    statusBuilder.append("${displayName}:\n")
-                    statusBuilder.append("  预编译文件: ${if (hasPrebuiltFile) "✓ 存在" else "✗ 不存在"}\n")
-                    statusBuilder.append("  内存状态: ${if (isLoadedInMemory) "✓ 已加载" else "✗ 未加载"}\n")
-                    
-                    // 如果有预编译文件，获取文件大小
-                    if (hasPrebuiltFile) {
-                        try {
-                            val inputStream = assets.open(assetPath)
-                            val fileSize = inputStream.available().toLong()
-                            inputStream.close()
-                            statusBuilder.append("  文件大小: ${formatFileSize(fileSize)}\n")
-                        } catch (e: Exception) {
-                            statusBuilder.append("  文件大小: 无法获取\n")
-                        }
-                    }
-                    
-                    statusBuilder.append("\n")
-                }
-                
-                // 统计信息
-                val totalPrebuiltFiles = TrieBuilder.TrieType.values().count { 
-                    isAssetFileExists(this@TrieBuildActivity, "trie/${getTypeString(it)}_trie.dat") 
-                }
-                val totalLoadedInMemory = TrieBuilder.TrieType.values().count { 
-                    trieManager.isTrieLoaded(it) 
-                }
-                
-                statusBuilder.append("=== 统计信息 ===\n")
-                statusBuilder.append("预编译文件总数: $totalPrebuiltFiles / ${TrieBuilder.TrieType.values().size}\n")
-                statusBuilder.append("内存加载总数: $totalLoadedInMemory / ${TrieBuilder.TrieType.values().size}\n")
-                
-                withContext(Dispatchers.Main) {
-                    prebuiltStatusText.text = statusBuilder.toString()
-                    addLog("预编译状态更新完成 - 预编译文件: $totalPrebuiltFiles, 内存加载: $totalLoadedInMemory")
-                }
-                
-            } catch (e: Exception) {
-                Timber.e(e, "更新预编译状态失败")
-                withContext(Dispatchers.Main) {
-                    prebuiltStatusText.text = "检查预编译状态失败: ${e.message}"
-                    addLog("预编译状态更新失败: ${e.message}")
-                }
-            }
-        }
-    }
-    
-    /**
-     * 检查assets文件是否存在
-     */
-    private fun isAssetFileExists(context: Context, assetPath: String): Boolean {
-        return try {
-            val inputStream = context.assets.open(assetPath)
-            inputStream.close()
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-} 
+                                                withContext(Dispatchers.Main) {                    Toast.makeText(this@TrieBuildActivity, "诊断失败: ${e.message}", Toast.LENGTH_LONG).show()                }            }        }    }        /**     * 更新预编译状态显示     */    private fun updatePrebuiltStatus() {        val statusBuilder = StringBuilder()                // 添加系统内存信息        val runtime = Runtime.getRuntime()        val maxMemory = runtime.maxMemory()        val totalMemory = runtime.totalMemory()        val freeMemory = runtime.freeMemory()        val usedMemory = totalMemory - freeMemory                val loadedTypes = trieManager.getLoadedTrieTypes()        val loadedCount = loadedTypes.size        val totalTrieMemory = loadedTypes.sumOf { trieManager.getTrieMemoryUsage(it) }                statusBuilder.append("系统内存: ${formatFileSize(usedMemory)} / ${formatFileSize(maxMemory)}\n")        statusBuilder.append("已加载Trie: $loadedCount 个, 占用: ${formatFileSize(totalTrieMemory)}\n")        statusBuilder.append("可用内存: ${formatFileSize(freeMemory)}\n\n")                // 添加预编译词典状态        statusBuilder.append("预编译词典状态:\n")                for (trieType in TrieBuilder.TrieType.values()) {            val displayName = getDisplayName(trieType)            val hasPrebuilt = trieManager.hasPrebuiltTrie(trieType)            val isLoaded = trieManager.isTrieLoaded(trieType)                        val prebuiltStatus = if (hasPrebuilt) "✓" else "✗"            val loadedStatus = if (isLoaded) "✓" else "✗"                        statusBuilder.append("${displayName}: 预编译[$prebuiltStatus] 内存[$loadedStatus]\n")        }                prebuiltStatusText.text = statusBuilder.toString()    }} 

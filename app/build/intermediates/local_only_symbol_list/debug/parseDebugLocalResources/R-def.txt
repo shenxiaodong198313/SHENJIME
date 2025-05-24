@@ -107,6 +107,7 @@ id copy_result_button
 id current_input_text_view
 id default_candidates_view
 id descriptionText
+id detailText
 id divider1
 id divider2
 id etBatchSize
@@ -176,6 +177,8 @@ id permission_status_text_view
 id pinyin_container
 id pinyin_display
 id pinyin_test_button
+id prebuilt_status_card
+id prebuilt_status_text
 id progressBar
 id progressBarLoading
 id progressText

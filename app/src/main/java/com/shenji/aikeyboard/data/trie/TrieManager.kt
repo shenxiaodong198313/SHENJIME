@@ -2,99 +2,79 @@ package com.shenji.aikeyboard.data.trie
 
 import android.content.Context
 import com.shenji.aikeyboard.ShenjiApplication
-import com.shenji.aikeyboard.model.WordFrequency
+import com.shenji.aikeyboard.data.WordFrequency
 import timber.log.Timber
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.ObjectInputStream
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Trie树管理器 - 支持所有9种词典类型
- * 负责管理Trie树的生命周期和提供查询接口
+ * Trie树管理器 - 单例模式
+ * 负责管理所有类型的Trie树的加载、卸载和查询
  */
 class TrieManager private constructor() {
-    // 所有类型的Trie树存储
+    
+    // Trie树存储映射
     private val trieMap = ConcurrentHashMap<TrieBuilder.TrieType, PinyinTrie>()
     
-    // 内存加载状态
+    // 加载状态映射
     private val loadedStatus = ConcurrentHashMap<TrieBuilder.TrieType, Boolean>()
     
     // 初始化状态
     private var isInitialized = false
     
     /**
-     * 初始化Trie管理器，加载可用的Trie树
-     * 应在应用启动时调用
+     * 初始化TrieManager
+     * 尝试从assets加载预构建的Trie文件
      */
     fun init() {
         if (isInitialized) return
         
-        try {
-            loadTriesInternal()
-            isInitialized = true
-        } catch (e: Exception) {
-            Timber.e(e, "TrieManager初始化失败")
+        Timber.d("TrieManager开始初始化")
+        
+        // 尝试加载预构建的Trie文件
+        val loadSuccess = loadPrebuiltTries()
+        
+        isInitialized = true
+        
+        if (loadSuccess) {
+            val loadedTypes = getLoadedTrieTypes()
+            Timber.d("TrieManager初始化完成，成功加载${loadedTypes.size}个预构建Trie: ${loadedTypes.map { getDisplayName(it) }}")
+        } else {
+            Timber.d("TrieManager初始化完成，未找到预构建Trie文件")
         }
     }
     
     /**
-     * 检查是否有任何Trie已经加载
+     * 检查是否已初始化
+     */
+    fun isInitialized(): Boolean = isInitialized
+    
+    /**
+     * 检查所有Trie是否已加载
      */
     fun isTriesLoaded(): Boolean {
-        return loadedStatus.values.any { it }
+        return trieMap.isNotEmpty()
     }
     
     /**
-     * 公开的加载方法，供外部调用
+     * 公开加载Trie的方法
      */
     fun loadTries() {
-        loadTriesInternal()
+        if (!isInitialized) {
+            init()
+        }
     }
     
     /**
-     * 加载所有可用的Trie树
+     * 从assets加载预构建的Trie文件
+     * @return 是否成功加载任何Trie文件
      */
-    private fun loadTriesInternal() {
+    private fun loadPrebuiltTries(): Boolean {
         val context = ShenjiApplication.appContext
-        
-        // 首先尝试从assets加载预构建Trie
-        if (loadPrebuiltTries(context)) {
-            Timber.d("成功从assets加载预构建Trie文件")
-            return
-        }
-        
-        // 如果assets中没有预构建文件，则尝试加载用户构建的文件
-        val builder = TrieBuilder(context)
-        
-        // 尝试加载所有类型的Trie树
-        for (trieType in TrieBuilder.TrieType.values()) {
-            try {
-                val trie = builder.loadTrie(trieType)
-                
-                if (trie != null) {
-                    trieMap[trieType] = trie
-                    loadedStatus[trieType] = true
-                    val stats = trie.getMemoryStats()
-                    Timber.d("成功加载${getDisplayName(trieType)}Trie树: $stats")
-                } else {
-                    loadedStatus[trieType] = false
-                    Timber.d("${getDisplayName(trieType)}Trie树不存在，需要构建")
-                }
-            } catch (e: Exception) {
-                loadedStatus[trieType] = false
-                Timber.e(e, "加载${getDisplayName(trieType)}Trie树失败")
-            }
-        }
-    }
-    
-    /**
-     * 从assets目录加载预构建的Trie文件
-     * @param context 上下文对象
-     * @return 是否成功加载了任何预构建文件
-     */
-    private fun loadPrebuiltTries(context: Context): Boolean {
         var anySuccess = false
         
         for (trieType in TrieBuilder.TrieType.values()) {
@@ -210,14 +190,32 @@ class TrieManager private constructor() {
      */
     fun loadTrieToMemory(type: TrieBuilder.TrieType): Boolean {
         val context = ShenjiApplication.appContext
-        val builder = TrieBuilder(context)
         
         return try {
-            val trie = builder.loadTrie(type)
+            var trie: PinyinTrie? = null
+            
+            // 首先尝试从用户构建的文件加载
+            val builder = TrieBuilder(context)
+            trie = builder.loadTrie(type)
+            
+            if (trie != null) {
+                Timber.d("从用户构建文件加载${getDisplayName(type)}Trie成功")
+            } else {
+                // 如果用户文件不存在，尝试从assets加载预编译文件
+                val assetPath = "trie/${getTypeString(type)}_trie.dat"
+                if (isAssetFileExists(context, assetPath)) {
+                    trie = loadTrieFromAssets(context, assetPath)
+                    if (trie != null) {
+                        Timber.d("从assets预编译文件加载${getDisplayName(type)}Trie成功")
+                    }
+                }
+            }
+            
             if (trie != null) {
                 trieMap[type] = trie
                 loadedStatus[type] = true
-                Timber.d("手动加载${getDisplayName(type)}Trie树成功: ${trie.getMemoryStats()}")
+                val stats = trie.getMemoryStats()
+                Timber.d("手动加载${getDisplayName(type)}Trie树成功: $stats")
                 true
             } else {
                 Timber.w("手动加载${getDisplayName(type)}Trie树失败: 文件不存在或格式错误")
@@ -352,6 +350,72 @@ class TrieManager private constructor() {
         // 然后检查assets中的预构建文件
         return isAssetFileExists(context, fileName)
     }
+    
+    /**
+     * 检查是否存在预编译的Trie文件（assets中）
+     * @param type Trie树类型
+     * @return 是否存在预编译文件
+     */
+    fun hasPrebuiltTrie(type: TrieBuilder.TrieType): Boolean {
+        val context = ShenjiApplication.appContext
+        val fileName = "trie/${getTypeString(type)}_trie.dat"
+        return isAssetFileExists(context, fileName)
+    }
+    
+    /**
+     * 检查是否存在用户构建的Trie文件
+     * @param type Trie树类型
+     * @return 是否存在用户构建文件
+     */
+    fun hasUserBuiltTrie(type: TrieBuilder.TrieType): Boolean {
+        val context = ShenjiApplication.appContext
+        val fileName = "trie/${getTypeString(type)}_trie.dat"
+        val file = File(context.filesDir, fileName)
+        return file.exists() && file.length() > 0
+    }
+    
+    /**
+     * 获取Trie文件的详细状态信息
+     * @param type Trie树类型
+     * @return Trie文件状态信息
+     */
+    fun getTrieFileStatus(type: TrieBuilder.TrieType): TrieFileStatus {
+        val context = ShenjiApplication.appContext
+        val fileName = "trie/${getTypeString(type)}_trie.dat"
+        
+        // 检查用户构建的文件
+        val userFile = File(context.filesDir, fileName)
+        val hasUserBuilt = userFile.exists() && userFile.length() > 0
+        val userFileSize = if (hasUserBuilt) userFile.length() else 0L
+        val userFileTime = if (hasUserBuilt) userFile.lastModified() else 0L
+        
+        // 检查预编译文件
+        val hasPrebuilt = isAssetFileExists(context, fileName)
+        
+        // 检查是否已加载到内存
+        val isLoaded = isTrieLoaded(type)
+        
+        return TrieFileStatus(
+            type = type,
+            hasPrebuiltFile = hasPrebuilt,
+            hasUserBuiltFile = hasUserBuilt,
+            userFileSize = userFileSize,
+            userFileLastModified = userFileTime,
+            isLoadedInMemory = isLoaded
+        )
+    }
+    
+    /**
+     * Trie文件状态数据类
+     */
+    data class TrieFileStatus(
+        val type: TrieBuilder.TrieType,
+        val hasPrebuiltFile: Boolean,
+        val hasUserBuiltFile: Boolean,
+        val userFileSize: Long,
+        val userFileLastModified: Long,
+        val isLoadedInMemory: Boolean
+    )
     
     /**
      * 获取所有已加载的Trie类型

@@ -3369,6 +3369,7 @@ id design_menu_item_action_area
 id design_menu_item_action_area_stub
 id design_menu_item_text
 id design_navigation_view
+id detailText
 id dialog_button
 id dimensions
 id direct
@@ -3643,6 +3644,8 @@ id pinyin_display
 id pinyin_test_button
 id position
 id postLayout
+id prebuilt_status_card
+id prebuilt_status_text
 id pressed
 id progressBar
 id progressBarLoading

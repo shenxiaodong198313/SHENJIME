@@ -53,9 +53,26 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="正在初始化..."
-        android:textSize="14sp"
+        android:textSize="16sp"
+        android:textStyle="bold"
         android:textColor="@android:color/white"
-        android:alpha="0.9" />
+        android:alpha="0.95"
+        android:layout_marginBottom="8dp" />
+
+    <!-- 详细信息文本 -->
+    <TextView
+        android:id="@+id/detailText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="准备初始化应用组件"
+        android:textSize="13sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.8"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:minHeight="40dp"
+        android:maxLines="2"
+        android:ellipsize="end" />
 
     <!-- 底部提示 -->
     <TextView
@@ -65,7 +82,7 @@
         android:textSize="12sp"
         android:textColor="@android:color/white"
         android:alpha="0.6"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="16dp"
         android:gravity="center" />
 
 </LinearLayout> 
