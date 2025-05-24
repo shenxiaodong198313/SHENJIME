@@ -3430,7 +3430,7 @@ int id floating 0x7f080105
 int id forever 0x7f080106
 int id fragment_container 0x7f080107
 int id fragment_container_view_tag 0x7f080108
-int id frequency_threshold_input 0x7f080109
+int id frequency_filter_spinner 0x7f080109
 int id frost 0x7f08010a
 int id fullscreen_header 0x7f08010b
 int id ghost_view 0x7f08010c

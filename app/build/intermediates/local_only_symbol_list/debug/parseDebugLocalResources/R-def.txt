@@ -120,7 +120,7 @@ id et_input
 id expandIconImageView
 id expand_candidates_button
 id fragment_container
-id frequency_threshold_input
+id frequency_filter_spinner
 id input_debug_button
 id input_edit_text
 id key_0

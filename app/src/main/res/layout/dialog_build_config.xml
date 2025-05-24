@@ -8,17 +8,15 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="词频阈值:"
+        android:text="词频过滤:"
         android:textSize="16sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
 
-    <EditText
-        android:id="@+id/frequency_threshold_input"
+    <Spinner
+        android:id="@+id/frequency_filter_spinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="最小词频阈值 (默认: 1)"
-        android:inputType="number"
         android:layout_marginBottom="16dp" />
 
     <CheckBox

@@ -221,40 +221,95 @@ class TrieBuildActivity : AppCompatActivity() {
             setPadding(0, 4, 0, 16)
         }
         
-        // 操作按钮容器
+        // 操作按钮容器 - 使用2x2网格布局
         val buttonContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
+            orientation = LinearLayout.VERTICAL
             setPadding(0, 8, 0, 0)
+        }
+        
+        // 第一行按钮
+        val firstRowContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        
+        // 第二行按钮
+        val secondRowContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 8
+            }
         }
         
         val buildButton = Button(this).apply {
             text = "从Realm构建"
+            textSize = 11f
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            ).apply {
+                rightMargin = 4
+            }
             setOnClickListener { showBuildConfigDialog(trieType) }
         }
         
         val exportButton = Button(this).apply {
             text = "导出"
+            textSize = 11f
             isEnabled = false
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            ).apply {
+                leftMargin = 4
+            }
             setOnClickListener { exportTrie(trieType) }
         }
         
         val loadButton = Button(this).apply {
             text = "加载到内存"
+            textSize = 11f
             isEnabled = false
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            ).apply {
+                rightMargin = 4
+            }
             setOnClickListener { toggleMemoryLoad(trieType) }
         }
         
         val testButton = Button(this).apply {
             text = "测试查询"
+            textSize = 11f
             isEnabled = false
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            ).apply {
+                leftMargin = 4
+            }
             setOnClickListener { testTrie(trieType) }
         }
         
-        // 组装布局
-        buttonContainer.addView(buildButton)
-        buttonContainer.addView(exportButton)
-        buttonContainer.addView(loadButton)
-        buttonContainer.addView(testButton)
+        // 组装按钮布局
+        firstRowContainer.addView(buildButton)
+        firstRowContainer.addView(exportButton)
+        secondRowContainer.addView(loadButton)
+        secondRowContainer.addView(testButton)
+        
+        buttonContainer.addView(firstRowContainer)
+        buttonContainer.addView(secondRowContainer)
         
         container.addView(nameText)
         container.addView(descriptionText)
@@ -447,11 +502,22 @@ class TrieBuildActivity : AppCompatActivity() {
                 
                 // 显示构建配置对话框
                 val dialogView = layoutInflater.inflate(R.layout.dialog_build_config, null)
-                val frequencyThresholdInput = dialogView.findViewById<EditText>(R.id.frequency_threshold_input)
+                val frequencyFilterSpinner = dialogView.findViewById<Spinner>(R.id.frequency_filter_spinner)
                 val enableOptimizationCheckbox = dialogView.findViewById<CheckBox>(R.id.enable_optimization_checkbox)
                 
+                // 设置词频过滤选项
+                val frequencyOptions = arrayOf(
+                    "所有词条",
+                    "词频最高20%",
+                    "词频最高30%",
+                    "词频最高40%"
+                )
+                val adapter = ArrayAdapter(this@TrieBuildActivity, android.R.layout.simple_spinner_item, frequencyOptions)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                frequencyFilterSpinner.adapter = adapter
+                
                 // 设置默认值
-                frequencyThresholdInput.setText("1")
+                frequencyFilterSpinner.setSelection(0) // 默认选择"所有词条"
                 enableOptimizationCheckbox.isChecked = true
                 
                 AlertDialog.Builder(this@TrieBuildActivity)
@@ -459,9 +525,9 @@ class TrieBuildActivity : AppCompatActivity() {
                     .setMessage("数据库中有 $count 条记录\n请配置构建参数:")
                     .setView(dialogView)
                     .setPositiveButton("开始构建") { _, _ ->
-                        val threshold = frequencyThresholdInput.text.toString().toIntOrNull() ?: 1
+                        val selectedOption = frequencyFilterSpinner.selectedItemPosition
                         val enableOptimization = enableOptimizationCheckbox.isChecked
-                        buildTrie(trieType, threshold, enableOptimization)
+                        buildTrie(trieType, selectedOption, enableOptimization)
                     }
                     .setNegativeButton("取消", null)
                     .show()
@@ -472,12 +538,20 @@ class TrieBuildActivity : AppCompatActivity() {
     /**
      * 构建Trie树
      */
-    private fun buildTrie(trieType: TrieBuilder.TrieType, frequencyThreshold: Int, enableOptimization: Boolean) {
+    private fun buildTrie(trieType: TrieBuilder.TrieType, frequencyFilterOption: Int, enableOptimization: Boolean) {
         val card = dictCards[trieType] ?: return
         val displayName = getDisplayName(trieType)
         
+        // 获取词频过滤选项描述
+        val frequencyOptions = arrayOf("所有词条", "词频最高20%", "词频最高30%", "词频最高40%")
+        val selectedFilter = if (frequencyFilterOption < frequencyOptions.size) {
+            frequencyOptions[frequencyFilterOption]
+        } else {
+            "所有词条"
+        }
+        
         // 记录开始构建日志
-        addLog("开始构建${displayName} - 词频阈值: $frequencyThreshold, 优化: $enableOptimization")
+        addLog("开始构建${displayName} - 词频过滤: $selectedFilter, 优化: $enableOptimization")
         
         // 显示进度条
         card.progress.visibility = View.VISIBLE
@@ -488,7 +562,7 @@ class TrieBuildActivity : AppCompatActivity() {
         card.buildButton.isEnabled = false
         
         // 提示用户
-        Toast.makeText(this, "开始构建${displayName}，词频阈值: $frequencyThreshold", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "开始构建${displayName}，词频过滤: $selectedFilter", Toast.LENGTH_LONG).show()
         
         // 保持屏幕常亮
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -502,7 +576,7 @@ class TrieBuildActivity : AppCompatActivity() {
                     card.progressText.text = "准备中..."
                 }
                 
-                Timber.d("开始构建${displayName}Trie树，词频阈值: $frequencyThreshold")
+                Timber.d("开始构建${displayName}Trie树，词频过滤: $selectedFilter")
                 
                 // 构建Trie树 - 使用简化的构建方法
                 addLog("${displayName} - 开始构建Trie树")

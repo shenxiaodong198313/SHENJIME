@@ -3431,7 +3431,7 @@ id floating
 id forever
 id fragment_container
 id fragment_container_view_tag
-id frequency_threshold_input
+id frequency_filter_spinner
 id frost
 id fullscreen_header
 id ghost_view
