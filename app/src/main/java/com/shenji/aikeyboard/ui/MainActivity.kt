@@ -6,10 +6,19 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.databinding.ActivityMainBinding
+import com.shenji.aikeyboard.data.trie.TrieManager
+import com.shenji.aikeyboard.data.trie.TrieBuilder
+import com.shenji.aikeyboard.ui.dictionary.DictionaryMenuActivity
+import com.shenji.aikeyboard.ui.trie.TrieBuildActivity
 import com.shenji.aikeyboard.settings.InputMethodSettingsActivity
 import timber.log.Timber
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,6 +38,9 @@ class MainActivity : AppCompatActivity() {
             // 设置UI组件
             setupToolbar()
             setupUI()
+            
+            // 启动后台词典加载
+            startBackgroundDictionaryLoading()
             
             Log.i("MainActivity", "主界面创建完成")
         } catch (e: Exception) {
@@ -102,10 +114,8 @@ class MainActivity : AppCompatActivity() {
         try {
             Log.d("MainActivity", "开始打开日志详情")
             Timber.d("打开日志详情")
-            val intent = Intent(this, LogDetailActivity::class.java)
-            Log.d("MainActivity", "创建Intent: ${intent}")
-            startActivity(intent)
-            Log.d("MainActivity", "日志详情Activity启动完成")
+            // 暂时使用Toast提示，因为LogDetailActivity不存在
+            Toast.makeText(this, "日志查看功能开发中", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("MainActivity", "打开日志详情失败: ${e.message}", e)
             Toast.makeText(this, "无法打开日志详情: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -135,7 +145,7 @@ class MainActivity : AppCompatActivity() {
     private fun openDevTools() {
         try {
             Timber.d("打开开发工具")
-            val intent = Intent(this, DevToolsActivity::class.java)
+            val intent = Intent(this, TrieBuildActivity::class.java)
             startActivity(intent)
         } catch (e: Exception) {
             Log.e("MainActivity", "打开开发工具失败: ${e.message}", e)
@@ -163,11 +173,82 @@ class MainActivity : AppCompatActivity() {
     private fun openSystemCheck() {
         try {
             Timber.d("打开系统检查")
-            val intent = Intent(this, SystemCheckActivity::class.java)
-            startActivity(intent)
+            // 暂时使用Toast提示，因为SystemCheckActivity不存在
+            Toast.makeText(this, "系统检查功能开发中", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("MainActivity", "打开系统检查失败: ${e.message}", e)
             Toast.makeText(this, "无法打开系统检查: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 在主界面启动后台词典加载
+     */
+    private fun startBackgroundDictionaryLoading() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val trieManager = TrieManager.instance
+                val backgroundTypes = listOf(
+                    TrieBuilder.TrieType.BASE,           // 60%基础词典
+                    TrieBuilder.TrieType.CORRELATION,    // 关联词典
+                    TrieBuilder.TrieType.ASSOCIATIONAL,  // 联想词典
+                    TrieBuilder.TrieType.PLACE,          // 地名词典
+                    TrieBuilder.TrieType.PEOPLE,         // 人名词典
+                    TrieBuilder.TrieType.POETRY,         // 诗词词典
+                    TrieBuilder.TrieType.CORRECTIONS,    // 纠错词典
+                    TrieBuilder.TrieType.COMPATIBLE      // 兼容词典
+                )
+                
+                Timber.i("主界面启动后台词典加载，共${backgroundTypes.size}个词典")
+                
+                for (trieType in backgroundTypes) {
+                    try {
+                        if (trieManager.isTrieFileExists(trieType) && !trieManager.isTrieLoaded(trieType)) {
+                            Timber.d("后台加载${getDisplayName(trieType)}...")
+                            val startTime = System.currentTimeMillis()
+                            val success = trieManager.loadTrieToMemory(trieType)
+                            val loadTime = System.currentTimeMillis() - startTime
+                            
+                            if (success) {
+                                Timber.i("后台加载${getDisplayName(trieType)}成功，耗时${loadTime}ms")
+                            } else {
+                                Timber.w("后台加载${getDisplayName(trieType)}失败")
+                            }
+                            
+                            // 每个词典加载后稍作延迟，避免CPU占用过高
+                            delay(2000)
+                        } else if (trieManager.isTrieLoaded(trieType)) {
+                            Timber.d("${getDisplayName(trieType)}已在内存中，跳过加载")
+                        }
+                    } catch (e: Exception) {
+                        Timber.w(e, "后台加载${getDisplayName(trieType)}异常")
+                        // 发生异常时等待更长时间再继续
+                        delay(3000)
+                    }
+                }
+                
+                Timber.i("主界面后台词典加载完成")
+                
+            } catch (e: Exception) {
+                Timber.e(e, "后台词典加载过程异常")
+            }
+        }
+    }
+    
+    /**
+     * 获取Trie类型的显示名称
+     */
+    private fun getDisplayName(trieType: TrieBuilder.TrieType): String {
+        return when (trieType) {
+            TrieBuilder.TrieType.CHARS -> "单字"
+            TrieBuilder.TrieType.BASE -> "基础词典"
+            TrieBuilder.TrieType.CORRELATION -> "关联词典"
+            TrieBuilder.TrieType.ASSOCIATIONAL -> "联想词典"
+            TrieBuilder.TrieType.PLACE -> "地名词典"
+            TrieBuilder.TrieType.PEOPLE -> "人名词典"
+            TrieBuilder.TrieType.POETRY -> "诗词词典"
+            TrieBuilder.TrieType.CORRECTIONS -> "纠错词典"
+            TrieBuilder.TrieType.COMPATIBLE -> "兼容词典"
         }
     }
 } 

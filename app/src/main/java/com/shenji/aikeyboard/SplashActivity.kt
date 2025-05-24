@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
@@ -66,40 +67,39 @@ class SplashActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 // 步骤1: 检查环境
-                updateProgress(5, "检查运行环境", "正在检查系统兼容性...")
-                delay(800)
+                updateProgress(10, "检查运行环境", "正在检查系统兼容性...")
+                delay(300) // 减少延迟
                 
-                // 步骤2: 初始化日志系统
-                updateProgress(10, "初始化日志系统", "正在配置日志记录...")
-                delay(500)
-                
-                // 步骤3: 检查内存状态
-                updateProgress(15, "检查内存状态", "正在检查可用内存...")
+                // 步骤2: 检查内存状态
+                updateProgress(20, "检查内存状态", "正在检查可用内存...")
                 checkMemoryStatus()
-                delay(600)
+                delay(300) // 减少延迟
                 
-                // 步骤4: 初始化数据库
-                updateProgress(25, "初始化数据库", "正在连接Realm数据库...")
+                // 步骤3: 初始化数据库
+                updateProgress(40, "初始化数据库", "正在连接Realm数据库...")
                 initializeDatabase()
-                delay(600)
+                delay(300) // 减少延迟
                 
-                // 步骤5: 检查Trie文件状态
-                updateProgress(35, "检查Trie文件", "正在扫描预编译词典文件...")
+                // 步骤4: 检查Trie文件状态
+                updateProgress(60, "检查词典文件", "正在扫描预编译词典文件...")
                 checkTrieFiles()
-                delay(700)
+                delay(300) // 减少延迟
                 
-                // 步骤6-9: 加载Trie数据
-                loadTrieData()
+                // 步骤5: 快速加载核心词典
+                updateProgress(80, "加载核心词典", "正在加载单字词典...")
+                loadCriticalTries()
+                delay(300) // 减少延迟
                 
-                // 步骤10: 完成初始化
-                updateProgress(95, "初始化完成", "正在启动主界面...")
-                delay(800)
-                
+                // 步骤6: 完成初始化
                 updateProgress(100, "启动完成", "欢迎使用神机AI键盘！")
-                delay(1000)
+                delay(500) // 减少延迟
                 
-                // 跳转到主Activity
+                // 快速跳转到主Activity
                 navigateToMainActivity()
+                
+                // 启动后台异步加载其他词典
+                // 注意：后台加载已移至MainActivity，避免重复加载
+                Timber.i("启动页完成，后台词典加载将在主界面启动")
                 
             } catch (e: Exception) {
                 Timber.e(e, "初始化过程中发生错误")
@@ -213,94 +213,44 @@ class SplashActivity : AppCompatActivity() {
     }
     
     /**
-     * 加载Trie数据
-     */
-    private suspend fun loadTrieData() {
-        val trieManager = TrieManager.instance
-        
-        // 初始化TrieManager
-        updateProgress(45, "初始化Trie管理器", "正在准备词典加载系统...")
-        withContext(Dispatchers.IO) {
-            trieManager.init()
-        }
-        delay(600)
-        
-        // 检查基础词典
-        updateProgress(55, "检查基础词典", "正在检查base词典状态...")
-        checkBaseTrieStatus()
-        delay(700)
-        
-        // 加载关键词典到内存
-        updateProgress(65, "加载核心词典", "正在加载单字和基础词典...")
-        loadCriticalTries()
-        delay(800)
-        
-        // 检查其他词典
-        updateProgress(75, "检查扩展词典", "正在检查地名、人名等词典...")
-        checkExtendedTries()
-        delay(600)
-        
-        // 预热缓存
-        updateProgress(85, "预热系统缓存", "正在优化内存布局...")
-        preWarmCache()
-        delay(700)
-    }
-    
-    /**
-     * 检查基础词典状态
-     */
-    private suspend fun checkBaseTrieStatus() {
-        withContext(Dispatchers.IO) {
-            val trieManager = TrieManager.instance
-            val hasPrebuilt = trieManager.hasPrebuiltTrie(TrieBuilder.TrieType.BASE)
-            val hasUserBuilt = trieManager.hasUserBuiltTrie(TrieBuilder.TrieType.BASE)
-            val isLoaded = trieManager.isTrieLoaded(TrieBuilder.TrieType.BASE)
-            
-            withContext(Dispatchers.Main) {
-                when {
-                    isLoaded -> detailText.text = "基础词典已在内存中 ✓"
-                    hasPrebuilt -> detailText.text = "发现预编译基础词典 ✓"
-                    hasUserBuilt -> detailText.text = "发现用户构建的基础词典 ✓"
-                    else -> detailText.text = "基础词典需要构建 ⚠"
-                }
-            }
-        }
-    }
-    
-    /**
-     * 加载关键词典
+     * 加载关键词典（启动时只加载chars）
      */
     private suspend fun loadCriticalTries() {
         withContext(Dispatchers.IO) {
             val trieManager = TrieManager.instance
-            val criticalTypes = listOf(
-                TrieBuilder.TrieType.CHARS,
-                TrieBuilder.TrieType.BASE
-            )
             
-            var loadedCount = 0
-            for (trieType in criticalTypes) {
-                try {
-                    if (trieManager.isTrieFileExists(trieType) && !trieManager.isTrieLoaded(trieType)) {
-                        val success = trieManager.loadTrieToMemory(trieType)
-                        if (success) {
-                            loadedCount++
-                            withContext(Dispatchers.Main) {
-                                detailText.text = "已加载${getDisplayName(trieType)} ✓"
-                            }
-                            delay(300)
+            // 初始化TrieManager
+            trieManager.init()
+            
+            // 只加载单字词典，确保基本输入功能
+            try {
+                if (trieManager.isTrieFileExists(TrieBuilder.TrieType.CHARS) && 
+                    !trieManager.isTrieLoaded(TrieBuilder.TrieType.CHARS)) {
+                    val success = trieManager.loadTrieToMemory(TrieBuilder.TrieType.CHARS)
+                    if (success) {
+                        withContext(Dispatchers.Main) {
+                            detailText.text = "单字词典加载完成 ✓"
                         }
-                    } else if (trieManager.isTrieLoaded(trieType)) {
-                        loadedCount++
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            detailText.text = "单字词典加载失败，将使用数据库查询"
+                        }
                     }
-                } catch (e: Exception) {
-                    Timber.w(e, "加载${getDisplayName(trieType)}失败")
+                } else {
+                    withContext(Dispatchers.Main) {
+                        detailText.text = "单字词典已就绪 ✓"
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "加载单字词典失败")
+                withContext(Dispatchers.Main) {
+                    detailText.text = "单字词典加载异常，将使用数据库查询"
                 }
             }
             
-            withContext(Dispatchers.Main) {
-                detailText.text = "核心词典加载完成 (${loadedCount}/${criticalTypes.size})"
-            }
+            // 启动后台异步加载其他词典
+            // 注意：后台加载已移至MainActivity，避免重复加载
+            Timber.i("启动页完成，后台词典加载将在主界面启动")
         }
     }
     
