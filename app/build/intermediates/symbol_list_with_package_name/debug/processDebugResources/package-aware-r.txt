@@ -3265,6 +3265,8 @@ id autoCompleteToEnd
 id autoCompleteToStart
 id barrier
 id baseline
+id batch_size_display
+id batch_size_seekbar
 id batch_test_button
 id beginOnFirstDraw
 id beginning
@@ -3400,7 +3402,7 @@ id edit_query
 id edit_text_id
 id elastic
 id embed
-id enable_optimization_checkbox
+id enable_breakpoint_checkbox
 id end
 id endToStart
 id enterAlways
@@ -3809,6 +3811,8 @@ id textinput_helper_text
 id textinput_placeholder
 id textinput_prefix_text
 id textinput_suffix_text
+id thread_count_display
+id thread_count_seekbar
 id time
 id title
 id titleDividerNoCustom

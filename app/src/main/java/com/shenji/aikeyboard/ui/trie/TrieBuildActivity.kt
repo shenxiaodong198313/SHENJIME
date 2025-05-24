@@ -503,14 +503,21 @@ class TrieBuildActivity : AppCompatActivity() {
                 // 显示构建配置对话框
                 val dialogView = layoutInflater.inflate(R.layout.dialog_build_config, null)
                 val frequencyFilterSpinner = dialogView.findViewById<Spinner>(R.id.frequency_filter_spinner)
-                val enableOptimizationCheckbox = dialogView.findViewById<CheckBox>(R.id.enable_optimization_checkbox)
+                val threadCountSeekBar = dialogView.findViewById<SeekBar>(R.id.thread_count_seekbar)
+                val threadCountDisplay = dialogView.findViewById<TextView>(R.id.thread_count_display)
+                val batchSizeSeekBar = dialogView.findViewById<SeekBar>(R.id.batch_size_seekbar)
+                val batchSizeDisplay = dialogView.findViewById<TextView>(R.id.batch_size_display)
+                val enableBreakpointCheckbox = dialogView.findViewById<CheckBox>(R.id.enable_breakpoint_checkbox)
                 
                 // 设置词频过滤选项
                 val frequencyOptions = arrayOf(
                     "所有词条",
+                    "词频最高5%",
+                    "词频最高10%",
                     "词频最高20%",
                     "词频最高30%",
-                    "词频最高40%"
+                    "词频最高40%",
+                    "词频最高50%"
                 )
                 val adapter = ArrayAdapter(this@TrieBuildActivity, android.R.layout.simple_spinner_item, frequencyOptions)
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -518,18 +525,57 @@ class TrieBuildActivity : AppCompatActivity() {
                 
                 // 设置默认值
                 frequencyFilterSpinner.setSelection(0) // 默认选择"所有词条"
-                enableOptimizationCheckbox.isChecked = true
+                threadCountSeekBar.progress = 3 // 默认4线程 (progress=3, 实际值=3+1=4)
+                batchSizeSeekBar.progress = 4 // 默认5000 (progress=4, 实际值=1000+4*1000=5000)
+                enableBreakpointCheckbox.isChecked = true
+                
+                // 设置多线程数量SeekBar监听器
+                threadCountSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                        val threadCount = progress + 1 // 范围1-7
+                        threadCountDisplay.text = "当前设置: $threadCount 线程"
+                    }
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                })
+                
+                // 设置批次大小SeekBar监听器
+                batchSizeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                        val batchSize = 1000 + progress * 1000 // 范围1000-20000
+                        batchSizeDisplay.text = "当前设置: $batchSize 条/批次"
+                    }
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                })
+                
+                // 初始化显示
+                threadCountDisplay.text = "当前设置: ${threadCountSeekBar.progress + 1} 线程"
+                batchSizeDisplay.text = "当前设置: ${1000 + batchSizeSeekBar.progress * 1000} 条/批次"
+                
+                // 获取CPU核心数信息
+                val cpuCores = Runtime.getRuntime().availableProcessors()
+                val recommendedThreads = minOf(cpuCores, 7)
                 
                 AlertDialog.Builder(this@TrieBuildActivity)
                     .setTitle("构建${displayName}")
-                    .setMessage("数据库中有 $count 条记录\n请配置构建参数:")
+                    .setMessage("数据库中有 $count 条记录\n" +
+                            "设备CPU核心数: $cpuCores (建议线程数: $recommendedThreads)\n" +
+                            "请配置构建参数:")
                     .setView(dialogView)
                     .setPositiveButton("开始构建") { _, _ ->
                         val selectedOption = frequencyFilterSpinner.selectedItemPosition
-                        val enableOptimization = enableOptimizationCheckbox.isChecked
-                        buildTrie(trieType, selectedOption, enableOptimization)
+                        val threadCount = threadCountSeekBar.progress + 1
+                        val batchSize = 1000 + batchSizeSeekBar.progress * 1000
+                        val enableBreakpoint = enableBreakpointCheckbox.isChecked
+                        buildTrie(trieType, selectedOption, threadCount, batchSize, enableBreakpoint)
                     }
                     .setNegativeButton("取消", null)
+                    .setNeutralButton("推荐设置") { _, _ ->
+                        // 使用推荐设置
+                        val selectedOption = frequencyFilterSpinner.selectedItemPosition
+                        buildTrie(trieType, selectedOption, recommendedThreads, 5000, true)
+                    }
                     .show()
             }
         }
@@ -538,20 +584,40 @@ class TrieBuildActivity : AppCompatActivity() {
     /**
      * 构建Trie树
      */
-    private fun buildTrie(trieType: TrieBuilder.TrieType, frequencyFilterOption: Int, enableOptimization: Boolean) {
+    private fun buildTrie(trieType: TrieBuilder.TrieType, frequencyFilterOption: Int, threadCount: Int, batchSize: Int, enableBreakpoint: Boolean) {
         val card = dictCards[trieType] ?: return
         val displayName = getDisplayName(trieType)
         
         // 获取词频过滤选项描述
-        val frequencyOptions = arrayOf("所有词条", "词频最高20%", "词频最高30%", "词频最高40%")
+        val frequencyOptions = arrayOf("所有词条", "词频最高5%", "词频最高10%", "词频最高20%", "词频最高30%", "词频最高40%", "词频最高50%")
         val selectedFilter = if (frequencyFilterOption < frequencyOptions.size) {
             frequencyOptions[frequencyFilterOption]
         } else {
             "所有词条"
         }
         
+        // 映射界面选项到TrieBuilder.FrequencyFilter枚举
+        val frequencyFilter = when (frequencyFilterOption) {
+            0 -> TrieBuilder.FrequencyFilter.ALL           // 所有词条
+            1 -> TrieBuilder.FrequencyFilter.TOP_5         // 词频最高5%
+            2 -> TrieBuilder.FrequencyFilter.TOP_10        // 词频最高10%
+            3 -> TrieBuilder.FrequencyFilter.TOP_20        // 词频最高20%
+            4 -> TrieBuilder.FrequencyFilter.TOP_30        // 词频最高30%
+            5 -> TrieBuilder.FrequencyFilter.TOP_40        // 词频最高40%
+            6 -> TrieBuilder.FrequencyFilter.TOP_50        // 词频最高50%
+            else -> TrieBuilder.FrequencyFilter.ALL
+        }
+        
+        // 创建构建配置
+        val config = TrieBuilder.TrieBuildConfig(
+            batchSize = batchSize,
+            numWorkers = threadCount,
+            frequencyFilter = frequencyFilter,
+            enableBreakpoint = enableBreakpoint
+        )
+        
         // 记录开始构建日志
-        addLog("开始构建${displayName} - 词频过滤: $selectedFilter, 优化: $enableOptimization")
+        addLog("开始构建${displayName} - 词频过滤: $selectedFilter (${frequencyFilter.percentage * 100}%), 线程数: $threadCount, 批次大小: $batchSize, 断点续传: $enableBreakpoint")
         
         // 显示进度条
         card.progress.visibility = View.VISIBLE
@@ -562,7 +628,7 @@ class TrieBuildActivity : AppCompatActivity() {
         card.buildButton.isEnabled = false
         
         // 提示用户
-        Toast.makeText(this, "开始构建${displayName}，词频过滤: $selectedFilter", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "开始构建${displayName}，词频过滤: $selectedFilter，线程数: $threadCount", Toast.LENGTH_LONG).show()
         
         // 保持屏幕常亮
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -576,11 +642,11 @@ class TrieBuildActivity : AppCompatActivity() {
                     card.progressText.text = "准备中..."
                 }
                 
-                Timber.d("开始构建${displayName}Trie树，词频过滤: $selectedFilter")
+                Timber.d("开始构建${displayName}Trie树，词频过滤: $selectedFilter, 配置: $config")
                 
-                // 构建Trie树 - 使用简化的构建方法
-                addLog("${displayName} - 开始构建Trie树")
-                val trie = trieBuilder.buildTrie(trieType) { progress, message ->
+                // 构建Trie树 - 传递正确的配置参数
+                addLog("${displayName} - 开始构建Trie树，使用配置: $config")
+                val trie = trieBuilder.buildTrie(trieType, config) { progress, message ->
                     lifecycleScope.launch(Dispatchers.Main) {
                         card.progress.progress = progress
                         card.progressText.text = message
@@ -610,7 +676,7 @@ class TrieBuildActivity : AppCompatActivity() {
                     val fileSize = formatFileSize(file.length())
                     
                     // 记录构建成功日志
-                    addLog("${displayName} - 构建完成! 文件大小: $fileSize")
+                    addLog("${displayName} - 构建完成! 文件大小: $fileSize, 词频过滤: $selectedFilter")
                     
                     // 隐藏进度条
                     card.progress.visibility = View.GONE
@@ -626,9 +692,9 @@ class TrieBuildActivity : AppCompatActivity() {
                     updateMemoryInfo()
                     
                     if (loadSuccess) {
-                        Toast.makeText(this@TrieBuildActivity, "${displayName}构建并加载成功", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@TrieBuildActivity, "${displayName}构建并加载成功 ($selectedFilter)", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(this@TrieBuildActivity, "${displayName}构建成功", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@TrieBuildActivity, "${displayName}构建成功 ($selectedFilter)", Toast.LENGTH_SHORT).show()
                     }
                     
                     window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

@@ -1,38 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="wrap_content">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="词频过滤:"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
-
-    <Spinner
-        android:id="@+id/frequency_filter_spinner"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <CheckBox
-        android:id="@+id/enable_optimization_checkbox"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="启用性能优化"
-        android:textSize="14sp"
-        android:layout_marginBottom="8dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="词频过滤:"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="注意：构建过程可能需要几分钟时间，请保持应用在前台运行。"
-        android:textSize="12sp"
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginTop="8dp" />
+        <Spinner
+            android:id="@+id/frequency_filter_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
 
-</LinearLayout> 
+        <!-- 多线程数量设置 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="多线程数量:"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textSize="14sp" />
+
+            <SeekBar
+                android:id="@+id/thread_count_seekbar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="8dp"
+                android:max="6"
+                android:progress="3" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="7"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/thread_count_display"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="当前设置: 4 线程"
+            android:textSize="14sp"
+            android:textColor="@color/teal_700"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 批次大小设置 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="批次大小:"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1K"
+                android:textSize="14sp" />
+
+            <SeekBar
+                android:id="@+id/batch_size_seekbar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="8dp"
+                android:max="19"
+                android:progress="4" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="20K"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/batch_size_display"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="当前设置: 5000 条/批次"
+            android:textSize="14sp"
+            android:textColor="@color/teal_700"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 断点续传选项 -->
+        <CheckBox
+            android:id="@+id/enable_breakpoint_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="启用断点续传"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="提示：\n• 多线程数量建议设置为CPU核心数\n• 批次大小影响内存使用，较大批次处理更快但占用更多内存\n• 构建过程可能需要几分钟时间，请保持应用在前台运行"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</ScrollView> 

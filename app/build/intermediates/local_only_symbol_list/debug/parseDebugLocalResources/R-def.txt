@@ -64,6 +64,8 @@ id action_view_logs
 id appBarLayout
 id app_icon
 id app_name_display
+id batch_size_display
+id batch_size_seekbar
 id batch_test_button
 id btnBuildTrie
 id btnCancel
@@ -112,7 +114,7 @@ id descriptionText
 id detailText
 id divider1
 id divider2
-id enable_optimization_checkbox
+id enable_breakpoint_checkbox
 id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
@@ -233,6 +235,8 @@ id tab_layout
 id tableModules
 id test_button
 id test_edit_text
+id thread_count_display
+id thread_count_seekbar
 id titleText
 id title_text
 id title_text_view
