@@ -114,8 +114,8 @@ class MainActivity : AppCompatActivity() {
         try {
             Log.d("MainActivity", "开始打开日志详情")
             Timber.d("打开日志详情")
-            // 暂时使用Toast提示，因为LogDetailActivity不存在
-            Toast.makeText(this, "日志查看功能开发中", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, LogDetailActivity::class.java)
+            startActivity(intent)
         } catch (e: Exception) {
             Log.e("MainActivity", "打开日志详情失败: ${e.message}", e)
             Toast.makeText(this, "无法打开日志详情: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity() {
     private fun openDevTools() {
         try {
             Timber.d("打开开发工具")
-            val intent = Intent(this, TrieBuildActivity::class.java)
+            val intent = Intent(this, DevToolsActivity::class.java)
             startActivity(intent)
         } catch (e: Exception) {
             Log.e("MainActivity", "打开开发工具失败: ${e.message}", e)
@@ -173,8 +173,8 @@ class MainActivity : AppCompatActivity() {
     private fun openSystemCheck() {
         try {
             Timber.d("打开系统检查")
-            // 暂时使用Toast提示，因为SystemCheckActivity不存在
-            Toast.makeText(this, "系统检查功能开发中", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, SystemCheckActivity::class.java)
+            startActivity(intent)
         } catch (e: Exception) {
             Log.e("MainActivity", "打开系统检查失败: ${e.message}", e)
             Toast.makeText(this, "无法打开系统检查: ${e.message}", Toast.LENGTH_SHORT).show()
