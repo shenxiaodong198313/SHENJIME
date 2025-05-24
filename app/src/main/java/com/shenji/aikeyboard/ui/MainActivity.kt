@@ -189,30 +189,40 @@ class MainActivity : AppCompatActivity() {
             try {
                 val trieManager = TrieManager.instance
                 
-                // 暂时禁用后台Trie加载，避免内存溢出
-                Timber.i("主界面启动，暂时禁用后台Trie加载以避免内存溢出")
+                // 🚫 完全禁用后台词典加载，避免内存溢出
+                // 只在启动时加载chars词典，其他词典全部设置为手动加载
+                Timber.i("主界面启动 - 后台词典加载已完全禁用")
+                Timber.i("内存优化策略：只保留启动时的chars词典，其他词典需手动加载")
                 Timber.i("当前内存状态: 最大=${Runtime.getRuntime().maxMemory() / 1024 / 1024}MB")
                 Timber.i("已用内存: ${(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024}MB")
                 
-                // 只检查Trie文件状态，不实际加载
-                val backgroundTypes = listOf(
-                    TrieBuilder.TrieType.BASE,           // 60%基础词典
-                    TrieBuilder.TrieType.CORRELATION,    // 关联词典
-                    TrieBuilder.TrieType.ASSOCIATIONAL,  // 联想词典
-                    TrieBuilder.TrieType.PLACE,          // 地名词典
-                    TrieBuilder.TrieType.PEOPLE,         // 人名词典
-                    TrieBuilder.TrieType.POETRY,         // 诗词词典
-                    TrieBuilder.TrieType.CORRECTIONS,    // 纠错词典
-                    TrieBuilder.TrieType.COMPATIBLE      // 兼容词典
-                )
+                // 检查当前已加载的词典状态
+                val allTypes = TrieBuilder.TrieType.values()
+                var loadedCount = 0
+                var totalMemoryEstimate = 0L
                 
-                for (trieType in backgroundTypes) {
+                for (trieType in allTypes) {
                     val exists = trieManager.isTrieFileExists(trieType)
                     val loaded = trieManager.isTrieLoaded(trieType)
-                    Timber.d("${getDisplayName(trieType)}: 文件存在=$exists, 已加载=$loaded")
+                    
+                    if (loaded) {
+                        loadedCount++
+                        Timber.i("✅ ${getDisplayName(trieType)}: 已加载")
+                    } else if (exists) {
+                        Timber.i("📁 ${getDisplayName(trieType)}: 文件存在，未加载(手动加载)")
+                    } else {
+                        Timber.d("❌ ${getDisplayName(trieType)}: 文件不存在")
+                    }
                 }
                 
-                Timber.i("主界面Trie状态检查完成，实际加载已禁用")
+                Timber.i("📊 词典状态总结: ${loadedCount}个已加载，${allTypes.size - loadedCount}个未加载")
+                Timber.i("💡 提示: 如需加载其他词典，请使用词典管理界面手动加载")
+                
+                // 执行垃圾回收，释放可能的临时内存
+                System.gc()
+                
+                val finalUsedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024
+                Timber.i("🧹 垃圾回收后内存使用: ${finalUsedMemory}MB")
                 
             } catch (e: Exception) {
                 Timber.e(e, "后台词典状态检查异常")
