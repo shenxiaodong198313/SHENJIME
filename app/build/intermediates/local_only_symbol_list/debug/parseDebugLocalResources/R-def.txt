@@ -110,6 +110,7 @@ id descriptionText
 id detailText
 id divider1
 id divider2
+id enable_optimization_checkbox
 id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
@@ -117,6 +118,7 @@ id et_input
 id expandIconImageView
 id expand_candidates_button
 id fragment_container
+id frequency_threshold_input
 id input_debug_button
 id input_edit_text
 id key_0
@@ -177,8 +179,6 @@ id permission_status_text_view
 id pinyin_container
 id pinyin_display
 id pinyin_test_button
-id prebuilt_status_card
-id prebuilt_status_text
 id progressBar
 id progressBarLoading
 id progressText
@@ -300,6 +300,7 @@ layout activity_pinyin_test
 layout activity_splash
 layout activity_system_check
 layout activity_trie_build
+layout dialog_build_config
 layout dialog_build_status
 layout dialog_build_trie_settings
 layout dialog_database_info

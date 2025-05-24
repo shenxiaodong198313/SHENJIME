@@ -5,13 +5,13 @@
     <item
         android:id="@+id/action_view_logs"
         android:title="查看日志"
-        android:icon="@android:drawable/ic_menu_info_details"
-        app:showAsAction="always" />
+        android:icon="@android:drawable/ic_menu_view"
+        app:showAsAction="never" />
         
     <item
         android:id="@+id/action_diagnose_db"
         android:title="数据库诊断"
-        android:icon="@android:drawable/ic_menu_search"
-        app:showAsAction="ifRoom" />
+        android:icon="@android:drawable/ic_menu_info_details"
+        app:showAsAction="never" />
         
 </menu> 

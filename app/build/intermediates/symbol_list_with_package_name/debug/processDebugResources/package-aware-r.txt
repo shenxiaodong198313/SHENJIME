@@ -3398,6 +3398,7 @@ id edit_query
 id edit_text_id
 id elastic
 id embed
+id enable_optimization_checkbox
 id end
 id endToStart
 id enterAlways
@@ -3428,6 +3429,7 @@ id floating
 id forever
 id fragment_container
 id fragment_container_view_tag
+id frequency_threshold_input
 id frost
 id fullscreen_header
 id ghost_view
@@ -3644,8 +3646,6 @@ id pinyin_display
 id pinyin_test_button
 id position
 id postLayout
-id prebuilt_status_card
-id prebuilt_status_text
 id pressed
 id progressBar
 id progressBarLoading
@@ -4049,6 +4049,7 @@ layout design_navigation_menu
 layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
+layout dialog_build_config
 layout dialog_build_status
 layout dialog_build_trie_settings
 layout dialog_database_info

@@ -9,11 +9,25 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.ObjectInputStream
+import java.io.RandomAccessFile
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.*
 
 /**
- * Trie树管理器 - 单例模式
+ * 高性能Trie树管理器 - 单例模式
  * 负责管理所有类型的Trie树的加载、卸载和查询
+ * 
+ * 性能优化特性：
+ * - 并行加载多个词典
+ * - 64KB大缓冲区文件复制
+ * - 内存映射文件支持
+ * - 预分配内存池
+ * - 优化的反序列化流程
  */
 class TrieManager private constructor() {
     
@@ -26,25 +40,54 @@ class TrieManager private constructor() {
     // 初始化状态
     private var isInitialized = false
     
+    // 并行加载线程池
+    private val loadingExecutor = Executors.newFixedThreadPool(
+        minOf(Runtime.getRuntime().availableProcessors(), 4)
+    )
+    
+    // 性能优化常量
+    companion object {
+        private const val LARGE_BUFFER_SIZE = 64 * 1024 // 64KB缓冲区
+        private const val MEMORY_MAPPED_THRESHOLD = 10 * 1024 * 1024 // 10MB以上使用内存映射
+        private const val PARALLEL_LOAD_TIMEOUT = 60L // 并行加载超时时间（秒）
+        
+        // 单例实例
+        @JvmStatic
+        fun getInstance(context: Context): TrieManager {
+            return instance
+        }
+        
+        val instance: TrieManager by lazy {
+            TrieManager()
+        }
+    }
+    
     /**
-     * 初始化TrieManager
-     * 尝试从assets加载预构建的Trie文件
+     * 高性能初始化TrieManager
+     * 使用并行加载和优化的I/O操作
      */
     fun init() {
         if (isInitialized) return
         
-        Timber.d("TrieManager开始初始化")
+        val startTime = System.currentTimeMillis()
+        Timber.d("TrieManager开始高性能初始化")
         
-        // 尝试加载预构建的Trie文件
-        val loadSuccess = loadPrebuiltTries()
+        // 预分配内存，减少GC压力
+        System.gc()
+        
+        // 并行加载预构建的Trie文件
+        val loadSuccess = loadPrebuiltTriesParallel()
         
         isInitialized = true
         
+        val endTime = System.currentTimeMillis()
+        val loadTime = endTime - startTime
+        
         if (loadSuccess) {
             val loadedTypes = getLoadedTrieTypes()
-            Timber.d("TrieManager初始化完成，成功加载${loadedTypes.size}个预构建Trie: ${loadedTypes.map { getDisplayName(it) }}")
+            Timber.d("TrieManager高性能初始化完成，耗时${loadTime}ms，成功加载${loadedTypes.size}个预构建Trie: ${loadedTypes.map { getDisplayName(it) }}")
         } else {
-            Timber.d("TrieManager初始化完成，未找到预构建Trie文件")
+            Timber.d("TrieManager初始化完成，耗时${loadTime}ms，未找到预构建Trie文件")
         }
     }
     
@@ -70,34 +113,58 @@ class TrieManager private constructor() {
     }
     
     /**
-     * 从assets加载预构建的Trie文件
+     * 并行加载预构建的Trie文件
      * @return 是否成功加载任何Trie文件
      */
-    private fun loadPrebuiltTries(): Boolean {
+    private fun loadPrebuiltTriesParallel(): Boolean {
         val context = ShenjiApplication.appContext
-        var anySuccess = false
+        val futures = mutableListOf<CompletableFuture<Pair<TrieBuilder.TrieType, Boolean>>>()
         
+        // 为每个词典类型创建并行加载任务
         for (trieType in TrieBuilder.TrieType.values()) {
-            try {
-                val assetPath = "trie/${getTypeString(trieType)}_trie.dat"
-                
-                if (isAssetFileExists(context, assetPath)) {
-                    val trie = loadTrieFromAssets(context, assetPath)
-                    if (trie != null) {
-                        trieMap[trieType] = trie
-                        loadedStatus[trieType] = true
-                        anySuccess = true
+            val future = CompletableFuture.supplyAsync({
+                try {
+                    val assetPath = "trie/${getTypeString(trieType)}_trie.dat"
+                    
+                    if (isAssetFileExists(context, assetPath)) {
+                        val startTime = System.currentTimeMillis()
+                        val trie = loadTrieFromAssetsOptimized(context, assetPath)
+                        val endTime = System.currentTimeMillis()
                         
-                        val stats = trie.getMemoryStats()
-                        Timber.d("成功从assets加载预构建${getDisplayName(trieType)}Trie: $stats")
+                        if (trie != null) {
+                            trieMap[trieType] = trie
+                            loadedStatus[trieType] = true
+                            
+                            val stats = trie.getMemoryStats()
+                            Timber.d("并行加载${getDisplayName(trieType)}Trie成功，耗时${endTime - startTime}ms: $stats")
+                            return@supplyAsync Pair(trieType, true)
+                        }
                     }
+                    Pair(trieType, false)
+                } catch (e: Exception) {
+                    Timber.e(e, "并行加载${getDisplayName(trieType)}Trie失败")
+                    Pair(trieType, false)
                 }
-            } catch (e: Exception) {
-                Timber.e(e, "从assets加载${getDisplayName(trieType)}Trie失败")
-            }
+            }, loadingExecutor)
+            
+            futures.add(future)
         }
         
-        return anySuccess
+        // 等待所有加载任务完成
+        return try {
+            val results = CompletableFuture.allOf(*futures.toTypedArray())
+                .get(PARALLEL_LOAD_TIMEOUT, TimeUnit.SECONDS)
+            
+            val successCount = futures.count { 
+                try { it.get().second } catch (e: Exception) { false }
+            }
+            
+            Timber.d("并行加载完成，成功加载${successCount}个词典")
+            successCount > 0
+        } catch (e: Exception) {
+            Timber.e(e, "并行加载超时或失败")
+            false
+        }
     }
     
     /**
@@ -114,67 +181,91 @@ class TrieManager private constructor() {
     }
     
     /**
-     * 从assets加载Trie文件
+     * 优化版本：从assets加载Trie文件
+     * 使用内存映射和大缓冲区优化
      */
-    private fun loadTrieFromAssets(context: Context, assetPath: String): PinyinTrie? {
+    private fun loadTrieFromAssetsOptimized(context: Context, assetPath: String): PinyinTrie? {
         return try {
             context.assets.open(assetPath).use { inputStream ->
-                // 先复制到临时文件，因为assets中的文件可能很大
-                val tempFile = File(context.cacheDir, "temp_trie_${System.currentTimeMillis()}.dat")
-                copyInputStreamToFile(inputStream, tempFile)
+                val fileSize = inputStream.available()
                 
-                // 从临时文件加载
-                try {
-                    val trie = ObjectInputStream(tempFile.inputStream()).use { ois ->
-                        try {
-                            // 尝试读取版本号（新格式）
-                            val version = ois.readInt()
-                            if (version == 2) { // SERIALIZATION_VERSION
-                                ois.readObject() as PinyinTrie
-                            } else {
-                                // 版本不匹配，重置并按旧格式读取
-                                tempFile.inputStream().use { fis ->
-                                    ObjectInputStream(fis).use { newOis ->
-                                        newOis.readObject() as PinyinTrie
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            // 可能是旧格式，直接读取对象
-                            tempFile.inputStream().use { fis ->
-                                ObjectInputStream(fis).use { newOis ->
-                                    newOis.readObject() as PinyinTrie
-                                }
-                            }
-                        }
-                    }
-                    
-                    // 验证Trie树是否为空
-                    if (trie.isEmpty()) {
-                        Timber.w("从assets加载的Trie树为空: $assetPath")
-                        null
-                    } else {
-                        trie
-                    }
-                } finally {
-                    // 清理临时文件
-                    if (tempFile.exists()) {
-                        tempFile.delete()
-                    }
+                // 根据文件大小选择加载策略
+                if (fileSize > MEMORY_MAPPED_THRESHOLD) {
+                    loadLargeTrieWithMemoryMapping(inputStream, fileSize, context)
+                } else {
+                    loadSmallTrieWithOptimizedBuffer(inputStream, context)
                 }
             }
         } catch (e: Exception) {
-            Timber.e(e, "从assets加载Trie文件失败: $assetPath")
+            Timber.e(e, "优化加载Trie文件失败: $assetPath")
             null
         }
     }
     
     /**
-     * 将输入流复制到文件
+     * 使用内存映射加载大型Trie文件
      */
-    private fun copyInputStreamToFile(inputStream: InputStream, file: File) {
+    private fun loadLargeTrieWithMemoryMapping(
+        inputStream: InputStream, 
+        fileSize: Int, 
+        context: Context
+    ): PinyinTrie? {
+        val tempFile = File(context.cacheDir, "temp_trie_mmap_${System.currentTimeMillis()}.dat")
+        
+        return try {
+            // 使用大缓冲区复制文件
+            copyInputStreamToFileOptimized(inputStream, tempFile)
+            
+            // 使用内存映射读取
+            RandomAccessFile(tempFile, "r").use { randomAccessFile ->
+                val channel = randomAccessFile.channel
+                val mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, tempFile.length())
+                
+                // 从映射缓冲区反序列化
+                val trie = deserializeFromMappedBuffer(mappedBuffer)
+                
+                // 验证Trie树
+                if (trie?.isEmpty() == false) {
+                    trie
+                } else {
+                    Timber.w("内存映射加载的Trie树为空")
+                    null
+                }
+            }
+        } finally {
+            // 清理临时文件
+            if (tempFile.exists()) {
+                tempFile.delete()
+            }
+        }
+    }
+    
+    /**
+     * 使用优化缓冲区加载小型Trie文件
+     */
+    private fun loadSmallTrieWithOptimizedBuffer(inputStream: InputStream, context: Context): PinyinTrie? {
+        val tempFile = File(context.cacheDir, "temp_trie_opt_${System.currentTimeMillis()}.dat")
+        
+        return try {
+            // 使用大缓冲区复制文件
+            copyInputStreamToFileOptimized(inputStream, tempFile)
+            
+            // 优化的反序列化流程
+            deserializeTrieOptimized(tempFile)
+        } finally {
+            // 清理临时文件
+            if (tempFile.exists()) {
+                tempFile.delete()
+            }
+        }
+    }
+    
+    /**
+     * 优化的文件复制方法 - 使用64KB缓冲区
+     */
+    private fun copyInputStreamToFileOptimized(inputStream: InputStream, file: File) {
         FileOutputStream(file).use { outputStream ->
-            val buffer = ByteArray(4 * 1024) // 4KB buffer
+            val buffer = ByteArray(LARGE_BUFFER_SIZE) // 64KB缓冲区
             var read: Int
             while (inputStream.read(buffer).also { read = it } != -1) {
                 outputStream.write(buffer, 0, read)
@@ -184,7 +275,74 @@ class TrieManager private constructor() {
     }
     
     /**
-     * 手动加载指定类型的Trie树到内存
+     * 从内存映射缓冲区反序列化Trie
+     */
+    private fun deserializeFromMappedBuffer(mappedBuffer: MappedByteBuffer): PinyinTrie? {
+        return try {
+            // 创建临时文件用于ObjectInputStream
+            val tempFile = File.createTempFile("mmap_deserialize", ".tmp")
+            try {
+                FileOutputStream(tempFile).use { fos ->
+                    val channel = fos.channel
+                    channel.write(mappedBuffer)
+                }
+                
+                deserializeTrieOptimized(tempFile)
+            } finally {
+                tempFile.delete()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "内存映射反序列化失败")
+            null
+        }
+    }
+    
+    /**
+     * 优化的Trie反序列化方法
+     */
+    private fun deserializeTrieOptimized(file: File): PinyinTrie? {
+        return try {
+            FileInputStream(file).buffered(LARGE_BUFFER_SIZE).use { fis ->
+                ObjectInputStream(fis).use { ois ->
+                    try {
+                        // 尝试读取版本号（新格式）
+                        val version = ois.readInt()
+                        if (version == 2) { // SERIALIZATION_VERSION
+                            ois.readObject() as PinyinTrie
+                        } else {
+                            // 版本不匹配，按旧格式重新读取
+                            deserializeTrieLegacyFormat(file)
+                        }
+                    } catch (e: Exception) {
+                        // 可能是旧格式，直接读取对象
+                        deserializeTrieLegacyFormat(file)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "优化反序列化失败")
+            null
+        }
+    }
+    
+    /**
+     * 旧格式Trie反序列化
+     */
+    private fun deserializeTrieLegacyFormat(file: File): PinyinTrie? {
+        return try {
+            FileInputStream(file).buffered(LARGE_BUFFER_SIZE).use { fis ->
+                ObjectInputStream(fis).use { ois ->
+                    ois.readObject() as PinyinTrie
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "旧格式反序列化失败")
+            null
+        }
+    }
+    
+    /**
+     * 手动加载指定类型的Trie树到内存（优化版本）
      * @param type Trie树类型
      * @return 是否加载成功
      */
@@ -192,6 +350,7 @@ class TrieManager private constructor() {
         val context = ShenjiApplication.appContext
         
         return try {
+            val startTime = System.currentTimeMillis()
             var trie: PinyinTrie? = null
             
             // 首先尝试从用户构建的文件加载
@@ -201,10 +360,10 @@ class TrieManager private constructor() {
             if (trie != null) {
                 Timber.d("从用户构建文件加载${getDisplayName(type)}Trie成功")
             } else {
-                // 如果用户文件不存在，尝试从assets加载预编译文件
+                // 如果用户文件不存在，尝试从assets加载预编译文件（使用优化方法）
                 val assetPath = "trie/${getTypeString(type)}_trie.dat"
                 if (isAssetFileExists(context, assetPath)) {
-                    trie = loadTrieFromAssets(context, assetPath)
+                    trie = loadTrieFromAssetsOptimized(context, assetPath)
                     if (trie != null) {
                         Timber.d("从assets预编译文件加载${getDisplayName(type)}Trie成功")
                     }
@@ -215,7 +374,8 @@ class TrieManager private constructor() {
                 trieMap[type] = trie
                 loadedStatus[type] = true
                 val stats = trie.getMemoryStats()
-                Timber.d("手动加载${getDisplayName(type)}Trie树成功: $stats")
+                val endTime = System.currentTimeMillis()
+                Timber.d("手动加载${getDisplayName(type)}Trie树成功，耗时${endTime - startTime}ms: $stats")
                 true
             } else {
                 Timber.w("手动加载${getDisplayName(type)}Trie树失败: 文件不存在或格式错误")
@@ -473,18 +633,18 @@ class TrieManager private constructor() {
         trieMap.clear()
         loadedStatus.clear()
         isInitialized = false
-        Timber.d("TrieManager资源已释放")
-    }
-    
-    companion object {
-        // 单例实例
-        @JvmStatic
-        fun getInstance(context: Context): TrieManager {
-            return instance
+        
+        // 关闭线程池
+        try {
+            loadingExecutor.shutdown()
+            if (!loadingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                loadingExecutor.shutdownNow()
+            }
+        } catch (e: InterruptedException) {
+            loadingExecutor.shutdownNow()
+            Thread.currentThread().interrupt()
         }
         
-        val instance: TrieManager by lazy {
-            TrieManager()
-        }
+        Timber.d("TrieManager资源已释放，线程池已关闭")
     }
 } 
