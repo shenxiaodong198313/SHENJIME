@@ -54,10 +54,10 @@
                 app:layout_constraintTop_toBottomOf="@+id/tvTitle">
 
                 <Button
-                    android:id="@+id/btn_system_check"
+                    android:id="@+id/btn_ime_settings"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="系统检查" />
+                    android:text="输入法设置" />
                 
                 <Button
                     android:id="@+id/btnLogs"
@@ -67,32 +67,11 @@
                     android:text="@string/view_logs" />
 
                 <Button
-                    android:id="@+id/btnDictManager"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/dict_manager" />
-                
-                <Button
-                    android:id="@+id/btnDevTools"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="开发工具" />
-
-                <Button
-                    android:id="@+id/btn_ime_settings"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="输入法设置" />
-
-                <Button
                     android:id="@+id/btn_optimized_test"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="优化候选词测试" />
+                    android:text="智能候选词引擎测试" />
 
             </LinearLayout>
             

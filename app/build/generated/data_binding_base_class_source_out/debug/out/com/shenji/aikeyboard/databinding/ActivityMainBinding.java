@@ -23,12 +23,6 @@ public final class ActivityMainBinding implements ViewBinding {
   private final ConstraintLayout rootView;
 
   @NonNull
-  public final Button btnDevTools;
-
-  @NonNull
-  public final Button btnDictManager;
-
-  @NonNull
   public final Button btnImeSettings;
 
   @NonNull
@@ -36,9 +30,6 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final Button btnOptimizedTest;
-
-  @NonNull
-  public final Button btnSystemCheck;
 
   @NonNull
   public final LinearLayout mainButtonContainer;
@@ -55,18 +46,14 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final TextView tvTitle;
 
-  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnDevTools,
-      @NonNull Button btnDictManager, @NonNull Button btnImeSettings, @NonNull Button btnLogs,
-      @NonNull Button btnOptimizedTest, @NonNull Button btnSystemCheck,
+  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnImeSettings,
+      @NonNull Button btnLogs, @NonNull Button btnOptimizedTest,
       @NonNull LinearLayout mainButtonContainer, @NonNull ConstraintLayout mainContainer,
       @NonNull Toolbar toolbar, @NonNull TextView tvHelpText, @NonNull TextView tvTitle) {
     this.rootView = rootView;
-    this.btnDevTools = btnDevTools;
-    this.btnDictManager = btnDictManager;
     this.btnImeSettings = btnImeSettings;
     this.btnLogs = btnLogs;
     this.btnOptimizedTest = btnOptimizedTest;
-    this.btnSystemCheck = btnSystemCheck;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
     this.toolbar = toolbar;
@@ -101,18 +88,6 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.btnDevTools;
-      Button btnDevTools = ViewBindings.findChildViewById(rootView, id);
-      if (btnDevTools == null) {
-        break missingId;
-      }
-
-      id = R.id.btnDictManager;
-      Button btnDictManager = ViewBindings.findChildViewById(rootView, id);
-      if (btnDictManager == null) {
-        break missingId;
-      }
-
       id = R.id.btn_ime_settings;
       Button btnImeSettings = ViewBindings.findChildViewById(rootView, id);
       if (btnImeSettings == null) {
@@ -128,12 +103,6 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btn_optimized_test;
       Button btnOptimizedTest = ViewBindings.findChildViewById(rootView, id);
       if (btnOptimizedTest == null) {
-        break missingId;
-      }
-
-      id = R.id.btn_system_check;
-      Button btnSystemCheck = ViewBindings.findChildViewById(rootView, id);
-      if (btnSystemCheck == null) {
         break missingId;
       }
 
@@ -163,9 +132,8 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((ConstraintLayout) rootView, btnDevTools, btnDictManager,
-          btnImeSettings, btnLogs, btnOptimizedTest, btnSystemCheck, mainButtonContainer,
-          mainContainer, toolbar, tvHelpText, tvTitle);
+      return new ActivityMainBinding((ConstraintLayout) rootView, btnImeSettings, btnLogs,
+          btnOptimizedTest, mainButtonContainer, mainContainer, toolbar, tvHelpText, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

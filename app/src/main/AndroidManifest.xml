@@ -60,103 +60,11 @@
             android:name=".ui.LogDetailActivity"
             android:exported="false" />
             
-        <!-- 词典管理菜单活动 -->
-        <activity
-            android:name=".ui.dictionary.DictionaryMenuActivity"
-            android:exported="false"
-            android:label="词典管理中心" />
-            
-        <!-- Realm词典列表活动 -->
-        <activity
-            android:name=".ui.dictionary.DictionaryListActivity"
-            android:exported="false"
-            android:label="词典列表" />
-            
-        <!-- 词典详情活动 -->
-        <activity
-            android:name=".ui.DictionaryDetailActivity"
-            android:exported="false" />
-
-        <!-- 词典日志活动 -->
-        <activity
-            android:name=".ui.DictionaryLogsActivity"
-            android:exported="false" />
-            
-        <!-- Trie树构建活动 -->
-        <activity
-            android:name=".ui.trie.TrieBuildActivity"
-            android:exported="false"
-            android:label="构建双Trie数据" />
-            
-        <!-- 输入测试活动 -->
-        <activity
-            android:name=".ui.InputTestActivity"
-            android:exported="false"
-            android:windowSoftInputMode="stateVisible|adjustResize" />
-
-        <!-- 开发工具活动 -->
-        <activity
-            android:name=".ui.DevToolsActivity"
-            android:exported="true" />
-            
-        <!-- 拼音测试活动 -->
-        <activity
-            android:name=".ui.PinyinTestActivity"
-            android:exported="false" />
-            
-        <!-- 日志查看活动 -->
-        <activity
-            android:name=".ui.LogViewerActivity"
-            android:exported="false" />
-            
-        <!-- 验证码测试活动 -->
-        <activity
-            android:name=".ui.VerificationCodeActivity"
-            android:exported="false" />
-            
-        <!-- 权限检查活动 -->
-        <activity
-            android:name=".ui.PermissionCheckActivity"
-            android:exported="false" />
-            
-        <!-- 系统检查活动 -->
-        <activity
-            android:name=".ui.SystemCheckActivity"
-            android:exported="false" />
-
-        <!-- 移动调试工具活动 -->
-        <activity
-            android:name=".ui.MobileDebugActivity"
-            android:exported="false"
-            android:label="@string/mobile_debug_title"
-            android:windowSoftInputMode="adjustResize" />
-
-        <!-- 音节测试活动 -->
-        <activity
-            android:name=".ui.SyllableTestActivity"
-            android:exported="false"
-            android:label="音节测试工具"
-            android:windowSoftInputMode="adjustResize" />
-            
-        <!-- 输入调试活动 -->
-        <activity
-            android:name=".ui.InputDebugActivity"
-            android:exported="false"
-            android:label="输入调试工具"
-            android:windowSoftInputMode="adjustResize" />
-            
-        <!-- 组合候选词测试活动 -->
-        <activity
-            android:name=".tools.CombinationTestActivity"
-            android:exported="false"
-            android:label="组合候选词测试"
-            android:windowSoftInputMode="adjustResize" />
-            
         <!-- 优化候选词测试活动 -->
         <activity
             android:name=".ui.OptimizedCandidateTestActivity"
             android:exported="false"
-            android:label="优化候选词测试"
+            android:label="智能候选词引擎测试"
             android:windowSoftInputMode="adjustResize" />
             
         <!-- 输入法服务 -->

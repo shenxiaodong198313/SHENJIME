@@ -3,7 +3,6 @@ package com.shenji.aikeyboard.ui
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -58,36 +57,20 @@ class MainActivity : AppCompatActivity() {
             // 设置按钮点击事件
             Log.d("MainActivity", "设置按钮点击事件监听器")
             
+            // 输入法设置
+            binding.btnImeSettings?.setOnClickListener {
+                Log.d("MainActivity", "btn_ime_settings 按钮被点击")
+                openInputMethodSettings()
+            }
+            
+            // 查看日志
             binding.btnLogs?.setOnClickListener {
                 Log.d("MainActivity", "btnLogs 按钮被点击")
                 openLogDetail()
             }
             
-            binding.btnDictManager?.setOnClickListener {
-                Log.d("MainActivity", "btnDictManager 按钮被点击")
-                Toast.makeText(this, "词典管理功能已简化", Toast.LENGTH_SHORT).show()
-            }
-            
-            // 添加开发工具入口
-            binding.btnDevTools?.setOnClickListener {
-                Log.d("MainActivity", "btnDevTools 按钮被点击")
-                Toast.makeText(this, "开发工具功能已简化", Toast.LENGTH_SHORT).show()
-            }
-            
-            // 添加输入法设置入口
-            binding.mainButtonContainer?.findViewById<Button>(R.id.btn_ime_settings)?.setOnClickListener {
-                Log.d("MainActivity", "btn_ime_settings 按钮被点击")
-                openInputMethodSettings()
-            }
-            
-            // 添加系统检查入口
-            binding.mainButtonContainer?.findViewById<Button>(R.id.btn_system_check)?.setOnClickListener {
-                Log.d("MainActivity", "btn_system_check 按钮被点击")
-                Toast.makeText(this, "系统检查功能已简化", Toast.LENGTH_SHORT).show()
-            }
-            
-            // 添加优化候选词测试入口
-            binding.mainButtonContainer?.findViewById<Button>(R.id.btn_optimized_test)?.setOnClickListener {
+            // 智能候选词引擎测试
+            binding.btnOptimizedTest?.setOnClickListener {
                 Log.d("MainActivity", "btn_optimized_test 按钮被点击")
                 openOptimizedCandidateTest()
             }
@@ -96,6 +79,20 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "设置UI元素失败: ${e.message}", e)
             Toast.makeText(this, "界面初始化异常，部分功能可能不可用", Toast.LENGTH_LONG).show()      
+        }
+    }
+    
+    /**
+     * 打开输入法设置
+     */
+    private fun openInputMethodSettings() {
+        try {
+            Timber.d("打开输入法设置")
+            val intent = Intent(this, InputMethodSettingsActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开输入法设置失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开输入法设置: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -115,42 +112,16 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * 打开词典管理界面
-     */
-    
-    /**
-     * 打开开发工具界面
-     */
-    
-    /**
-     * 打开输入法设置
-     */
-    private fun openInputMethodSettings() {
-        try {
-            Timber.d("打开输入法设置")
-            val intent = Intent(this, InputMethodSettingsActivity::class.java)
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "打开输入法设置失败: ${e.message}", e)
-            Toast.makeText(this, "无法打开输入法设置: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    /**
-     * 打开系统检查
-     */
-    
-    /**
-     * 打开优化候选词测试
+     * 打开智能候选词引擎测试
      */
     private fun openOptimizedCandidateTest() {
         try {
-            Timber.d("打开优化候选词测试")
+            Timber.d("打开智能候选词引擎测试")
             val intent = Intent(this, OptimizedCandidateTestActivity::class.java)
             startActivity(intent)
         } catch (e: Exception) {
-            Log.e("MainActivity", "打开优化候选词测试失败: ${e.message}", e)
-            Toast.makeText(this, "无法打开优化候选词测试: ${e.message}", Toast.LENGTH_SHORT).show()
+            Log.e("MainActivity", "打开智能候选词引擎测试失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开智能候选词引擎测试: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -181,8 +152,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    
-    /**
-     * 获取Trie类型的显示名称
-     */
 } 
