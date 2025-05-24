@@ -173,6 +173,7 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
                 // 词组测试
                 "nihao" to "词组拼音",
                 "shijie" to "词组拼音",
+                "weixin" to "词组拼音(微信测试)",
                 
                 // 缩写测试
                 "bj" to "首字母缩写",
@@ -212,6 +213,12 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
                         results.appendLine("   候选词: $topCandidates")
                     } else {
                         results.appendLine("   ❌ 无候选词")
+                        
+                        // 特别调试weixin
+                        if (input == "weixin") {
+                            results.appendLine("   🔍 调试weixin:")
+                            debugWeixin(results)
+                        }
                     }
                     
                     results.appendLine()
@@ -229,6 +236,45 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
             updatePerformanceStats()
             
             Timber.d("批量测试完成")
+        }
+    }
+    
+    /**
+     * 调试weixin查询
+     */
+    private suspend fun debugWeixin(results: StringBuilder) {
+        try {
+            // 检查BASE Trie是否加载
+            val trieManager = com.shenji.aikeyboard.data.trie.TrieManager.instance
+            val isBaseLoaded = trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+            results.appendLine("     BASE Trie已加载: $isBaseLoaded")
+            
+            if (!isBaseLoaded) {
+                results.appendLine("     正在加载BASE Trie...")
+                val loadSuccess = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+                results.appendLine("     BASE Trie加载结果: $loadSuccess")
+            }
+            
+            // 直接查询BASE Trie
+            val baseResults = trieManager.searchByPrefix(com.shenji.aikeyboard.data.trie.TrieType.BASE, "weixin", 10)
+            results.appendLine("     BASE Trie直接查询结果: ${baseResults.size}个")
+            if (baseResults.isNotEmpty()) {
+                baseResults.take(3).forEach { 
+                    results.appendLine("       - ${it.word} (${it.frequency})")
+                }
+            }
+            
+            // 检查wei前缀
+            val weiResults = trieManager.searchByPrefix(com.shenji.aikeyboard.data.trie.TrieType.BASE, "wei", 5)
+            results.appendLine("     'wei'前缀查询结果: ${weiResults.size}个")
+            if (weiResults.isNotEmpty()) {
+                weiResults.take(3).forEach { 
+                    results.appendLine("       - ${it.word} (${it.frequency})")
+                }
+            }
+            
+        } catch (e: Exception) {
+            results.appendLine("     调试失败: ${e.message}")
         }
     }
     
