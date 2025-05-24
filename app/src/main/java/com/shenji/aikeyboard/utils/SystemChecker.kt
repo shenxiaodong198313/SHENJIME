@@ -197,55 +197,99 @@ class SystemChecker(private val context: Context) {
         try {
             val details = StringBuilder()
             
-            // 测试多种查询方式
-            val testQueries = listOf(
-                "ni" to "单音节拼音查询",
-                "hao" to "单音节拼音查询", 
-                "a" to "单字母查询",
-                "zh" to "双字母查询"
+            // 定义9个词典类型
+            val dictTypes = listOf(
+                "chars" to "单字词典",
+                "base" to "基础词典", 
+                "correlation" to "关联词典",
+                "associational" to "联想词典",
+                "compatible" to "兼容词典",
+                "corrections" to "纠错词典",
+                "place" to "地名词典",
+                "people" to "人名词典",
+                "poetry" to "诗词词典"
             )
             
             var totalResults = 0
             var successfulQueries = 0
+            var totalEntries = 0
             
-            for ((query, description) in testQueries) {
+            details.appendLine("从各词典类型随机查询数据验证:")
+            
+            for ((dictType, dictName) in dictTypes) {
                 try {
-                    val words = dictionaryRepository.searchBasicEntries(query, 5, emptyList())
-                    totalResults += words.size
+                    // 获取该词典类型的词条数量
+                    val count = dictionaryRepository.getEntryCountByType(dictType)
+                    totalEntries += count
                     
-                    if (words.isNotEmpty()) {
-                        successfulQueries++
-                        details.appendLine("✓ $description '$query': ${words.size}个结果")
-                        words.take(2).forEach { word ->
-                            details.appendLine("  - ${word.word} (频率: ${word.frequency})")
+                    if (count > 0) {
+                        // 随机获取几条数据进行验证
+                        val sampleEntries = dictionaryRepository.getEntriesByType(dictType, 0, 3)
+                        
+                        if (sampleEntries.isNotEmpty()) {
+                            successfulQueries++
+                            totalResults += sampleEntries.size
+                            
+                            details.appendLine("✓ $dictName: $count 条数据")
+                            sampleEntries.forEach { entry ->
+                                details.appendLine("  - ${entry.word} | ${entry.pinyin} | 频率:${entry.frequency}")
+                            }
+                        } else {
+                            details.appendLine("✗ $dictName: $count 条数据，但无法读取样本")
                         }
                     } else {
-                        details.appendLine("✗ $description '$query': 无结果")
+                        details.appendLine("○ $dictName: 无数据")
                     }
                 } catch (e: Exception) {
-                    details.appendLine("✗ $description '$query': 查询异常 - ${e.message}")
+                    details.appendLine("✗ $dictName: 查询异常 - ${e.message}")
                 }
             }
             
-            // 额外测试：直接查询数据库中的词条
+            // 额外测试：验证拼音查询功能
+            details.appendLine("\n拼音查询功能测试:")
             try {
-                val sampleEntries = dictionaryRepository.getEntriesByType("chars", 0, 3)
-                if (sampleEntries.isNotEmpty()) {
-                    details.appendLine("\n数据库样本数据:")
-                    sampleEntries.forEach { entry ->
-                        details.appendLine("- ${entry.word} | ${entry.pinyin} | ${entry.frequency}")
+                // 从chars词典中获取一个真实的拼音进行测试
+                val charsSample = dictionaryRepository.getEntriesByType("chars", 0, 1)
+                if (charsSample.isNotEmpty()) {
+                    val sampleEntry = charsSample.first()
+                    val testPinyin = sampleEntry.pinyin.lowercase().trim()
+                    
+                    details.appendLine("使用真实拼音 '$testPinyin' 测试查询:")
+                    
+                    // 测试精确匹配
+                    val exactResults = dictionaryRepository.searchBasicEntries(testPinyin, 3, emptyList())
+                    if (exactResults.isNotEmpty()) {
+                        details.appendLine("✓ 精确匹配: ${exactResults.size}个结果")
+                        exactResults.take(2).forEach { result ->
+                            details.appendLine("  - ${result.word} (频率: ${result.frequency})")
+                        }
+                    } else {
+                        details.appendLine("✗ 精确匹配: 无结果")
                     }
-                } else {
-                    details.appendLine("\n警告: chars词典中无数据")
+                    
+                    // 测试前缀匹配
+                    if (testPinyin.length > 1) {
+                        val prefix = testPinyin.substring(0, 2)
+                        val prefixResults = dictionaryRepository.searchBasicEntries(prefix, 3, emptyList())
+                        if (prefixResults.isNotEmpty()) {
+                            details.appendLine("✓ 前缀匹配 '$prefix': ${prefixResults.size}个结果")
+                        } else {
+                            details.appendLine("✗ 前缀匹配 '$prefix': 无结果")
+                        }
+                    }
                 }
             } catch (e: Exception) {
-                details.appendLine("\n获取样本数据失败: ${e.message}")
+                details.appendLine("拼音查询测试异常: ${e.message}")
             }
             
-            val passed = successfulQueries > 0 && totalResults > 0
+            val passed = successfulQueries >= 6 && totalResults > 0 && totalEntries > 0
             val duration = System.currentTimeMillis() - startTime
             
-            details.appendLine("\n总结: ${successfulQueries}/${testQueries.size}个查询成功，共${totalResults}个结果")
+            details.appendLine("\n总结:")
+            details.appendLine("- 成功查询词典: ${successfulQueries}/${dictTypes.size}个")
+            details.appendLine("- 总词条数: $totalEntries")
+            details.appendLine("- 样本数据: $totalResults 条")
+            details.appendLine("- 检查结果: ${if (passed) "通过" else "失败"}")
             
             CheckResult("Realm词典查询检查", passed, details.toString(), duration = duration)
         } catch (e: Exception) {
