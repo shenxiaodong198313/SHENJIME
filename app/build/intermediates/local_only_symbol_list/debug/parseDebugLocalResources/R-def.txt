@@ -11,6 +11,8 @@ color colorPrecompiledLoading
 color colorPrimary
 color colorPrimaryDark
 color divider
+color error_red
+color info_background
 color key_text
 color keyboard_background
 color keyboard_border
@@ -22,14 +24,19 @@ color keyboard_key_shadow
 color keyboard_special_key_bg
 color keyboard_special_key_pressed
 color keyboard_text
+color light_gray
 color pinyin_text
+color primary_blue
 color purple_200
 color purple_500
 color purple_700
+color secondary_gray
 color shimmer_color
+color success_green
 color teal_200
 color teal_50
 color teal_700
+color warning_orange
 color white
 dimen candidate_divider_height
 dimen candidate_word_margin
@@ -40,6 +47,7 @@ drawable candidate_item_background
 drawable candidate_word_bg
 drawable candidate_word_selected_bg
 drawable circle_background
+drawable edit_text_background
 drawable ic_arrow_down
 drawable ic_export
 drawable ic_mic
@@ -62,6 +70,7 @@ id action_export
 id action_refresh_cache
 id action_settings
 id action_view_logs
+id analysisTextView
 id appBarLayout
 id app_icon
 id app_name_display
@@ -86,6 +95,7 @@ id btn_copy
 id btn_enable_ime
 id btn_fuzzy_pinyin
 id btn_ime_settings
+id btn_optimized_test
 id btn_set_default_ime
 id btn_system_check
 id btn_test
@@ -93,6 +103,7 @@ id build_progress
 id build_status_text
 id buttonContainer
 id candidate_stats_text_view
+id candidatesTextView
 id candidates_container
 id candidates_recycler_view
 id candidates_scroll_view
@@ -104,6 +115,7 @@ id checkDurationTextView
 id checkNameTextView
 id checkStatusTextView
 id check_all_permissions_button
+id clearCacheButton
 id clear_button
 id clear_cache_button
 id clear_logs_button
@@ -124,6 +136,7 @@ id expandIconImageView
 id expand_candidates_button
 id fragment_container
 id frequency_filter_spinner
+id inputEditText
 id input_debug_button
 id input_edit_text
 id key_0
@@ -178,6 +191,7 @@ id main_container
 id memory_card
 id memory_info_text
 id memory_usage_text
+id performanceTextView
 id performance_stats_text_view
 id permission_check_button
 id permission_status_text_view
@@ -234,6 +248,7 @@ id switch_select_all
 id switch_z_zh
 id tab_layout
 id tableModules
+id testSamplesButton
 id test_button
 id test_edit_text
 id thread_count_display
@@ -303,6 +318,7 @@ layout activity_input_debug
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
+layout activity_optimized_candidate_test
 layout activity_pinyin_test
 layout activity_splash
 layout activity_system_check

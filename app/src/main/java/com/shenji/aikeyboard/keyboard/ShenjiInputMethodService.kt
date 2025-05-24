@@ -14,6 +14,7 @@ import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.model.WordFrequency
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import android.graphics.Color
 
@@ -70,9 +71,6 @@ class ShenjiInputMethodService : InputMethodService() {
     // 长按删除键的延迟时间（毫秒）
     private val DELETE_INITIAL_DELAY = 400L  // 长按后首次触发的延迟
     private val DELETE_REPEAT_DELAY = 50L   // 连续触发的间隔
-    
-    // 查询过程文本区域
-    private lateinit var queryProcessText: TextView
 
     override fun onCreate() {
         super.onCreate()
@@ -104,9 +102,6 @@ class ShenjiInputMethodService : InputMethodService() {
             appIcon = keyboardView.findViewById(R.id.app_icon)
             // 初始化工具栏
             toolbarView = keyboardView.findViewById(R.id.toolbar_view)
-            
-            // 初始化查询过程文本区域
-            queryProcessText = keyboardView.findViewById(R.id.query_process_text)
             
             // 设置展开按钮点击事件
             expandCandidatesButton.setOnClickListener {
@@ -271,7 +266,6 @@ class ShenjiInputMethodService : InputMethodService() {
             if (composingText.isEmpty()) {
                 // 如果拼音为空，清空拼音显示并隐藏候选词区域
                 updatePinyinDisplay("")
-                clearQueryProcessInfo()
                 hideCandidates()
                 
                 // 结束组合文本状态
@@ -329,10 +323,9 @@ class ShenjiInputMethodService : InputMethodService() {
             // 重置组合文本
             composingText.clear()
             
-            // 清空拼音显示区域和查询过程信息
+            // 清空拼音显示区域
             if (areViewComponentsInitialized()) {
                 pinyinDisplay.text = ""
-                clearQueryProcessInfo()
                 hideCandidates()
                 
                 // 重置候选词滚动位置
@@ -419,30 +412,6 @@ class ShenjiInputMethodService : InputMethodService() {
         }
     }
     
-    // 更新查询过程信息显示
-    private fun updateQueryProcessInfo(sourceInfo: String) {
-        if (::queryProcessText.isInitialized) {
-            // 确保查询过程文本视图可见
-            queryProcessText.visibility = View.VISIBLE
-            
-            // 如果现有内容不为空，添加换行
-            val existingText = queryProcessText.text
-            
-            if (existingText.isNotEmpty()) {
-                queryProcessText.text = "$existingText\n$sourceInfo"
-            } else {
-                queryProcessText.text = sourceInfo
-            }
-        }
-    }
-    
-    // 清空查询过程信息
-    private fun clearQueryProcessInfo() {
-        if (::queryProcessText.isInitialized) {
-            queryProcessText.text = ""
-        }
-    }
-    
     // 加载候选词
     private fun loadCandidates(input: String) {
         if (input.isEmpty()) {
@@ -450,58 +419,32 @@ class ShenjiInputMethodService : InputMethodService() {
             return
         }
         
-        // 先显示候选词区域，确保可见性
         showCandidates()
         
-        // 重置候选词滚动位置到起始位置
-        keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
-        
-        // 使用PinyinIMEAdapter异步获取候选词
-        Handler(Looper.getMainLooper()).post {
+        // 使用简化的候选词查询
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
             try {
-                // 启动异步任务获取候选词
-                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                    try {
-                        // 强制显示候选词容器，确保可见性
-                        showCandidates()
-                        
-                        // 使用标准化的PinyinIMEAdapter获取候选词
-                        val pinyinAdapter = PinyinIMEAdapter.getInstance()
-                        val result = pinyinAdapter.getCandidates(input, 20)
-                        
-                        // 获取分段拆分结果并更新拼音显示
-                        updatePinyinDisplayWithSegmentation(input)
-                        
-                        if (result.isNotEmpty()) {
-                            // 更新成员变量
-                            candidates = result
-                            // 显示候选词
-                            updateCandidatesView(result)
-                            Timber.d("成功加载候选词: ${result.size}个")
-                            
-                            // 再次确保候选词区域可见
-                            if (areViewComponentsInitialized()) {
-                                candidatesContainer.visibility = View.VISIBLE
-                                defaultCandidatesView.visibility = View.VISIBLE
-                                toolbarView.visibility = View.GONE
-                                
-                                // 确保候选词视图有足够高度
-                                val params = defaultCandidatesView.layoutParams
-                                params.height = 120 // 设置固定高度，确保可见
-                                defaultCandidatesView.layoutParams = params
-                            }
-                        } else {
-                            Timber.d("未找到候选词")
-                            candidates = emptyList()
-                            clearCandidatesView()
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "加载候选词失败: ${e.message}")
-                        Toast.makeText(this@ShenjiInputMethodService, "加载候选词失败", Toast.LENGTH_SHORT).show()
-                    }
+                val pinyinAdapter = PinyinIMEAdapter.getInstance()
+                val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    pinyinAdapter.getCandidates(input, 20)
+                }
+                
+                // 更新拼音显示
+                updatePinyinDisplayWithSegmentation(input)
+                
+                if (result.isNotEmpty()) {
+                    candidates = result
+                    updateCandidatesView(result)
+                    Timber.d("加载候选词: ${result.size}个")
+                } else {
+                    candidates = emptyList()
+                    clearCandidatesView()
+                    Timber.d("未找到候选词")
                 }
             } catch (e: Exception) {
-                Timber.e(e, "启动候选词获取任务失败: ${e.message}")
+                Timber.e(e, "加载候选词失败")
+                candidates = emptyList()
+                clearCandidatesView()
             }
         }
     }

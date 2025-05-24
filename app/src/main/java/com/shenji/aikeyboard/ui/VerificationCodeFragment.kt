@@ -176,7 +176,7 @@ class VerificationCodeFragment : Fragment(), SmsReceiver.OnVerificationCodeRecei
                 statusBuilder.append("1. 短信读取权限 - 点击\"请求权限\"按钮\n")
             }
             if (!accessibilityServiceEnabled) {
-                statusBuilder.append("2. 无障碍服务权限 - 点击\"无障碍设置\"按钮，找到并启用\"神机键盘\"服务\n")
+                statusBuilder.append("2. 无障碍服务权限 - 点击\"无障碍设置\"按钮，找到并启用\"神迹键盘\"服务\n")
             }
         }
         

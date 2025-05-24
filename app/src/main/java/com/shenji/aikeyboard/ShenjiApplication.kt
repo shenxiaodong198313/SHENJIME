@@ -7,13 +7,10 @@ import android.os.Looper
 import android.util.Log
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import com.shenji.aikeyboard.data.CandidateManager
-import com.shenji.aikeyboard.data.DictionaryManager
-import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.data.Entry
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.logger.CrashReportingTree
-import com.shenji.aikeyboard.pinyin.PinyinQueryEngine
+import com.shenji.aikeyboard.keyboard.OptimizedCandidateEngine
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -42,14 +39,9 @@ class ShenjiApplication : MultiDexApplication() {
             
         lateinit var realm: Realm
             
-        // 候选词管理器单例
-        val candidateManager by lazy {
-            CandidateManager()
-        }
-        
-        // 标准化的拼音查询引擎
-        val pinyinQueryEngine by lazy {
-            PinyinQueryEngine.getInstance()
+        // 优化的候选词引擎（新增）
+        val optimizedCandidateEngine by lazy {
+            OptimizedCandidateEngine.getInstance()
         }
         
         // Trie树管理器
@@ -99,6 +91,21 @@ class ShenjiApplication : MultiDexApplication() {
             // 只进行最基本的初始化，其他工作移到SplashActivity中进行
             // 这样可以避免Application启动时的长时间阻塞
             logStartupMessage("基础初始化完成，详细初始化将在启动页中进行")
+            
+            // 初始化Trie管理器（轻量级初始化）
+            trieManager.init()
+            
+            // 异步初始化优化引擎（预加载核心Trie）
+            GlobalScope.launch(Dispatchers.IO) {
+                try {
+                    Timber.d("开始初始化优化候选词引擎")
+                    // 触发优化引擎的初始化，这会在后台预加载核心Trie
+                    optimizedCandidateEngine
+                    Timber.d("优化候选词引擎初始化完成")
+                } catch (e: Exception) {
+                    Timber.e(e, "优化候选词引擎初始化失败")
+                }
+            }
             
             logStartupMessage("应用初始化完成")
             Timber.d("应用初始化完成")

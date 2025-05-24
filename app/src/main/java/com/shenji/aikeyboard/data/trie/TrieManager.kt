@@ -2,7 +2,7 @@ package com.shenji.aikeyboard.data.trie
 
 import android.content.Context
 import com.shenji.aikeyboard.ShenjiApplication
-import com.shenji.aikeyboard.data.WordFrequency
+import com.shenji.aikeyboard.model.WordFrequency
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
@@ -32,10 +32,10 @@ import kotlinx.coroutines.*
 class TrieManager private constructor() {
     
     // Trie树存储映射
-    private val trieMap = ConcurrentHashMap<TrieBuilder.TrieType, PinyinTrie>()
+    private val trieMap = ConcurrentHashMap<TrieType, PinyinTrie>()
     
     // 加载状态映射
-    private val loadedStatus = ConcurrentHashMap<TrieBuilder.TrieType, Boolean>()
+    private val loadedStatus = ConcurrentHashMap<TrieType, Boolean>()
     
     // 初始化状态
     private var isInitialized = false
@@ -92,11 +92,11 @@ class TrieManager private constructor() {
     /**
      * 检查可用的Trie文件（不加载到内存）
      */
-    private fun checkAvailableTrieFiles(): List<TrieBuilder.TrieType> {
+    private fun checkAvailableTrieFiles(): List<TrieType> {
         val context = ShenjiApplication.appContext
-        val availableTypes = mutableListOf<TrieBuilder.TrieType>()
+        val availableTypes = mutableListOf<TrieType>()
         
-        for (trieType in TrieBuilder.TrieType.values()) {
+        for (trieType in TrieType.values()) {
             val assetPath = "trie/${getTypeString(trieType)}_trie.dat"
             
             if (isAssetFileExists(context, assetPath)) {
@@ -135,10 +135,10 @@ class TrieManager private constructor() {
      */
     private fun loadPrebuiltTriesParallel(): Boolean {
         val context = ShenjiApplication.appContext
-        val futures = mutableListOf<CompletableFuture<Pair<TrieBuilder.TrieType, Boolean>>>()
+        val futures = mutableListOf<CompletableFuture<Pair<TrieType, Boolean>>>()
         
         // 为每个词典类型创建并行加载任务
-        for (trieType in TrieBuilder.TrieType.values()) {
+        for (trieType in TrieType.values()) {
             val future = CompletableFuture.supplyAsync({
                 try {
                     val assetPath = "trie/${getTypeString(trieType)}_trie.dat"
@@ -459,27 +459,19 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      * @return 是否加载成功
      */
-    fun loadTrieToMemory(type: TrieBuilder.TrieType): Boolean {
+    fun loadTrieToMemory(type: TrieType): Boolean {
         val context = ShenjiApplication.appContext
         
         return try {
             val startTime = System.currentTimeMillis()
             var trie: PinyinTrie? = null
             
-            // 首先尝试从用户构建的文件加载
-            val builder = TrieBuilder(context)
-            trie = builder.loadTrie(type)
-            
-            if (trie != null) {
-                Timber.d("从用户构建文件加载${getDisplayName(type)}Trie成功")
-            } else {
-                // 如果用户文件不存在，尝试从assets加载预编译文件（使用优化方法）
-                val assetPath = "trie/${getTypeString(type)}_trie.dat"
-                if (isAssetFileExists(context, assetPath)) {
-                    trie = loadTrieFromAssetsOptimized(context, assetPath)
-                    if (trie != null) {
-                        Timber.d("从assets预编译文件加载${getDisplayName(type)}Trie成功")
-                    }
+            // 尝试从assets加载预编译文件
+            val assetPath = "trie/${getTypeString(type)}_trie.dat"
+            if (isAssetFileExists(context, assetPath)) {
+                trie = loadTrieFromAssetsOptimized(context, assetPath)
+                if (trie != null) {
+                    Timber.d("从assets预编译文件加载${getDisplayName(type)}Trie成功")
                 }
             }
             
@@ -506,7 +498,7 @@ class TrieManager private constructor() {
      * 卸载指定类型的Trie树，释放内存
      * @param type Trie树类型
      */
-    fun unloadTrie(type: TrieBuilder.TrieType) {
+    fun unloadTrie(type: TrieType) {
         trieMap.remove(type)
         loadedStatus[type] = false
         Timber.d("${getDisplayName(type)}Trie树已卸载")
@@ -517,7 +509,7 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      * @return 是否已加载
      */
-    fun isTrieLoaded(type: TrieBuilder.TrieType): Boolean {
+    fun isTrieLoaded(type: TrieType): Boolean {
         return loadedStatus[type] == true && trieMap.containsKey(type)
     }
     
@@ -526,7 +518,7 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      * @return 内存统计信息，如果未加载则返回null
      */
-    fun getTrieMemoryStats(type: TrieBuilder.TrieType): TrieMemoryStats? {
+    fun getTrieMemoryStats(type: TrieType): TrieMemoryStats? {
         return trieMap[type]?.getMemoryStats()
     }
     
@@ -535,7 +527,7 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      * @return 估计的内存占用字节数，如果未加载则返回0
      */
-    fun getTrieMemoryUsage(type: TrieBuilder.TrieType): Long {
+    fun getTrieMemoryUsage(type: TrieType): Long {
         val stats = getTrieMemoryStats(type) ?: return 0
         
         // 粗略估计：每个节点约100字节，每个词条约50字节
@@ -549,7 +541,7 @@ class TrieManager private constructor() {
      * @param limit 返回结果的最大数量
      * @return 匹配的词语列表，按频率排序
      */
-    fun searchByPrefix(type: TrieBuilder.TrieType, prefix: String, limit: Int = 10): List<WordFrequency> {
+    fun searchByPrefix(type: TrieType, prefix: String, limit: Int = 10): List<WordFrequency> {
         if (!isInitialized) init()
         
         val trie = trieMap[type]
@@ -595,14 +587,14 @@ class TrieManager private constructor() {
      * 根据拼音前缀查询单字（兼容性方法）
      */
     fun searchCharsByPrefix(prefix: String, limit: Int = 10): List<WordFrequency> {
-        return searchByPrefix(TrieBuilder.TrieType.CHARS, prefix, limit)
+        return searchByPrefix(TrieType.CHARS, prefix, limit)
     }
     
     /**
      * 根据拼音前缀查询基础词典（兼容性方法）
      */
     fun searchBaseByPrefix(prefix: String, limit: Int = 10): List<WordFrequency> {
-        return searchByPrefix(TrieBuilder.TrieType.BASE, prefix, limit)
+        return searchByPrefix(TrieType.BASE, prefix, limit)
     }
     
     /**
@@ -610,7 +602,7 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      * @return 是否存在文件（包括assets中的预构建文件）
      */
-    fun isTrieFileExists(type: TrieBuilder.TrieType): Boolean {
+    fun isTrieFileExists(type: TrieType): Boolean {
         val context = ShenjiApplication.appContext
         val fileName = "trie/${getTypeString(type)}_trie.dat"
         
@@ -629,7 +621,7 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      * @return 是否存在预编译文件
      */
-    fun hasPrebuiltTrie(type: TrieBuilder.TrieType): Boolean {
+    fun hasPrebuiltTrie(type: TrieType): Boolean {
         val context = ShenjiApplication.appContext
         val fileName = "trie/${getTypeString(type)}_trie.dat"
         return isAssetFileExists(context, fileName)
@@ -640,7 +632,7 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      * @return 是否存在用户构建文件
      */
-    fun hasUserBuiltTrie(type: TrieBuilder.TrieType): Boolean {
+    fun hasUserBuiltTrie(type: TrieType): Boolean {
         val context = ShenjiApplication.appContext
         val fileName = "trie/${getTypeString(type)}_trie.dat"
         val file = File(context.filesDir, fileName)
@@ -652,7 +644,7 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      * @return Trie文件状态信息
      */
-    fun getTrieFileStatus(type: TrieBuilder.TrieType): TrieFileStatus {
+    fun getTrieFileStatus(type: TrieType): TrieFileStatus {
         val context = ShenjiApplication.appContext
         val fileName = "trie/${getTypeString(type)}_trie.dat"
         
@@ -682,7 +674,7 @@ class TrieManager private constructor() {
      * Trie文件状态数据类
      */
     data class TrieFileStatus(
-        val type: TrieBuilder.TrieType,
+        val type: TrieType,
         val hasPrebuiltFile: Boolean,
         val hasUserBuiltFile: Boolean,
         val userFileSize: Long,
@@ -693,48 +685,48 @@ class TrieManager private constructor() {
     /**
      * 获取所有已加载的Trie类型
      */
-    fun getLoadedTrieTypes(): List<TrieBuilder.TrieType> {
+    fun getLoadedTrieTypes(): List<TrieType> {
         return loadedStatus.filter { it.value }.keys.toList()
     }
     
     /**
      * 获取所有可用的Trie文件类型
      */
-    fun getAvailableTrieTypes(): List<TrieBuilder.TrieType> {
-        return TrieBuilder.TrieType.values().filter { isTrieFileExists(it) }
+    fun getAvailableTrieTypes(): List<TrieType> {
+        return TrieType.values().filter { isTrieFileExists(it) }
     }
     
     /**
      * 获取Trie类型对应的字符串
      */
-    private fun getTypeString(trieType: TrieBuilder.TrieType): String {
+    private fun getTypeString(trieType: TrieType): String {
         return when (trieType) {
-            TrieBuilder.TrieType.CHARS -> "chars"
-            TrieBuilder.TrieType.BASE -> "base"
-            TrieBuilder.TrieType.CORRELATION -> "correlation"
-            TrieBuilder.TrieType.ASSOCIATIONAL -> "associational"
-            TrieBuilder.TrieType.PLACE -> "place"
-            TrieBuilder.TrieType.PEOPLE -> "people"
-            TrieBuilder.TrieType.POETRY -> "poetry"
-            TrieBuilder.TrieType.CORRECTIONS -> "corrections"
-            TrieBuilder.TrieType.COMPATIBLE -> "compatible"
+            TrieType.CHARS -> "chars"
+            TrieType.BASE -> "base"
+            TrieType.CORRELATION -> "correlation"
+            TrieType.ASSOCIATIONAL -> "associational"
+            TrieType.PLACE -> "place"
+            TrieType.PEOPLE -> "people"
+            TrieType.POETRY -> "poetry"
+            TrieType.CORRECTIONS -> "corrections"
+            TrieType.COMPATIBLE -> "compatible"
         }
     }
     
     /**
      * 获取Trie类型的显示名称
      */
-    private fun getDisplayName(trieType: TrieBuilder.TrieType): String {
+    private fun getDisplayName(trieType: TrieType): String {
         return when (trieType) {
-            TrieBuilder.TrieType.CHARS -> "单字"
-            TrieBuilder.TrieType.BASE -> "基础词典"
-            TrieBuilder.TrieType.CORRELATION -> "关联词典"
-            TrieBuilder.TrieType.ASSOCIATIONAL -> "联想词典"
-            TrieBuilder.TrieType.PLACE -> "地名词典"
-            TrieBuilder.TrieType.PEOPLE -> "人名词典"
-            TrieBuilder.TrieType.POETRY -> "诗词词典"
-            TrieBuilder.TrieType.CORRECTIONS -> "纠错词典"
-            TrieBuilder.TrieType.COMPATIBLE -> "兼容词典"
+            TrieType.CHARS -> "单字"
+            TrieType.BASE -> "基础词典"
+            TrieType.CORRELATION -> "关联词典"
+            TrieType.ASSOCIATIONAL -> "联想词典"
+            TrieType.PLACE -> "地名词典"
+            TrieType.PEOPLE -> "人名词典"
+            TrieType.POETRY -> "诗词词典"
+            TrieType.CORRECTIONS -> "纠错词典"
+            TrieType.COMPATIBLE -> "兼容词典"
         }
     }
     

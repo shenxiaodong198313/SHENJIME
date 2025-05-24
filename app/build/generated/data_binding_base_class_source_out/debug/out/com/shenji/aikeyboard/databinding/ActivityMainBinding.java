@@ -35,6 +35,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button btnLogs;
 
   @NonNull
+  public final Button btnOptimizedTest;
+
+  @NonNull
   public final Button btnSystemCheck;
 
   @NonNull
@@ -54,14 +57,15 @@ public final class ActivityMainBinding implements ViewBinding {
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnDevTools,
       @NonNull Button btnDictManager, @NonNull Button btnImeSettings, @NonNull Button btnLogs,
-      @NonNull Button btnSystemCheck, @NonNull LinearLayout mainButtonContainer,
-      @NonNull ConstraintLayout mainContainer, @NonNull Toolbar toolbar,
-      @NonNull TextView tvHelpText, @NonNull TextView tvTitle) {
+      @NonNull Button btnOptimizedTest, @NonNull Button btnSystemCheck,
+      @NonNull LinearLayout mainButtonContainer, @NonNull ConstraintLayout mainContainer,
+      @NonNull Toolbar toolbar, @NonNull TextView tvHelpText, @NonNull TextView tvTitle) {
     this.rootView = rootView;
     this.btnDevTools = btnDevTools;
     this.btnDictManager = btnDictManager;
     this.btnImeSettings = btnImeSettings;
     this.btnLogs = btnLogs;
+    this.btnOptimizedTest = btnOptimizedTest;
     this.btnSystemCheck = btnSystemCheck;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
@@ -121,6 +125,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btn_optimized_test;
+      Button btnOptimizedTest = ViewBindings.findChildViewById(rootView, id);
+      if (btnOptimizedTest == null) {
+        break missingId;
+      }
+
       id = R.id.btn_system_check;
       Button btnSystemCheck = ViewBindings.findChildViewById(rootView, id);
       if (btnSystemCheck == null) {
@@ -154,8 +164,8 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnDevTools, btnDictManager,
-          btnImeSettings, btnLogs, btnSystemCheck, mainButtonContainer, mainContainer, toolbar,
-          tvHelpText, tvTitle);
+          btnImeSettings, btnLogs, btnOptimizedTest, btnSystemCheck, mainButtonContainer,
+          mainContainer, toolbar, tvHelpText, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -152,6 +152,13 @@
             android:label="组合候选词测试"
             android:windowSoftInputMode="adjustResize" />
             
+        <!-- 优化候选词测试活动 -->
+        <activity
+            android:name=".ui.OptimizedCandidateTestActivity"
+            android:exported="false"
+            android:label="优化候选词测试"
+            android:windowSoftInputMode="adjustResize" />
+            
         <!-- 输入法服务 -->
         <service
             android:name=".keyboard.ShenjiInputMethodService"
@@ -169,7 +176,7 @@
         <!-- 无障碍服务 - 用于自动填写验证码 -->
         <service
             android:name=".utils.AutofillAccessibilityService"
-            android:label="神机键盘验证码自动填写"
+            android:label="神迹键盘验证码自动填写"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
             <intent-filter>

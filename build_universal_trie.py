@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-神机输入法 - 通用Trie预编译构建工具
+神迹输入法 - 通用Trie预编译构建工具
 支持多种词典类型和自定义参数
 """
 
@@ -217,7 +217,7 @@ def get_dict_info(dict_type: str) -> Tuple[str, str]:
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description='神机输入法 - 通用Trie预编译构建工具')
+    parser = argparse.ArgumentParser(description='神迹输入法 - 通用Trie预编译构建工具')
     parser.add_argument('--input', '-i', type=str, help='输入词典文件路径')
     parser.add_argument('--output', '-o', type=str, help='输出Trie文件路径')
     parser.add_argument('--type', '-t', type=str, choices=['base', 'correlation', 'associational', 'poetry', 'chars', 'place', 'people', 'compatible', 'corrections'], help='词典类型')
@@ -240,7 +240,7 @@ def main():
         output_path = args.output
     
     print("=" * 60)
-    print("神机输入法 - 通用Trie预编译构建工具")
+    print("神迹输入法 - 通用Trie预编译构建工具")
     print("=" * 60)
     print(f"输入文件: {input_path}")
     print(f"输出文件: {output_path}")

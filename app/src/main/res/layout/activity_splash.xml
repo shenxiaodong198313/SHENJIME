@@ -18,7 +18,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="神机AI键盘"
+        android:text="神迹AI键盘"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="@android:color/white"

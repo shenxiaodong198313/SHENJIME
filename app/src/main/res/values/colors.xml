@@ -34,4 +34,13 @@
     <color name="candidate_other">#9E9E9E</color>
     <color name="pinyin_text">#757575</color>
     <color name="divider">#E0E0E0</color>
+    
+    <!-- 新增颜色 -->
+    <color name="light_gray">#FFF5F5F5</color>
+    <color name="info_background">#FFF0F8FF</color>
+    <color name="primary_blue">#FF2196F3</color>
+    <color name="secondary_gray">#FF757575</color>
+    <color name="success_green">#FF4CAF50</color>
+    <color name="warning_orange">#FFFF9800</color>
+    <color name="error_red">#FFF44336</color>
 </resources> 

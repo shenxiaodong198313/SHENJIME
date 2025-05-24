@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-神机输入法 - Base词典Trie预编译构建工具
+神迹输入法 - Base词典Trie预编译构建工具
 功能：
 1. 解析base.dict.yaml文件
 2. 去掉拼音声调
@@ -262,7 +262,7 @@ def verify_trie_file(file_path: str) -> bool:
 def main():
     """主函数"""
     print("=" * 60)
-    print("神机输入法 - Base词典Trie预编译构建工具")
+    print("神迹输入法 - Base词典Trie预编译构建工具")
     print("=" * 60)
     
     # 文件路径

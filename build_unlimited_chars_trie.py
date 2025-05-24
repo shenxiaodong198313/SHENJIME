@@ -219,7 +219,7 @@ def main():
     output_path = "app/src/main/assets/trie/chars_trie.dat"
     
     print("=" * 60)
-    print("神机输入法 - 无限制chars Trie构建工具")
+    print("神迹输入法 - 无限制chars Trie构建工具")
     print("=" * 60)
     print(f"输入文件: {input_path}")
     print(f"输出文件: {output_path}")

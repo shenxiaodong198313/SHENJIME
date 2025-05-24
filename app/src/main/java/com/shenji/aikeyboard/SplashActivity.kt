@@ -8,10 +8,9 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.data.Entry
 import com.shenji.aikeyboard.data.trie.TrieManager
-import com.shenji.aikeyboard.data.trie.TrieBuilder
+import com.shenji.aikeyboard.data.trie.TrieType
 import com.shenji.aikeyboard.ui.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -61,7 +60,7 @@ class SplashActivity : AppCompatActivity() {
         
         progressBar.max = 100
         progressBar.progress = 0
-        statusText.text = "正在启动神机输入法..."
+        statusText.text = "正在启动神迹输入法..."
         detailText.text = "初始化预计需要10-20秒，正在准备数据库和词典..."
     }
     
@@ -130,46 +129,23 @@ class SplashActivity : AppCompatActivity() {
         updateDetail("检查Realm数据库状态...")
         
         try {
-            // 🔧 优化：Realm已在Application中初始化，这里只需验证状态
-            updateDetail("验证数据库连接...")
-            
             // 检查Realm实例是否可用
             val realm = ShenjiApplication.realm
-            val isRealmAvailable = try {
+            val entryCount = try {
                 realm.query(Entry::class).count().find()
-                true
             } catch (e: Exception) {
-                Timber.w(e, "Realm数据库不可用")
-                false
+                Timber.w(e, "Realm数据库查询失败")
+                0
             }
             
-            if (isRealmAvailable) {
-                updateDetail("获取数据库统计信息...")
-                val repository = DictionaryRepository()
-                
-                val dbSize = repository.getDictionaryFileSize()
-                val dbSizeMB = dbSize / (1024 * 1024)
-                val entryCount = try {
-                    repository.getTotalEntryCount()
-                } catch (e: Exception) {
-                    Timber.w(e, "获取词条数失败")
-                    0
-                }
-                
-                updateDetail("数据库状态: ${dbSizeMB}MB, ${entryCount}个词条")
-                Timber.i("数据库验证完成 - 大小: ${dbSizeMB}MB, 词条数: $entryCount")
-                
-                // 预热数据库连接（可选，如果数据库为空则跳过）
-                if (entryCount > 0) {
-                    updateDetail("正在预热数据库连接，这可能需要10-15秒...")
-                    repository.warmupCache()
-                } else {
-                    updateDetail("数据库为空，跳过预热")
-                    Timber.w("数据库为空，可能需要重新初始化")
-                }
+            updateDetail("数据库状态: ${entryCount}个词条")
+            Timber.i("数据库验证完成 - 词条数: $entryCount")
+            
+            if (entryCount > 0) {
+                updateDetail("数据库连接正常")
             } else {
-                updateDetail("数据库不可用，将使用降级模式")
-                Timber.w("数据库初始化失败，应用将以降级模式运行")
+                updateDetail("数据库为空，将使用降级模式")
+                Timber.w("数据库为空，可能需要重新初始化")
             }
             
         } catch (e: Exception) {
@@ -219,11 +195,11 @@ class SplashActivity : AppCompatActivity() {
             trieManager.init()
             
             // 只加载chars词典
-            if (trieManager.isTrieFileExists(TrieBuilder.TrieType.CHARS)) {
+            if (trieManager.isTrieFileExists(TrieType.CHARS)) {
                 updateDetail("检测到chars词典文件...")
                 
                 val startTime = System.currentTimeMillis()
-                val success = trieManager.loadTrieToMemory(TrieBuilder.TrieType.CHARS)
+                val success = trieManager.loadTrieToMemory(TrieType.CHARS)
                 val loadTime = System.currentTimeMillis() - startTime
                 
                 if (success) {
@@ -267,7 +243,7 @@ class SplashActivity : AppCompatActivity() {
         Timber.i("启动完成 - 内存使用: ${usedMemory}MB/${maxMemory}MB，剩余: ${freeMemory}MB")
         
         // 记录启动成功
-        Timber.i("神机输入法启动成功，准备进入主界面")
+        Timber.i("神迹输入法启动成功，准备进入主界面")
     }
     
     /**

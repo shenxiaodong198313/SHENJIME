@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-神机输入法 - Java兼容的Base词典Trie预编译构建工具
+神迹输入法 - Java兼容的Base词典Trie预编译构建工具
 使用简单的二进制格式生成数据文件
 """
 
@@ -199,7 +199,7 @@ def verify_simple_data_file(file_path: str) -> bool:
 def main():
     """主函数"""
     print("=" * 60)
-    print("神机输入法 - Java兼容Base词典构建工具")
+    print("神迹输入法 - Java兼容Base词典构建工具")
     print("=" * 60)
     
     input_file = "app/src/main/assets/cn_dicts/base.dict.yaml"

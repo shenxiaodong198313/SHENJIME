@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-神机输入法 - 实时日志监控工具
+神迹输入法 - 实时日志监控工具
 用于观察应用启动过程中的详细日志，特别是单字词典加载过程
 """
 
@@ -49,7 +49,7 @@ class AppLogMonitor:
         self.start_time = datetime.now()
         
         print("=" * 80)
-        print("🚀 神机输入法实时日志监控")
+        print("🚀 神迹输入法实时日志监控")
         print(f"📱 包名: {self.package_name}")
         print(f"⏰ 开始时间: {self.start_time.strftime('%H:%M:%S')}")
         print("=" * 80)
@@ -208,7 +208,7 @@ def main():
     # 清空日志缓冲区
     monitor.clear_logcat()
     
-    print("\n🎯 现在请启动神机输入法应用...")
+    print("\n�� 现在请启动神迹输入法应用...")
     print("💡 提示：启动应用后，此工具将显示详细的加载过程")
     print("⚠️  特别关注单字词典加载时间和内存使用情况")
     
