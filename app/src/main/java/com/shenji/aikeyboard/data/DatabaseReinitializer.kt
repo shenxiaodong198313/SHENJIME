@@ -3,6 +3,7 @@ package com.shenji.aikeyboard.data
 import android.content.Context
 import android.content.SharedPreferences
 import com.shenji.aikeyboard.ShenjiApplication
+import com.shenji.aikeyboard.data.Entry
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import kotlinx.coroutines.*
@@ -105,6 +106,8 @@ class DatabaseReinitializer(private val context: Context) {
     ): Boolean = withContext(Dispatchers.IO) {
         
         val totalStartTime = System.currentTimeMillis()
+        var realm: Realm? = null
+        var writeJob: Job? = null
         
         try {
             // 检查协程是否被取消
@@ -117,11 +120,11 @@ class DatabaseReinitializer(private val context: Context) {
             // 第一步：准备数据库环境
             ensureActive()
             progressCallback(0.05f, "", 0.0f, "准备数据库环境...")
-            val realm = prepareDatabaseEnvironment(resumeFromBreakpoint)
+            realm = prepareDatabaseEnvironment(resumeFromBreakpoint)
             
             // 第二步：启动写入协程
             ensureActive()
-            val writeJob = startDatabaseWriter(realm)
+            writeJob = startDatabaseWriter(realm)
             
             // 第三步：并行导入词典数据
             ensureActive()
@@ -131,12 +134,25 @@ class DatabaseReinitializer(private val context: Context) {
                 progressCallback(overallProgress, type, dictProgress, message)
             }
             
-            // 第四步：完成写入
+            // 第四步：等待所有数据写入完成
             ensureActive()
+            progressCallback(0.9f, "", 1.0f, "等待数据写入完成...")
             writeChannel.close()
-            writeJob.join()
+            writeJob.join() // 确保所有数据都写入完成
             
-            // 第五步：优化和清理
+            // 第五步：验证数据写入
+            ensureActive()
+            progressCallback(0.92f, "", 1.0f, "验证数据写入...")
+            val totalCount = realm.query(Entry::class).count().find().toInt()
+            Timber.d("数据写入验证: 总词条数 = $totalCount")
+            
+            if (totalCount == 0) {
+                Timber.e("数据写入失败: 数据库中没有词条")
+                progressCallback(1.0f, "", 0.0f, "数据写入失败: 数据库为空")
+                return@withContext false
+            }
+            
+            // 第六步：优化和清理
             if (success) {
                 ensureActive()
                 progressCallback(0.95f, "", 1.0f, "优化数据库索引...")
@@ -151,7 +167,7 @@ class DatabaseReinitializer(private val context: Context) {
             }
             
             val totalTime = System.currentTimeMillis() - totalStartTime
-            progressCallback(1.0f, "", 1.0f, "数据库重新初始化完成 (耗时: ${totalTime}ms)")
+            progressCallback(1.0f, "", 1.0f, "数据库重新初始化完成 (耗时: ${totalTime}ms, 词条数: $totalCount)")
             
             return@withContext success
             
@@ -163,6 +179,9 @@ class DatabaseReinitializer(private val context: Context) {
             Timber.e(e, "重新初始化数据库失败")
             progressCallback(1.0f, "", 0.0f, "初始化失败: ${e.message}")
             return@withContext false
+        } finally {
+            // 确保写入协程被正确关闭
+            writeJob?.cancel()
         }
     }
     
@@ -208,20 +227,52 @@ class DatabaseReinitializer(private val context: Context) {
     /**
      * 启动数据库写入协程
      */
-    private fun startDatabaseWriter(realm: Realm) = GlobalScope.launch(Dispatchers.IO) {
+    private fun CoroutineScope.startDatabaseWriter(realm: Realm) = launch(Dispatchers.IO) {
+        var batchCount = 0
+        var totalWritten = 0
+        val writtenIds = mutableSetOf<String>() // 跟踪已写入的ID，避免重复
+        
         try {
             for (entries in writeChannel) {
                 ensureActive()
-                realm.write {
-                    for (entry in entries) {
-                        copyToRealm(entry)
+                batchCount++
+                
+                // 过滤重复的条目
+                val uniqueEntries = entries.filter { entry ->
+                    if (writtenIds.contains(entry.id)) {
+                        Timber.w("跳过重复条目: ${entry.word} (${entry.id})")
+                        false
+                    } else {
+                        writtenIds.add(entry.id)
+                        true
                     }
                 }
+                
+                if (uniqueEntries.isNotEmpty()) {
+                    realm.write {
+                        uniqueEntries.forEach { entry ->
+                            try {
+                                copyToRealm(entry)
+                                totalWritten++
+                            } catch (e: Exception) {
+                                Timber.e(e, "写入条目失败: ${entry.word} (${entry.id})")
+                            }
+                        }
+                    }
+                }
+                
+                // 每100个批次记录一次日志
+                if (batchCount % 100 == 0) {
+                    Timber.d("已写入 $batchCount 个批次，总条目: $totalWritten")
+                }
             }
+            Timber.d("数据库写入完成，总共写入 $batchCount 个批次，$totalWritten 条记录")
         } catch (e: CancellationException) {
-            Timber.d("数据库写入协程被取消")
+            Timber.d("数据库写入协程被取消，已写入 $batchCount 个批次，$totalWritten 条记录")
+            throw e
         } catch (e: Exception) {
-            Timber.e(e, "数据库写入失败")
+            Timber.e(e, "数据库写入失败，已写入 $batchCount 个批次，$totalWritten 条记录")
+            throw e
         }
     }
     
@@ -403,7 +454,11 @@ class DatabaseReinitializer(private val context: Context) {
             val pinyin = removeTones(parts[1].trim())
             val frequency = if (parts.size > 2) parts[2].toIntOrNull() ?: 0 else 0
             
+            // 生成唯一ID，避免主键冲突
+            val uniqueId = "${dictType}_${word}_${pinyin}_${frequency}".hashCode().toString()
+            
             return Entry().apply {
+                this.id = uniqueId
                 this.word = word
                 this.pinyin = pinyin
                 this.frequency = frequency
@@ -519,7 +574,8 @@ class DatabaseReinitializer(private val context: Context) {
      */
     private fun closeCurrentDatabase() {
         try {
-            ShenjiApplication.realm?.close()
+            ShenjiApplication.realm.close()
+            Timber.d("数据库连接已关闭")
         } catch (e: Exception) {
             Timber.e(e, "关闭数据库失败")
         }
@@ -532,8 +588,25 @@ class DatabaseReinitializer(private val context: Context) {
         try {
             val dbDir = File(context.filesDir, "dictionaries")
             if (dbDir.exists()) {
-                dbDir.deleteRecursively()
+                // 删除所有数据库相关文件
+                dbDir.listFiles()?.forEach { file ->
+                    if (file.name.contains("shenji_dict")) {
+                        val deleted = file.delete()
+                        Timber.d("删除文件 ${file.name}: $deleted")
+                    }
+                }
+                
+                // 如果目录为空，删除目录
+                if (dbDir.listFiles()?.isEmpty() == true) {
+                    dbDir.delete()
+                    Timber.d("删除空目录: dictionaries")
+                }
             }
+            
+            // 强制垃圾回收，释放文件句柄
+            System.gc()
+            Thread.sleep(100) // 等待一下确保文件句柄释放
+            
         } catch (e: Exception) {
             Timber.e(e, "删除旧数据库失败")
         }
@@ -581,16 +654,33 @@ class DatabaseReinitializer(private val context: Context) {
      */
     private suspend fun reinitializeAppComponents(realm: Realm) = withContext(Dispatchers.IO) {
         try {
-            // 清理缓存
+            Timber.d("开始重新初始化应用组件...")
+            
+            // 确保全局realm引用已更新
+            ShenjiApplication.realm = realm
+            
+            // 强制重新创建DictionaryRepository实例
+            // 这样它会使用新的realm实例
             val repository = DictionaryRepository()
+            
+            // 清理所有缓存
             repository.clearCache()
             
-            // 预热缓存
-            repository.warmupCache()
+            // 验证数据库连接
+            val totalCount = repository.getTotalEntryCount()
+            Timber.d("数据库验证: 总词条数 = $totalCount")
             
-            Timber.d("应用组件重新初始化完成")
+            if (totalCount > 0) {
+                // 预热缓存
+                repository.warmupCache()
+                Timber.d("应用组件重新初始化完成，词条总数: $totalCount")
+            } else {
+                Timber.w("警告: 数据库重新初始化后词条数为0")
+            }
+            
         } catch (e: Exception) {
             Timber.e(e, "重新初始化应用组件失败")
+            throw e
         }
     }
     

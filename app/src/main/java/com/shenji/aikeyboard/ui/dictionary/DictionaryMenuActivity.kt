@@ -216,7 +216,19 @@ class DictionaryMenuActivity : AppCompatActivity() {
                     progressDialog?.dismiss()
                     
                     if (success) {
-                        Toast.makeText(this@DictionaryMenuActivity, "数据库重新初始化成功！", Toast.LENGTH_LONG).show()
+                        // 显示成功对话框，提示用户刷新
+                        AlertDialog.Builder(this@DictionaryMenuActivity)
+                            .setTitle("数据库重新初始化成功！")
+                            .setMessage("数据库已成功重新构建。\n\n" +
+                                    "为了确保Realm词典管理界面显示最新数据，建议您：\n" +
+                                    "1. 重启应用，或\n" +
+                                    "2. 进入Realm词典管理界面查看数据\n\n" +
+                                    "是否现在打开Realm词典管理？")
+                            .setPositiveButton("打开词典管理") { _, _ ->
+                                openRealmDictManager()
+                            }
+                            .setNegativeButton("稍后查看", null)
+                            .show()
                         reinitDbButton.text = "重新初始化数据库"
                     } else {
                         Toast.makeText(this@DictionaryMenuActivity, "数据库重新初始化失败，请查看日志", Toast.LENGTH_LONG).show()

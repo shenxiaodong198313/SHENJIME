@@ -496,10 +496,9 @@ class TrieBuilder(
         insertCount.set(0)
     }
     
-    private fun startAsyncInsertProcessor(trie: PinyinTrie, logFile: File) = kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
-        // 实现异步插入处理逻辑
-    }
-    
+    /**
+     * 处理词典批次（带重试机制）
+     */
     private suspend fun processDictionaryBatchWithRetry(
         dictType: String,
         batchIndex: Int, 
@@ -508,15 +507,173 @@ class TrieBuilder(
         frequencyFilter: FrequencyFilter,
         logFile: File,
         maxRetries: Int = 3
-    ): Boolean {
-        // 实现批次处理逻辑
-        return true
+    ): Boolean = withContext(Dispatchers.IO) {
+        
+        var attempt = 0
+        var lastException: Exception? = null
+        
+        while (attempt < maxRetries) {
+            try {
+                attempt++
+                logFile.appendText("批次${batchIndex + 1}: 第${attempt}次尝试开始\n")
+                
+                // 计算偏移量
+                val offset = batchIndex * batchSize
+                
+                // 获取当前批次的词条数据（使用词频过滤）
+                val entries = repository.getEntriesByTypeWithFrequencyFilter(
+                    dictType, offset, batchSize, frequencyFilter
+                )
+                
+                if (entries.isEmpty()) {
+                    logFile.appendText("批次${batchIndex + 1}: 无数据，跳过\n")
+                    return@withContext true
+                }
+                
+                logFile.appendText("批次${batchIndex + 1}: 获取到${entries.size}个词条\n")
+                
+                // 处理词条
+                val processedEntries = mutableListOf<TrieInsertEntry>()
+                
+                for (entry in entries) {
+                    val processedEntry = processEntry(entry, dictType)
+                    if (processedEntry != null) {
+                        processedEntries.add(processedEntry)
+                    }
+                }
+                
+                // 发送到插入通道
+                if (processedEntries.isNotEmpty()) {
+                    insertChannel.trySend(TrieInsertBatch(processedEntries))
+                    insertCount.addAndGet(processedEntries.size.toLong())
+                }
+                
+                processedCount.addAndGet(entries.size.toLong())
+                logFile.appendText("批次${batchIndex + 1}: 成功处理${entries.size}个词条，插入${processedEntries.size}个\n")
+                
+                return@withContext true
+                
+            } catch (e: Exception) {
+                lastException = e
+                logFile.appendText("批次${batchIndex + 1}: 第${attempt}次尝试失败: ${e.message}\n")
+                Timber.w(e, "处理批次${batchIndex + 1}失败，第${attempt}次尝试")
+                
+                if (attempt < maxRetries) {
+                    delay(1000L * attempt) // 递增延迟
+                }
+            }
+        }
+        
+        // 所有重试都失败了
+        errorCount.incrementAndGet()
+        logFile.appendText("批次${batchIndex + 1}: 所有重试都失败，最后错误: ${lastException?.message}\n")
+        return@withContext false
     }
     
-    private suspend fun performMemoryCheck(logFile: File) {
-        // 实现内存检查逻辑
+    /**
+     * 处理单个词条
+     */
+    private fun processEntry(entry: com.shenji.aikeyboard.data.Entry, dictType: String): TrieInsertEntry? {
+        try {
+            val word = entry.word
+            val pinyin = entry.pinyin?.lowercase()?.trim()
+            val frequency = entry.frequency ?: 0
+            
+            if (word.isBlank() || pinyin.isNullOrBlank()) {
+                skipCount.incrementAndGet()
+                return null
+            }
+            
+            // 处理拼音（去除声调，处理多音节）
+            val cleanPinyin = removeTones(pinyin)
+            
+            return TrieInsertEntry(
+                key = cleanPinyin,
+                word = word,
+                frequency = frequency
+            )
+            
+        } catch (e: Exception) {
+            Timber.w(e, "处理词条失败: ${entry.word}")
+            errorCount.incrementAndGet()
+            return null
+        }
     }
     
+    /**
+     * 去除拼音声调
+     */
+    private fun removeTones(pinyin: String): String {
+        return pinyin.replace(Regex("[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]")) { matchResult ->
+            when (matchResult.value) {
+                "ā", "á", "ǎ", "à" -> "a"
+                "ē", "é", "ě", "è" -> "e"
+                "ī", "í", "ǐ", "ì" -> "i"
+                "ō", "ó", "ǒ", "ò" -> "o"
+                "ū", "ú", "ǔ", "ù" -> "u"
+                "ǖ", "ǘ", "ǚ", "ǜ" -> "v"
+                else -> matchResult.value
+            }
+        }
+    }
+    
+    /**
+     * 启动异步插入处理器
+     */
+    private fun startAsyncInsertProcessor(trie: PinyinTrie, logFile: File) = kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+        try {
+            var batchCount = 0
+            for (batch in insertChannel) {
+                try {
+                    // 批量插入到Trie
+                    for (entry in batch.entries) {
+                        trie.insert(entry.key, entry.word, entry.frequency)
+                    }
+                    
+                    batchCount++
+                    if (batchCount % 10 == 0) {
+                        logFile.appendText("异步插入: 已处理${batchCount}个批次\n")
+                    }
+                    
+                } catch (e: Exception) {
+                    logFile.appendText("异步插入失败: ${e.message}\n")
+                    Timber.e(e, "异步插入失败")
+                }
+            }
+            logFile.appendText("异步插入处理器完成，总共处理${batchCount}个批次\n")
+        } catch (e: Exception) {
+            logFile.appendText("异步插入处理器异常: ${e.message}\n")
+            Timber.e(e, "异步插入处理器异常")
+        }
+    }
+    
+    /**
+     * 执行内存检查
+     */
+    private suspend fun performMemoryCheck(logFile: File) = withContext(Dispatchers.IO) {
+        val runtime = Runtime.getRuntime()
+        val maxMemory = runtime.maxMemory()
+        val totalMemory = runtime.totalMemory()
+        val freeMemory = runtime.freeMemory()
+        val usedMemory = totalMemory - freeMemory
+        val usageRatio = usedMemory.toFloat() / maxMemory
+        
+        logFile.appendText("内存检查: 使用${usedMemory / (1024 * 1024)}MB / ${maxMemory / (1024 * 1024)}MB (${(usageRatio * 100).toInt()}%)\n")
+        
+        if (usageRatio > MAX_MEMORY_USAGE_RATIO) {
+            logFile.appendText("内存使用率过高，执行垃圾回收\n")
+            System.gc()
+            delay(500L)
+            
+            val newUsedMemory = runtime.totalMemory() - runtime.freeMemory()
+            val newUsageRatio = newUsedMemory.toFloat() / maxMemory
+            logFile.appendText("垃圾回收后: 使用${newUsedMemory / (1024 * 1024)}MB (${(newUsageRatio * 100).toInt()}%)\n")
+        }
+    }
+    
+    /**
+     * 保存检查点
+     */
     private fun saveCheckpoint(
         trie: PinyinTrie, 
         dictType: String, 
@@ -525,33 +682,164 @@ class TrieBuilder(
         totalEntries: Long, 
         logFile: File
     ) {
-        // 实现检查点保存逻辑
+        try {
+            // 保存进度信息
+            val progress = BuildProgress(
+                totalBatches = totalBatches,
+                completedBatches = batchIndex + 1,
+                processedEntries = processedCount.get(),
+                totalEntries = totalEntries,
+                lastBatchIndex = batchIndex
+            )
+            
+            saveBuildProgress(dictType, progress)
+            
+            // 保存部分Trie
+            savePartialTrie(trie, dictType)
+            
+            logFile.appendText("检查点已保存: 批次${batchIndex + 1}/${totalBatches}\n")
+            
+        } catch (e: Exception) {
+            logFile.appendText("保存检查点失败: ${e.message}\n")
+            Timber.e(e, "保存检查点失败")
+        }
     }
     
-    private fun saveEmergencyCheckpoint(trie: PinyinTrie, dictType: String, logFile: File) {
-        // 实现紧急检查点保存逻辑
+    /**
+     * 保存构建进度
+     */
+    private fun saveBuildProgress(dictType: String, progress: BuildProgress) {
+        prefs.edit()
+            .putInt("${dictType}_total_batches", progress.totalBatches)
+            .putInt("${dictType}_completed_batches", progress.completedBatches)
+            .putLong("${dictType}_processed_entries", progress.processedEntries)
+            .putLong("${dictType}_total_entries", progress.totalEntries)
+            .putInt("${dictType}_last_batch_index", progress.lastBatchIndex)
+            .apply()
     }
     
-    private fun performFinalOptimization(trie: PinyinTrie, logFile: File) {
-        // 实现最终优化逻辑
-    }
-    
-    private fun saveErrorLog(dictType: String, error: Exception) {
-        // 实现错误日志保存逻辑
-    }
-    
+    /**
+     * 加载构建进度
+     */
     private fun loadBuildProgress(dictType: String): BuildProgress? {
-        // 实现构建进度加载逻辑
-        return null
+        return try {
+            val totalBatches = prefs.getInt("${dictType}_total_batches", -1)
+            if (totalBatches <= 0) return null
+            
+            BuildProgress(
+                totalBatches = totalBatches,
+                completedBatches = prefs.getInt("${dictType}_completed_batches", 0),
+                processedEntries = prefs.getLong("${dictType}_processed_entries", 0),
+                totalEntries = prefs.getLong("${dictType}_total_entries", 0),
+                lastBatchIndex = prefs.getInt("${dictType}_last_batch_index", -1)
+            )
+        } catch (e: Exception) {
+            Timber.e(e, "加载构建进度失败")
+            null
+        }
     }
     
+    /**
+     * 清理构建进度
+     */
     private fun clearBuildProgress(dictType: String) {
-        // 实现构建进度清理逻辑
+        prefs.edit()
+            .remove("${dictType}_total_batches")
+            .remove("${dictType}_completed_batches")
+            .remove("${dictType}_processed_entries")
+            .remove("${dictType}_total_entries")
+            .remove("${dictType}_last_batch_index")
+            .apply()
     }
     
+    /**
+     * 保存部分Trie
+     */
+    private fun savePartialTrie(trie: PinyinTrie, dictType: String) {
+        try {
+            val fileName = "${dictType}_trie_partial.dat"
+            val file = File(context.filesDir, "trie/$fileName")
+            file.parentFile?.mkdirs()
+            
+            FileOutputStream(file).use { fos ->
+                ObjectOutputStream(fos).use { oos ->
+                    oos.writeInt(SERIALIZATION_VERSION)
+                    oos.writeObject(trie)
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "保存部分Trie失败")
+        }
+    }
+    
+    /**
+     * 加载部分Trie
+     */
     private fun loadPartialTrie(dictType: String): PinyinTrie? {
-        // 实现部分Trie加载逻辑
-        return null
+        return try {
+            val fileName = "${dictType}_trie_partial.dat"
+            val file = File(context.filesDir, "trie/$fileName")
+            
+            if (!file.exists()) return null
+            
+            FileInputStream(file).use { fis ->
+                ObjectInputStream(fis).use { ois ->
+                    val version = ois.readInt()
+                    if (version == SERIALIZATION_VERSION) {
+                        ois.readObject() as PinyinTrie
+                    } else {
+                        null
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "加载部分Trie失败")
+            null
+        }
+    }
+    
+    /**
+     * 执行最终优化
+     */
+    private fun performFinalOptimization(trie: PinyinTrie, logFile: File) {
+        try {
+            logFile.appendText("开始最终优化...\n")
+            
+            // 执行垃圾回收
+            System.gc()
+            
+            // 获取最终统计信息
+            val stats = trie.getMemoryStats()
+            logFile.appendText("最终统计: ${stats}\n")
+            logFile.appendText("处理统计: 总处理=${processedCount.get()}, 跳过=${skipCount.get()}, 错误=${errorCount.get()}, 插入=${insertCount.get()}\n")
+            
+        } catch (e: Exception) {
+            logFile.appendText("最终优化失败: ${e.message}\n")
+            Timber.e(e, "最终优化失败")
+        }
+    }
+    
+    /**
+     * 保存错误日志
+     */
+    private fun saveErrorLog(dictType: String, error: Exception) {
+        try {
+            val errorLogFile = File(context.filesDir, "logs/${dictType}_error_${System.currentTimeMillis()}.log")
+            errorLogFile.parentFile?.mkdirs()
+            
+            errorLogFile.writeText("""
+                错误时间: ${java.util.Date()}
+                词典类型: $dictType
+                错误信息: ${error.message}
+                错误堆栈:
+                ${error.stackTraceToString()}
+                
+                系统信息: ${getSystemInfo()}
+            """.trimIndent())
+            
+        } catch (e: Exception) {
+            Timber.e(e, "保存错误日志失败")
+        }
     }
     
     /**
@@ -650,6 +938,37 @@ class TrieBuilder(
                 Timber.w("无法备份损坏的文件，已删除")
             }
             null
+        }
+    }
+    
+    /**
+     * 保存紧急检查点
+     */
+    private fun saveEmergencyCheckpoint(trie: PinyinTrie, dictType: String, logFile: File) {
+        try {
+            logFile.appendText("保存紧急检查点...\n")
+            
+            // 保存当前Trie状态
+            savePartialTrie(trie, dictType)
+            
+            // 保存当前统计信息
+            val emergencyInfo = """
+                紧急检查点时间: ${java.util.Date()}
+                已处理词条: ${processedCount.get()}
+                跳过词条: ${skipCount.get()}
+                错误词条: ${errorCount.get()}
+                插入词条: ${insertCount.get()}
+            """.trimIndent()
+            
+            val emergencyFile = File(context.filesDir, "logs/${dictType}_emergency_${System.currentTimeMillis()}.log")
+            emergencyFile.parentFile?.mkdirs()
+            emergencyFile.writeText(emergencyInfo)
+            
+            logFile.appendText("紧急检查点已保存\n")
+            
+        } catch (e: Exception) {
+            logFile.appendText("保存紧急检查点失败: ${e.message}\n")
+            Timber.e(e, "保存紧急检查点失败")
         }
     }
 } 
