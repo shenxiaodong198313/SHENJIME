@@ -3,6 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     
     <item
+        android:id="@+id/action_refresh_cache"
+        android:title="刷新缓存"
+        android:icon="@android:drawable/ic_menu_rotate"
+        app:showAsAction="ifRoom"
+        android:contentDescription="刷新词典缓存" />
+        
+    <item
         android:id="@+id/action_export"
         android:title="导出"
         android:icon="@drawable/ic_export"

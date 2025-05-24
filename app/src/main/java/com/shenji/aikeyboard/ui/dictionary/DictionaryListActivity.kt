@@ -72,6 +72,10 @@ class DictionaryListActivity : AppCompatActivity() {
                 finish()
                 true
             }
+            R.id.action_refresh_cache -> {
+                refreshCacheAndReload()
+                true
+            }
             R.id.action_export -> {
                 exportDatabase()
                 true
@@ -99,7 +103,7 @@ class DictionaryListActivity : AppCompatActivity() {
     }
     
     /**
-     * 加载词典数据
+     * 加载词典数据（优化版，使用缓存）
      */
     private fun loadDictionaryData() {
         progressBar.visibility = View.VISIBLE
@@ -108,24 +112,37 @@ class DictionaryListActivity : AppCompatActivity() {
         
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 获取词典统计信息
-                val totalEntryCount = dictionaryRepository.getTotalEntryCount()
-                val fileSize = dictionaryRepository.getDictionaryFileSize()
-                val formattedFileSize = dictionaryRepository.formatFileSize(fileSize)
+                val startTime = System.currentTimeMillis()
                 
-                // 获取词典模块列表
+                // 🔧 使用缓存的统计信息方法
+                val statistics = dictionaryRepository.getDictionaryStatistics()
+                
+                // 🔧 使用缓存的模块列表方法
                 val modules = dictionaryRepository.getDictionaryModules()
+                
+                val loadTime = System.currentTimeMillis() - startTime
+                
+                // 记录缓存状态
+                val cacheInfo = dictionaryRepository.getCacheInfo()
+                Timber.d("词典数据加载完成，耗时: ${loadTime}ms")
+                Timber.d("缓存状态: $cacheInfo")
                 
                 withContext(Dispatchers.Main) {
                     // 更新统计信息
-                    totalCountText.text = "$totalEntryCount 个"
-                    fileSizeText.text = formattedFileSize
+                    totalCountText.text = "${statistics.totalEntryCount} 个"
+                    fileSizeText.text = statistics.formattedFileSize
                     
                     // 更新词典模块列表
                     if (modules.isNotEmpty()) {
                         moduleAdapter.submitList(modules)
                         recyclerView.visibility = View.VISIBLE
                         emptyView.visibility = View.GONE
+                        
+                        // 如果是从缓存加载的，显示提示
+                        if (loadTime < 50) { // 加载时间很短，说明使用了缓存
+                            Toast.makeText(this@DictionaryListActivity, 
+                                "已从缓存加载 (${loadTime}ms)", Toast.LENGTH_SHORT).show()
+                        }
                     } else {
                         recyclerView.visibility = View.GONE
                         emptyView.visibility = View.VISIBLE
@@ -140,6 +157,31 @@ class DictionaryListActivity : AppCompatActivity() {
                     progressBar.visibility = View.GONE
                     emptyView.visibility = View.VISIBLE
                     emptyView.text = "加载失败: ${e.message}"
+                }
+            }
+        }
+    }
+    
+    /**
+     * 刷新缓存并重新加载数据
+     */
+    private fun refreshCacheAndReload() {
+        Toast.makeText(this, "正在刷新缓存...", Toast.LENGTH_SHORT).show()
+        
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 强制刷新缓存
+                dictionaryRepository.refreshCache()
+                
+                withContext(Dispatchers.Main) {
+                    // 重新加载数据
+                    loadDictionaryData()
+                    Toast.makeText(this@DictionaryListActivity, "缓存已刷新", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "刷新缓存失败")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@DictionaryListActivity, "刷新缓存失败: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

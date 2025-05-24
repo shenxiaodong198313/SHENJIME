@@ -3238,6 +3238,7 @@ id action_menu_presenter
 id action_mode_bar
 id action_mode_bar_stub
 id action_mode_close_button
+id action_refresh_cache
 id action_settings
 id action_text
 id action_view_logs

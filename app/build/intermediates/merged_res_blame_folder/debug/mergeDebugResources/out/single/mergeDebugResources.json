@@ -44,10 +44,6 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_main.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_dialog_build_config.xml.flat",
-        "source": "com.shenji.aikeyboard.app-main-6:/layout/dialog_build_config.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\layout_fragment_log_viewer.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_log_viewer.xml"
     },
@@ -82,6 +78,10 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\layout_activity_fragment_container.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_fragment_container.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/menu_menu_dictionary_list.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/menu/menu_dictionary_list.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\menu_trie_build_menu.xml.flat",

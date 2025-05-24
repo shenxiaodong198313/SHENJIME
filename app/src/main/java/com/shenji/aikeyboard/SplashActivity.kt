@@ -62,7 +62,7 @@ class SplashActivity : AppCompatActivity() {
         progressBar.max = 100
         progressBar.progress = 0
         statusText.text = "正在启动神机输入法..."
-        detailText.text = "准备初始化..."
+        detailText.text = "初始化预计需要10-20秒，正在准备数据库和词典..."
     }
     
     /**
@@ -161,7 +161,7 @@ class SplashActivity : AppCompatActivity() {
                 
                 // 预热数据库连接（可选，如果数据库为空则跳过）
                 if (entryCount > 0) {
-                    updateDetail("预热数据库连接...")
+                    updateDetail("正在预热数据库连接，这可能需要10-15秒...")
                     repository.warmupCache()
                 } else {
                     updateDetail("数据库为空，跳过预热")

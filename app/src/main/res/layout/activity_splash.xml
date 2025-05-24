@@ -78,7 +78,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="首次启动需要加载词典数据，请稍候..."
+        android:text="首次启动需要初始化数据库，预计需要10-20秒，请耐心等待..."
         android:textSize="12sp"
         android:textColor="@android:color/white"
         android:alpha="0.6"

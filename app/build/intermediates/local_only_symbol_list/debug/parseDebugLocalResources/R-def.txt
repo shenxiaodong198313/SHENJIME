@@ -59,6 +59,7 @@ id action_build_trie
 id action_db_info
 id action_diagnose_db
 id action_export
+id action_refresh_cache
 id action_settings
 id action_view_logs
 id appBarLayout

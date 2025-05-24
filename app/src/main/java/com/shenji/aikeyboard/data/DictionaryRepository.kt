@@ -23,8 +23,23 @@ class DictionaryRepository {
     // 词频分层缓存 - 缓存每个词典类型的词频分层信息
     private val frequencyTierCache = LruCache<String, FrequencyTiers>(50)
     
+    // 🔧 新增：词典模块列表缓存
+    private var dictionaryModulesCache: List<DictionaryModule>? = null
+    private var dictionaryStatisticsCache: DictionaryStatistics? = null
+    private var cacheTimestamp: Long = 0
+    private val cacheValidityDuration = 5 * 60 * 1000L // 5分钟缓存有效期
+    
     // 查询超时时间（毫秒）
     private val queryTimeoutMs = 500L
+    
+    /**
+     * 词典统计信息数据类
+     */
+    data class DictionaryStatistics(
+        val totalEntryCount: Int,
+        val fileSize: Long,
+        val formattedFileSize: String
+    )
     
     /**
      * 词频分层数据类
@@ -251,9 +266,16 @@ class DictionaryRepository {
     }
     
     /**
-     * 构建词典模块列表
+     * 构建词典模块列表（带缓存）
      */
     fun getDictionaryModules(): List<DictionaryModule> {
+        // 🔧 检查缓存是否有效
+        if (isCacheValid()) {
+            Timber.d("使用缓存的词典模块列表，缓存年龄: ${(System.currentTimeMillis() - cacheTimestamp) / 1000}秒")
+            return dictionaryModulesCache!!
+        }
+        
+        Timber.d("缓存无效或过期，重新构建词典模块列表")
         val modules = mutableListOf<DictionaryModule>()
         
         try {
@@ -278,6 +300,12 @@ class DictionaryRepository {
                     )
                 )
             }
+            
+            // 🔧 缓存结果
+            dictionaryModulesCache = modules
+            cacheTimestamp = System.currentTimeMillis()
+            Timber.d("词典模块列表已缓存，包含${modules.size}个模块")
+            
         } catch (e: Exception) {
             Timber.e(e, "构建词典模块列表失败")
         }
@@ -580,11 +608,48 @@ class DictionaryRepository {
     }
     
     /**
+     * 检查缓存是否有效
+     */
+    private fun isCacheValid(): Boolean {
+        return dictionaryModulesCache != null && 
+               dictionaryStatisticsCache != null &&
+               (System.currentTimeMillis() - cacheTimestamp) < cacheValidityDuration
+    }
+    
+    /**
+     * 强制刷新缓存
+     */
+    fun refreshCache() {
+        Timber.d("强制刷新词典缓存")
+        dictionaryModulesCache = null
+        dictionaryStatisticsCache = null
+        cacheTimestamp = 0
+        clearCache() // 同时清理其他缓存
+    }
+    
+    /**
+     * 获取缓存状态信息
+     */
+    fun getCacheInfo(): String {
+        val isValid = isCacheValid()
+        val age = if (cacheTimestamp > 0) {
+            (System.currentTimeMillis() - cacheTimestamp) / 1000
+        } else 0
+        
+        return "词典缓存: ${if (isValid) "有效" else "无效"}, 年龄: ${age}秒, " +
+               "模块数: ${dictionaryModulesCache?.size ?: 0}, " +
+               "统计: ${if (dictionaryStatisticsCache != null) "已缓存" else "未缓存"}"
+    }
+    
+    /**
      * 清理缓存
      */
     fun clearCache() {
         queryCache.evictAll()
         frequencyTierCache.evictAll()
+        dictionaryModulesCache = null
+        dictionaryStatisticsCache = null
+        cacheTimestamp = 0
         Timber.d("已清理所有缓存")
     }
     
@@ -613,6 +678,37 @@ class DictionaryRepository {
         } catch (e: Exception) {
             Timber.e(e, "缓存预热失败")
         }
+    }
+    
+    /**
+     * 获取词典统计信息（带缓存）
+     */
+    fun getDictionaryStatistics(): DictionaryStatistics {
+        // 🔧 检查缓存是否有效
+        if (isCacheValid() && dictionaryStatisticsCache != null) {
+            Timber.d("使用缓存的词典统计信息")
+            return dictionaryStatisticsCache!!
+        }
+        
+        Timber.d("重新计算词典统计信息")
+        val totalEntryCount = getTotalEntryCount()
+        val fileSize = getDictionaryFileSize()
+        val formattedFileSize = formatFileSize(fileSize)
+        
+        val statistics = DictionaryStatistics(
+            totalEntryCount = totalEntryCount,
+            fileSize = fileSize,
+            formattedFileSize = formattedFileSize
+        )
+        
+        // 🔧 缓存结果
+        dictionaryStatisticsCache = statistics
+        if (cacheTimestamp == 0L) {
+            cacheTimestamp = System.currentTimeMillis()
+        }
+        
+        Timber.d("词典统计信息已缓存: ${totalEntryCount}个词条, ${formattedFileSize}")
+        return statistics
     }
 }
 
