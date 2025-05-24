@@ -32,7 +32,7 @@ class TrieManager private constructor() {
         if (isInitialized) return
         
         try {
-            loadTries()
+            loadTriesInternal()
             isInitialized = true
         } catch (e: Exception) {
             Timber.e(e, "TrieManager初始化失败")
@@ -40,9 +40,23 @@ class TrieManager private constructor() {
     }
     
     /**
+     * 检查是否有任何Trie已经加载
+     */
+    fun isTriesLoaded(): Boolean {
+        return loadedStatus.values.any { it }
+    }
+    
+    /**
+     * 公开的加载方法，供外部调用
+     */
+    fun loadTries() {
+        loadTriesInternal()
+    }
+    
+    /**
      * 加载所有可用的Trie树
      */
-    private fun loadTries() {
+    private fun loadTriesInternal() {
         val context = ShenjiApplication.appContext
         
         // 首先尝试从assets加载预构建Trie
@@ -132,7 +146,27 @@ class TrieManager private constructor() {
                 // 从临时文件加载
                 try {
                     val trie = ObjectInputStream(tempFile.inputStream()).use { ois ->
-                        ois.readObject() as PinyinTrie
+                        try {
+                            // 尝试读取版本号（新格式）
+                            val version = ois.readInt()
+                            if (version == 2) { // SERIALIZATION_VERSION
+                                ois.readObject() as PinyinTrie
+                            } else {
+                                // 版本不匹配，重置并按旧格式读取
+                                tempFile.inputStream().use { fis ->
+                                    ObjectInputStream(fis).use { newOis ->
+                                        newOis.readObject() as PinyinTrie
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            // 可能是旧格式，直接读取对象
+                            tempFile.inputStream().use { fis ->
+                                ObjectInputStream(fis).use { newOis ->
+                                    newOis.readObject() as PinyinTrie
+                                }
+                            }
+                        }
                     }
                     
                     // 验证Trie树是否为空
@@ -249,7 +283,7 @@ class TrieManager private constructor() {
         
         val trie = trieMap[type]
         if (trie == null || !isTrieLoaded(type)) {
-            Timber.w("${getDisplayName(type)}Trie树未加载，无法查询")
+            Timber.w("${getDisplayName(type)}Trie树未加载，无法查询 - 已加载类型: ${getLoadedTrieTypes().map { getDisplayName(it) }}")
             return emptyList()
         }
         
@@ -259,6 +293,12 @@ class TrieManager private constructor() {
             // 统一处理为小写
             val normalizedPrefix = prefix.lowercase().trim()
             
+            // 检查Trie树是否为空
+            if (trie.isEmpty()) {
+                Timber.w("${getDisplayName(type)}Trie树为空，无法查询")
+                return emptyList()
+            }
+            
             // 从Trie树查询结果
             val results = trie.searchByPrefix(normalizedPrefix, limit)
             
@@ -266,7 +306,12 @@ class TrieManager private constructor() {
             val wordFrequencies = results.map { WordFrequency(it.word, it.frequency) }
             
             val endTime = System.currentTimeMillis()
-            Timber.d("${getDisplayName(type)}Trie查询'$normalizedPrefix'，找到${results.size}个结果，耗时${endTime - startTime}ms")
+            val stats = trie.getMemoryStats()
+            Timber.d("${getDisplayName(type)}Trie查询'$normalizedPrefix'，找到${results.size}个结果，耗时${endTime - startTime}ms，Trie统计: $stats")
+            
+            if (results.isEmpty() && normalizedPrefix.isNotEmpty()) {
+                Timber.d("${getDisplayName(type)}Trie查询'$normalizedPrefix'无结果，Trie状态: 节点数=${stats.nodeCount}, 词条数=${stats.wordCount}")
+            }
             
             return wordFrequencies
         } catch (e: Exception) {
@@ -292,14 +337,20 @@ class TrieManager private constructor() {
     /**
      * 检查是否存在某类型的Trie树文件
      * @param type Trie树类型
-     * @return 是否存在文件
+     * @return 是否存在文件（包括assets中的预构建文件）
      */
     fun isTrieFileExists(type: TrieBuilder.TrieType): Boolean {
         val context = ShenjiApplication.appContext
         val fileName = "trie/${getTypeString(type)}_trie.dat"
         
+        // 首先检查用户构建的文件
         val file = File(context.filesDir, fileName)
-        return file.exists() && file.length() > 0
+        if (file.exists() && file.length() > 0) {
+            return true
+        }
+        
+        // 然后检查assets中的预构建文件
+        return isAssetFileExists(context, fileName)
     }
     
     /**
@@ -363,6 +414,11 @@ class TrieManager private constructor() {
     
     companion object {
         // 单例实例
+        @JvmStatic
+        fun getInstance(context: Context): TrieManager {
+            return instance
+        }
+        
         val instance: TrieManager by lazy {
             TrieManager()
         }

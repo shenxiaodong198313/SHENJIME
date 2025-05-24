@@ -19,6 +19,8 @@ import com.shenji.aikeyboard.pinyin.PinyinSplitter
 import io.realm.kotlin.Realm
 import com.shenji.aikeyboard.engine.InputMethodEngine
 import com.shenji.aikeyboard.engine.CombinationCandidateGenerator
+import com.shenji.aikeyboard.data.trie.TrieManager
+import com.shenji.aikeyboard.data.trie.TrieBuilder
 
 // 调试信息类型别名，方便外部引用
 // typealias DebugInfo = StagedDictionaryRepository.DebugInfo
@@ -29,6 +31,9 @@ import com.shenji.aikeyboard.engine.CombinationCandidateGenerator
  * 使用混合策略：优先使用新引擎，失败时回退到旧逻辑
  */
 class CandidateManager {
+    
+    // Trie管理器（优先使用）
+    private val trieManager = TrieManager.instance
     
     // 新的输入法引擎
     private val inputMethodEngine = InputMethodEngine()
@@ -54,7 +59,21 @@ class CandidateManager {
             try {
                 Timber.d("开始生成候选词: '$input'")
                 
-                // 首先尝试新引擎
+                // 首先尝试从Trie获取候选词
+                val trieCandidates = try {
+                    generateCandidatesFromTrie(input, limit)
+                } catch (e: Exception) {
+                    Timber.w(e, "Trie查询失败，尝试新引擎")
+                    emptyList()
+                }
+                
+                // 如果Trie返回了结果，直接使用
+                if (trieCandidates.isNotEmpty()) {
+                    Timber.d("Trie返回 ${trieCandidates.size} 个候选词")
+                    return@withContext trieCandidates
+                }
+                
+                // 然后尝试新引擎
                 val newEngineCandidates = try {
                     inputMethodEngine.generateCandidates(input, limit)
                 } catch (e: Exception) {
@@ -79,6 +98,99 @@ class CandidateManager {
                 Timber.e(e, "候选词生成完全失败: $input")
                 emptyList()
             }
+        }
+    }
+    
+    /**
+     * 从Trie生成候选词（优先策略）
+     */
+    private suspend fun generateCandidatesFromTrie(input: String, limit: Int): List<Candidate> {
+        val normalizedInput = input.trim().lowercase()
+        if (normalizedInput.isEmpty()) return emptyList()
+        
+        val candidates = mutableListOf<Candidate>()
+        
+        try {
+            // 根据输入长度和特征选择合适的Trie类型
+            val trieTypes = selectTrieTypes(normalizedInput)
+            
+            for (trieType in trieTypes) {
+                if (trieManager.isTrieLoaded(trieType)) {
+                    val wordFreqs = trieManager.searchByPrefix(trieType, normalizedInput, limit)
+                    
+                    val trieCandidates = wordFreqs.map { wordFreq ->
+                        CandidateBuilder()
+                            .word(wordFreq.word)
+                            .pinyin(normalizedInput)
+                            .initialLetters("")
+                            .frequency(wordFreq.frequency)
+                            .type(getTrieTypeName(trieType))
+                            .weight(CandidateWeight.default(wordFreq.frequency))
+                            .source(CandidateSource(
+                                generator = GeneratorType.EXACT_MATCH,
+                                matchType = MatchType.EXACT,
+                                layer = 1,
+                                confidence = 1.0f
+                            ))
+                            .build()
+                    }
+                    
+                    candidates.addAll(trieCandidates)
+                    Timber.d("从${getTrieTypeName(trieType)}Trie获取 ${trieCandidates.size} 个候选词")
+                }
+            }
+            
+            // 去重并排序
+            val uniqueCandidates = candidates
+                .distinctBy { it.word }
+                .sortedByDescending { it.finalWeight }
+                .take(limit)
+            
+            Timber.d("Trie总共返回 ${uniqueCandidates.size} 个候选词")
+            return uniqueCandidates
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Trie查询失败: $normalizedInput")
+            return emptyList()
+        }
+    }
+    
+    /**
+     * 根据输入选择合适的Trie类型
+     */
+    private fun selectTrieTypes(input: String): List<TrieBuilder.TrieType> {
+        return when {
+            input.length == 1 -> listOf(TrieBuilder.TrieType.CHARS)
+            input.length <= 4 -> listOf(
+                TrieBuilder.TrieType.CHARS,
+                TrieBuilder.TrieType.BASE,
+                TrieBuilder.TrieType.PEOPLE,
+                TrieBuilder.TrieType.PLACE
+            )
+            else -> listOf(
+                TrieBuilder.TrieType.BASE,
+                TrieBuilder.TrieType.PEOPLE,
+                TrieBuilder.TrieType.PLACE,
+                TrieBuilder.TrieType.POETRY,
+                TrieBuilder.TrieType.CHARS
+            )
+        }
+    }
+    
+    /**
+     * 获取Trie类型名称
+     */
+    private fun getTrieTypeName(trieType: TrieBuilder.TrieType): String {
+        return when (trieType) {
+            TrieBuilder.TrieType.CHARS -> "单字"
+            TrieBuilder.TrieType.BASE -> "基础词典"
+            TrieBuilder.TrieType.CORRELATION -> "关联词典"
+            TrieBuilder.TrieType.ASSOCIATIONAL -> "联想词典"
+            TrieBuilder.TrieType.PLACE -> "地名词典"
+            TrieBuilder.TrieType.PEOPLE -> "人名词典"
+            TrieBuilder.TrieType.POETRY -> "诗词词典"
+            TrieBuilder.TrieType.CORRECTIONS -> "纠错词典"
+            TrieBuilder.TrieType.COMPATIBLE -> "兼容词典"
         }
     }
     

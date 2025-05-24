@@ -8,4 +8,10 @@
         android:icon="@android:drawable/ic_menu_info_details"
         app:showAsAction="always" />
         
+    <item
+        android:id="@+id/action_diagnose_db"
+        android:title="数据库诊断"
+        android:icon="@android:drawable/ic_menu_search"
+        app:showAsAction="ifRoom" />
+        
 </menu> 

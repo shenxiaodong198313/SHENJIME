@@ -71,7 +71,9 @@ class TrieBuildActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_trie_build)
         
-        // 设置返回按钮
+        // 设置Toolbar
+        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "双Trie数据构建中心"
         
@@ -103,6 +105,10 @@ class TrieBuildActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_view_logs -> {
                 showOperationLogs()
+                true
+            }
+            R.id.action_diagnose_db -> {
+                showDatabaseDiagnosis()
                 true
             }
             android.R.id.home -> {
@@ -936,5 +942,83 @@ class TrieBuildActivity : AppCompatActivity() {
         operationLogs.clear()
         addLog("日志已清空 (原有${logCount}条)")
         Toast.makeText(this, "日志已清空", Toast.LENGTH_SHORT).show()
+    }
+    
+    /**
+     * 显示数据库诊断信息
+     */
+    private fun showDatabaseDiagnosis() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val repository = com.shenji.aikeyboard.data.DictionaryRepository()
+                val diagnosis = StringBuilder()
+                
+                diagnosis.append("=== 数据库诊断报告 ===\n\n")
+                
+                // 检查所有词典类型
+                val allTypes = repository.getAllDictionaryTypes()
+                diagnosis.append("发现词典类型: ${allTypes.joinToString()}\n\n")
+                
+                for (type in allTypes) {
+                    val count = repository.getEntryCountByType(type)
+                    diagnosis.append("$type: $count 条词条\n")
+                    
+                    if (count > 0) {
+                        // 获取前5条数据作为示例
+                        val samples = repository.getEntriesByType(type, 0, 5)
+                        diagnosis.append("  示例数据:\n")
+                        samples.forEach { entry ->
+                            diagnosis.append("    ${entry.word} -> ${entry.pinyin} (${entry.frequency})\n")
+                        }
+                    }
+                    diagnosis.append("\n")
+                }
+                
+                // 检查Trie文件状态
+                diagnosis.append("=== Trie文件状态 ===\n")
+                for (trieType in TrieBuilder.TrieType.values()) {
+                    val exists = trieManager.isTrieFileExists(trieType)
+                    val loaded = trieManager.isTrieLoaded(trieType)
+                    val displayName = getDisplayName(trieType)
+                    
+                    diagnosis.append("$displayName: 文件存在=$exists, 已加载=$loaded")
+                    
+                    if (loaded) {
+                        val stats = trieManager.getTrieMemoryStats(trieType)
+                        diagnosis.append(", 统计=$stats")
+                    }
+                    diagnosis.append("\n")
+                }
+                
+                withContext(Dispatchers.Main) {
+                    val scrollView = ScrollView(this@TrieBuildActivity)
+                    val textView = TextView(this@TrieBuildActivity).apply {
+                        text = diagnosis.toString()
+                        textSize = 12f
+                        setPadding(32, 32, 32, 32)
+                        setTextIsSelectable(true)
+                        typeface = android.graphics.Typeface.MONOSPACE
+                    }
+                    scrollView.addView(textView)
+                    
+                    AlertDialog.Builder(this@TrieBuildActivity)
+                        .setTitle("数据库诊断")
+                        .setView(scrollView)
+                        .setPositiveButton("复制") { _, _ ->
+                            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("数据库诊断", diagnosis.toString())
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(this@TrieBuildActivity, "诊断信息已复制", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("关闭", null)
+                        .show()
+                }
+                
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@TrieBuildActivity, "诊断失败: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 } 

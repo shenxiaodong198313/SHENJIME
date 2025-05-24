@@ -283,15 +283,22 @@ class TrieBuilder(
             logFile.appendText("系统信息: ${getSystemInfo()}\n")
             logFile.appendText("构建配置: $config\n\n")
             
-            // 检查是否有之前的构建进度
+            // 强制内存清理
+            performAggressiveMemoryCleanup(logFile)
+            
+            // 智能断点续传：只在内存充足时加载，否则重新开始
             val existingProgress = if (config.enableBreakpoint) loadBuildProgress(dictType) else null
-            val trie = if (existingProgress != null) {
-                progressCallback(5, "发现${dictName}断点续传数据，准备继续构建...")
-                logFile.appendText("发现断点续传数据: 已完成${existingProgress.completedBatches}/${existingProgress.totalBatches}批次\n")
-                loadPartialTrie(dictType) ?: PinyinTrie()
+            val trie = if (existingProgress != null && isMemorySufficientForResume(logFile)) {
+                progressCallback(5, "内存充足，从断点继续构建${dictName}...")
+                logFile.appendText("从断点继续构建: 已完成${existingProgress.completedBatches}/${existingProgress.totalBatches}批次\n")
+                loadPartialTrieSafely(dictType, logFile) ?: run {
+                    logFile.appendText("加载断点失败，重新开始构建\n")
+                    clearBuildProgress(dictType)
+                    PinyinTrie()
+                }
             } else {
-                progressCallback(5, "开始全新构建${dictName}...")
-                logFile.appendText("开始全新构建\n")
+                progressCallback(5, "重新开始构建${dictName}（内存不足或无断点）...")
+                logFile.appendText("重新开始构建\n")
                 clearBuildProgress(dictType)
                 PinyinTrie()
             }
@@ -303,17 +310,43 @@ class TrieBuilder(
             progressCallback(10, "获取到${totalCount}个${dictName}词条，过滤后${filteredCount}个")
             logFile.appendText("词条总数: $totalCount, 过滤后: $filteredCount\n")
             
-            // 计算优化的批次参数
-            val optimizedParams = calculateOptimizedParams(filteredCount, config)
+            // 增强数据检查
+            if (totalCount == 0) {
+                val errorMsg = "${dictName}词典数据库中无数据，请检查数据库初始化"
+                progressCallback(-1, errorMsg)
+                logFile.appendText("错误: $errorMsg\n")
+                throw IllegalStateException(errorMsg)
+            }
+            
+            if (filteredCount == 0) {
+                val errorMsg = "${dictName}词典过滤后无数据，请调整词频过滤设置"
+                progressCallback(-1, errorMsg)
+                logFile.appendText("错误: $errorMsg\n")
+                throw IllegalStateException(errorMsg)
+            }
+            
+            // 测试数据获取
+            val testEntries = repository.getEntriesByTypeWithFrequencyFilter(dictType, 0, 5, config.frequencyFilter)
+            logFile.appendText("测试数据获取: 前5条词条数量=${testEntries.size}\n")
+            if (testEntries.isNotEmpty()) {
+                logFile.appendText("示例词条: ${testEntries.first().word} -> ${testEntries.first().pinyin} (${testEntries.first().frequency})\n")
+            } else {
+                val errorMsg = "${dictName}词典无法获取测试数据"
+                progressCallback(-1, errorMsg)
+                logFile.appendText("错误: $errorMsg\n")
+                throw IllegalStateException(errorMsg)
+            }
+            
+            // 计算优化的批次参数（更小的批次以节省内存）
+            val optimizedParams = calculateMemoryOptimizedParams(filteredCount, config)
             val batchSize = optimizedParams.batchSize
             val numWorkers = optimizedParams.numWorkers
             val totalBatches = (filteredCount + batchSize - 1) / batchSize
             
-            logFile.appendText("优化参数: 批次大小=$batchSize, 工作线程=$numWorkers, 总批次=$totalBatches\n\n")
+            logFile.appendText("内存优化参数: 批次大小=$batchSize, 工作线程=$numWorkers, 总批次=$totalBatches\n\n")
             
-            // 确定开始批次（断点续传）
+            // 确定开始批次（智能断点续传）
             val startBatchIndex = existingProgress?.lastBatchIndex?.plus(1) ?: 0
-            
             if (startBatchIndex > 0) {
                 progressCallback(15, "从批次${startBatchIndex + 1}开始断点续传...")
                 logFile.appendText("断点续传: 从批次${startBatchIndex + 1}开始\n")
@@ -322,23 +355,28 @@ class TrieBuilder(
             // 重置统计计数器
             resetCounters()
             
-            // 启动异步插入处理器
-            val insertJob = startAsyncInsertProcessor(trie, logFile)
+            // 不再使用异步插入处理器，改为直接同步插入
             
             try {
                 // 分批并行处理
                 for (batchIndex in startBatchIndex until totalBatches) {
                     try {
-                        // 内存检查和清理
-                        if (batchIndex % MEMORY_CHECK_INTERVAL == 0) {
+                        // 更频繁的内存检查和清理
+                        if (batchIndex % 5 == 0) {
                             performMemoryCheck(logFile)
+                        }
+                        
+                        // 每批次后都进行轻量级内存清理
+                        if (batchIndex % 2 == 1) {
+                            System.gc()
+                            delay(50L)
                         }
                         
                         // 处理当前批次
                         val batchStartTime = System.currentTimeMillis()
                         val success = processDictionaryBatchWithRetry(
                             dictType, batchIndex, batchSize, numWorkers, 
-                            config.frequencyFilter, logFile
+                            config.frequencyFilter, logFile, trie
                         )
                         val batchTime = System.currentTimeMillis() - batchStartTime
                         
@@ -352,10 +390,7 @@ class TrieBuilder(
                         val progressMsg = "批次${batchIndex + 1}/${totalBatches} (${batchTime}ms) - 已处理${processedCount.get()}条"
                         progressCallback(overallProgress, progressMsg)
                         
-                        // 保存检查点
-                        if (config.enableBreakpoint && batchIndex % CHECKPOINT_INTERVAL == 0) {
-                            saveCheckpoint(trie, dictType, batchIndex, totalBatches, filteredCount.toLong(), logFile)
-                        }
+                                                // 保存轻量级检查点（更频繁）                        if (config.enableBreakpoint && batchIndex % 5 == 4) {                            saveLightweightCheckpoint(trie, dictType, batchIndex, totalBatches, filteredCount.toLong(), logFile)                        }
                         
                         // 自适应延迟，防止过热
                         if (batchIndex % 20 == 19) {
@@ -370,9 +405,7 @@ class TrieBuilder(
                     }
                 }
                 
-                // 关闭插入通道并等待完成
-                insertChannel.close()
-                insertJob.join()
+                // 不再需要等待异步插入完成
                 
                 progressCallback(95, "构建完成，正在优化和保存...")
                 
@@ -506,6 +539,7 @@ class TrieBuilder(
         numWorkers: Int,
         frequencyFilter: FrequencyFilter,
         logFile: File,
+        trie: PinyinTrie,
         maxRetries: Int = 3
     ): Boolean = withContext(Dispatchers.IO) {
         
@@ -526,30 +560,72 @@ class TrieBuilder(
                 )
                 
                 if (entries.isEmpty()) {
-                    logFile.appendText("批次${batchIndex + 1}: 无数据，跳过\n")
+                    logFile.appendText("批次${batchIndex + 1}: 无数据，跳过 (offset=$offset, batchSize=$batchSize)\n")
                     return@withContext true
                 }
                 
-                logFile.appendText("批次${batchIndex + 1}: 获取到${entries.size}个词条\n")
+                logFile.appendText("批次${batchIndex + 1}: 获取到${entries.size}个词条 (offset=$offset, batchSize=$batchSize)\n")
                 
-                // 处理词条
-                val processedEntries = mutableListOf<TrieInsertEntry>()
+                // 记录第一个词条的详细信息用于调试
+                if (entries.isNotEmpty()) {
+                    val firstEntry = entries.first()
+                    logFile.appendText("  首个词条: ${firstEntry.word} -> ${firstEntry.pinyin} (频率:${firstEntry.frequency}, 类型:${firstEntry.type})\n")
+                }
                 
-                for (entry in entries) {
+                // 处理词条并直接插入到Trie（改为同步插入，增加内存检查）
+                var insertedCount = 0
+                var actualInsertedCount = 0
+                
+                for ((index, entry) in entries.withIndex()) {
+                    // 每50个词条检查一次内存
+                    if (index % 50 == 0) {
+                        val runtime = Runtime.getRuntime()
+                        val usedMemory = runtime.totalMemory() - runtime.freeMemory()
+                        val maxMemory = runtime.maxMemory()
+                        val usageRatio = usedMemory.toFloat() / maxMemory
+                        
+                        if (usageRatio > 0.85f) {
+                            logFile.appendText("  内存使用率过高(${(usageRatio * 100).toInt()}%)，执行垃圾回收\n")
+                            System.gc()
+                            delay(100L)
+                        }
+                    }
+                    
                     val processedEntry = processEntry(entry, dictType)
                     if (processedEntry != null) {
-                        processedEntries.add(processedEntry)
+                        // 直接同步插入到Trie树
+                        try {
+                            trie.insert(processedEntry.key, processedEntry.word, processedEntry.frequency)
+                            actualInsertedCount++
+                            
+                            // 记录详细的插入信息用于调试
+                            if (insertedCount < 3) {
+                                logFile.appendText("  直接插入: ${processedEntry.word} -> ${processedEntry.key} (频率:${processedEntry.frequency})\n")
+                            }
+                        } catch (e: OutOfMemoryError) {
+                            logFile.appendText("  内存不足，无法插入: ${processedEntry.word} -> ${processedEntry.key}\n")
+                            // 执行紧急内存清理
+                            System.gc()
+                            delay(200L)
+                            throw e
+                        } catch (e: Exception) {
+                            logFile.appendText("  插入失败: ${processedEntry.word} -> ${processedEntry.key}, 错误: ${e.message}\n")
+                        }
+                        insertedCount++
                     }
                 }
                 
-                // 发送到插入通道
-                if (processedEntries.isNotEmpty()) {
-                    insertChannel.trySend(TrieInsertBatch(processedEntries))
-                    insertCount.addAndGet(processedEntries.size.toLong())
-                }
+                // 不再发送到插入通道，因为已经直接插入了
+                insertCount.addAndGet(actualInsertedCount.toLong())
                 
                 processedCount.addAndGet(entries.size.toLong())
-                logFile.appendText("批次${batchIndex + 1}: 成功处理${entries.size}个词条，插入${processedEntries.size}个\n")
+                logFile.appendText("批次${batchIndex + 1}: 成功处理${entries.size}个词条，直接插入${actualInsertedCount}个\n")
+                
+                // 定期检查Trie状态
+                if (batchIndex % 5 == 0) {
+                    val currentStats = trie.getMemoryStats()
+                    logFile.appendText("  当前Trie状态: ${currentStats}\n")
+                }
                 
                 return@withContext true
                 
@@ -579,13 +655,34 @@ class TrieBuilder(
             val pinyin = entry.pinyin?.lowercase()?.trim()
             val frequency = entry.frequency ?: 0
             
-            if (word.isBlank() || pinyin.isNullOrBlank()) {
+            // 详细的数据验证和调试
+            if (word.isBlank()) {
                 skipCount.incrementAndGet()
+                Timber.w("跳过空白词语: word='$word', pinyin='$pinyin'")
+                return null
+            }
+            
+            if (pinyin.isNullOrBlank()) {
+                skipCount.incrementAndGet()
+                Timber.w("跳过空白拼音: word='$word', pinyin='$pinyin'")
                 return null
             }
             
             // 处理拼音（去除声调，处理多音节）
             val cleanPinyin = removeTones(pinyin)
+            
+            // 验证处理后的拼音
+            if (cleanPinyin.isBlank()) {
+                skipCount.incrementAndGet()
+                Timber.w("处理后拼音为空: word='$word', 原始pinyin='$pinyin', 处理后='$cleanPinyin'")
+                return null
+            }
+            
+            // 记录处理成功的词条（前几个）
+            val currentProcessed = processedCount.get()
+            if (currentProcessed < 5) {
+                Timber.d("成功处理词条: '$word' -> '$cleanPinyin' (频率:$frequency, 原始拼音:'$pinyin')")
+            }
             
             return TrieInsertEntry(
                 key = cleanPinyin,
@@ -604,7 +701,10 @@ class TrieBuilder(
      * 去除拼音声调
      */
     private fun removeTones(pinyin: String): String {
-        return pinyin.replace(Regex("[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]")) { matchResult ->
+        if (pinyin.isBlank()) return ""
+        
+        // 处理多音节拼音（如"bai bo"）
+        val result = pinyin.replace(Regex("[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]")) { matchResult ->
             when (matchResult.value) {
                 "ā", "á", "ǎ", "à" -> "a"
                 "ē", "é", "ě", "è" -> "e"
@@ -614,37 +714,15 @@ class TrieBuilder(
                 "ǖ", "ǘ", "ǚ", "ǜ" -> "v"
                 else -> matchResult.value
             }
+        }.trim()
+        
+        // 记录前几个处理结果用于调试
+        val currentProcessed = processedCount.get()
+        if (currentProcessed < 3) {
+            Timber.d("拼音处理: '$pinyin' -> '$result'")
         }
-    }
-    
-    /**
-     * 启动异步插入处理器
-     */
-    private fun startAsyncInsertProcessor(trie: PinyinTrie, logFile: File) = kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
-        try {
-            var batchCount = 0
-            for (batch in insertChannel) {
-                try {
-                    // 批量插入到Trie
-                    for (entry in batch.entries) {
-                        trie.insert(entry.key, entry.word, entry.frequency)
-                    }
-                    
-                    batchCount++
-                    if (batchCount % 10 == 0) {
-                        logFile.appendText("异步插入: 已处理${batchCount}个批次\n")
-                    }
-                    
-                } catch (e: Exception) {
-                    logFile.appendText("异步插入失败: ${e.message}\n")
-                    Timber.e(e, "异步插入失败")
-                }
-            }
-            logFile.appendText("异步插入处理器完成，总共处理${batchCount}个批次\n")
-        } catch (e: Exception) {
-            logFile.appendText("异步插入处理器异常: ${e.message}\n")
-            Timber.e(e, "异步插入处理器异常")
-        }
+        
+        return result
     }
     
     /**
@@ -773,32 +851,6 @@ class TrieBuilder(
     }
     
     /**
-     * 加载部分Trie
-     */
-    private fun loadPartialTrie(dictType: String): PinyinTrie? {
-        return try {
-            val fileName = "${dictType}_trie_partial.dat"
-            val file = File(context.filesDir, "trie/$fileName")
-            
-            if (!file.exists()) return null
-            
-            FileInputStream(file).use { fis ->
-                ObjectInputStream(fis).use { ois ->
-                    val version = ois.readInt()
-                    if (version == SERIALIZATION_VERSION) {
-                        ois.readObject() as PinyinTrie
-                    } else {
-                        null
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "加载部分Trie失败")
-            null
-        }
-    }
-    
-    /**
      * 执行最终优化
      */
     private fun performFinalOptimization(trie: PinyinTrie, logFile: File) {
@@ -862,15 +914,13 @@ class TrieBuilder(
                 }
             }
             
-            // 验证保存的文件
+            // 验证保存的文件（不进行加载验证以节省内存）
             if (file.exists() && file.length() > 0) {
-                // 尝试读取验证
-                try {
-                    loadTrie(trieType)
-                    Timber.d("${getDisplayName(trieType)}Trie保存并验证成功: ${file.absolutePath}")
-                } catch (e: Exception) {
-                    Timber.w(e, "${getDisplayName(trieType)}Trie保存成功但验证失败")
-                }
+                val originalStats = trie.getMemoryStats()
+                Timber.d("${getDisplayName(trieType)}Trie文件保存成功: ${file.absolutePath}, 大小: ${file.length()} bytes, 统计: $originalStats")
+            } else {
+                Timber.e("${getDisplayName(trieType)}Trie文件保存失败或文件为空")
+                throw IllegalStateException("Trie文件保存失败")
             }
             
             return file
@@ -971,4 +1021,164 @@ class TrieBuilder(
             Timber.e(e, "保存紧急检查点失败")
         }
     }
-} 
+    
+    /**
+     * 检查内存是否充足以进行断点续传
+     */
+    private fun isMemorySufficientForResume(logFile: File): Boolean {
+        val runtime = Runtime.getRuntime()
+        val maxMemory = runtime.maxMemory()
+        val usedMemory = runtime.totalMemory() - runtime.freeMemory()
+        val freeMemory = maxMemory - usedMemory
+        val freeMemoryMB = freeMemory / (1024 * 1024)
+        
+        // 根据总内存动态调整断点加载的内存要求
+        val requiredFreeMemoryMB = when {
+            maxMemory / (1024 * 1024) <= 512 -> 200  // 小内存设备需要200MB
+            maxMemory / (1024 * 1024) <= 2048 -> 500  // 2GB设备需要500MB
+            else -> 1000  // 大内存设备需要1GB
+        }
+        val isMemorySufficient = freeMemoryMB >= requiredFreeMemoryMB
+        
+        logFile.appendText("内存检查: 空闲${freeMemoryMB}MB, 是否充足: $isMemorySufficient\n")
+        
+        return isMemorySufficient
+    }
+    
+    /**
+     * 安全加载部分Trie（带内存检查）
+     */
+    private fun loadPartialTrieSafely(dictType: String, logFile: File): PinyinTrie? {
+        return try {
+            val fileName = "${dictType}_trie_partial.dat"
+            val file = File(context.filesDir, "trie/$fileName")
+            
+            if (!file.exists()) {
+                logFile.appendText("断点文件不存在: ${file.absolutePath}\n")
+                return null
+            }
+            
+            val fileSizeMB = file.length() / (1024 * 1024)
+            logFile.appendText("尝试加载断点文件: ${file.absolutePath}, 大小: ${fileSizeMB}MB\n")
+            
+            // 检查文件大小是否合理
+            if (fileSizeMB > 100) {
+                logFile.appendText("断点文件过大(${fileSizeMB}MB)，跳过加载\n")
+                return null
+            }
+            
+            // 执行内存清理
+            System.gc()
+            Thread.sleep(500L)
+            
+            FileInputStream(file).use { fis ->
+                ObjectInputStream(fis).use { ois ->
+                    val version = ois.readInt()
+                    if (version == SERIALIZATION_VERSION) {
+                        val trie = ois.readObject() as PinyinTrie
+                        logFile.appendText("成功加载断点Trie\n")
+                        trie
+                    } else {
+                        logFile.appendText("断点文件版本不匹配: $version\n")
+                        null
+                    }
+                }
+            }
+        } catch (e: OutOfMemoryError) {
+            logFile.appendText("加载断点时内存不足: ${e.message}\n")
+            // 执行紧急内存清理
+            System.gc()
+            null
+        } catch (e: Exception) {
+            logFile.appendText("加载断点失败: ${e.message}\n")
+            null
+        }
+    }
+    
+    /**
+     * 更频繁的检查点保存（轻量级）
+     */
+    private fun saveLightweightCheckpoint(
+        trie: PinyinTrie, 
+        dictType: String, 
+        batchIndex: Int, 
+        totalBatches: Int, 
+        totalEntries: Long, 
+        logFile: File
+    ) {
+        try {
+            // 只保存进度信息，不保存Trie（避免内存问题）
+            val progress = BuildProgress(
+                totalBatches = totalBatches,
+                completedBatches = batchIndex + 1,
+                processedEntries = processedCount.get(),
+                totalEntries = totalEntries,
+                lastBatchIndex = batchIndex
+            )
+            
+            saveBuildProgress(dictType, progress)
+            
+            // 只在关键节点保存Trie
+            if (batchIndex % 20 == 19) {
+                savePartialTrie(trie, dictType)
+                logFile.appendText("完整检查点已保存: 批次${batchIndex + 1}/${totalBatches}\n")
+            } else {
+                logFile.appendText("轻量级检查点已保存: 批次${batchIndex + 1}/${totalBatches}\n")
+            }
+            
+        } catch (e: Exception) {
+            logFile.appendText("保存检查点失败: ${e.message}\n")
+            Timber.e(e, "保存检查点失败")
+        }
+    }
+    
+    /**
+     * 计算内存优化的构建参数
+     */
+    private fun calculateMemoryOptimizedParams(totalCount: Int, config: TrieBuildConfig): OptimizedParams {
+        val runtime = Runtime.getRuntime()
+        val maxMemoryMB = runtime.maxMemory() / (1024 * 1024)
+        val availableCores = runtime.availableProcessors()
+        
+        // 根据实际可用内存动态调整批次大小
+        val batchSize = when {
+            maxMemoryMB <= 512 -> 500  // 极小批次
+            maxMemoryMB <= 1024 -> 1000
+            maxMemoryMB <= 2048 -> 2000  // 2GB内存
+            maxMemoryMB <= 4096 -> 5000  // 4GB内存
+            else -> 10000  // 大内存设备，使用更大批次
+        }.coerceAtMost(totalCount / 5)  // 最多分成5个批次
+        
+        // 根据内存大小调整工作线程数
+        val numWorkers = when {
+            maxMemoryMB <= 512 -> 1  // 单线程
+            maxMemoryMB <= 1024 -> 2
+            maxMemoryMB <= 2048 -> 3
+            maxMemoryMB <= 4096 -> 4
+            else -> availableCores.coerceAtMost(6)  // 大内存设备，充分利用多核
+        }
+        
+        Timber.d("内存优化参数: 内存=${maxMemoryMB}MB, 核心=${availableCores}, 批次大小=${batchSize}, 工作线程=${numWorkers}")
+        
+        return OptimizedParams(batchSize, numWorkers)
+    }
+    
+    /**
+     * 激进的内存清理
+     */
+    private suspend fun performAggressiveMemoryCleanup(logFile: File) = withContext(Dispatchers.IO) {
+        val runtime = Runtime.getRuntime()
+        val beforeMemory = runtime.totalMemory() - runtime.freeMemory()
+        
+        logFile.appendText("执行激进内存清理前: 使用${beforeMemory / (1024 * 1024)}MB\n")
+        
+        // 多次垃圾回收
+        repeat(3) {
+            System.gc()
+            delay(200L)
+        }
+        
+        val afterMemory = runtime.totalMemory() - runtime.freeMemory()
+        logFile.appendText("激进内存清理后: 使用${afterMemory / (1024 * 1024)}MB，释放${(beforeMemory - afterMemory) / (1024 * 1024)}MB\n")
+    }
+}

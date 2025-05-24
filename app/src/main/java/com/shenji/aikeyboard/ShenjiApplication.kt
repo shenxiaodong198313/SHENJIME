@@ -5,6 +5,8 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.multidex.MultiDex
+import androidx.multidex.MultiDexApplication
 import com.shenji.aikeyboard.data.CandidateManager
 import com.shenji.aikeyboard.data.DictionaryManager
 import com.shenji.aikeyboard.data.DictionaryRepository
@@ -29,7 +31,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class ShenjiApplication : Application() {
+class ShenjiApplication : MultiDexApplication() {
     
     companion object {
         lateinit var instance: ShenjiApplication
@@ -54,6 +56,11 @@ class ShenjiApplication : Application() {
         val trieManager by lazy {
             TrieManager.instance
         }
+    }
+    
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+        MultiDex.install(this)
     }
     
     @OptIn(DelicateCoroutinesApi::class)
