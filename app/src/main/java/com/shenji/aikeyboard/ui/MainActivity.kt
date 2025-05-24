@@ -189,43 +189,74 @@ class MainActivity : AppCompatActivity() {
             try {
                 val trieManager = TrieManager.instance
                 
-                // 🚫 完全禁用后台词典加载，避免内存溢出
-                // 只在启动时加载chars词典，其他词典全部设置为手动加载
-                Timber.i("主界面启动 - 后台词典加载已完全禁用")
-                Timber.i("内存优化策略：只保留启动时的chars词典，其他词典需手动加载")
-                Timber.i("当前内存状态: 最大=${Runtime.getRuntime().maxMemory() / 1024 / 1024}MB")
-                Timber.i("已用内存: ${(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024}MB")
+                // 🎯 优化：只处理chars和base词典，避免检查其他词典
+                Timber.i("主界面启动 - 开始优化的词典加载策略")
+                Timber.i("内存优化策略：启动时已加载chars，现在异步加载base，其他词典需手动加载")
                 
-                // 检查当前已加载的词典状态
-                val allTypes = TrieBuilder.TrieType.values()
+                val runtime = Runtime.getRuntime()
+                val maxMemory = runtime.maxMemory() / 1024 / 1024
+                val usedMemoryBefore = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
+                
+                Timber.i("异步加载前内存状态: 已用${usedMemoryBefore}MB / 最大${maxMemory}MB")
+                
+                // 等待一段时间，确保主界面完全加载
+                delay(2000)
+                
+                // 🔧 优化：只检查和加载必要的词典
+                val coreTypes = listOf(
+                    TrieBuilder.TrieType.CHARS to "单字词典",
+                    TrieBuilder.TrieType.BASE to "基础词典"
+                )
+                
                 var loadedCount = 0
-                var totalMemoryEstimate = 0L
                 
-                for (trieType in allTypes) {
-                    val exists = trieManager.isTrieFileExists(trieType)
-                    val loaded = trieManager.isTrieLoaded(trieType)
-                    
-                    if (loaded) {
-                        loadedCount++
-                        Timber.i("✅ ${getDisplayName(trieType)}: 已加载")
-                    } else if (exists) {
-                        Timber.i("📁 ${getDisplayName(trieType)}: 文件存在，未加载(手动加载)")
-                    } else {
-                        Timber.d("❌ ${getDisplayName(trieType)}: 文件不存在")
+                for ((trieType, displayName) in coreTypes) {
+                    try {
+                        val isLoaded = trieManager.isTrieLoaded(trieType)
+                        val fileExists = trieManager.isTrieFileExists(trieType)
+                        
+                        if (isLoaded) {
+                            Timber.i("✅ $displayName: 已在内存中")
+                            loadedCount++
+                        } else if (fileExists && trieType == TrieBuilder.TrieType.BASE) {
+                            // 只异步加载base词典
+                            Timber.i("开始异步加载$displayName...")
+                            val startTime = System.currentTimeMillis()
+                            val success = trieManager.loadTrieToMemory(trieType)
+                            val loadTime = System.currentTimeMillis() - startTime
+                            
+                            if (success) {
+                                val usedMemoryAfter = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
+                                val memoryIncrease = usedMemoryAfter - usedMemoryBefore
+                                
+                                Timber.i("$displayName 异步加载成功！")
+                                Timber.i("加载耗时: ${loadTime}ms")
+                                Timber.i("内存增加: ${memoryIncrease}MB (${usedMemoryBefore}MB -> ${usedMemoryAfter}MB)")
+                                loadedCount++
+                            } else {
+                                Timber.w("$displayName 异步加载失败")
+                            }
+                        } else if (fileExists) {
+                            Timber.i("📁 $displayName: 文件存在，手动加载")
+                        } else {
+                            Timber.d("❌ $displayName: 文件不存在")
+                        }
+                    } catch (e: Exception) {
+                        Timber.w(e, "处理$displayName 时出现异常")
                     }
                 }
                 
-                Timber.i("📊 词典状态总结: ${loadedCount}个已加载，${allTypes.size - loadedCount}个未加载")
+                val finalUsedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
+                val finalFreeMemory = maxMemory - finalUsedMemory
+                
+                Timber.i("📊 优化的异步加载完成总结:")
+                Timber.i("  核心词典已加载: ${loadedCount}/2个")
+                Timber.i("  最终内存使用: ${finalUsedMemory}MB / ${maxMemory}MB")
+                Timber.i("  剩余可用内存: ${finalFreeMemory}MB")
                 Timber.i("💡 提示: 如需加载其他词典，请使用词典管理界面手动加载")
                 
-                // 执行垃圾回收，释放可能的临时内存
-                System.gc()
-                
-                val finalUsedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024
-                Timber.i("🧹 垃圾回收后内存使用: ${finalUsedMemory}MB")
-                
             } catch (e: Exception) {
-                Timber.e(e, "后台词典状态检查异常")
+                Timber.e(e, "异步词典加载过程异常")
             }
         }
     }

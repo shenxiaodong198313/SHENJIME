@@ -64,31 +64,48 @@ class TrieManager private constructor() {
     
     /**
      * 高性能初始化TrieManager
-     * 使用并行加载和优化的I/O操作
+     * 优化版本：不在启动时加载所有词典，只进行基础初始化
      */
     fun init() {
         if (isInitialized) return
         
         val startTime = System.currentTimeMillis()
-        Timber.d("TrieManager开始高性能初始化")
+        Timber.d("TrieManager开始轻量级初始化")
         
         // 预分配内存，减少GC压力
         System.gc()
         
-        // 并行加载预构建的Trie文件
-        val loadSuccess = loadPrebuiltTriesParallel()
+        // 🔧 优化：不在启动时并行加载所有词典，避免内存压力
+        // 只进行基础的状态检查
+        val availableTypes = checkAvailableTrieFiles()
         
         isInitialized = true
         
         val endTime = System.currentTimeMillis()
         val loadTime = endTime - startTime
         
-        if (loadSuccess) {
-            val loadedTypes = getLoadedTrieTypes()
-            Timber.d("TrieManager高性能初始化完成，耗时${loadTime}ms，成功加载${loadedTypes.size}个预构建Trie: ${loadedTypes.map { getDisplayName(it) }}")
-        } else {
-            Timber.d("TrieManager初始化完成，耗时${loadTime}ms，未找到预构建Trie文件")
+        Timber.d("TrieManager轻量级初始化完成，耗时${loadTime}ms")
+        Timber.d("可用的Trie文件: ${availableTypes.map { getDisplayName(it) }}")
+        Timber.d("词典将按需加载，减少启动时内存压力")
+    }
+    
+    /**
+     * 检查可用的Trie文件（不加载到内存）
+     */
+    private fun checkAvailableTrieFiles(): List<TrieBuilder.TrieType> {
+        val context = ShenjiApplication.appContext
+        val availableTypes = mutableListOf<TrieBuilder.TrieType>()
+        
+        for (trieType in TrieBuilder.TrieType.values()) {
+            val assetPath = "trie/${getTypeString(trieType)}_trie.dat"
+            
+            if (isAssetFileExists(context, assetPath)) {
+                availableTypes.add(trieType)
+                Timber.d("发现可用Trie文件: ${getDisplayName(trieType)}")
+            }
         }
+        
+        return availableTypes
     }
     
     /**
@@ -312,7 +329,7 @@ class TrieManager private constructor() {
                     return deserializeTrieLegacyFormat(file)
                 }
                 
-                val version = java.nio.ByteBuffer.wrap(versionBytes).int
+                val version = java.nio.ByteBuffer.wrap(versionBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                 Timber.d("检测到文件版本: $version")
                 
                 when (version) {
@@ -351,7 +368,7 @@ class TrieManager private constructor() {
                 Timber.e("无法读取拼音条目数量")
                 return null
             }
-            val count = java.nio.ByteBuffer.wrap(countBytes).int
+            val count = java.nio.ByteBuffer.wrap(countBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
             Timber.d("开始加载 $count 个拼音条目")
             
             var loadedCount = 0
@@ -362,7 +379,7 @@ class TrieManager private constructor() {
                     // 读取拼音长度
                     val pinyinLenBytes = ByteArray(4)
                     if (inputStream.read(pinyinLenBytes) != 4) break
-                    val pinyinLen = java.nio.ByteBuffer.wrap(pinyinLenBytes).int
+                    val pinyinLen = java.nio.ByteBuffer.wrap(pinyinLenBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                     
                     // 读取拼音
                     val pinyinBytes = ByteArray(pinyinLen)
@@ -372,14 +389,14 @@ class TrieManager private constructor() {
                     // 读取词语数量
                     val wordCountBytes = ByteArray(4)
                     if (inputStream.read(wordCountBytes) != 4) break
-                    val wordCount = java.nio.ByteBuffer.wrap(wordCountBytes).int
+                    val wordCount = java.nio.ByteBuffer.wrap(wordCountBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                     
                     // 读取每个词语
                     for (j in 0 until wordCount) {
                         // 读取词语长度
                         val wordLenBytes = ByteArray(4)
                         if (inputStream.read(wordLenBytes) != 4) break
-                        val wordLen = java.nio.ByteBuffer.wrap(wordLenBytes).int
+                        val wordLen = java.nio.ByteBuffer.wrap(wordLenBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                         
                         // 读取词语
                         val wordBytes = ByteArray(wordLen)
@@ -389,7 +406,7 @@ class TrieManager private constructor() {
                         // 读取词频
                         val frequencyBytes = ByteArray(4)
                         if (inputStream.read(frequencyBytes) != 4) break
-                        val frequency = java.nio.ByteBuffer.wrap(frequencyBytes).int
+                        val frequency = java.nio.ByteBuffer.wrap(frequencyBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                         
                         // 插入到Trie树
                         trie.insert(pinyin, word, frequency)

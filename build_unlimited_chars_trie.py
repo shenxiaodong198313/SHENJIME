@@ -112,28 +112,28 @@ def save_trie_data_file(trie_data: Dict, output_path: str) -> bool:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         with open(output_path, 'wb') as f:
-            # 写入版本号
-            f.write(struct.pack('>i', 3))  # 使用版本3表示简化格式
+            # 写入版本号 - 使用小端字节序
+            f.write(struct.pack('<i', 3))  # 使用版本3表示简化格式
             
             # 写入数据条目数量
-            f.write(struct.pack('>i', len(trie_data)))
+            f.write(struct.pack('<i', len(trie_data)))
             
             # 写入每个条目
             for pinyin, words in trie_data.items():
                 # 写入拼音长度和拼音
                 pinyin_bytes = pinyin.encode('utf-8')
-                f.write(struct.pack('>i', len(pinyin_bytes)))
+                f.write(struct.pack('<i', len(pinyin_bytes)))
                 f.write(pinyin_bytes)
                 
                 # 写入词语数量
-                f.write(struct.pack('>i', len(words)))
+                f.write(struct.pack('<i', len(words)))
                 
                 # 写入每个词语
                 for word_item in words:
                     word_bytes = word_item['word'].encode('utf-8')
-                    f.write(struct.pack('>i', len(word_bytes)))
+                    f.write(struct.pack('<i', len(word_bytes)))
                     f.write(word_bytes)
-                    f.write(struct.pack('>i', word_item['frequency']))
+                    f.write(struct.pack('<i', word_item['frequency']))
         
         file_size = os.path.getsize(output_path)
         print(f"文件保存成功！文件大小: {file_size} 字节 ({file_size/1024/1024:.2f} MB)")
@@ -150,41 +150,41 @@ def verify_trie_data_file(file_path: str) -> bool:
     
     try:
         with open(file_path, 'rb') as f:
-            # 读取版本号
+            # 读取版本号 - 使用小端字节序
             version_bytes = f.read(4)
             if len(version_bytes) != 4:
                 print("错误：文件格式不正确")
                 return False
             
-            version = struct.unpack('>i', version_bytes)[0]
+            version = struct.unpack('<i', version_bytes)[0]
             print(f"文件版本号: {version}")
             
             # 读取数据条目数量
             count_bytes = f.read(4)
-            count = struct.unpack('>i', count_bytes)[0]
+            count = struct.unpack('<i', count_bytes)[0]
             print(f"拼音条目数量: {count}")
             
             # 验证前几个条目
             total_words = 0
             for i in range(min(5, count)):
                 # 读取拼音
-                pinyin_len = struct.unpack('>i', f.read(4))[0]
+                pinyin_len = struct.unpack('<i', f.read(4))[0]
                 pinyin = f.read(pinyin_len).decode('utf-8')
                 
                 # 读取词语数量
-                word_count = struct.unpack('>i', f.read(4))[0]
+                word_count = struct.unpack('<i', f.read(4))[0]
                 total_words += word_count
                 
                 words = []
                 for j in range(min(3, word_count)):  # 只显示前3个词
-                    word_len = struct.unpack('>i', f.read(4))[0]
+                    word_len = struct.unpack('<i', f.read(4))[0]
                     word = f.read(word_len).decode('utf-8')
-                    frequency = struct.unpack('>i', f.read(4))[0]
+                    frequency = struct.unpack('<i', f.read(4))[0]
                     words.append(f"{word}({frequency})")
                 
                 # 跳过剩余的词语
                 for j in range(3, word_count):
-                    word_len = struct.unpack('>i', f.read(4))[0]
+                    word_len = struct.unpack('<i', f.read(4))[0]
                     f.seek(f.tell() + word_len + 4)  # 跳过词语内容和频率
                 
                 print(f"   '{pinyin}' -> {', '.join(words)} (共{word_count}个词)")
@@ -194,16 +194,16 @@ def verify_trie_data_file(file_path: str) -> bool:
             actual_total_words = 0
             for i in range(count):
                 # 跳过拼音
-                pinyin_len = struct.unpack('>i', f.read(4))[0]
+                pinyin_len = struct.unpack('<i', f.read(4))[0]
                 f.seek(f.tell() + pinyin_len)
                 
                 # 读取词语数量
-                word_count = struct.unpack('>i', f.read(4))[0]
+                word_count = struct.unpack('<i', f.read(4))[0]
                 actual_total_words += word_count
                 
                 # 跳过所有词语
                 for j in range(word_count):
-                    word_len = struct.unpack('>i', f.read(4))[0]
+                    word_len = struct.unpack('<i', f.read(4))[0]
                     f.seek(f.tell() + word_len + 4)  # 跳过词语内容和频率
             
             print(f"验证成功！实际总词语数: {actual_total_words}")

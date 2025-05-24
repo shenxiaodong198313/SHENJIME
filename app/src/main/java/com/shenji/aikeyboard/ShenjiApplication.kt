@@ -91,6 +91,11 @@ class ShenjiApplication : MultiDexApplication() {
                 logStartupMessage("RELEASE模式：使用CrashReportingTree")
             }
             
+            // 🔧 修复：在Application启动时就初始化Realm
+            logStartupMessage("开始初始化Realm数据库...")
+            initRealm()
+            logStartupMessage("Realm数据库初始化完成")
+            
             // 只进行最基本的初始化，其他工作移到SplashActivity中进行
             // 这样可以避免Application启动时的长时间阻塞
             logStartupMessage("基础初始化完成，详细初始化将在启动页中进行")
@@ -190,10 +195,13 @@ class ShenjiApplication : MultiDexApplication() {
     
     fun initRealm() {
         try {
+            logStartupMessage("正在配置Realm数据库...")
+            
             // 确保词典目录存在
             val internalDir = File(filesDir, "dictionaries")
             if (!internalDir.exists()) {
                 internalDir.mkdirs()
+                logStartupMessage("创建词典目录: ${internalDir.absolutePath}")
             }
             
             val dictFile = File(internalDir, "shenji_dict.realm")
@@ -202,6 +210,7 @@ class ShenjiApplication : MultiDexApplication() {
             val hasAssetsDb = try {
                 assets.open("shenji_dict.realm").use { true }
             } catch (e: Exception) {
+                logStartupMessage("assets中未找到预构建数据库")
                 false
             }
             
@@ -232,7 +241,18 @@ class ShenjiApplication : MultiDexApplication() {
                 
             // 打开数据库
             realm = Realm.open(config)
-            logStartupMessage("Realm初始化成功")
+            logStartupMessage("Realm数据库打开成功")
+            
+            // 验证数据库连接
+            val entryCount = try {
+                realm.query(Entry::class).count().find()
+            } catch (e: Exception) {
+                logStartupMessage("数据库查询测试失败: ${e.message}")
+                0
+            }
+            
+            logStartupMessage("Realm初始化成功，词条数: $entryCount")
+        
         } catch (e: Exception) {
             logStartupMessage("初始化Realm数据库失败，尝试创建空数据库: ${e.message}")
             Timber.e(e, "Error initializing Realm database, creating empty one")
@@ -249,10 +269,34 @@ class ShenjiApplication : MultiDexApplication() {
                     
                 realm = Realm.open(config)
                 logStartupMessage("创建空Realm数据库成功")
+                
+                // 验证空数据库
+                val entryCount = try {
+                    realm.query(Entry::class).count().find()
+                } catch (e2: Exception) {
+                    logStartupMessage("空数据库验证失败: ${e2.message}")
+                    0
+                }
+                logStartupMessage("空数据库验证成功，词条数: $entryCount")
+                
             } catch (e2: Exception) {
                 // 如果还是失败，记录日志但不抛出异常
                 logStartupMessage("创建空Realm数据库失败: ${e2.message}")
                 Timber.e(e2, "Failed to create Realm database")
+                
+                // 🚨 最后的回退方案：创建一个最小配置的Realm
+                try {
+                    val fallbackConfig = RealmConfiguration.Builder(schema = setOf(Entry::class))
+                        .name("fallback_dict.realm")
+                        .deleteRealmIfMigrationNeeded()
+                        .build()
+                    realm = Realm.open(fallbackConfig)
+                    logStartupMessage("回退方案：创建最小配置数据库成功")
+                } catch (e3: Exception) {
+                    logStartupMessage("致命错误：无法创建任何Realm数据库实例: ${e3.message}")
+                    Timber.e(e3, "Fatal: Cannot create any Realm database instance")
+                    // 这里不抛出异常，让应用继续运行，但功能会受限
+                }
             }
         }
     }
