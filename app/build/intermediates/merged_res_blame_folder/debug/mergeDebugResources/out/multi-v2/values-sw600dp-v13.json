@@ -4,7 +4,7 @@
             "outputFile": "com.shenji.aikeyboard.app-mergeDebugResources-2:/values-sw600dp-v13/values-sw600dp-v13.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\47273312db2f584221da6b2134a5208a\\transformed\\appcompat-1.7.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-4\\34d9bb80440e1acfb573b0d7a667ce42\\transformed\\appcompat-1.7.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -14,7 +14,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.13\\transforms\\492af13c4a655a9d2b14a56ac5c4861f\\transformed\\material-1.11.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+                    "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-4\\b43958dc0f7d3b79ccaaba8f2d23215c\\transformed\\material-1.11.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,10,11,12,13,14",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4",

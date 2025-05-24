@@ -8,24 +8,21 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.ObjectInputStream
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Trie树管理器
+ * Trie树管理器 - 支持所有9种词典类型
  * 负责管理Trie树的生命周期和提供查询接口
  */
 class TrieManager private constructor() {
-    // 单字Trie树
-    private var charsTrie: PinyinTrie? = null
+    // 所有类型的Trie树存储
+    private val trieMap = ConcurrentHashMap<TrieBuilder.TrieType, PinyinTrie>()
     
-    // 基础词典Trie树（暂未实现）
-    private var baseTrie: PinyinTrie? = null
+    // 内存加载状态
+    private val loadedStatus = ConcurrentHashMap<TrieBuilder.TrieType, Boolean>()
     
     // 初始化状态
     private var isInitialized = false
-    
-    // 内存加载状态
-    private var isCharsTrieLoaded = false
-    private var isBaseTrieLoaded = false
     
     /**
      * 初始化Trie管理器，加载可用的Trie树
@@ -57,38 +54,24 @@ class TrieManager private constructor() {
         // 如果assets中没有预构建文件，则尝试加载用户构建的文件
         val builder = TrieBuilder(context)
         
-        // 尝试加载单字Trie树
-        try {
-            charsTrie = builder.loadTrie(TrieBuilder.TrieType.CHARS)
-            
-            if (charsTrie != null) {
-                val stats = charsTrie!!.getMemoryStats()
-                isCharsTrieLoaded = true
-                Timber.d("成功加载单字Trie树: $stats")
-            } else {
-                Timber.d("单字Trie树不存在，需要构建")
-                isCharsTrieLoaded = false
+        // 尝试加载所有类型的Trie树
+        for (trieType in TrieBuilder.TrieType.values()) {
+            try {
+                val trie = builder.loadTrie(trieType)
+                
+                if (trie != null) {
+                    trieMap[trieType] = trie
+                    loadedStatus[trieType] = true
+                    val stats = trie.getMemoryStats()
+                    Timber.d("成功加载${getDisplayName(trieType)}Trie树: $stats")
+                } else {
+                    loadedStatus[trieType] = false
+                    Timber.d("${getDisplayName(trieType)}Trie树不存在，需要构建")
+                }
+            } catch (e: Exception) {
+                loadedStatus[trieType] = false
+                Timber.e(e, "加载${getDisplayName(trieType)}Trie树失败")
             }
-        } catch (e: Exception) {
-            Timber.e(e, "加载单字Trie树失败")
-            isCharsTrieLoaded = false
-        }
-        
-        // 尝试加载基础词典Trie树
-        try {
-            baseTrie = builder.loadTrie(TrieBuilder.TrieType.BASE)
-            
-            if (baseTrie != null) {
-                val stats = baseTrie!!.getMemoryStats()
-                isBaseTrieLoaded = true
-                Timber.d("成功加载基础词典Trie树: $stats")
-            } else {
-                Timber.d("基础词典Trie树不存在，需要构建")
-                isBaseTrieLoaded = false
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "加载基础词典Trie树失败")
-            isBaseTrieLoaded = false
         }
     }
     
@@ -100,34 +83,24 @@ class TrieManager private constructor() {
     private fun loadPrebuiltTries(context: Context): Boolean {
         var anySuccess = false
         
-        try {
-            // 检查assets中是否存在预构建的单字Trie
-            if (isAssetFileExists(context, "trie/chars_trie.dat")) {
-                val charsTrie = loadTrieFromAssets(context, "trie/chars_trie.dat")
-                if (charsTrie != null) {
-                    this.charsTrie = charsTrie
-                    isCharsTrieLoaded = true
-                    anySuccess = true
-                    
-                    val stats = charsTrie.getMemoryStats()
-                    Timber.d("成功从assets加载预构建单字Trie: $stats")
+        for (trieType in TrieBuilder.TrieType.values()) {
+            try {
+                val assetPath = "trie/${getTypeString(trieType)}_trie.dat"
+                
+                if (isAssetFileExists(context, assetPath)) {
+                    val trie = loadTrieFromAssets(context, assetPath)
+                    if (trie != null) {
+                        trieMap[trieType] = trie
+                        loadedStatus[trieType] = true
+                        anySuccess = true
+                        
+                        val stats = trie.getMemoryStats()
+                        Timber.d("成功从assets加载预构建${getDisplayName(trieType)}Trie: $stats")
+                    }
                 }
+            } catch (e: Exception) {
+                Timber.e(e, "从assets加载${getDisplayName(trieType)}Trie失败")
             }
-            
-            // 检查assets中是否存在预构建的基础词典Trie
-            if (isAssetFileExists(context, "trie/base_trie.dat")) {
-                val baseTrie = loadTrieFromAssets(context, "trie/base_trie.dat")
-                if (baseTrie != null) {
-                    this.baseTrie = baseTrie
-                    isBaseTrieLoaded = true
-                    anySuccess = true
-                    
-                    val stats = baseTrie.getMemoryStats()
-                    Timber.d("成功从assets加载预构建基础词典Trie: $stats")
-                }
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "从assets加载预构建Trie失败")
         }
         
         return anySuccess
@@ -206,36 +179,20 @@ class TrieManager private constructor() {
         val builder = TrieBuilder(context)
         
         return try {
-            when (type) {
-                TrieBuilder.TrieType.CHARS -> {
-                    charsTrie = builder.loadTrie(type)
-                    if (charsTrie != null) {
-                        isCharsTrieLoaded = true
-                        Timber.d("手动加载单字Trie树成功: ${charsTrie!!.getMemoryStats()}")
-                        true
-                    } else {
-                        Timber.w("手动加载单字Trie树失败: 文件不存在或格式错误")
-                        isCharsTrieLoaded = false
-                        false
-                    }
-                }
-                TrieBuilder.TrieType.BASE -> {
-                    baseTrie = builder.loadTrie(type)
-                    if (baseTrie != null) {
-                        isBaseTrieLoaded = true
-                        Timber.d("手动加载基础词典Trie树成功: ${baseTrie!!.getMemoryStats()}")
-                        true
-                    } else {
-                        Timber.w("手动加载基础词典Trie树失败: 文件不存在或格式错误")
-                        isBaseTrieLoaded = false
-                        false
-                    }
-                }
+            val trie = builder.loadTrie(type)
+            if (trie != null) {
+                trieMap[type] = trie
+                loadedStatus[type] = true
+                Timber.d("手动加载${getDisplayName(type)}Trie树成功: ${trie.getMemoryStats()}")
+                true
+            } else {
+                Timber.w("手动加载${getDisplayName(type)}Trie树失败: 文件不存在或格式错误")
+                loadedStatus[type] = false
+                false
             }
         } catch (e: Exception) {
-            Timber.e(e, "手动加载${type.name}Trie树失败")
-            if (type == TrieBuilder.TrieType.CHARS) isCharsTrieLoaded = false
-            else isBaseTrieLoaded = false
+            Timber.e(e, "手动加载${getDisplayName(type)}Trie树失败")
+            loadedStatus[type] = false
             false
         }
     }
@@ -245,18 +202,9 @@ class TrieManager private constructor() {
      * @param type Trie树类型
      */
     fun unloadTrie(type: TrieBuilder.TrieType) {
-        when (type) {
-            TrieBuilder.TrieType.CHARS -> {
-                charsTrie = null
-                isCharsTrieLoaded = false
-                Timber.d("单字Trie树已卸载")
-            }
-            TrieBuilder.TrieType.BASE -> {
-                baseTrie = null
-                isBaseTrieLoaded = false
-                Timber.d("基础词典Trie树已卸载")
-            }
-        }
+        trieMap.remove(type)
+        loadedStatus[type] = false
+        Timber.d("${getDisplayName(type)}Trie树已卸载")
     }
     
     /**
@@ -265,10 +213,7 @@ class TrieManager private constructor() {
      * @return 是否已加载
      */
     fun isTrieLoaded(type: TrieBuilder.TrieType): Boolean {
-        return when (type) {
-            TrieBuilder.TrieType.CHARS -> isCharsTrieLoaded && charsTrie != null
-            TrieBuilder.TrieType.BASE -> isBaseTrieLoaded && baseTrie != null
-        }
+        return loadedStatus[type] == true && trieMap.containsKey(type)
     }
     
     /**
@@ -277,10 +222,7 @@ class TrieManager private constructor() {
      * @return 内存统计信息，如果未加载则返回null
      */
     fun getTrieMemoryStats(type: TrieBuilder.TrieType): TrieMemoryStats? {
-        return when (type) {
-            TrieBuilder.TrieType.CHARS -> charsTrie?.getMemoryStats()
-            TrieBuilder.TrieType.BASE -> baseTrie?.getMemoryStats()
-        }
+        return trieMap[type]?.getMemoryStats()
     }
     
     /**
@@ -296,39 +238,18 @@ class TrieManager private constructor() {
     }
     
     /**
-     * 根据拼音前缀查询单字
+     * 根据拼音前缀查询指定类型的Trie树
+     * @param type Trie树类型
      * @param prefix 拼音前缀
-     * @param limit 返回结果的最大数量
-     * @return 匹配的汉字列表，按频率排序
-     */
-    fun searchCharsByPrefix(prefix: String, limit: Int = 10): List<WordFrequency> {
-        if (!isInitialized) init()
-        
-        if (charsTrie == null || !isCharsTrieLoaded) {
-            Timber.w("单字Trie树未加载，无法查询")
-            return emptyList()
-        }
-        
-        try {
-            val results = charsTrie!!.searchByPrefix(prefix.lowercase(), limit)
-            return results.map { WordFrequency(it.word, it.frequency) }
-        } catch (e: Exception) {
-            Timber.e(e, "单字Trie树查询失败: $prefix")
-            return emptyList()
-        }
-    }
-    
-    /**
-     * 根据拼音前缀查询基础词典
-     * @param prefix 拼音前缀（无空格）或首字母缩写
      * @param limit 返回结果的最大数量
      * @return 匹配的词语列表，按频率排序
      */
-    fun searchBaseByPrefix(prefix: String, limit: Int = 10): List<WordFrequency> {
+    fun searchByPrefix(type: TrieBuilder.TrieType, prefix: String, limit: Int = 10): List<WordFrequency> {
         if (!isInitialized) init()
         
-        if (baseTrie == null || !isBaseTrieLoaded) {
-            Timber.w("基础词典Trie树未加载，无法查询")
+        val trie = trieMap[type]
+        if (trie == null || !isTrieLoaded(type)) {
+            Timber.w("${getDisplayName(type)}Trie树未加载，无法查询")
             return emptyList()
         }
         
@@ -339,19 +260,33 @@ class TrieManager private constructor() {
             val normalizedPrefix = prefix.lowercase().trim()
             
             // 从Trie树查询结果
-            val results = baseTrie!!.searchByPrefix(normalizedPrefix, limit)
+            val results = trie.searchByPrefix(normalizedPrefix, limit)
             
             // 转换为WordFrequency对象
             val wordFrequencies = results.map { WordFrequency(it.word, it.frequency) }
             
             val endTime = System.currentTimeMillis()
-            Timber.d("基础词典Trie查询'$normalizedPrefix'，找到${results.size}个结果，耗时${endTime - startTime}ms")
+            Timber.d("${getDisplayName(type)}Trie查询'$normalizedPrefix'，找到${results.size}个结果，耗时${endTime - startTime}ms")
             
             return wordFrequencies
         } catch (e: Exception) {
-            Timber.e(e, "基础词典Trie树查询失败: $prefix")
+            Timber.e(e, "${getDisplayName(type)}Trie树查询失败: $prefix")
             return emptyList()
         }
+    }
+    
+    /**
+     * 根据拼音前缀查询单字（兼容性方法）
+     */
+    fun searchCharsByPrefix(prefix: String, limit: Int = 10): List<WordFrequency> {
+        return searchByPrefix(TrieBuilder.TrieType.CHARS, prefix, limit)
+    }
+    
+    /**
+     * 根据拼音前缀查询基础词典（兼容性方法）
+     */
+    fun searchBaseByPrefix(prefix: String, limit: Int = 10): List<WordFrequency> {
+        return searchByPrefix(TrieBuilder.TrieType.BASE, prefix, limit)
     }
     
     /**
@@ -361,13 +296,58 @@ class TrieManager private constructor() {
      */
     fun isTrieFileExists(type: TrieBuilder.TrieType): Boolean {
         val context = ShenjiApplication.appContext
-        val fileName = when (type) {
-            TrieBuilder.TrieType.CHARS -> "trie/chars_trie.dat"
-            TrieBuilder.TrieType.BASE -> "trie/base_trie.dat"
-        }
+        val fileName = "trie/${getTypeString(type)}_trie.dat"
         
-        val file = java.io.File(context.filesDir, fileName)
+        val file = File(context.filesDir, fileName)
         return file.exists() && file.length() > 0
+    }
+    
+    /**
+     * 获取所有已加载的Trie类型
+     */
+    fun getLoadedTrieTypes(): List<TrieBuilder.TrieType> {
+        return loadedStatus.filter { it.value }.keys.toList()
+    }
+    
+    /**
+     * 获取所有可用的Trie文件类型
+     */
+    fun getAvailableTrieTypes(): List<TrieBuilder.TrieType> {
+        return TrieBuilder.TrieType.values().filter { isTrieFileExists(it) }
+    }
+    
+    /**
+     * 获取Trie类型对应的字符串
+     */
+    private fun getTypeString(trieType: TrieBuilder.TrieType): String {
+        return when (trieType) {
+            TrieBuilder.TrieType.CHARS -> "chars"
+            TrieBuilder.TrieType.BASE -> "base"
+            TrieBuilder.TrieType.CORRELATION -> "correlation"
+            TrieBuilder.TrieType.ASSOCIATIONAL -> "associational"
+            TrieBuilder.TrieType.PLACE -> "place"
+            TrieBuilder.TrieType.PEOPLE -> "people"
+            TrieBuilder.TrieType.POETRY -> "poetry"
+            TrieBuilder.TrieType.CORRECTIONS -> "corrections"
+            TrieBuilder.TrieType.COMPATIBLE -> "compatible"
+        }
+    }
+    
+    /**
+     * 获取Trie类型的显示名称
+     */
+    private fun getDisplayName(trieType: TrieBuilder.TrieType): String {
+        return when (trieType) {
+            TrieBuilder.TrieType.CHARS -> "单字"
+            TrieBuilder.TrieType.BASE -> "基础词典"
+            TrieBuilder.TrieType.CORRELATION -> "关联词典"
+            TrieBuilder.TrieType.ASSOCIATIONAL -> "联想词典"
+            TrieBuilder.TrieType.PLACE -> "地名词典"
+            TrieBuilder.TrieType.PEOPLE -> "人名词典"
+            TrieBuilder.TrieType.POETRY -> "诗词词典"
+            TrieBuilder.TrieType.CORRECTIONS -> "纠错词典"
+            TrieBuilder.TrieType.COMPATIBLE -> "兼容词典"
+        }
     }
     
     /**
@@ -375,10 +355,8 @@ class TrieManager private constructor() {
      * 在内存紧张时调用
      */
     fun release() {
-        charsTrie = null
-        baseTrie = null
-        isCharsTrieLoaded = false
-        isBaseTrieLoaded = false
+        trieMap.clear()
+        loadedStatus.clear()
         isInitialized = false
         Timber.d("TrieManager资源已释放")
     }

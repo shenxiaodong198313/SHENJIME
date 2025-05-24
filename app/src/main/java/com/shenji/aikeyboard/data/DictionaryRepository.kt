@@ -171,6 +171,67 @@ class DictionaryRepository {
     }
     
     /**
+     * 分页获取特定类型的词条（支持词频过滤）
+     * @param type 词典类型
+     * @param offset 偏移量
+     * @param limit 限制数量
+     * @param frequencyFilter 词频过滤器
+     */
+    fun getEntriesByTypeWithFrequencyFilter(
+        type: String, 
+        offset: Int, 
+        limit: Int, 
+        frequencyFilter: com.shenji.aikeyboard.data.trie.TrieBuilder.FrequencyFilter
+    ): List<Entry> {
+        return try {
+            if (frequencyFilter == com.shenji.aikeyboard.data.trie.TrieBuilder.FrequencyFilter.ALL) {
+                // 如果是全部构建，直接使用原方法
+                return getEntriesByType(type, offset, limit)
+            }
+            
+            // 获取该类型的词频阈值
+            val allEntries = realm.query<Entry>("type == $0", type)
+                .find()
+                .sortedByDescending { it.frequency }
+            
+            if (allEntries.isEmpty()) {
+                return emptyList()
+            }
+            
+            // 计算过滤后的数量
+            val totalCount = allEntries.size
+            val filteredCount = (totalCount * frequencyFilter.percentage).toInt()
+            
+            // 获取过滤后的词条
+            val filteredEntries = allEntries.take(filteredCount)
+            
+            // 应用分页
+            return filteredEntries.drop(offset).take(limit)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "获取${type}词条列表失败（词频过滤）")
+            emptyList()
+        }
+    }
+    
+    /**
+     * 获取过滤后的词条数量
+     */
+    fun getFilteredEntryCount(type: String, frequencyFilter: com.shenji.aikeyboard.data.trie.TrieBuilder.FrequencyFilter): Int {
+        return try {
+            if (frequencyFilter == com.shenji.aikeyboard.data.trie.TrieBuilder.FrequencyFilter.ALL) {
+                return getEntryCountByType(type)
+            }
+            
+            val totalCount = getEntryCountByType(type)
+            (totalCount * frequencyFilter.percentage).toInt()
+        } catch (e: Exception) {
+            Timber.e(e, "获取${type}过滤后词条数量失败")
+            0
+        }
+    }
+    
+    /**
      * 获取词典文件大小
      */
     fun getDictionaryFileSize(): Long {
