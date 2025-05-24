@@ -1,10 +1,16 @@
 package com.shenji.aikeyboard.ui.dictionary
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,6 +20,7 @@ import com.shenji.aikeyboard.data.DictionaryModule
 import com.shenji.aikeyboard.data.DictionaryRepository
 import com.shenji.aikeyboard.ui.DictionaryDetailActivity
 import com.shenji.aikeyboard.ui.DictionaryModuleAdapter
+import com.shenji.aikeyboard.utils.DatabaseExporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -21,7 +28,7 @@ import timber.log.Timber
 
 /**
  * 词典列表Activity
- * 显示词典模块列表和统计信息
+ * 显示词典模块列表和统计信息，支持导出功能
  */
 class DictionaryListActivity : AppCompatActivity() {
     
@@ -33,10 +40,14 @@ class DictionaryListActivity : AppCompatActivity() {
     
     private lateinit var moduleAdapter: DictionaryModuleAdapter
     private val dictionaryRepository = DictionaryRepository()
+    private lateinit var databaseExporter: DatabaseExporter
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dictionary_list)
+        
+        // 初始化导出工具
+        databaseExporter = DatabaseExporter(this)
         
         // 设置标题栏
         setSupportActionBar(findViewById(R.id.toolbar))
@@ -48,6 +59,25 @@ class DictionaryListActivity : AppCompatActivity() {
         
         // 加载词典数据
         loadDictionaryData()
+    }
+    
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_dictionary_list, menu)
+        return true
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            R.id.action_export -> {
+                exportDatabase()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
     
     /**
@@ -116,6 +146,78 @@ class DictionaryListActivity : AppCompatActivity() {
     }
     
     /**
+     * 导出数据库
+     */
+    private fun exportDatabase() {
+        // 显示导出进度对话框
+        val progressDialog = AlertDialog.Builder(this)
+            .setTitle("导出数据库")
+            .setMessage("正在导出数据库文件，请稍候...")
+            .setCancelable(false)
+            .create()
+        
+        progressDialog.show()
+        
+        lifecycleScope.launch {
+            try {
+                val result = databaseExporter.exportDatabase()
+                
+                withContext(Dispatchers.Main) {
+                    progressDialog.dismiss()
+                    
+                    if (result.success) {
+                        showExportSuccessDialog(result.filePath!!, result.fileSize)
+                    } else {
+                        showExportErrorDialog(result.errorMessage ?: "未知错误")
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressDialog.dismiss()
+                    showExportErrorDialog("导出失败: ${e.message}")
+                }
+            }
+        }
+    }
+    
+    /**
+     * 显示导出成功对话框
+     */
+    private fun showExportSuccessDialog(filePath: String, fileSize: Long) {
+        val formattedSize = databaseExporter.formatFileSize(fileSize)
+        
+        AlertDialog.Builder(this)
+            .setTitle("导出成功")
+            .setMessage("数据库已成功导出到：\n\n$filePath\n\n文件大小：$formattedSize\n\n注意：文件保存在应用私有目录中，可以通过文件管理器访问。")
+            .setPositiveButton("复制路径") { _, _ ->
+                copyToClipboard(filePath)
+            }
+            .setNegativeButton("确定", null)
+            .show()
+    }
+    
+    /**
+     * 显示导出错误对话框
+     */
+    private fun showExportErrorDialog(errorMessage: String) {
+        AlertDialog.Builder(this)
+            .setTitle("导出失败")
+            .setMessage(errorMessage)
+            .setPositiveButton("确定", null)
+            .show()
+    }
+    
+    /**
+     * 复制文本到剪贴板
+     */
+    private fun copyToClipboard(text: String) {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("导出路径", text)
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(this, "路径已复制到剪贴板", Toast.LENGTH_SHORT).show()
+    }
+    
+    /**
      * 打开词典详情
      */
     private fun openDictionaryDetail(module: DictionaryModule) {
@@ -128,13 +230,5 @@ class DictionaryListActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Timber.e(e, "打开词典详情失败")
         }
-    }
-    
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            finish()
-            return true
-        }
-        return super.onOptionsItemSelected(item)
     }
 } 

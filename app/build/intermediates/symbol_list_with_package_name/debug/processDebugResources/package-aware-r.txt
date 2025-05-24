@@ -3068,6 +3068,7 @@ drawable ic_call_decline
 drawable ic_call_decline_low
 drawable ic_clear_black_24
 drawable ic_clock_black_24dp
+drawable ic_export
 drawable ic_keyboard_black_24dp
 drawable ic_m3_chip_check
 drawable ic_m3_chip_checked_circle
@@ -3230,6 +3231,7 @@ id action_context_bar
 id action_db_info
 id action_diagnose_db
 id action_divider
+id action_export
 id action_image
 id action_menu_divider
 id action_menu_presenter
@@ -4133,6 +4135,7 @@ layout select_dialog_singlechoice_material
 layout shimmer_dictionary_module
 layout shimmer_dictionary_stat_card
 layout support_simple_spinner_dropdown_item
+menu menu_dictionary_list
 menu menu_dictionary_manager
 menu trie_build_menu
 mipmap ic_launcher

@@ -114,16 +114,52 @@ class SplashActivity : AppCompatActivity() {
     private suspend fun initializeDatabase() {
         withContext(Dispatchers.IO) {
             try {
-                // 初始化Realm数据库
+                // 检查是否需要从assets复制数据库
                 val app = application as ShenjiApplication
-                app.initRealm()
+                val dictFile = java.io.File(app.filesDir, "dictionaries/shenji_dict.realm")
+                
+                // 检查assets中是否有预构建的数据库文件
+                val hasAssetsDb = try {
+                    app.assets.open("shenji_dict.realm").use { true }
+                } catch (e: Exception) {
+                    false
+                }
+                
+                if (hasAssetsDb && (!dictFile.exists() || dictFile.length() < 1000)) {
+                    withContext(Dispatchers.Main) {
+                        detailText.text = "发现预构建数据库，正在复制..."
+                    }
+                    
+                    // 获取文件大小信息
+                    val totalSize = app.assets.open("shenji_dict.realm").use { it.available().toLong() }
+                    val totalSizeMB = totalSize / (1024 * 1024)
+                    
+                    withContext(Dispatchers.Main) {
+                        detailText.text = "正在复制数据库文件 (${totalSizeMB}MB)..."
+                    }
+                    
+                    // 初始化Realm数据库（这会触发复制）
+                    app.initRealm()
+                    
+                    withContext(Dispatchers.Main) {
+                        detailText.text = "数据库复制完成 ✓"
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        detailText.text = "正在连接数据库..."
+                    }
+                    
+                    // 初始化Realm数据库
+                    app.initRealm()
+                    
+                    withContext(Dispatchers.Main) {
+                        detailText.text = "数据库连接成功 ✓"
+                    }
+                }
                 
                 // 初始化词典管理器
                 DictionaryManager.init()
                 
-                withContext(Dispatchers.Main) {
-                    detailText.text = "数据库连接成功 ✓"
-                }
             } catch (e: Exception) {
                 Timber.e(e, "初始化数据库失败")
                 withContext(Dispatchers.Main) {

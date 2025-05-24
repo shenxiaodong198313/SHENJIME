@@ -41,6 +41,7 @@ drawable candidate_word_bg
 drawable candidate_word_selected_bg
 drawable circle_background
 drawable ic_arrow_down
+drawable ic_export
 drawable ic_mic
 drawable ic_stage_acronym
 drawable ic_stage_initial
@@ -57,6 +58,7 @@ id accessibility_settings_button
 id action_build_trie
 id action_db_info
 id action_diagnose_db
+id action_export
 id action_settings
 id action_view_logs
 id appBarLayout
@@ -321,6 +323,7 @@ layout item_dictionary_module
 layout keyboard_layout
 layout shimmer_dictionary_module
 layout shimmer_dictionary_stat_card
+menu menu_dictionary_list
 menu menu_dictionary_manager
 menu trie_build_menu
 mipmap ic_launcher

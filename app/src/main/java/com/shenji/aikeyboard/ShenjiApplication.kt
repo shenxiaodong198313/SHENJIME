@@ -198,30 +198,27 @@ class ShenjiApplication : MultiDexApplication() {
             
             val dictFile = File(internalDir, "shenji_dict.realm")
             
-            // 如果文件不存在或者内容有问题，从assets中复制预构建的数据库
-            if (!dictFile.exists() || dictFile.length() < 1000) {
-                logStartupMessage("数据库文件不存在或无效，从assets中复制预构建的数据库")
+            // 检查assets中是否有预构建的数据库文件
+            val hasAssetsDb = try {
+                assets.open("shenji_dict.realm").use { true }
+            } catch (e: Exception) {
+                false
+            }
+            
+            if (hasAssetsDb) {
+                // 如果assets中有数据库文件，检查是否需要更新本地文件
+                val shouldCopyFromAssets = !dictFile.exists() || 
+                    dictFile.length() < 1000 || 
+                    isAssetsDatabaseNewer(dictFile)
                 
-                try {
-                    // 从assets复制预构建的数据库
-                    val inputStream = assets.open("shenji_dict.realm")
-                    val outputStream = FileOutputStream(dictFile)
-                    
-                    val buffer = ByteArray(8192) // 使用更大的缓冲区提高复制效率
-                    var length: Int
-                    
-                    while (inputStream.read(buffer).also { length = it } > 0) {
-                        outputStream.write(buffer, 0, length)
-                    }
-                    
-                    inputStream.close()
-                    outputStream.close()
-                    
-                    logStartupMessage("预构建数据库复制成功")
-                } catch (e: IOException) {
-                    logStartupMessage("复制预构建数据库失败: ${e.message}")
-                    Timber.e(e, "复制预构建数据库失败")
+                if (shouldCopyFromAssets) {
+                    logStartupMessage("从assets复制预构建数据库...")
+                    copyDatabaseFromAssets(dictFile)
+                } else {
+                    logStartupMessage("使用现有的数据库文件")
                 }
+            } else {
+                logStartupMessage("assets中未找到预构建数据库，使用现有文件或创建空数据库")
             }
             
             // 配置Realm
@@ -257,6 +254,53 @@ class ShenjiApplication : MultiDexApplication() {
                 logStartupMessage("创建空Realm数据库失败: ${e2.message}")
                 Timber.e(e2, "Failed to create Realm database")
             }
+        }
+    }
+    
+    /**
+     * 检查assets中的数据库是否比本地文件更新
+     */
+    private fun isAssetsDatabaseNewer(localFile: File): Boolean {
+        return try {
+            // 简单的检查：如果assets文件存在且本地文件较小，认为需要更新
+            assets.open("shenji_dict.realm").use { inputStream ->
+                val assetsSize = inputStream.available().toLong()
+                assetsSize > localFile.length()
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * 从assets复制数据库文件
+     */
+    private fun copyDatabaseFromAssets(targetFile: File) {
+        try {
+            assets.open("shenji_dict.realm").use { inputStream ->
+                FileOutputStream(targetFile).use { outputStream ->
+                    val buffer = ByteArray(8192) // 8KB缓冲区
+                    var bytesRead: Int
+                    var totalBytes = 0L
+                    
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                        totalBytes += bytesRead
+                        
+                        // 每复制10MB记录一次进度
+                        if (totalBytes % (10 * 1024 * 1024) == 0L) {
+                            logStartupMessage("已复制 ${totalBytes / (1024 * 1024)} MB")
+                        }
+                    }
+                    
+                    outputStream.flush()
+                    logStartupMessage("数据库复制完成，总大小: ${totalBytes / (1024 * 1024)} MB")
+                }
+            }
+        } catch (e: IOException) {
+            logStartupMessage("复制数据库失败: ${e.message}")
+            Timber.e(e, "复制数据库失败")
+            throw e
         }
     }
     
