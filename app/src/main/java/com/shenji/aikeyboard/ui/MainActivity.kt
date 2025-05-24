@@ -188,6 +188,13 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val trieManager = TrieManager.instance
+                
+                // 暂时禁用后台Trie加载，避免内存溢出
+                Timber.i("主界面启动，暂时禁用后台Trie加载以避免内存溢出")
+                Timber.i("当前内存状态: 最大=${Runtime.getRuntime().maxMemory() / 1024 / 1024}MB")
+                Timber.i("已用内存: ${(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024}MB")
+                
+                // 只检查Trie文件状态，不实际加载
                 val backgroundTypes = listOf(
                     TrieBuilder.TrieType.BASE,           // 60%基础词典
                     TrieBuilder.TrieType.CORRELATION,    // 关联词典
@@ -199,38 +206,16 @@ class MainActivity : AppCompatActivity() {
                     TrieBuilder.TrieType.COMPATIBLE      // 兼容词典
                 )
                 
-                Timber.i("主界面启动后台词典加载，共${backgroundTypes.size}个词典")
-                
                 for (trieType in backgroundTypes) {
-                    try {
-                        if (trieManager.isTrieFileExists(trieType) && !trieManager.isTrieLoaded(trieType)) {
-                            Timber.d("后台加载${getDisplayName(trieType)}...")
-                            val startTime = System.currentTimeMillis()
-                            val success = trieManager.loadTrieToMemory(trieType)
-                            val loadTime = System.currentTimeMillis() - startTime
-                            
-                            if (success) {
-                                Timber.i("后台加载${getDisplayName(trieType)}成功，耗时${loadTime}ms")
-                            } else {
-                                Timber.w("后台加载${getDisplayName(trieType)}失败")
-                            }
-                            
-                            // 每个词典加载后稍作延迟，避免CPU占用过高
-                            delay(2000)
-                        } else if (trieManager.isTrieLoaded(trieType)) {
-                            Timber.d("${getDisplayName(trieType)}已在内存中，跳过加载")
-                        }
-                    } catch (e: Exception) {
-                        Timber.w(e, "后台加载${getDisplayName(trieType)}异常")
-                        // 发生异常时等待更长时间再继续
-                        delay(3000)
-                    }
+                    val exists = trieManager.isTrieFileExists(trieType)
+                    val loaded = trieManager.isTrieLoaded(trieType)
+                    Timber.d("${getDisplayName(trieType)}: 文件存在=$exists, 已加载=$loaded")
                 }
                 
-                Timber.i("主界面后台词典加载完成")
+                Timber.i("主界面Trie状态检查完成，实际加载已禁用")
                 
             } catch (e: Exception) {
-                Timber.e(e, "后台词典加载过程异常")
+                Timber.e(e, "后台词典状态检查异常")
             }
         }
     }

@@ -328,6 +328,9 @@ class SplashActivity : AppCompatActivity() {
      * 跳转到主Activity
      */
     private fun navigateToMainActivity() {
+        // 在跳转前进行垃圾回收，释放启动过程中的临时内存
+        System.gc()
+        
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish() // 关闭启动页，防止用户返回
