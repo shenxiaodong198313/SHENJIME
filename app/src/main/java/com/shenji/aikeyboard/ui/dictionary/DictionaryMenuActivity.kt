@@ -18,6 +18,7 @@ import com.shenji.aikeyboard.ui.trie.TrieBuildActivity
 import com.shenji.aikeyboard.data.DatabaseReinitializer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import timber.log.Timber
 
 /**
@@ -128,44 +129,39 @@ class DictionaryMenuActivity : AppCompatActivity() {
         scrollView.addView(container)
         
         // 添加说明文本
-        val infoText = TextView(this).apply {
-            text = "选择要导入的词典类型：\n\n" +
-                    "✅ 已完成的词典支持断点续传\n" +
-                    "🔄 利用8核CPU并行处理\n" +
-                    "💾 优化16G内存使用\n" +
-                    "📊 实时显示每个词典的详细进度\n\n"
-            textSize = 14f
-            setPadding(0, 0, 0, 24)
-        }
-        container.addView(infoText)
+        container.addView(TextView(this).apply {
+            text = "选择要导入的词典类型："
+            textSize = 16f
+            setPadding(0, 0, 0, 16)
+        })
         
-        // 创建词典选择复选框
+        // 创建复选框
         val checkBoxes = mutableMapOf<String, CheckBox>()
-        
         for (dict in availableDictionaries) {
             val checkBox = CheckBox(this).apply {
-                text = "${dict.displayName} (${dict.description})"
-                isChecked = true // 默认全选
+                text = "${dict.displayName} - ${dict.description} (约${dict.estimatedSize}条)"
+                isChecked = dict.key !in completedDictionaries // 未完成的默认选中
                 
                 // 如果已完成，显示特殊标记
                 if (dict.key in completedDictionaries) {
-                    text = "✅ ${dict.displayName} (${dict.description}) - 已完成"
+                    text = "$text ✓已完成"
+                    setTextColor(getColor(android.R.color.holo_green_dark))
                 }
-                
-                textSize = 16f
-                setPadding(0, 8, 0, 8)
             }
-            
             checkBoxes[dict.key] = checkBox
             container.addView(checkBox)
         }
         
-        // 添加断点续传选项
-        val resumeCheckBox = CheckBox(this).apply {
-            text = "启用断点续传（跳过已完成的词典）"
-            isChecked = completedDictionaries.isNotEmpty()
+        // 断点续传选项
+        container.addView(TextView(this).apply {
+            text = "\n选项："
             textSize = 16f
-            setPadding(0, 16, 0, 8)
+            setTypeface(null, android.graphics.Typeface.BOLD)
+        })
+        
+        val resumeCheckBox = CheckBox(this).apply {
+            text = "使用断点续传（跳过已完成的词典）"
+            isChecked = completedDictionaries.isNotEmpty()
         }
         container.addView(resumeCheckBox)
         
@@ -228,6 +224,9 @@ class DictionaryMenuActivity : AppCompatActivity() {
                     }
                 }
                 
+            } catch (e: CancellationException) {
+                // 协程被取消，不需要特殊处理，已经在cancelInitialization中处理了
+                Timber.d("数据库初始化协程被取消")
             } catch (e: Exception) {
                 Timber.e(e, "重新初始化数据库失败")
                 runOnUiThread {
@@ -282,18 +281,17 @@ class DictionaryMenuActivity : AppCompatActivity() {
         })
         
         // 为每个选中的词典创建进度视图
-        progressViews.clear()
         for (dictKey in selectedDictionaries) {
             val dictInfo = availableDictionaries.find { it.key == dictKey } ?: continue
             
             val dictContainer = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(0, 16, 0, 16)
+                setPadding(0, 8, 0, 8)
             }
             
             val nameText = TextView(this).apply {
                 text = dictInfo.displayName
-                textSize = 16f
+                textSize = 14f
                 setTypeface(null, android.graphics.Typeface.BOLD)
             }
             
@@ -303,23 +301,23 @@ class DictionaryMenuActivity : AppCompatActivity() {
             }
             
             val statusText = TextView(this).apply {
-                text = "等待中..."
-                textSize = 14f
+                text = "等待开始..."
+                textSize = 12f
             }
             
             val detailText = TextView(this).apply {
-                text = ""
+                text = "进度: 0%"
                 textSize = 12f
-                setTextColor(android.graphics.Color.GRAY)
+                setTextColor(getColor(android.R.color.darker_gray))
             }
             
             dictContainer.addView(nameText)
             dictContainer.addView(progressBar)
             dictContainer.addView(statusText)
             dictContainer.addView(detailText)
-            
             container.addView(dictContainer)
             
+            // 保存进度视图引用
             progressViews[dictKey] = ProgressView(
                 container = dictContainer,
                 nameText = nameText,
@@ -329,7 +327,6 @@ class DictionaryMenuActivity : AppCompatActivity() {
             )
         }
         
-        // 创建对话框
         progressDialog = AlertDialog.Builder(this)
             .setTitle("数据库重新初始化进度")
             .setView(scrollView)
@@ -365,20 +362,40 @@ class DictionaryMenuActivity : AppCompatActivity() {
         if (currentDict.isNotEmpty()) {
             progressViews[currentDict]?.let { view ->
                 view.progressBar.progress = (dictProgress * 100).toInt()
-                view.statusText.text = message
+                view.statusText.text = if (dictProgress >= 1.0f) "已完成 (断点续传)" else message
                 view.detailText.text = "进度: ${(dictProgress * 100).toInt()}%"
             }
         }
         
-        // 更新按钮文本
+        // 更新按钮文本和状态
         val progressPercent = (overallProgress * 100).toInt()
-        reinitDbButton.text = "[$progressPercent%] 正在初始化... (点击取消)"
+        if (overallProgress >= 1.0f) {
+            // 完成状态
+            reinitDbButton.text = "初始化完成"
+            // 更新对话框按钮
+            progressDialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.text = "完成"
+        } else {
+            // 进行中状态
+            reinitDbButton.text = "[$progressPercent%] 正在初始化... (点击取消)"
+        }
     }
     
     /**
      * 取消初始化操作
      */
     private fun cancelInitialization() {
+        // 检查是否已完成
+        val overallProgress = progressViews["_overall"]?.progressBar?.progress ?: 0
+        if (overallProgress >= 100) {
+            // 已完成，直接关闭对话框
+            resetInitializationState()
+            progressDialog?.dismiss()
+            Toast.makeText(this, "数据库初始化已完成", Toast.LENGTH_SHORT).show()
+            reinitDbButton.text = "重新初始化数据库"
+            return
+        }
+        
+        // 未完成，显示取消确认对话框
         AlertDialog.Builder(this)
             .setTitle("取消初始化")
             .setMessage("确定要取消数据库初始化吗？\n\n⚠️ 注意：取消后可以使用断点续传功能继续未完成的导入。")

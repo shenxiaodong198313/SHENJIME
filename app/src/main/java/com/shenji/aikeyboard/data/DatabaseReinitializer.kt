@@ -107,19 +107,24 @@ class DatabaseReinitializer(private val context: Context) {
         val totalStartTime = System.currentTimeMillis()
         
         try {
+            // 检查协程是否被取消
+            ensureActive()
             progressCallback(0.0f, "", 0.0f, "开始高性能数据库重新初始化...")
             
             // 初始化进度跟踪
             initializeProgressTracking(selectedDictionaries, resumeFromBreakpoint)
             
             // 第一步：准备数据库环境
+            ensureActive()
             progressCallback(0.05f, "", 0.0f, "准备数据库环境...")
             val realm = prepareDatabaseEnvironment(resumeFromBreakpoint)
             
             // 第二步：启动写入协程
+            ensureActive()
             val writeJob = startDatabaseWriter(realm)
             
             // 第三步：并行导入词典数据
+            ensureActive()
             progressCallback(0.1f, "", 0.0f, "开始并行导入词典数据...")
             val success = importDictionariesParallel(selectedDictionaries, resumeFromBreakpoint) { type, dictProgress, message ->
                 val overallProgress = calculateOverallProgress()
@@ -127,14 +132,17 @@ class DatabaseReinitializer(private val context: Context) {
             }
             
             // 第四步：完成写入
+            ensureActive()
             writeChannel.close()
             writeJob.join()
             
             // 第五步：优化和清理
             if (success) {
+                ensureActive()
                 progressCallback(0.95f, "", 1.0f, "优化数据库索引...")
                 optimizeDatabaseIndexes(realm)
                 
+                ensureActive()
                 progressCallback(0.98f, "", 1.0f, "重新初始化应用组件...")
                 reinitializeAppComponents(realm)
                 
@@ -147,6 +155,10 @@ class DatabaseReinitializer(private val context: Context) {
             
             return@withContext success
             
+        } catch (e: CancellationException) {
+            Timber.d("数据库重新初始化被取消")
+            progressCallback(0.0f, "", 0.0f, "初始化已取消")
+            throw e // 重新抛出CancellationException以正确处理协程取消
         } catch (e: Exception) {
             Timber.e(e, "重新初始化数据库失败")
             progressCallback(1.0f, "", 0.0f, "初始化失败: ${e.message}")
@@ -196,41 +208,20 @@ class DatabaseReinitializer(private val context: Context) {
     /**
      * 启动数据库写入协程
      */
-    private fun CoroutineScope.startDatabaseWriter(realm: Realm): Job {
-        return launch(Dispatchers.IO) {
-            val writeBuffer = mutableListOf<Entry>()
-            var totalWritten = 0L
-            
-            try {
-                for (entries in writeChannel) {
-                    writeBuffer.addAll(entries)
-                    
-                    // 当缓冲区达到一定大小时批量写入
-                    if (writeBuffer.size >= BATCH_SIZE) {
-                        val writeTime = measureTimeMillis {
-                            realm.write {
-                                writeBuffer.forEach { copyToRealm(it) }
-                            }
-                        }
-                        
-                        totalWritten += writeBuffer.size
-                        Timber.d("批量写入 ${writeBuffer.size} 条记录，耗时: ${writeTime}ms，总计: $totalWritten")
-                        writeBuffer.clear()
+    private fun startDatabaseWriter(realm: Realm) = GlobalScope.launch(Dispatchers.IO) {
+        try {
+            for (entries in writeChannel) {
+                ensureActive()
+                realm.write {
+                    for (entry in entries) {
+                        copyToRealm(entry)
                     }
                 }
-                
-                // 写入剩余数据
-                if (writeBuffer.isNotEmpty()) {
-                    realm.write {
-                        writeBuffer.forEach { copyToRealm(it) }
-                    }
-                    totalWritten += writeBuffer.size
-                    Timber.d("最终写入 ${writeBuffer.size} 条记录，总计: $totalWritten")
-                }
-                
-            } catch (e: Exception) {
-                Timber.e(e, "数据库写入失败")
             }
+        } catch (e: CancellationException) {
+            Timber.d("数据库写入协程被取消")
+        } catch (e: Exception) {
+            Timber.e(e, "数据库写入失败")
         }
     }
     
@@ -241,48 +232,45 @@ class DatabaseReinitializer(private val context: Context) {
         selectedDictionaries: List<String>,
         resumeFromBreakpoint: Boolean,
         progressCallback: (String, Float, String) -> Unit
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): Boolean = coroutineScope {
         
-        val jobs = mutableListOf<Job>()
-        val results = ConcurrentHashMap<String, Boolean>()
+        val completedDictionaries = if (resumeFromBreakpoint) getCompletedDictionaries() else emptySet()
+        val pendingDictionaries = selectedDictionaries.filter { it !in completedDictionaries }
+        
+        if (pendingDictionaries.isEmpty()) {
+            progressCallback("", 1.0f, "所有词典已完成，无需重新导入")
+            return@coroutineScope true
+        }
         
         // 按优先级排序
-        val sortedDictionaries = selectedDictionaries.sortedBy { dictType ->
+        val sortedDictionaries = pendingDictionaries.sortedBy { dictType ->
             availableDictionaries.find { it.key == dictType }?.priority ?: Int.MAX_VALUE
         }
         
-        for (dictType in sortedDictionaries) {
-            val progress = progressMap[dictType] ?: continue
-            
-            // 如果已完成且支持断点续传，则跳过
-            if (resumeFromBreakpoint && progress.status.get() == ImportStatus.COMPLETED) {
-                results[dictType] = true
-                progressCallback(dictType, 1.0f, "${progress.displayName} 已完成（断点续传）")
-                continue
-            }
-            
-            val job = launch {
+        // 并行导入
+        val jobs = sortedDictionaries.map { dictType ->
+            async {
                 importSemaphore.acquire()
                 try {
-                    val success = importSingleDictionary(dictType, progressCallback)
-                    results[dictType] = success
-                    
-                    if (success) {
-                        // 标记为已完成
-                        markDictionaryCompleted(dictType)
-                    }
+                    importSingleDictionary(dictType, progressCallback)
                 } finally {
                     importSemaphore.release()
                 }
             }
-            jobs.add(job)
         }
         
         // 等待所有导入完成
-        jobs.joinAll()
+        val results = jobs.awaitAll()
+        val allSuccess = results.all { it }
         
-        // 检查是否所有导入都成功
-        return@withContext results.values.all { it }
+        if (allSuccess) {
+            // 标记所有词典为已完成
+            for (dictType in selectedDictionaries) {
+                markDictionaryCompleted(dictType)
+            }
+        }
+        
+        return@coroutineScope allSuccess
     }
     
     /**
@@ -333,16 +321,19 @@ class DatabaseReinitializer(private val context: Context) {
                 return@withContext false
             }
             
-        } catch (e: Exception) {
-            Timber.e(e, "导入词典 $dictType 失败")
+        } catch (e: CancellationException) {
             progress.status.set(ImportStatus.FAILED)
-            progressCallback(dictType, 0.0f, "${dictInfo.displayName} 异常: ${e.message}")
+            throw e
+        } catch (e: Exception) {
+            progress.status.set(ImportStatus.FAILED)
+            progressCallback(dictType, 0.0f, "${dictInfo.displayName} 导入异常: ${e.message}")
+            Timber.e(e, "导入词典失败: $dictType")
             return@withContext false
         }
     }
     
     /**
-     * 导入词典数据（内存优化版本）
+     * 导入词典数据
      */
     private suspend fun importDictionaryData(
         dictType: String,
@@ -350,94 +341,106 @@ class DatabaseReinitializer(private val context: Context) {
         progressCallback: (Int) -> Unit
     ): Int = withContext(Dispatchers.IO) {
         
-        val inputStream = context.assets.open(assetPath)
-        val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
-        
         var importedCount = 0
-        var lineCount = 0
-        val memoryBuffer = mutableListOf<Entry>()
+        var currentLine = 0
+        val batch = mutableListOf<Entry>()
         
-        reader.use { reader ->
-            reader.forEachLine { line ->
-                lineCount++
-                
-                // 更新进度（每100行更新一次）
-                if (lineCount % 100 == 0) {
-                    progressCallback(lineCount)
-                }
-                
-                if (line.isNotBlank()) {
+        try {
+            val inputStream = context.assets.open(assetPath)
+            val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
+            
+            reader.use { r ->
+                r.forEachLine { line ->
+                    ensureActive()
+                    currentLine++
+                    
                     val entry = parseLineToEntry(line, dictType)
                     if (entry != null) {
-                        memoryBuffer.add(entry)
+                        batch.add(entry)
+                        importedCount++
                         
-                        // 当内存缓冲区满时，发送到写入通道
-                        if (memoryBuffer.size >= MEMORY_BUFFER_SIZE) {
-                            writeChannel.trySend(memoryBuffer.toList())
-                            importedCount += memoryBuffer.size
-                            memoryBuffer.clear()
+                        // 批量写入
+                        if (batch.size >= BATCH_SIZE) {
+                            writeChannel.trySend(batch.toList())
+                            batch.clear()
                         }
+                    }
+                    
+                    // 更新进度
+                    if (currentLine % 1000 == 0) {
+                        progressCallback(currentLine)
                     }
                 }
             }
             
-            // 发送剩余数据
-            if (memoryBuffer.isNotEmpty()) {
-                writeChannel.trySend(memoryBuffer.toList())
-                importedCount += memoryBuffer.size
+            // 写入剩余数据
+            if (batch.isNotEmpty()) {
+                writeChannel.trySend(batch.toList())
             }
+            
+            progressCallback(currentLine)
+            return@withContext importedCount
+            
+        } catch (e: Exception) {
+            Timber.e(e, "导入词典数据失败: $dictType")
+            return@withContext 0
         }
-        
-        progressCallback(lineCount)
-        return@withContext importedCount
     }
     
     /**
      * 解析行数据为Entry对象
-     * YAML格式：字符\t拼音\t频率
      */
     private fun parseLineToEntry(line: String, dictType: String): Entry? {
         try {
+            if (line.trim().isEmpty() || line.startsWith("#")) {
+                return null
+            }
+            
             val parts = line.split("\t")
             if (parts.size < 2) return null
             
             val word = parts[0].trim()
-            val rawPinyin = parts[1].trim()
-            val frequency = if (parts.size > 2) parts[2].toIntOrNull() ?: 1 else 1
-            
-            if (rawPinyin.isEmpty() || word.isEmpty()) return null
-            
-            // 去掉声调符号，只保留字母
-            val pinyin = removeTones(rawPinyin)
+            val pinyin = removeTones(parts[1].trim())
+            val frequency = if (parts.size > 2) parts[2].toIntOrNull() ?: 0 else 0
             
             return Entry().apply {
-                id = "${word}_${pinyin}_${dictType}".hashCode().toString()
-                this.pinyin = pinyin
                 this.word = word
+                this.pinyin = pinyin
                 this.frequency = frequency
                 this.type = dictType
-                this.initialLetters = pinyin.split(" ")
-                    .joinToString("") { it.firstOrNull()?.toString() ?: "" }
+                this.initialLetters = generateInitialLetters(pinyin)
             }
             
         } catch (e: Exception) {
-            Timber.w(e, "解析行数据失败: $line")
+            Timber.w("解析行数据失败: $line")
             return null
         }
     }
     
     /**
-     * 去掉拼音中的声调符号
+     * 去除拼音声调
      */
     private fun removeTones(pinyin: String): String {
-        return pinyin
-            .replace("ā", "a").replace("á", "a").replace("ǎ", "a").replace("à", "a")
-            .replace("ē", "e").replace("é", "e").replace("ě", "e").replace("è", "e")
-            .replace("ī", "i").replace("í", "i").replace("ǐ", "i").replace("ì", "i")
-            .replace("ō", "o").replace("ó", "o").replace("ǒ", "o").replace("ò", "o")
-            .replace("ū", "u").replace("ú", "u").replace("ǔ", "u").replace("ù", "u")
-            .replace("ǖ", "v").replace("ǘ", "v").replace("ǚ", "v").replace("ǜ", "v")
-            .replace("ü", "v").replace("ń", "n").replace("ň", "n").replace("ǹ", "n")
+        return pinyin.replace(Regex("[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]")) { matchResult ->
+            when (matchResult.value) {
+                "ā", "á", "ǎ", "à" -> "a"
+                "ē", "é", "ě", "è" -> "e"
+                "ī", "í", "ǐ", "ì" -> "i"
+                "ō", "ó", "ǒ", "ò" -> "o"
+                "ū", "ú", "ǔ", "ù" -> "u"
+                "ǖ", "ǘ", "ǚ", "ǜ" -> "v"
+                else -> matchResult.value
+            }
+        }
+    }
+    
+    /**
+     * 生成首字母缩写
+     */
+    private fun generateInitialLetters(pinyin: String): String {
+        return pinyin.split(" ").joinToString("") { syllable ->
+            if (syllable.isNotEmpty()) syllable[0].toString() else ""
+        }
     }
     
     /**
@@ -512,13 +515,13 @@ class DatabaseReinitializer(private val context: Context) {
     }
     
     /**
-     * 关闭当前数据库连接
+     * 关闭当前数据库
      */
     private fun closeCurrentDatabase() {
         try {
-            ShenjiApplication.realm.close()
+            ShenjiApplication.realm?.close()
         } catch (e: Exception) {
-            Timber.w(e, "关闭数据库连接时出错")
+            Timber.e(e, "关闭数据库失败")
         }
     }
     
@@ -528,26 +531,16 @@ class DatabaseReinitializer(private val context: Context) {
     private fun deleteOldDatabase() {
         try {
             val dbDir = File(context.filesDir, "dictionaries")
-            val dbFile = File(dbDir, "shenji_dict.realm")
-            
-            if (dbFile.exists()) {
-                dbFile.delete()
-                Timber.d("已删除旧数据库文件")
+            if (dbDir.exists()) {
+                dbDir.deleteRecursively()
             }
-            
-            // 删除相关的锁文件和日志文件
-            val lockFile = File(dbDir, "shenji_dict.realm.lock")
-            if (lockFile.exists()) {
-                lockFile.delete()
-            }
-            
         } catch (e: Exception) {
-            Timber.e(e, "删除旧数据库文件失败")
+            Timber.e(e, "删除旧数据库失败")
         }
     }
     
     /**
-     * 创建优化的数据库结构
+     * 创建优化的数据库
      */
     private fun createOptimizedDatabase(): Realm {
         val dbDir = File(context.filesDir, "dictionaries")
