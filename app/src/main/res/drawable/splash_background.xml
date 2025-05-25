@@ -35,8 +35,8 @@
         </shape>
     </item>
     
-    <!-- 底部文字区域 -->
-    <item android:gravity="bottom|center_horizontal">
+    <!-- 底部距离记录文字 -->
+    <item android:gravity="bottom|center_horizontal" android:bottom="24dp">
         <shape android:shape="rectangle">
             <solid android:color="@android:color/transparent" />
         </shape>

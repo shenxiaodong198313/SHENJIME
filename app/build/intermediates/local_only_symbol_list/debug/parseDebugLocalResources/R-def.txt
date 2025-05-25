@@ -45,6 +45,7 @@ dimen candidate_word_margin
 drawable appcon
 drawable appicon
 drawable bg_permission_needed
+drawable build_dict_button_bg
 drawable button_refresh_background
 drawable candidate_background
 drawable candidate_button_bg
@@ -82,6 +83,8 @@ id action_settings
 id action_view_logs
 id ai_assistant_icon
 id analysisTextView
+id appSubtitle
+id appTitle
 id app_icon
 id app_name_display
 id batch_size_display
@@ -106,6 +109,7 @@ id btn_ime_settings
 id btn_optimized_test
 id btn_set_default_ime
 id btn_test
+id buildDictButton
 id build_progress
 id build_status_text
 id buttonContainer

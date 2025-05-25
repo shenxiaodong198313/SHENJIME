@@ -3058,6 +3058,7 @@ drawable btn_radio_off_mtrl
 drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
+drawable build_dict_button_bg
 drawable button_refresh_background
 drawable candidate_background
 drawable candidate_button_bg
@@ -3274,6 +3275,8 @@ id animateToEnd
 id animateToStart
 id antiClockwise
 id anticipate
+id appSubtitle
+id appTitle
 id app_icon
 id app_name_display
 id arc
@@ -3317,6 +3320,7 @@ id btn_ime_settings
 id btn_optimized_test
 id btn_set_default_ime
 id btn_test
+id buildDictButton
 id build_progress
 id build_status_text
 id buttonContainer

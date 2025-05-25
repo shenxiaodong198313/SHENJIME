@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
     android:background="@color/splash_background_color"
     android:padding="32dp">
 
-    <!-- 应用图标 -->
+    <!-- 应用图标 - 基于可用屏幕高度居中 -->
     <ImageView
         android:id="@+id/splashIcon"
         android:layout_width="280dp"
@@ -15,43 +13,63 @@
         android:src="@android:color/transparent"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
-        android:layout_marginTop="80dp"
-        android:layout_marginBottom="60dp" />
+        android:layout_centerHorizontal="true"
+        android:layout_centerInParent="true" />
 
-    <!-- 应用名称 -->
+    <!-- 应用名称 - 绝对定位，不影响图标 -->
     <TextView
+        android:id="@+id/appTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="神迹AI键盘"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="@color/splash_text_color"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/buildDictButton"
         android:layout_marginBottom="16dp" />
 
-    <!-- 版本信息 -->
+    <!-- 版本信息 - 绝对定位，不影响图标 -->
     <TextView
+        android:id="@+id/appSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="智能拼音输入法"
         android:textSize="16sp"
         android:textColor="@color/splash_text_color"
         android:alpha="0.8"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/appTitle"
+        android:layout_marginBottom="8dp" />
+
+    <!-- 构建词典按钮 - 绝对定位，不影响图标 -->
+    <Button
+        android:id="@+id/buildDictButton"
+        android:layout_width="200dp"
+        android:layout_height="48dp"
+        android:text="构建离线词典"
+        android:textSize="16sp"
+        android:textColor="@color/splash_text_color"
+        android:background="@drawable/build_dict_button_bg"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/progressBar"
         android:layout_marginBottom="48dp" />
 
-    <!-- 加载进度 -->
+    <!-- 加载进度 - 绝对定位，不影响图标 -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="8dp"
-        android:layout_marginBottom="16dp"
         android:progressTint="@android:color/white"
         android:progressBackgroundTint="#80FFFFFF"
         android:alpha="0.7"
         android:max="100"
-        android:progress="0" />
+        android:progress="0"
+        android:layout_above="@+id/statusText"
+        android:layout_marginBottom="16dp" />
 
-    <!-- 加载状态文本 -->
+    <!-- 加载状态文本 - 绝对定位，不影响图标 -->
     <TextView
         android:id="@+id/statusText"
         android:layout_width="wrap_content"
@@ -61,9 +79,11 @@
         android:textStyle="bold"
         android:textColor="@color/splash_text_color"
         android:alpha="0.95"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/detailText"
         android:layout_marginBottom="8dp" />
 
-    <!-- 详细信息文本 -->
+    <!-- 详细信息文本 - 绝对定位在底部，不影响图标 -->
     <TextView
         android:id="@+id/detailText"
         android:layout_width="match_parent"
@@ -73,9 +93,10 @@
         android:textColor="@color/splash_text_color"
         android:alpha="0.8"
         android:gravity="center"
-        android:layout_marginBottom="24dp"
         android:minHeight="40dp"
         android:maxLines="2"
-        android:ellipsize="end" />
+        android:ellipsize="end"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="24dp" />
 
-</LinearLayout> 
+</RelativeLayout> 
