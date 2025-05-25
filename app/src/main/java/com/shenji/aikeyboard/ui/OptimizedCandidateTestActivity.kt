@@ -31,6 +31,7 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
     private lateinit var performanceTextView: TextView
     private lateinit var clearCacheButton: Button
     private lateinit var testSamplesButton: Button
+    private lateinit var mvpTestButton: Button
     private lateinit var dictionaryStatusView: DictionaryStatusView
     
     private val candidateEngine = OptimizedCandidateEngine.getInstance()
@@ -53,6 +54,7 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
         performanceTextView = findViewById(R.id.performanceTextView)
         clearCacheButton = findViewById(R.id.clearCacheButton)
         testSamplesButton = findViewById(R.id.testSamplesButton)
+        mvpTestButton = findViewById(R.id.mvpTestButton)
         dictionaryStatusView = findViewById(R.id.dictionary_status_view)
         
         // 设置初始提示
@@ -94,6 +96,11 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
         // 测试样本按钮
         testSamplesButton.setOnClickListener {
             runTestSamples()
+        }
+        
+        // MVP测试按钮
+        mvpTestButton.setOnClickListener {
+            startActivity(android.content.Intent(this, SmartPinyinMvpTestActivity::class.java))
         }
     }
     

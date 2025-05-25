@@ -3273,6 +3273,7 @@ id auto
 id autoComplete
 id autoCompleteToEnd
 id autoCompleteToStart
+id backButton
 id barrier
 id baseline
 id batch_size_display
@@ -3357,11 +3358,13 @@ id contentPanel
 id contiguous
 id continuousVelocity
 id coordinator
+id copyAnalysisButton
 id copy_logs_button
 id copy_result_button
 id cos
 id counterclockwise
 id cradle
+id currentInputTextView
 id currentState
 id current_input_text_view
 id custom
@@ -3444,6 +3447,7 @@ id fragment_container_view_tag
 id frequency_filter_spinner
 id frost
 id fullscreen_header
+id generateTestButton
 id ghost_view
 id ghost_view_holder
 id gone
@@ -3531,6 +3535,7 @@ id line3
 id linear
 id listMode
 id list_item
+id loadMoreButton
 id loadMoreProgress
 id logs_text_view
 id m3_side_sheet
@@ -3599,6 +3604,7 @@ id mtrl_picker_text_input_range_start
 id mtrl_picker_title_text
 id mtrl_view_tag_bottom_padding
 id multiply
+id mvpTestButton
 id navigation_bar_item_active_indicator_view
 id navigation_bar_item_icon_container
 id navigation_bar_item_icon_view
@@ -4014,6 +4020,7 @@ layout activity_log_detail
 layout activity_main
 layout activity_optimized_candidate_test
 layout activity_pinyin_test
+layout activity_smart_pinyin_mvp_test
 layout activity_splash
 layout activity_trie_build
 layout custom_dialog

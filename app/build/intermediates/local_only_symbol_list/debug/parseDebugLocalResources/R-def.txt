@@ -74,6 +74,7 @@ id action_view_logs
 id analysisTextView
 id app_icon
 id app_name_display
+id backButton
 id batch_size_display
 id batch_size_seekbar
 id batch_test_button
@@ -114,8 +115,10 @@ id clearCacheButton
 id clear_button
 id clear_cache_button
 id clear_logs_button
+id copyAnalysisButton
 id copy_logs_button
 id copy_result_button
+id currentInputTextView
 id current_input_text_view
 id default_candidates_view
 id detailText
@@ -131,6 +134,7 @@ id expandIconImageView
 id expand_candidates_button
 id fragment_container
 id frequency_filter_spinner
+id generateTestButton
 id inputEditText
 id input_edit_text
 id key_0
@@ -176,6 +180,7 @@ id key_w
 id key_x
 id key_y
 id key_z
+id loadMoreButton
 id loadMoreProgress
 id logs_text_view
 id mainButtonContainer
@@ -184,6 +189,7 @@ id main_container
 id memory_card
 id memory_info_text
 id memory_usage_text
+id mvpTestButton
 id performanceTextView
 id performance_stats_text_view
 id permission_status_text_view
@@ -281,6 +287,7 @@ layout activity_log_detail
 layout activity_main
 layout activity_optimized_candidate_test
 layout activity_pinyin_test
+layout activity_smart_pinyin_mvp_test
 layout activity_splash
 layout activity_trie_build
 layout dialog_build_config
