@@ -148,7 +148,7 @@ class TrieManager private constructor() {
                     
                     if (isAssetFileExists(context, assetPath)) {
                         val startTime = System.currentTimeMillis()
-                        val trie = loadTrieFromAssetsOptimized(context, assetPath)
+                        val trie = loadTrieFromAssetsOptimized(context, assetPath, trieType)
                         val endTime = System.currentTimeMillis()
                         
                         if (trie != null) {
@@ -204,16 +204,16 @@ class TrieManager private constructor() {
      * 优化版本：从assets加载Trie文件
      * 使用内存映射和大缓冲区优化
      */
-    private fun loadTrieFromAssetsOptimized(context: Context, assetPath: String): PinyinTrie? {
+    private fun loadTrieFromAssetsOptimized(context: Context, assetPath: String, trieType: TrieType? = null): PinyinTrie? {
         return try {
             context.assets.open(assetPath).use { inputStream ->
                 val fileSize = inputStream.available()
                 
                 // 根据文件大小选择加载策略
                 if (fileSize > MEMORY_MAPPED_THRESHOLD) {
-                    loadLargeTrieWithMemoryMapping(inputStream, fileSize, context)
+                    loadLargeTrieWithMemoryMapping(inputStream, fileSize, context, trieType)
                 } else {
-                    loadSmallTrieWithOptimizedBuffer(inputStream, context)
+                    loadSmallTrieWithOptimizedBuffer(inputStream, context, trieType)
                 }
             }
         } catch (e: Exception) {
@@ -228,7 +228,8 @@ class TrieManager private constructor() {
     private fun loadLargeTrieWithMemoryMapping(
         inputStream: InputStream, 
         fileSize: Int, 
-        context: Context
+        context: Context,
+        trieType: TrieType? = null
     ): PinyinTrie? {
         val tempFile = File(context.cacheDir, "temp_trie_mmap_${System.currentTimeMillis()}.dat")
         
@@ -242,7 +243,7 @@ class TrieManager private constructor() {
                 val mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, tempFile.length())
                 
                 // 从映射缓冲区反序列化
-                val trie = deserializeFromMappedBuffer(mappedBuffer)
+                val trie = deserializeFromMappedBuffer(mappedBuffer, trieType)
                 
                 // 验证Trie树
                 if (trie?.isEmpty() == false) {
@@ -263,7 +264,7 @@ class TrieManager private constructor() {
     /**
      * 使用优化缓冲区加载小型Trie文件
      */
-    private fun loadSmallTrieWithOptimizedBuffer(inputStream: InputStream, context: Context): PinyinTrie? {
+    private fun loadSmallTrieWithOptimizedBuffer(inputStream: InputStream, context: Context, trieType: TrieType? = null): PinyinTrie? {
         val tempFile = File(context.cacheDir, "temp_trie_opt_${System.currentTimeMillis()}.dat")
         
         return try {
@@ -271,7 +272,7 @@ class TrieManager private constructor() {
             copyInputStreamToFileOptimized(inputStream, tempFile)
             
             // 优化的反序列化流程
-            deserializeTrieOptimized(tempFile)
+            deserializeTrieOptimized(tempFile, trieType)
         } finally {
             // 清理临时文件
             if (tempFile.exists()) {
@@ -297,7 +298,7 @@ class TrieManager private constructor() {
     /**
      * 从内存映射缓冲区反序列化Trie
      */
-    private fun deserializeFromMappedBuffer(mappedBuffer: MappedByteBuffer): PinyinTrie? {
+    private fun deserializeFromMappedBuffer(mappedBuffer: MappedByteBuffer, trieType: TrieType? = null): PinyinTrie? {
         return try {
             // 创建临时文件用于ObjectInputStream
             val tempFile = File.createTempFile("mmap_deserialize", ".tmp")
@@ -307,7 +308,7 @@ class TrieManager private constructor() {
                 channel.write(mappedBuffer)
                 fos.close()
                 
-                deserializeTrieOptimized(tempFile)
+                deserializeTrieOptimized(tempFile, trieType)
             } finally {
                 tempFile.delete()
             }
@@ -320,10 +321,10 @@ class TrieManager private constructor() {
     /**
      * 简化的Trie反序列化方法 - 统一使用版本3格式
      */
-    private fun deserializeTrieOptimized(file: File): PinyinTrie? {
+    private fun deserializeTrieOptimized(file: File, trieType: TrieType? = null): PinyinTrie? {
         return try {
             FileInputStream(file).use { fis ->
-                deserializeSimplifiedFormat(fis.buffered(LARGE_BUFFER_SIZE))
+                deserializeSimplifiedFormat(fis.buffered(LARGE_BUFFER_SIZE), trieType)
             }
         } catch (e: Exception) {
             Timber.e(e, "Trie反序列化失败: ${file.name}")
@@ -334,7 +335,7 @@ class TrieManager private constructor() {
     /**
      * 统一的简化格式反序列化（版本3格式）
      */
-    private fun deserializeSimplifiedFormat(inputStream: java.io.InputStream): PinyinTrie? {
+    private fun deserializeSimplifiedFormat(inputStream: java.io.InputStream, trieType: TrieType? = null): PinyinTrie? {
         return try {
             val trie = PinyinTrie()
             
@@ -376,7 +377,13 @@ class TrieManager private constructor() {
                         val currentUsedMemory = runtime.totalMemory() - runtime.freeMemory()
                         val memoryUsagePercent = (currentUsedMemory * 100) / maxMemory
                         
-                        if (memoryUsagePercent > 80) {
+                        // 对于chars词典，允许使用更多内存（90%），其他词典保持80%限制
+                        val memoryLimit = when (trieType) {
+                            TrieType.CHARS -> 90
+                            else -> 80
+                        }
+                        
+                        if (memoryUsagePercent > memoryLimit) {
                             Timber.w("内存使用率过高 (${memoryUsagePercent}%)，停止加载以避免OOM")
                             break
                         }
@@ -423,9 +430,19 @@ class TrieManager private constructor() {
                         
                         // 插入到Trie树
                         try {
-                            // 只加载高频词汇（词频>100）以减少内存压力
-                            if (frequency > 100) {
-                                trie.insert(normalizedPinyin, word, frequency)
+                            // 对于chars词典，加载全部词条；其他词典只加载高频词汇（词频>100）以减少内存压力
+                            val shouldLoad = when (trieType) {
+                                TrieType.CHARS -> true  // chars词典全量加载
+                                else -> frequency > 100  // 其他词典只加载高频词
+                            }
+                            
+                            if (shouldLoad) {
+                                // 对于chars词典使用更大的节点容量
+                                val maxWordsPerNode = when (trieType) {
+                                    TrieType.CHARS -> TrieNode.MAX_WORDS_PER_NODE_CHARS
+                                    else -> TrieNode.MAX_WORDS_PER_NODE
+                                }
+                                trie.insert(normalizedPinyin, word, frequency, maxWordsPerNode)
                                 totalWords++
                             } else {
                                 skippedWords++
@@ -485,7 +502,7 @@ class TrieManager private constructor() {
             // 尝试从assets加载预编译文件
             val assetPath = "trie/${getTypeString(type)}_trie.dat"
             if (isAssetFileExists(context, assetPath)) {
-                trie = loadTrieFromAssetsOptimized(context, assetPath)
+                trie = loadTrieFromAssetsOptimized(context, assetPath, type)
                 if (trie != null) {
                     Timber.d("从assets预编译文件加载${getDisplayName(type)}Trie成功")
                 }

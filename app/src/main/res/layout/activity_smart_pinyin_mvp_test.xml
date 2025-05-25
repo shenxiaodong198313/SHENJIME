@@ -1,265 +1,221 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@color/white">
+    tools:context=".ui.SmartPinyinMvpTestActivity">
 
-    <LinearLayout
+    <!-- 顶部工具栏 -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:title="MVP引擎测试" />
 
-        <!-- 标题栏 -->
+    <!-- 主内容区域 -->
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
+            android:orientation="vertical">
 
+            <!-- 生成随机测试用例按钮 -->
             <Button
-                android:id="@+id/backButton"
-                android:layout_width="wrap_content"
+                android:id="@+id/generateTestButton"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="← 返回"
-                style="@style/Widget.Material3.Button.OutlinedButton" />
+                android:text="🎲 生成随机测试用例"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp"
+                style="@style/Widget.Material3.Button" />
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="🚀 SmartPinyinEngine MVP测试"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginHorizontal="16dp" />
-
-            <View
-                android:layout_width="80dp"
-                android:layout_height="wrap_content" />
-
-        </LinearLayout>
-
-        <!-- 控制按钮区域 -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp">
-
+            <!-- 按拼音长度测试按钮区域 -->
             <LinearLayout
+                android:id="@+id/lengthTestContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginBottom="16dp">
 
-                <TextView
+                <!-- 第一行按钮 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🎮 测试控制"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
 
-                <Button
-                    android:id="@+id/generateTestButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="🎲 生成随机测试用例"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="8dp"
-                    style="@style/Widget.Material3.Button" />
+                    <Button
+                        android:id="@+id/lengthTest1to2Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="长度1~2"
+                        android:textSize="12sp"
+                        android:layout_marginEnd="4dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
+                    <Button
+                        android:id="@+id/lengthTest1to3Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="长度1~3"
+                        android:textSize="12sp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                    <Button
+                        android:id="@+id/lengthTest1to4Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="长度1~4"
+                        android:textSize="12sp"
+                        android:layout_marginStart="4dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                </LinearLayout>
+
+                <!-- 第二行按钮 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
                     <Button
-                        android:id="@+id/clearCacheButton"
+                        android:id="@+id/lengthTest1to5Button"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="🧹 清理缓存"
-                        android:layout_marginEnd="8dp"
+                        android:text="长度1~5"
+                        android:textSize="12sp"
+                        android:layout_marginEnd="4dp"
                         style="@style/Widget.Material3.Button.OutlinedButton" />
 
                     <Button
-                        android:id="@+id/copyAnalysisButton"
+                        android:id="@+id/lengthTest1to6Button"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="📋 复制分析"
-                        android:layout_marginStart="8dp"
+                        android:text="长度1~6"
+                        android:textSize="12sp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
                         style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                    <!-- 占位View -->
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp" />
 
                 </LinearLayout>
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- 当前测试输入 -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
+            <!-- 候选词结果 -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="📝 当前测试输入"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/currentInputTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="点击按钮生成随机测试用例"
-                    android:textSize="18sp"
-                    android:fontFamily="monospace"
-                    android:background="@color/light_gray"
-                    android:padding="12dp"
-                    android:gravity="center" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="🎯 候选词结果"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
 
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/candidatesTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="候选词结果将在这里显示..."
+                        android:textSize="14sp"
+                        android:fontFamily="monospace"
+                        android:background="@color/light_gray"
+                        android:padding="12dp"
+                        android:minHeight="120dp"
+                        android:gravity="top" />
 
-        </com.google.android.material.card.MaterialCardView>
+                    <Button
+                        android:id="@+id/loadMoreButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="📄 查看更多候选词"
+                        android:layout_marginTop="8dp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
-        <!-- 候选词结果 -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp">
+                </LinearLayout>
 
-            <LinearLayout
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 查询分析 -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🎯 候选词结果"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/candidatesTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="候选词结果将在这里显示..."
-                    android:textSize="14sp"
-                    android:fontFamily="monospace"
-                    android:background="@color/light_gray"
-                    android:padding="12dp"
-                    android:minHeight="120dp"
-                    android:gravity="top" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="🔍 查询分析"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
 
-                <Button
-                    android:id="@+id/loadMoreButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="📄 查看更多候选词"
-                    android:layout_marginTop="8dp"
-                    style="@style/Widget.Material3.Button.OutlinedButton" />
+                    <TextView
+                        android:id="@+id/analysisTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="查询分析将在这里显示..."
+                        android:textSize="12sp"
+                        android:fontFamily="monospace"
+                        android:background="@color/light_gray"
+                        android:padding="12dp"
+                        android:minHeight="200dp"
+                        android:gravity="top" />
 
-            </LinearLayout>
+                </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+            </com.google.android.material.card.MaterialCardView>
 
-        <!-- 查询分析 -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp">
+        </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+    </ScrollView>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="🔍 查询分析"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
-
-                <TextView
-                    android:id="@+id/analysisTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="查询分析将在这里显示..."
-                    android:textSize="12sp"
-                    android:fontFamily="monospace"
-                    android:background="@color/light_gray"
-                    android:padding="12dp"
-                    android:minHeight="200dp"
-                    android:gravity="top" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- 性能统计 -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="📊 性能统计"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
-
-                <TextView
-                    android:id="@+id/performanceTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="性能统计将在这里显示..."
-                    android:textSize="14sp"
-                    android:fontFamily="monospace"
-                    android:background="@color/light_gray"
-                    android:padding="12dp"
-                    android:minHeight="100dp"
-                    android:gravity="top" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-    </LinearLayout>
-
-</ScrollView> 
+</androidx.constraintlayout.widget.ConstraintLayout> 

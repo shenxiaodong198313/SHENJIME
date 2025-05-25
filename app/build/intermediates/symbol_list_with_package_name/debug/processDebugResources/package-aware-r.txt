@@ -3235,8 +3235,10 @@ id action_bar_spinner
 id action_bar_subtitle
 id action_bar_title
 id action_build_trie
+id action_clear_cache
 id action_container
 id action_context_bar
+id action_copy_analysis
 id action_db_info
 id action_diagnose_db
 id action_divider
@@ -3273,7 +3275,6 @@ id auto
 id autoComplete
 id autoCompleteToEnd
 id autoCompleteToStart
-id backButton
 id barrier
 id baseline
 id batch_size_display
@@ -3358,13 +3359,11 @@ id contentPanel
 id contiguous
 id continuousVelocity
 id coordinator
-id copyAnalysisButton
 id copy_logs_button
 id copy_result_button
 id cos
 id counterclockwise
 id cradle
-id currentInputTextView
 id currentState
 id current_input_text_view
 id custom
@@ -3530,6 +3529,12 @@ id left
 id leftToRight
 id left_to_right
 id legacy
+id lengthTest1to2Button
+id lengthTest1to3Button
+id lengthTest1to4Button
+id lengthTest1to5Button
+id lengthTest1to6Button
+id lengthTestContainer
 id line1
 id line3
 id linear
@@ -4126,6 +4131,7 @@ layout support_simple_spinner_dropdown_item
 layout view_dictionary_status
 menu menu_dictionary_list
 menu menu_dictionary_manager
+menu menu_mvp_test
 menu trie_build_menu
 mipmap ic_launcher
 mipmap ic_launcher_round

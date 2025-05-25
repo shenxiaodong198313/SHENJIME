@@ -65,6 +65,8 @@ drawable keyboard_space_key_bg
 drawable keyboard_special_key_bg
 id accessibility_settings_button
 id action_build_trie
+id action_clear_cache
+id action_copy_analysis
 id action_db_info
 id action_diagnose_db
 id action_export
@@ -74,7 +76,6 @@ id action_view_logs
 id analysisTextView
 id app_icon
 id app_name_display
-id backButton
 id batch_size_display
 id batch_size_seekbar
 id batch_test_button
@@ -115,10 +116,8 @@ id clearCacheButton
 id clear_button
 id clear_cache_button
 id clear_logs_button
-id copyAnalysisButton
 id copy_logs_button
 id copy_result_button
-id currentInputTextView
 id current_input_text_view
 id default_candidates_view
 id detailText
@@ -180,6 +179,12 @@ id key_w
 id key_x
 id key_y
 id key_z
+id lengthTest1to2Button
+id lengthTest1to3Button
+id lengthTest1to4Button
+id lengthTest1to5Button
+id lengthTest1to6Button
+id lengthTestContainer
 id loadMoreButton
 id loadMoreProgress
 id logs_text_view
@@ -314,6 +319,7 @@ layout shimmer_dictionary_stat_card
 layout view_dictionary_status
 menu menu_dictionary_list
 menu menu_dictionary_manager
+menu menu_mvp_test
 menu trie_build_menu
 mipmap ic_launcher
 mipmap ic_launcher_round

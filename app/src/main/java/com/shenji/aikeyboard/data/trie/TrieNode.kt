@@ -19,6 +19,7 @@ class TrieNode : Serializable {
     // 限制节点存储的最大词语数量，避免内存占用过大
     companion object {
         const val MAX_WORDS_PER_NODE = 50
+        const val MAX_WORDS_PER_NODE_CHARS = 1000  // chars词典使用更大的容量，确保能容纳所有同音字
         private const val serialVersionUID = 1L
     }
     
@@ -26,11 +27,12 @@ class TrieNode : Serializable {
      * 添加一个词语到当前节点
      * @param word 词语
      * @param frequency 词频
+     * @param maxWordsPerNode 每个节点的最大词语数量
      * @return 是否成功添加（如果已达到最大容量且新词频率不够高，则不添加）
      */
-    fun addWord(word: String, frequency: Int): Boolean {
+    fun addWord(word: String, frequency: Int, maxWordsPerNode: Int = MAX_WORDS_PER_NODE): Boolean {
         // 如果列表未满，直接添加
-        if (words.size < MAX_WORDS_PER_NODE) {
+        if (words.size < maxWordsPerNode) {
             words.add(WordItem(word, frequency))
             words.sortByDescending { it.frequency } // 按频率排序
             return true

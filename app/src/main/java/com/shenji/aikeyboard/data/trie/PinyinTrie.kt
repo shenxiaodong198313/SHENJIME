@@ -31,8 +31,9 @@ class PinyinTrie : Serializable {
      * @param pinyin 拼音字符串
      * @param word 对应的汉字
      * @param frequency 词频
+     * @param maxWordsPerNode 每个节点的最大词语数量
      */
-    fun insert(pinyin: String, word: String, frequency: Int) {
+    fun insert(pinyin: String, word: String, frequency: Int, maxWordsPerNode: Int = TrieNode.MAX_WORDS_PER_NODE) {
         lock.write {
             try {
                 var current = root
@@ -50,7 +51,7 @@ class PinyinTrie : Serializable {
                 current.isEndOfWord = true
                 
                 // 添加词语到当前节点
-                current.addWord(word, frequency)
+                current.addWord(word, frequency, maxWordsPerNode)
             } catch (e: Exception) {
                 Timber.e(e, "Trie插入词语失败: $pinyin -> $word")
             }

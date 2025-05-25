@@ -1,5 +1,6 @@
 package com.shenji.aikeyboard.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -100,7 +101,7 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
         
         // MVP测试按钮
         mvpTestButton.setOnClickListener {
-            startActivity(android.content.Intent(this, SmartPinyinMvpTestActivity::class.java))
+            runMVPTest()
         }
     }
     
@@ -293,6 +294,20 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
             
         } catch (e: Exception) {
             results.appendLine("     调试失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 运行MVP测试
+     */
+    private fun runMVPTest() {
+        try {
+            Timber.d("启动SmartPinyinEngine MVP测试")
+            val intent = Intent(this, SmartPinyinMvpTestActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Timber.e(e, "启动MVP测试失败")
+            candidatesTextView.text = "启动MVP测试失败: ${e.message}"
         }
     }
     
