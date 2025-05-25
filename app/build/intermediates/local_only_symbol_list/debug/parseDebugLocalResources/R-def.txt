@@ -82,6 +82,8 @@ id action_settings
 id action_view_logs
 id ai_assistant_icon
 id analysisTextView
+id appIconTop
+id appNameTopLeft
 id appSubtitle
 id appTitle
 id app_icon
@@ -96,7 +98,9 @@ id btnCopyInfo
 id btnCopyLog
 id btnCopyLogs
 id btnExportRealm
-id btnLogs
+id btnImeSettingsContainer
+id btnLogsContainer
+id btnOptimizedTestContainer
 id btnRebuildRealm
 id btnStart
 id btn_back
@@ -104,8 +108,6 @@ id btn_clear
 id btn_copy
 id btn_enable_ime
 id btn_fuzzy_pinyin
-id btn_ime_settings
-id btn_optimized_test
 id btn_set_default_ime
 id btn_test
 id buildDictButton
@@ -269,14 +271,12 @@ id tvExportRealmDesc
 id tvFrequency
 id tvGroupCount
 id tvGroupTitle
-id tvHelpText
 id tvLogContent
 id tvMemoryStatus
 id tvMemoryUsage
 id tvNoLogs
 id tvPinyin
 id tvRebuildRealmDesc
-id tvTitle
 id tvWord
 id tv_candidate_weight
 id tv_candidate_word
@@ -361,7 +361,6 @@ string dict_no_data
 string dict_total_entries
 string expand_candidates
 string export_log
-string help_text
 string ime_log
 string ime_name
 string ime_settings

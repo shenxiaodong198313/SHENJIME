@@ -3274,6 +3274,8 @@ id animateToEnd
 id animateToStart
 id antiClockwise
 id anticipate
+id appIconTop
+id appNameTopLeft
 id appSubtitle
 id appTitle
 id app_icon
@@ -3307,7 +3309,9 @@ id btnCopyInfo
 id btnCopyLog
 id btnCopyLogs
 id btnExportRealm
-id btnLogs
+id btnImeSettingsContainer
+id btnLogsContainer
+id btnOptimizedTestContainer
 id btnRebuildRealm
 id btnStart
 id btn_back
@@ -3315,8 +3319,6 @@ id btn_clear
 id btn_copy
 id btn_enable_ime
 id btn_fuzzy_pinyin
-id btn_ime_settings
-id btn_optimized_test
 id btn_set_default_ime
 id btn_test
 id buildDictButton
@@ -3865,14 +3867,12 @@ id tvExportRealmDesc
 id tvFrequency
 id tvGroupCount
 id tvGroupTitle
-id tvHelpText
 id tvLogContent
 id tvMemoryStatus
 id tvMemoryUsage
 id tvNoLogs
 id tvPinyin
 id tvRebuildRealmDesc
-id tvTitle
 id tvWord
 id tv_candidate_weight
 id tv_candidate_word
@@ -4225,7 +4225,6 @@ string export_log
 string exposed_dropdown_menu_content_description
 string fab_transformation_scrim_behavior
 string fab_transformation_sheet_behavior
-string help_text
 string hide_bottom_view_on_scroll_behavior
 string icon_content_description
 string ime_log

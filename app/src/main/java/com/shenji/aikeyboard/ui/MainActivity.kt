@@ -4,10 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.FrameLayout
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
-import com.shenji.aikeyboard.databinding.ActivityMainBinding
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.settings.InputMethodSettingsActivity
 import timber.log.Timber
@@ -17,18 +21,25 @@ import kotlinx.coroutines.delay
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var btnImeSettings: Button
+    private lateinit var btnLogs: Button
+    private lateinit var btnOptimizedTest: Button
+    private lateinit var appIconTop: ImageView
     
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
             super.onCreate(savedInstanceState)
             
+            // 设置全屏模式
+            setupFullScreenMode()
+            
             // 记录到系统日志
             Log.i("MainActivity", "开始创建主界面")
             
-            // 尝试初始化视图绑定
-            binding = ActivityMainBinding.inflate(layoutInflater)
-            setContentView(binding.root)
+            setContentView(R.layout.activity_main)
+            
+            // 隐藏ActionBar
+            supportActionBar?.hide()
             
             // 设置UI组件
             setupUI()
@@ -52,34 +63,126 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+    /**
+     * 设置全屏模式
+     */
+    private fun setupFullScreenMode() {
+        try {
+            // 设置状态栏和导航栏颜色与背景一致
+            window.statusBarColor = getColor(R.color.splash_background_color)
+            window.navigationBarColor = getColor(R.color.splash_background_color)
+            
+            // 使用传统的全屏方法，更兼容
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            )
+        } catch (e: Exception) {
+            Log.w("MainActivity", "设置全屏模式失败: ${e.message}")
+        }
+    }
+    
     private fun setupUI() {
         try {
-            // 设置按钮点击事件
-            Log.d("MainActivity", "设置按钮点击事件监听器")
+            // 设置顶部图标
+            setupTopIcon()
             
-            // 输入法设置
-            binding.btnImeSettings?.setOnClickListener {
-                Log.d("MainActivity", "btn_ime_settings 按钮被点击")
-                openInputMethodSettings()
-            }
+            // 创建按钮
+            createButtons()
             
-            // 查看日志
-            binding.btnLogs?.setOnClickListener {
-                Log.d("MainActivity", "btnLogs 按钮被点击")
-                openLogDetail()
-            }
-            
-            // 候选词引擎测试
-            binding.btnOptimizedTest?.setOnClickListener {
-                Log.d("MainActivity", "btn_optimized_test 按钮被点击")
-                openOptimizedCandidateTest()
-            }
-            
-            Log.d("MainActivity", "所有按钮监听器设置完成")
+            Log.d("MainActivity", "所有UI元素设置完成")
         } catch (e: Exception) {
             Log.e("MainActivity", "设置UI元素失败: ${e.message}", e)
             Toast.makeText(this, "界面初始化异常，部分功能可能不可用", Toast.LENGTH_LONG).show()      
         }
+    }
+    
+    /**
+     * 设置顶部图标
+     */
+    private fun setupTopIcon() {
+        appIconTop = findViewById(R.id.appIconTop)
+        
+        // 从assets加载卡通设计图片
+        try {
+            val inputStream = assets.open("images/appicon.png")
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            val drawable = BitmapDrawable(resources, bitmap)
+            appIconTop.setImageDrawable(drawable)
+            inputStream.close()
+            Log.d("MainActivity", "顶部图标加载成功")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "加载顶部图标失败: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 创建白色背景按钮
+     */
+    private fun createButtons() {
+        // 创建输入法设置按钮
+        createWhiteButton(
+            R.id.btnImeSettingsContainer,
+            "输入法设置"
+        ) { openInputMethodSettings() }.also { btnImeSettings = it }
+        
+        // 创建查看日志按钮
+        createWhiteButton(
+            R.id.btnLogsContainer,
+            "查看日志"
+        ) { openLogDetail() }.also { btnLogs = it }
+        
+        // 创建候选词引擎测试按钮
+        createWhiteButton(
+            R.id.btnOptimizedTestContainer,
+            "候选词引擎测试"
+        ) { openOptimizedCandidateTest() }.also { btnOptimizedTest = it }
+        
+        Log.d("MainActivity", "所有按钮创建完成")
+    }
+    
+    /**
+     * 创建白色背景按钮
+     */
+    private fun createWhiteButton(containerId: Int, text: String, onClick: () -> Unit): Button {
+        val container = findViewById<FrameLayout>(containerId)
+        val button = Button(this)
+        
+        // 设置按钮文本和样式
+        button.text = text
+        button.textSize = 16f
+        button.setTextColor(getColor(R.color.splash_background_color))
+        
+        // 创建纯白色背景
+        val whiteBackground = android.graphics.drawable.GradientDrawable()
+        whiteBackground.setColor(android.graphics.Color.WHITE)
+        whiteBackground.cornerRadius = 12 * resources.displayMetrics.density
+        
+        // 应用背景和样式
+        button.background = whiteBackground
+        button.elevation = 0f
+        button.stateListAnimator = null
+        
+        // 移除Material Design效果
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            button.outlineProvider = null
+        }
+        
+        // 设置按钮尺寸
+        val layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            (56 * resources.displayMetrics.density).toInt() // 56dp高度
+        )
+        button.layoutParams = layoutParams
+        
+        // 设置点击事件
+        button.setOnClickListener { onClick() }
+        
+        // 添加到容器
+        container.addView(button)
+        
+        return button
     }
     
     /**

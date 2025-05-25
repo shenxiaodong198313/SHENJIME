@@ -4,13 +4,13 @@ package com.shenji.aikeyboard.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.shenji.aikeyboard.R;
@@ -20,50 +20,46 @@ import java.lang.String;
 
 public final class ActivityMainBinding implements ViewBinding {
   @NonNull
-  private final ConstraintLayout rootView;
+  private final RelativeLayout rootView;
 
   @NonNull
-  public final Button btnImeSettings;
+  public final ImageView appIconTop;
 
   @NonNull
-  public final Button btnLogs;
+  public final TextView appNameTopLeft;
 
   @NonNull
-  public final Button btnOptimizedTest;
+  public final FrameLayout btnImeSettingsContainer;
+
+  @NonNull
+  public final FrameLayout btnLogsContainer;
+
+  @NonNull
+  public final FrameLayout btnOptimizedTestContainer;
 
   @NonNull
   public final LinearLayout mainButtonContainer;
 
   @NonNull
-  public final ConstraintLayout mainContainer;
+  public final RelativeLayout mainContainer;
 
-  @NonNull
-  public final Toolbar toolbar;
-
-  @NonNull
-  public final TextView tvHelpText;
-
-  @NonNull
-  public final TextView tvTitle;
-
-  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnImeSettings,
-      @NonNull Button btnLogs, @NonNull Button btnOptimizedTest,
-      @NonNull LinearLayout mainButtonContainer, @NonNull ConstraintLayout mainContainer,
-      @NonNull Toolbar toolbar, @NonNull TextView tvHelpText, @NonNull TextView tvTitle) {
+  private ActivityMainBinding(@NonNull RelativeLayout rootView, @NonNull ImageView appIconTop,
+      @NonNull TextView appNameTopLeft, @NonNull FrameLayout btnImeSettingsContainer,
+      @NonNull FrameLayout btnLogsContainer, @NonNull FrameLayout btnOptimizedTestContainer,
+      @NonNull LinearLayout mainButtonContainer, @NonNull RelativeLayout mainContainer) {
     this.rootView = rootView;
-    this.btnImeSettings = btnImeSettings;
-    this.btnLogs = btnLogs;
-    this.btnOptimizedTest = btnOptimizedTest;
+    this.appIconTop = appIconTop;
+    this.appNameTopLeft = appNameTopLeft;
+    this.btnImeSettingsContainer = btnImeSettingsContainer;
+    this.btnLogsContainer = btnLogsContainer;
+    this.btnOptimizedTestContainer = btnOptimizedTestContainer;
     this.mainButtonContainer = mainButtonContainer;
     this.mainContainer = mainContainer;
-    this.toolbar = toolbar;
-    this.tvHelpText = tvHelpText;
-    this.tvTitle = tvTitle;
   }
 
   @Override
   @NonNull
-  public ConstraintLayout getRoot() {
+  public RelativeLayout getRoot() {
     return rootView;
   }
 
@@ -88,21 +84,33 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.btn_ime_settings;
-      Button btnImeSettings = ViewBindings.findChildViewById(rootView, id);
-      if (btnImeSettings == null) {
+      id = R.id.appIconTop;
+      ImageView appIconTop = ViewBindings.findChildViewById(rootView, id);
+      if (appIconTop == null) {
         break missingId;
       }
 
-      id = R.id.btnLogs;
-      Button btnLogs = ViewBindings.findChildViewById(rootView, id);
-      if (btnLogs == null) {
+      id = R.id.appNameTopLeft;
+      TextView appNameTopLeft = ViewBindings.findChildViewById(rootView, id);
+      if (appNameTopLeft == null) {
         break missingId;
       }
 
-      id = R.id.btn_optimized_test;
-      Button btnOptimizedTest = ViewBindings.findChildViewById(rootView, id);
-      if (btnOptimizedTest == null) {
+      id = R.id.btnImeSettingsContainer;
+      FrameLayout btnImeSettingsContainer = ViewBindings.findChildViewById(rootView, id);
+      if (btnImeSettingsContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.btnLogsContainer;
+      FrameLayout btnLogsContainer = ViewBindings.findChildViewById(rootView, id);
+      if (btnLogsContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.btnOptimizedTestContainer;
+      FrameLayout btnOptimizedTestContainer = ViewBindings.findChildViewById(rootView, id);
+      if (btnOptimizedTestContainer == null) {
         break missingId;
       }
 
@@ -112,28 +120,11 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      ConstraintLayout mainContainer = (ConstraintLayout) rootView;
+      RelativeLayout mainContainer = (RelativeLayout) rootView;
 
-      id = R.id.toolbar;
-      Toolbar toolbar = ViewBindings.findChildViewById(rootView, id);
-      if (toolbar == null) {
-        break missingId;
-      }
-
-      id = R.id.tvHelpText;
-      TextView tvHelpText = ViewBindings.findChildViewById(rootView, id);
-      if (tvHelpText == null) {
-        break missingId;
-      }
-
-      id = R.id.tvTitle;
-      TextView tvTitle = ViewBindings.findChildViewById(rootView, id);
-      if (tvTitle == null) {
-        break missingId;
-      }
-
-      return new ActivityMainBinding((ConstraintLayout) rootView, btnImeSettings, btnLogs,
-          btnOptimizedTest, mainButtonContainer, mainContainer, toolbar, tvHelpText, tvTitle);
+      return new ActivityMainBinding((RelativeLayout) rootView, appIconTop, appNameTopLeft,
+          btnImeSettingsContainer, btnLogsContainer, btnOptimizedTestContainer, mainButtonContainer,
+          mainContainer);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

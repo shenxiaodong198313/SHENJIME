@@ -71,7 +71,6 @@
     <string name="dict_total_entries">词条总数: %1$d</string>
     <string name="expand_candidates">展开候选词</string>
     <string name="export_log">导出日志</string>
-    <string name="help_text">请在系统设置中启用"神迹输入法"，并选择作为默认输入法使用。</string>
     <string name="ime_log">输入法日志</string>
     <string name="ime_name">神迹输入法</string>
     <string name="ime_settings">神迹输入法设置</string>

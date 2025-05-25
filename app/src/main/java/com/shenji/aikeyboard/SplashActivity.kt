@@ -486,7 +486,7 @@ class SplashActivity : AppCompatActivity() {
             }
             
             override fun onAnimationEnd(animation: android.animation.Animator) {
-                Timber.d("缩放旋转动画结束，等待2秒后开始移动动画")
+                Timber.d("缩放旋转动画结束，开始检测数据库状态")
                 // 动画结束后恢复裁剪设置
                 splashIcon.parent?.let { parent ->
                     if (parent is android.view.ViewGroup) {
@@ -494,10 +494,8 @@ class SplashActivity : AppCompatActivity() {
                         parent.clipToPadding = true
                     }
                 }
-                // 等待2秒后开始图标向上移动和按钮出现动画
-                handler.postDelayed({
-                    startMoveAndButtonAnimation()
-                }, 2000)
+                // 检测数据库状态，决定是否需要手动初始化
+                checkDatabaseStatusAndProceed()
             }
             
             override fun onAnimationCancel(animation: android.animation.Animator) {}
@@ -508,6 +506,84 @@ class SplashActivity : AppCompatActivity() {
         fullAnimationSet.start()
     }
     
+    /**
+     * 检测数据库状态并决定后续流程
+     */
+    private fun checkDatabaseStatusAndProceed() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                Timber.d("开始检测数据库初始化状态")
+                
+                // 检测数据库是否已经初始化
+                val isDatabaseInitialized = checkDatabaseInitialized()
+                
+                withContext(Dispatchers.Main) {
+                    if (isDatabaseInitialized) {
+                        Timber.i("数据库已初始化，直接进入主界面")
+                        // 显示跳转提示
+                        detailText.text = "数据库已就绪，正在进入主界面..."
+                        detailText.alpha = 1f
+                        detailText.gravity = android.view.Gravity.CENTER
+                        
+                        // 延迟1秒后直接跳转到主界面
+                        handler.postDelayed({
+                            navigateToMainActivity()
+                        }, 1000)
+                    } else {
+                        Timber.i("数据库未初始化，显示手动初始化流程")
+                        // 等待2秒后开始图标向上移动和按钮出现动画
+                        handler.postDelayed({
+                            startMoveAndButtonAnimation()
+                        }, 2000)
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "检测数据库状态失败")
+                withContext(Dispatchers.Main) {
+                    // 出错时默认显示手动初始化流程
+                    handler.postDelayed({
+                        startMoveAndButtonAnimation()
+                    }, 2000)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 检测数据库是否已经初始化
+     */
+    private suspend fun checkDatabaseInitialized(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            // 检查Realm数据库状态
+            val realm = ShenjiApplication.realm
+            val entryCount = realm.query(Entry::class).count().find()
+            
+            Timber.d("数据库词条数量: $entryCount")
+            
+            // 如果词条数量大于1000，认为数据库已经正常初始化
+            val hasEnoughEntries = entryCount > 1000
+            
+            // 检查Trie文件是否存在（可选检查，不影响主要判断）
+            val trieManager = TrieManager.instance
+            val hasCharsFile = trieManager.isTrieFileExists(TrieType.CHARS)
+            val hasBaseFile = trieManager.isTrieFileExists(TrieType.BASE)
+            
+            Timber.d("数据库检测结果: 词条数=$entryCount, chars文件=$hasCharsFile, base文件=$hasBaseFile")
+            
+            // 主要依据：词条数量是否足够
+            // 次要参考：至少有一个Trie文件存在
+            val isInitialized = hasEnoughEntries && (hasCharsFile || hasBaseFile)
+            
+            Timber.i("数据库初始化状态: $isInitialized (词条数: $entryCount)")
+            
+            return@withContext isInitialized
+            
+        } catch (e: Exception) {
+            Timber.e(e, "检测数据库状态时出错")
+            return@withContext false
+        }
+    }
+
     /**
      * 开始图标向上移动和按钮出现动画
      */
@@ -813,7 +889,10 @@ class SplashActivity : AppCompatActivity() {
      */
     private fun navigateToMainActivity() {
         handler.post {
-            updateProgress(100, "启动完成", "正在进入主界面...")
+            // 检查是否需要显示进度（如果是从手动初始化流程来的）
+            if (progressBar.alpha > 0f) {
+                updateProgress(100, "启动完成", "正在进入主界面...")
+            }
             
             // 执行图标缩放动画
             startIconScaleAnimation {

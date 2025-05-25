@@ -5,7 +5,7 @@
     <string name="ime_status">输入法状态: 未启用</string>
     <string name="ime_settings">神迹输入法设置</string>
     <string name="view_logs">查看日志</string>
-    <string name="help_text">请在系统设置中启用"神迹输入法"，并选择作为默认输入法使用。</string>
+
     <string name="log_details">日志详情</string>
     <string name="copy_log">复制日志内容</string>
     <string name="log_copied">日志内容已复制到剪贴板</string>
