@@ -42,6 +42,8 @@ color warning_orange
 color white
 dimen candidate_divider_height
 dimen candidate_word_margin
+drawable appcon
+drawable appicon
 drawable bg_permission_needed
 drawable button_refresh_background
 drawable candidate_background
@@ -226,6 +228,7 @@ id shimmerMemoryStatus
 id shimmerMemoryUsage
 id simulate_button
 id speech_library_icon
+id splashIcon
 id split_result_text_view
 id stage_text_view
 id statusText
@@ -322,6 +325,7 @@ menu menu_dictionary_list
 menu menu_dictionary_manager
 menu menu_mvp_test
 menu trie_build_menu
+mipmap appicon
 mipmap ic_launcher
 mipmap ic_launcher_round
 string accessibility_disabled

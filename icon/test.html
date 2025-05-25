@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图标生成工具 - 测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        #previewCanvas {
+            border: 2px solid #eee;
+            margin: 10px 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 图标生成工具 - 测试页面</h1>
+    
+    <div class="test-section">
+        <h2>1. 文件选择测试</h2>
+        <input type="file" id="fileInput" accept="image/*">
+        <button class="btn" onclick="testFileSelect()">测试文件选择</button>
+        <div id="fileResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 图片预览测试</h2>
+        <canvas id="previewCanvas" width="300" height="300"></canvas>
+        <div id="previewResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 原图显示</h2>
+        <img id="originalImage" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd;">
+        <div id="originalResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 控制台日志</h2>
+        <div id="consoleLog" style="background: #f5f5f5; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
+        <button class="btn" onclick="clearLog()">清空日志</button>
+    </div>
+
+    <script>
+        // 重写console.log来显示在页面上
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToLog(type, ...args) {
+            const logDiv = document.getElementById('consoleLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? 'red' : type === 'warn' ? 'orange' : 'black';
+            logEntry.textContent = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            // 调用原始的console方法
+            if (type === 'error') originalError(...args);
+            else if (type === 'warn') originalWarn(...args);
+            else originalLog(...args);
+        }
+        
+        console.log = (...args) => addToLog('log', ...args);
+        console.error = (...args) => addToLog('error', ...args);
+        console.warn = (...args) => addToLog('warn', ...args);
+        
+        function clearLog() {
+            document.getElementById('consoleLog').innerHTML = '';
+        }
+        
+        // 简化的图像处理器
+        class SimpleImageProcessor {
+            constructor() {
+                this.originalImage = null;
+            }
+            
+            async loadImage(file) {
+                return new Promise((resolve, reject) => {
+                    console.log('开始加载文件:', file.name, file.type, file.size);
+                    
+                    if (!file || !file.type.startsWith('image/')) {
+                        reject(new Error('请选择有效的图片文件'));
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        console.log('文件读取完成，创建图片对象...');
+                        const img = new Image();
+                        img.onload = () => {
+                            console.log('图片加载成功:', img.width, 'x', img.height);
+                            this.originalImage = img;
+                            this.updatePreview();
+                            this.showOriginal();
+                            resolve(img);
+                        };
+                        img.onerror = (error) => {
+                            console.error('图片加载失败:', error);
+                            reject(new Error('图片加载失败'));
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = (error) => {
+                        console.error('文件读取失败:', error);
+                        reject(new Error('文件读取失败'));
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            updatePreview() {
+                if (!this.originalImage) {
+                    console.warn('没有原始图片');
+                    return;
+                }
+                
+                const canvas = document.getElementById('previewCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                console.log('开始更新预览...');
+                
+                // 清空画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 计算缩放比例
+                const scale = Math.min(
+                    canvas.width / this.originalImage.width,
+                    canvas.height / this.originalImage.height
+                );
+                
+                const scaledWidth = this.originalImage.width * scale;
+                const scaledHeight = this.originalImage.height * scale;
+                
+                // 计算居中位置
+                const x = (canvas.width - scaledWidth) / 2;
+                const y = (canvas.height - scaledHeight) / 2;
+                
+                console.log('绘制参数:', { scale, scaledWidth, scaledHeight, x, y });
+                
+                // 绘制图片
+                ctx.drawImage(this.originalImage, x, y, scaledWidth, scaledHeight);
+                
+                console.log('预览更新完成');
+                document.getElementById('previewResult').innerHTML = '<div class="success">预览更新成功！</div>';
+            }
+            
+            showOriginal() {
+                if (!this.originalImage) return;
+                
+                const originalImg = document.getElementById('originalImage');
+                originalImg.src = this.originalImage.src;
+                document.getElementById('originalResult').innerHTML = '<div class="success">原图显示成功！</div>';
+            }
+        }
+        
+        const processor = new SimpleImageProcessor();
+        
+        async function testFileSelect() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('fileResult');
+            
+            if (!fileInput.files.length) {
+                resultDiv.innerHTML = '<div class="error">请先选择一个文件</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            
+            try {
+                resultDiv.innerHTML = '<div>正在处理文件...</div>';
+                await processor.loadImage(file);
+                resultDiv.innerHTML = '<div class="success">文件处理成功！</div>';
+            } catch (error) {
+                console.error('文件处理失败:', error);
+                resultDiv.innerHTML = `<div class="error">文件处理失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('测试页面加载完成');
+            
+            // 测试canvas是否可用
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                console.log('Canvas上下文获取成功');
+                // 绘制一个测试矩形
+                ctx.fillStyle = '#e0e0e0';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#666';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('等待图片上传...', canvas.width/2, canvas.height/2);
+            } else {
+                console.error('无法获取Canvas上下文');
+            }
+        });
+    </script>
+</body>
+</html> 

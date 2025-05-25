@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App图标生成工具</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 App图标生成工具</h1>
+            <p>专业的安卓应用图标生成器，支持去背景、多尺寸生成和无损压缩</p>
+        </header>
+
+        <main>
+            <!-- 步骤指示器 -->
+            <div class="steps">
+                <div class="step active" data-step="1">
+                    <span class="step-number">1</span>
+                    <span class="step-text">选择图片</span>
+                </div>
+                <div class="step" data-step="2">
+                    <span class="step-number">2</span>
+                    <span class="step-text">编辑处理</span>
+                </div>
+                <div class="step" data-step="3">
+                    <span class="step-number">3</span>
+                    <span class="step-text">生成图标</span>
+                </div>
+            </div>
+
+            <!-- 图片上传区域 -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">📁</div>
+                        <h3>选择或拖拽图片文件</h3>
+                        <p>支持 PNG, JPG, JPEG 格式</p>
+                        <button class="btn btn-primary" id="selectFileBtn">选择文件</button>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图片编辑区域 -->
+            <div class="edit-section" id="editSection" style="display: none;">
+                <div class="edit-container">
+                    <!-- 预览区域 -->
+                    <div class="preview-area">
+                        <h3>图片预览</h3>
+                        <div class="preview-container">
+                            <canvas id="previewCanvas" width="300" height="300"></canvas>
+                        </div>
+                        
+                        <!-- 原图预览 -->
+                        <div class="original-preview">
+                            <h4>原图</h4>
+                            <img id="originalImage" alt="原图预览">
+                        </div>
+                    </div>
+
+                    <!-- 控制面板 -->
+                    <div class="control-panel">
+                        <h3>编辑工具</h3>
+                        
+                        <!-- 去背景 -->
+                        <div class="control-group">
+                            <h4>🎭 背景处理</h4>
+                            <button class="btn btn-secondary" id="removeBackgroundBtn">
+                                <span class="btn-icon">✂️</span>
+                                一键去背景
+                            </button>
+                            <div class="processing-status" id="processingStatus" style="display: none;">
+                                <span class="spinner"></span>
+                                正在处理中...
+                            </div>
+                        </div>
+
+                        <!-- 背景颜色设置 -->
+                        <div class="control-group">
+                            <h4>🎨 背景颜色</h4>
+                            <div class="color-options">
+                                <div class="color-preset-group">
+                                    <label>预设颜色：</label>
+                                    <div class="color-presets">
+                                        <div class="color-preset transparent active" data-color="transparent" title="透明"></div>
+                                        <div class="color-preset" data-color="#ffffff" style="background-color: #ffffff;" title="白色"></div>
+                                        <div class="color-preset" data-color="#000000" style="background-color: #000000;" title="黑色"></div>
+                                        <div class="color-preset" data-color="#2196F3" style="background-color: #2196F3;" title="蓝色"></div>
+                                        <div class="color-preset" data-color="#4CAF50" style="background-color: #4CAF50;" title="绿色"></div>
+                                        <div class="color-preset" data-color="#FF9800" style="background-color: #FF9800;" title="橙色"></div>
+                                        <div class="color-preset" data-color="#9C27B0" style="background-color: #9C27B0;" title="紫色"></div>
+                                    </div>
+                                </div>
+                                <div class="custom-color-group">
+                                    <label for="customColor">自定义颜色：</label>
+                                    <input type="color" id="customColor" value="#ffffff">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 图标设置 -->
+                        <div class="control-group">
+                            <h4>⚙️ 图标设置</h4>
+                            <div class="setting-item">
+                                <label for="iconPadding">内边距：</label>
+                                <input type="range" id="iconPadding" min="0" max="50" value="10">
+                                <span id="paddingValue">10%</span>
+                            </div>
+                            <div class="setting-item">
+                                <label for="cornerRadius">圆角：</label>
+                                <input type="range" id="cornerRadius" min="0" max="50" value="0">
+                                <span id="radiusValue">0%</span>
+                            </div>
+                            <div class="setting-item">
+                                <label for="compressionQuality">压缩质量：</label>
+                                <input type="range" id="compressionQuality" min="0.1" max="1" step="0.1" value="0.9">
+                                <span id="qualityValue">90%</span>
+                            </div>
+                        </div>
+
+                        <!-- 生成按钮 -->
+                        <div class="control-group">
+                            <button class="btn btn-success btn-large" id="generateIconsBtn">
+                                <span class="btn-icon">🚀</span>
+                                生成安卓图标包
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生成结果区域 -->
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h3>生成结果</h3>
+                <div class="result-grid" id="resultGrid">
+                    <!-- 动态生成的图标预览 -->
+                </div>
+                <div class="download-area">
+                    <button class="btn btn-primary btn-large" id="downloadAllBtn">
+                        <span class="btn-icon">📦</span>
+                        下载完整图标包
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2024 App图标生成工具 - 让您的应用图标更专业</p>
+        </footer>
+    </div>
+
+    <!-- 加载第三方库 -->
+    <script src="lib/jszip.min.js"></script>
+    <script src="lib/remove-bg.js"></script>
+    
+    <!-- 项目脚本 -->
+    <script src="js/imageProcessor.js"></script>
+    <script src="js/iconGenerator.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 

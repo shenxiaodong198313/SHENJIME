@@ -15,7 +15,7 @@
         <!-- Customize your theme here. -->
     </style>
     
-    <!-- 启动页主题 - 解决白屏问题 -->
+    <!-- 启动页主题 - 直接显示加载页面 -->
     <style name="Theme.SHENJI.Splash" parent="Theme.SHENJI">
         <item name="android:windowBackground">@drawable/splash_background</item>
         <item name="android:windowNoTitle">true</item>

@@ -4,15 +4,19 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="@color/design_default_color_primary"
+    android:background="@color/splash_background_color"
     android:padding="32dp">
 
     <!-- 应用图标 -->
     <ImageView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:src="@mipmap/ic_launcher"
-        android:layout_marginBottom="24dp" />
+        android:id="@+id/splashIcon"
+        android:layout_width="280dp"
+        android:layout_height="280dp"
+        android:src="@android:color/transparent"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:layout_marginTop="80dp"
+        android:layout_marginBottom="60dp" />
 
     <!-- 应用名称 -->
     <TextView
@@ -21,7 +25,7 @@
         android:text="神迹AI键盘"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:textColor="@android:color/white"
+        android:textColor="@color/splash_text_color"
         android:layout_marginBottom="16dp" />
 
     <!-- 版本信息 -->
@@ -30,7 +34,7 @@
         android:layout_height="wrap_content"
         android:text="智能拼音输入法"
         android:textSize="16sp"
-        android:textColor="@android:color/white"
+        android:textColor="@color/splash_text_color"
         android:alpha="0.8"
         android:layout_marginBottom="48dp" />
 
@@ -42,7 +46,7 @@
         android:layout_height="8dp"
         android:layout_marginBottom="16dp"
         android:progressTint="@android:color/white"
-        android:progressBackgroundTint="@android:color/white"
+        android:progressBackgroundTint="#80FFFFFF"
         android:alpha="0.7"
         android:max="100"
         android:progress="0" />
@@ -55,7 +59,7 @@
         android:text="正在初始化..."
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="@android:color/white"
+        android:textColor="@color/splash_text_color"
         android:alpha="0.95"
         android:layout_marginBottom="8dp" />
 
@@ -66,23 +70,12 @@
         android:layout_height="wrap_content"
         android:text="准备初始化应用组件"
         android:textSize="13sp"
-        android:textColor="@android:color/white"
+        android:textColor="@color/splash_text_color"
         android:alpha="0.8"
         android:gravity="center"
         android:layout_marginBottom="24dp"
         android:minHeight="40dp"
         android:maxLines="2"
         android:ellipsize="end" />
-
-    <!-- 底部提示 -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="首次启动需要初始化数据库，预计需要10-20秒，请耐心等待..."
-        android:textSize="12sp"
-        android:textColor="@android:color/white"
-        android:alpha="0.6"
-        android:layout_marginTop="16dp"
-        android:gravity="center" />
 
 </LinearLayout> 

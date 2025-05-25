@@ -3045,6 +3045,8 @@ drawable abc_textfield_search_activated_mtrl_alpha
 drawable abc_textfield_search_default_mtrl_alpha
 drawable abc_textfield_search_material
 drawable abc_vector_test
+drawable appcon
+drawable appicon
 drawable avd_hide_password
 drawable avd_show_password
 drawable bg_permission_needed
@@ -3751,6 +3753,7 @@ id south
 id spacer
 id special_effects_controller_view_tag
 id speech_library_icon
+id splashIcon
 id spline
 id split_action_bar
 id split_result_text_view
@@ -4134,6 +4137,7 @@ menu menu_dictionary_list
 menu menu_dictionary_manager
 menu menu_mvp_test
 menu trie_build_menu
+mipmap appicon
 mipmap ic_launcher
 mipmap ic_launcher_round
 plurals mtrl_badge_content_description

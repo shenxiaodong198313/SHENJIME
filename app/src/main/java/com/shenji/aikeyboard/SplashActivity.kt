@@ -6,6 +6,11 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.ImageView
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import android.animation.ObjectAnimator
+import android.animation.AnimatorSet
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.data.Entry
@@ -32,6 +37,7 @@ class SplashActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var statusText: TextView
     private lateinit var detailText: TextView
+    private lateinit var splashIcon: ImageView
     private val handler = Handler(Looper.getMainLooper())
     
     // 启动阶段枚举
@@ -50,6 +56,8 @@ class SplashActivity : AppCompatActivity() {
         supportActionBar?.hide()
         
         initViews()
+        
+        // 立即开始初始化
         startOptimizedInitialization()
     }
     
@@ -57,11 +65,23 @@ class SplashActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
         statusText = findViewById(R.id.statusText)
         detailText = findViewById(R.id.detailText)
+        splashIcon = findViewById(R.id.splashIcon)
+        
+        // 从assets加载卡通设计图片
+        try {
+            val inputStream = assets.open("images/appicon.png")
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            val drawable = BitmapDrawable(resources, bitmap)
+            splashIcon.setImageDrawable(drawable)
+            inputStream.close()
+        } catch (e: Exception) {
+            Timber.e(e, "加载卡通设计图片失败")
+        }
         
         progressBar.max = 100
         progressBar.progress = 0
         statusText.text = "正在启动神迹输入法..."
-        detailText.text = "初始化预计需要10-20秒，正在准备数据库和词典..."
+        detailText.text = "正在准备数据库和词典..."
     }
     
     /**
@@ -283,16 +303,43 @@ class SplashActivity : AppCompatActivity() {
         handler.post {
             updateProgress(100, "启动完成", "正在进入主界面...")
             
-            // 短暂延迟后跳转
-            handler.postDelayed({
+            // 执行图标缩放动画
+            startIconScaleAnimation {
+                // 动画完成后跳转
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
                 finish()
                 
                 // 添加淡入淡出动画
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-            }, 500)
+            }
         }
+    }
+    
+    /**
+     * 启动图标缩放动画
+     */
+    private fun startIconScaleAnimation(onComplete: () -> Unit) {
+        // 创建缩放动画：从280dp缩小到120dp (模拟切换到加载页的效果)
+        val scaleXAnimator = ObjectAnimator.ofFloat(splashIcon, "scaleX", 1.0f, 0.43f)
+        val scaleYAnimator = ObjectAnimator.ofFloat(splashIcon, "scaleY", 1.0f, 0.43f)
+        
+        // 创建动画集合
+        val animatorSet = AnimatorSet()
+        animatorSet.playTogether(scaleXAnimator, scaleYAnimator)
+        animatorSet.duration = 300 // 300ms动画时长
+        
+        // 动画完成后执行回调
+        animatorSet.addListener(object : android.animation.Animator.AnimatorListener {
+            override fun onAnimationStart(animation: android.animation.Animator) {}
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                onComplete()
+            }
+            override fun onAnimationCancel(animation: android.animation.Animator) {}
+            override fun onAnimationRepeat(animation: android.animation.Animator) {}
+        })
+        
+        animatorSet.start()
     }
     
     /**
