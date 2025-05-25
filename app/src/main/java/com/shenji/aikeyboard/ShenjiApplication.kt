@@ -18,6 +18,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -98,26 +100,54 @@ class ShenjiApplication : MultiDexApplication() {
             // 🔧 新增：确保chars和base词典在启动时同步加载
             logStartupMessage("开始加载基础词典...")
             try {
-                // 加载chars词典
-                val charsLoaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                val startTime = System.currentTimeMillis()
+                
+                // 并行加载核心词典，提高启动速度
+                val charsDeferred = GlobalScope.async(Dispatchers.IO) {
+                    trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                }
+                val baseDeferred = GlobalScope.async(Dispatchers.IO) {
+                    trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+                }
+                
+                // 等待加载完成
+                val charsLoaded = runBlocking { charsDeferred.await() }
+                val baseLoaded = runBlocking { baseDeferred.await() }
+                
+                val endTime = System.currentTimeMillis()
+                val totalTime = endTime - startTime
+                
                 if (charsLoaded) {
-                    logStartupMessage("chars词典加载成功")
+                    logStartupMessage("✅ chars词典加载成功")
                 } else {
-                    logStartupMessage("chars词典加载失败")
+                    logStartupMessage("❌ chars词典加载失败")
                 }
                 
-                // 加载base词典
-                val baseLoaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.BASE)
                 if (baseLoaded) {
-                    logStartupMessage("base词典加载成功")
+                    logStartupMessage("✅ base词典加载成功")
                 } else {
-                    logStartupMessage("base词典加载失败")
+                    logStartupMessage("❌ base词典加载失败")
                 }
                 
-                logStartupMessage("基础词典加载完成 - chars: ${if (charsLoaded) "✓" else "✗"}, base: ${if (baseLoaded) "✓" else "✗"}")
+                logStartupMessage("基础词典加载完成，耗时${totalTime}ms - chars: ${if (charsLoaded) "✓" else "✗"}, base: ${if (baseLoaded) "✓" else "✗"}")
+                
+                // 如果核心词典加载失败，记录详细错误信息
+                if (!charsLoaded || !baseLoaded) {
+                    logStartupMessage("⚠️ 部分核心词典加载失败，输入法可能无法正常工作")
+                    
+                    // 检查文件是否存在
+                    if (!charsLoaded) {
+                        val charsExists = trieManager.isTrieFileExists(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                        logStartupMessage("chars词典文件存在: $charsExists")
+                    }
+                    if (!baseLoaded) {
+                        val baseExists = trieManager.isTrieFileExists(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+                        logStartupMessage("base词典文件存在: $baseExists")
+                    }
+                }
                 
             } catch (e: Exception) {
-                logStartupMessage("基础词典加载异常: ${e.message}")
+                logStartupMessage("❌ 基础词典加载异常: ${e.message}")
                 Timber.e(e, "基础词典加载异常")
             }
             

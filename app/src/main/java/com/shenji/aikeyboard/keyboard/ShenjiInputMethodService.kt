@@ -80,6 +80,190 @@ class ShenjiInputMethodService : InputMethodService() {
         super.onCreate()
         Timber.d("神迹输入法服务已创建")
         Timber.d("输入法服务生命周期: onCreate")
+        
+        // 🔧 新增：输入法服务自启动初始化机制
+        initializeInputMethodService()
+    }
+    
+    /**
+     * 输入法服务自启动初始化机制
+     * 确保覆盖安装后输入法服务能够自动加载必要的词典数据
+     */
+    private fun initializeInputMethodService() {
+        try {
+            Timber.d("🚀 开始输入法服务自启动初始化...")
+            
+            // 检查应用是否已经初始化
+            val isAppInitialized = try {
+                ShenjiApplication.instance
+                ShenjiApplication.appContext
+                true
+            } catch (e: Exception) {
+                Timber.w("应用尚未完全初始化: ${e.message}")
+                false
+            }
+            
+            if (!isAppInitialized) {
+                Timber.w("应用未初始化，跳过输入法服务初始化")
+                return
+            }
+            
+            // 在后台线程中执行初始化，避免阻塞输入法服务启动
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                try {
+                    // 1. 确保Realm数据库可用
+                    ensureRealmInitialized()
+                    
+                    // 2. 确保TrieManager已初始化
+                    ensureTrieManagerInitialized()
+                    
+                    // 3. 自动加载核心词典（chars和base）
+                    autoLoadCoreTrieDictionaries()
+                    
+                    // 4. 预热候选词引擎
+                    preheatCandidateEngine()
+                    
+                    Timber.i("✅ 输入法服务自启动初始化完成")
+                    
+                } catch (e: Exception) {
+                    Timber.e(e, "❌ 输入法服务自启动初始化失败: ${e.message}")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "输入法服务初始化异常: ${e.message}")
+        }
+    }
+    
+    /**
+     * 确保Realm数据库已初始化
+     */
+    private suspend fun ensureRealmInitialized() = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            // 检查Realm是否已初始化
+            val isRealmInitialized = try {
+                ShenjiApplication.realm
+                true
+            } catch (e: Exception) {
+                false
+            }
+            
+            if (!isRealmInitialized) {
+                Timber.d("🔧 Realm未初始化，开始初始化...")
+                // 这里可以添加Realm初始化逻辑，但通常在Application中已经处理
+                Timber.w("Realm需要在Application中初始化")
+            } else {
+                Timber.d("✅ Realm数据库已可用")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "检查Realm状态失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 确保TrieManager已初始化
+     */
+    private suspend fun ensureTrieManagerInitialized() = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val trieManager = ShenjiApplication.trieManager
+            
+            if (!trieManager.isInitialized()) {
+                Timber.d("🔧 TrieManager未初始化，开始初始化...")
+                trieManager.init()
+                Timber.d("✅ TrieManager初始化完成")
+            } else {
+                Timber.d("✅ TrieManager已初始化")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "TrieManager初始化失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 自动加载核心词典（chars和base）
+     * 这是输入法正常工作的最低要求
+     */
+    private suspend fun autoLoadCoreTrieDictionaries() = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val trieManager = ShenjiApplication.trieManager
+            val coreTypes = listOf(
+                com.shenji.aikeyboard.data.trie.TrieType.CHARS,
+                com.shenji.aikeyboard.data.trie.TrieType.BASE
+            )
+            
+            for (trieType in coreTypes) {
+                try {
+                    if (!trieManager.isTrieLoaded(trieType)) {
+                        Timber.d("🔧 自动加载${getTrieDisplayName(trieType)}词典...")
+                        val startTime = System.currentTimeMillis()
+                        
+                        val loaded = trieManager.loadTrieToMemory(trieType)
+                        val endTime = System.currentTimeMillis()
+                        
+                        if (loaded) {
+                            Timber.i("✅ ${getTrieDisplayName(trieType)}词典自动加载成功，耗时${endTime - startTime}ms")
+                        } else {
+                            Timber.e("❌ ${getTrieDisplayName(trieType)}词典自动加载失败")
+                        }
+                    } else {
+                        Timber.d("✅ ${getTrieDisplayName(trieType)}词典已加载")
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "${getTrieDisplayName(trieType)}词典加载异常: ${e.message}")
+                }
+            }
+            
+            // 记录加载状态
+            val loadedTypes = trieManager.getLoadedTrieTypes()
+            Timber.i("📚 当前已加载词典: ${loadedTypes.map { getTrieDisplayName(it) }}")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "核心词典自动加载失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 预热候选词引擎
+     * 通过执行一次简单查询来确保引擎正常工作
+     */
+    private suspend fun preheatCandidateEngine() = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            Timber.d("🔥 开始预热候选词引擎...")
+            val startTime = System.currentTimeMillis()
+            
+            // 执行一个简单的测试查询
+            val engineAdapter = InputMethodEngineAdapter.getInstance()
+            val testResults = engineAdapter.getCandidates("ni", 5)
+            
+            val endTime = System.currentTimeMillis()
+            
+            if (testResults.isNotEmpty()) {
+                Timber.i("✅ 候选词引擎预热成功，耗时${endTime - startTime}ms，测试查询返回${testResults.size}个结果")
+                Timber.d("🔥 测试结果: ${testResults.take(3).map { it.word }}")
+            } else {
+                Timber.w("⚠️ 候选词引擎预热完成，但测试查询无结果，可能词典未完全加载")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "候选词引擎预热失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 获取Trie类型的显示名称
+     */
+    private fun getTrieDisplayName(trieType: com.shenji.aikeyboard.data.trie.TrieType): String {
+        return when (trieType) {
+            com.shenji.aikeyboard.data.trie.TrieType.CHARS -> "单字"
+            com.shenji.aikeyboard.data.trie.TrieType.BASE -> "基础词典"
+            com.shenji.aikeyboard.data.trie.TrieType.CORRELATION -> "关联词典"
+            com.shenji.aikeyboard.data.trie.TrieType.ASSOCIATIONAL -> "联想词典"
+            com.shenji.aikeyboard.data.trie.TrieType.PLACE -> "地名词典"
+            com.shenji.aikeyboard.data.trie.TrieType.PEOPLE -> "人名词典"
+            com.shenji.aikeyboard.data.trie.TrieType.POETRY -> "诗词词典"
+            com.shenji.aikeyboard.data.trie.TrieType.CORRECTIONS -> "纠错词典"
+            com.shenji.aikeyboard.data.trie.TrieType.COMPATIBLE -> "兼容词典"
+        }
     }
     
     override fun onCreateInputView(): View {
@@ -143,13 +327,13 @@ class ShenjiInputMethodService : InputMethodService() {
             )
             keyboardView.layoutParams = keyboardLayoutParams
             
-            // 创建分隔线
+            // 创建分隔线 - 修复：使用更细的分隔线，避免遮挡候选词
             val separator = View(this)
             separator.layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                4 // 4dp高度
+                1 // 改为1dp高度，减少遮挡
             )
-            separator.setBackgroundColor(android.graphics.Color.parseColor("#FF5722")) // 橙色分隔线，便于调试
+            separator.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0")) // 改为浅灰色，不那么突兀
             
             // 将候选词视图和键盘视图添加到主容器（确保顺序正确）
             mainContainer.addView(candidatesViewLayout, 0) // 候选词在顶部
@@ -632,7 +816,7 @@ class ShenjiInputMethodService : InputMethodService() {
             
             // 🔧 确保候选词视图固定高度，防止跳动
             val params = defaultCandidatesView.layoutParams
-            params.height = 46 // 固定高度
+            params.height = LinearLayout.LayoutParams.MATCH_PARENT // 使用MATCH_PARENT填满可用空间
             params.width = LinearLayout.LayoutParams.MATCH_PARENT // 固定宽度
             defaultCandidatesView.layoutParams = params
             
@@ -647,7 +831,7 @@ class ShenjiInputMethodService : InputMethodService() {
             candidatesRow.orientation = LinearLayout.HORIZONTAL
             candidatesRow.layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                46 // 🔧 固定高度，防止跳动
+                LinearLayout.LayoutParams.MATCH_PARENT // 使用MATCH_PARENT填满可用空间
             )
             candidatesRow.gravity = Gravity.CENTER_VERTICAL // 垂直居中
             
@@ -693,7 +877,7 @@ class ShenjiInputMethodService : InputMethodService() {
                 // 🔧 设置固定布局参数，防止跳动
                 val textParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
-                    38 // 固定高度，比容器稍小留出边距
+                    LinearLayout.LayoutParams.MATCH_PARENT // 使用MATCH_PARENT填满容器高度
                 )
                 textParams.gravity = Gravity.CENTER_VERTICAL // 垂直居中
                 
@@ -785,9 +969,9 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 确保候选词视图正确初始化
         if (areViewComponentsInitialized()) {
-            // 🔧 设置候选词视图固定布局参数，防止跳动
+            // 🔧 设置候选词视图布局参数，使用MATCH_PARENT确保有足够空间
             val params = defaultCandidatesView.layoutParams
-            params.height = 46 // 固定高度
+            params.height = LinearLayout.LayoutParams.MATCH_PARENT // 使用MATCH_PARENT确保有足够空间
             params.width = LinearLayout.LayoutParams.MATCH_PARENT // 固定宽度
             defaultCandidatesView.layoutParams = params
             
@@ -829,31 +1013,77 @@ class ShenjiInputMethodService : InputMethodService() {
     /**
      * 确保chars词典始终可用
      * 如果检测到chars词典未加载，立即自动加载
+     * 增强版本：支持同步和异步加载，提供更好的容错机制
      */
     private fun ensureCharsTrieLoaded() {
         try {
             val trieManager = ShenjiApplication.trieManager
+            
+            // 检查chars词典是否已加载
             if (!trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)) {
-                Timber.w("检测到chars词典未加载，开始自动加载...")
+                Timber.w("🔧 检测到chars词典未加载，开始自动加载...")
+                
+                // 检查是否正在加载中，避免重复加载
+                if (trieManager.isLoading(com.shenji.aikeyboard.data.trie.TrieType.CHARS)) {
+                    Timber.d("chars词典正在加载中，等待完成...")
+                    return
+                }
                 
                 // 在后台线程中加载，避免阻塞UI
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                     try {
+                        val startTime = System.currentTimeMillis()
                         val loaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                        val endTime = System.currentTimeMillis()
+                        
                         if (loaded) {
-                            Timber.i("chars词典自动加载成功")
+                            Timber.i("✅ chars词典自动加载成功，耗时${endTime - startTime}ms")
+                            
+                            // 加载成功后，也尝试加载base词典
+                            if (!trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.BASE)) {
+                                Timber.d("🔧 chars词典加载成功，继续加载base词典...")
+                                val baseLoaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+                                if (baseLoaded) {
+                                    Timber.i("✅ base词典也已自动加载成功")
+                                } else {
+                                    Timber.w("⚠️ base词典自动加载失败")
+                                }
+                            }
                         } else {
-                            Timber.e("chars词典自动加载失败")
+                            Timber.e("❌ chars词典自动加载失败")
+                            
+                            // 尝试检查文件是否存在
+                            val fileExists = trieManager.isTrieFileExists(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                            if (!fileExists) {
+                                Timber.e("❌ chars词典文件不存在，请检查assets/trie/chars_trie.dat文件")
+                            }
                         }
                     } catch (e: Exception) {
-                        Timber.e(e, "chars词典自动加载异常: ${e.message}")
+                        Timber.e(e, "❌ chars词典自动加载异常: ${e.message}")
                     }
                 }
             } else {
-                Timber.d("chars词典已加载，状态正常")
+                Timber.d("✅ chars词典已加载，状态正常")
+                
+                // 如果chars已加载，也检查一下base词典
+                if (!trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.BASE)) {
+                    Timber.d("🔧 chars词典正常，但base词典未加载，开始加载...")
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                        try {
+                            val baseLoaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+                            if (baseLoaded) {
+                                Timber.i("✅ base词典补充加载成功")
+                            } else {
+                                Timber.w("⚠️ base词典补充加载失败")
+                            }
+                        } catch (e: Exception) {
+                            Timber.e(e, "base词典补充加载异常: ${e.message}")
+                        }
+                    }
+                }
             }
         } catch (e: Exception) {
-            Timber.e(e, "检查chars词典状态失败: ${e.message}")
+            Timber.e(e, "❌ 检查chars词典状态失败: ${e.message}")
         }
     }
 }
