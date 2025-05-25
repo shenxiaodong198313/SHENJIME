@@ -42,18 +42,14 @@
         android:layout_above="@+id/appTitle"
         android:layout_marginBottom="8dp" />
 
-    <!-- 构建词典按钮 - 绝对定位，不影响图标 -->
-    <Button
-        android:id="@+id/buildDictButton"
-        android:layout_width="200dp"
-        android:layout_height="48dp"
-        android:text="构建离线词典"
-        android:textSize="16sp"
-        android:textColor="@color/splash_text_color"
-        android:background="@drawable/build_dict_button_bg"
+    <!-- 构建词典按钮容器 - 用于动态创建按钮 -->
+    <FrameLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_above="@+id/progressBar"
-        android:layout_marginBottom="48dp" />
+        android:layout_marginBottom="80dp" />
 
     <!-- 加载进度 - 绝对定位，不影响图标 -->
     <ProgressBar

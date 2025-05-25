@@ -10,6 +10,11 @@ import android.widget.ImageView
 import android.widget.Button
 import android.animation.ObjectAnimator
 import android.animation.AnimatorSet
+import android.animation.ValueAnimator
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
+import android.view.animation.Interpolator
+import android.view.animation.PathInterpolator
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
@@ -40,6 +45,7 @@ class SplashActivity : AppCompatActivity() {
     private lateinit var detailText: TextView
     private lateinit var splashIcon: ImageView
     private lateinit var buildDictButton: Button
+    private lateinit var buttonContainer: android.widget.FrameLayout
     private val handler = Handler(Looper.getMainLooper())
     
     // 启动阶段枚举
@@ -94,7 +100,10 @@ class SplashActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         detailText = findViewById(R.id.detailText)
         splashIcon = findViewById(R.id.splashIcon)
-        buildDictButton = findViewById(R.id.buildDictButton)
+        buttonContainer = findViewById(R.id.buttonContainer)
+        
+        // 动态创建新按钮
+        createNewButton()
         
         // 从assets加载卡通设计图片
         try {
@@ -110,15 +119,60 @@ class SplashActivity : AppCompatActivity() {
         // 调整图标位置以匹配启动主题
         adjustIconPosition()
         
-        // 设置按钮点击事件（暂时不需要）
-        buildDictButton.setOnClickListener {
-            // 暂时不做任何操作，用于观察
-        }
-        
         progressBar.max = 100
         progressBar.progress = 0
         statusText.text = "正在启动神迹输入法..."
         detailText.text = "正在准备数据库和词典..."
+    }
+    
+    /**
+     * 动态创建新的按钮
+     */
+    private fun createNewButton() {
+        // 创建新按钮
+        buildDictButton = Button(this)
+        
+        // 设置按钮文本和样式
+        buildDictButton.text = "构建离线词典"
+        buildDictButton.textSize = 16f
+        buildDictButton.setTextColor(getColor(R.color.splash_background_color))
+        
+        // 创建纯白色背景
+        val whiteBackground = android.graphics.drawable.GradientDrawable()
+        whiteBackground.setColor(android.graphics.Color.WHITE)
+        whiteBackground.cornerRadius = 24 * resources.displayMetrics.density
+        whiteBackground.setStroke((2 * resources.displayMetrics.density).toInt(), android.graphics.Color.WHITE)
+        
+        // 应用背景和样式
+        buildDictButton.background = whiteBackground
+        buildDictButton.elevation = 0f
+        buildDictButton.stateListAnimator = null
+        
+        // 移除Material Design效果
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            buildDictButton.outlineProvider = null
+        }
+        
+        // 设置按钮尺寸和位置
+        val layoutParams = android.widget.FrameLayout.LayoutParams(
+            (200 * resources.displayMetrics.density).toInt(), // 200dp宽度
+            (48 * resources.displayMetrics.density).toInt()   // 48dp高度
+        )
+        layoutParams.gravity = android.view.Gravity.CENTER
+        buildDictButton.layoutParams = layoutParams
+        
+        // 初始时隐藏按钮
+        buildDictButton.alpha = 0f
+        
+        // 设置点击事件
+        buildDictButton.setOnClickListener {
+            startDictionaryBuild()
+        }
+        
+        // 添加到容器
+        buttonContainer.addView(buildDictButton)
+        
+        Timber.d("新按钮创建完成：纯白色背景，无Material Design效果")
     }
     
     /**
@@ -154,20 +208,7 @@ class SplashActivity : AppCompatActivity() {
                 layoutParams.removeRule(android.widget.RelativeLayout.CENTER_IN_PARENT)
                 splashIcon.layoutParams = layoutParams
                 
-                // 显示详细的屏幕信息
-                val screenInfo = """
-                    当前屏幕高度: ${currentScreenHeight}px (${(currentScreenHeight / displayMetrics.density).toInt()}dp)
-                    真实屏幕高度: ${realScreenHeight}px (${(realScreenHeight / displayMetrics.density).toInt()}dp)
-                    状态栏高度: ${statusBarHeight}px (${(statusBarHeight / displayMetrics.density).toInt()}dp)
-                    导航栏高度: ${navigationBarHeight}px (${(navigationBarHeight / displayMetrics.density).toInt()}dp)
-                    可用高度: ${availableHeight}px (${(availableHeight / displayMetrics.density).toInt()}dp)
-                    图标Y位置: ${targetY.toInt()}px (${(targetY / displayMetrics.density).toInt()}dp)
-                    屏幕密度: ${displayMetrics.density}
-                """.trimIndent()
-                
-                detailText.text = screenInfo
-                
-                Timber.d("屏幕信息详情: $screenInfo")
+                Timber.d("图标位置调整完成: Y=${targetY.toInt()}px")
             } catch (e: Exception) {
                 Timber.e(e, "调整图标位置失败")
                 detailText.text = "获取屏幕信息失败: ${e.message}"
@@ -216,17 +257,7 @@ class SplashActivity : AppCompatActivity() {
         return result
     }
     
-    /**
-     * 计算启动主题中图标的理论位置
-     * 模拟 android:gravity="center" android:top="-100dp" 的效果
-     */
-    private fun calculateSplashThemeIconPosition(screenHeight: Int, displayMetrics: android.util.DisplayMetrics): Float {
-        val iconHeightPx = 280 * displayMetrics.density
-        val offsetPx = 100 * displayMetrics.density
-        
-        // 启动主题逻辑：屏幕中心 - 图标高度的一半 - 100dp偏移
-        return (screenHeight / 2) - (iconHeightPx / 2) - offsetPx
-    }
+
     
     /**
      * 启动主题动画 - 控制何时进入加载页面
@@ -235,79 +266,323 @@ class SplashActivity : AppCompatActivity() {
         // 初始时隐藏所有加载页面内容，只显示背景和居中图标
         progressBar.alpha = 0f
         statusText.alpha = 0f
-        findViewById<TextView>(R.id.appTitle).alpha = 0f
-        findViewById<TextView>(R.id.appSubtitle).visibility = android.view.View.GONE
+        try {
+            findViewById<TextView>(R.id.appTitle)?.alpha = 0f
+            findViewById<TextView>(R.id.appSubtitle)?.visibility = android.view.View.GONE
+        } catch (e: Exception) {
+            // 如果这些视图不存在，忽略错误
+        }
         buildDictButton.alpha = 0f
+        
+        // 初始时隐藏底部版权信息
+        detailText.alpha = 0f
         
         // 延迟1.5秒后进入加载页面
         handler.postDelayed({
-            showLoadingPage()
+            startIconBezierAnimation()
         }, 1500)
     }
     
     /**
-     * 显示加载页面 - 图标保持居中不变，只显示底部文字
+     * 创建自定义贝塞尔曲线插值器 - 前70%慢，后30%快
      */
-    private fun showLoadingPage() {
-        // 图标保持原样，不做任何改变
-        // 计算并显示图标距离屏幕的信息
-        calculateAndShowIconDistance()
-        
-        // 隐藏其他所有元素
-        progressBar.alpha = 0f
-        statusText.alpha = 0f
-        findViewById<TextView>(R.id.appTitle).alpha = 0f
-        buildDictButton.alpha = 0f
+    private fun createCustomScaleUpInterpolator(): Interpolator {
+        // 使用贝塞尔曲线：前70%时间缓慢增长，后30%时间快速增长
+        // 控制点：(0.7, 0.3) 表示70%的时间只完成30%的动画
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            PathInterpolator(0.1f, 0.1f, 0.7f, 0.3f)
+        } else {
+            // 降级方案：使用组合插值器模拟效果
+            CustomBezierInterpolator()
+        }
     }
     
     /**
-     * 计算并显示图标距离屏幕的信息
+     * 创建自定义贝塞尔曲线插值器 - 缩小时前30%快，后70%慢
      */
-    private fun calculateAndShowIconDistance() {
-        splashIcon.post {
-            try {
-                val displayMetrics = resources.displayMetrics
-                val screenHeight = displayMetrics.heightPixels
-                val statusBarHeight = getStatusBarHeight()
-                
-                // 获取图标的实际位置
-                val iconTop = splashIcon.top
-                val iconBottom = splashIcon.bottom
-                val iconHeight = iconBottom - iconTop
-                
-                // 计算距离
-                val distanceFromTop = iconTop
-                val distanceFromBottom = screenHeight - iconBottom
-                val distanceFromScreenCenter = Math.abs((screenHeight / 2) - (iconTop + iconHeight / 2))
-                
-                // 计算启动主题中图标的理论位置
-                val splashThemeIconTop = calculateSplashThemeIconPosition(screenHeight, displayMetrics)
-                val splashThemeIconBottom = splashThemeIconTop + (280 * displayMetrics.density)
-                val splashThemeDistanceFromTop = splashThemeIconTop
-                val splashThemeDistanceFromBottom = screenHeight - splashThemeIconBottom
-                
-                // 显示距离信息对比
-                val difference = (distanceFromTop - splashThemeDistanceFromTop).toInt()
-                val distanceInfo = """
-                    加载页面: 距顶部 ${distanceFromTop}px (${(distanceFromTop / displayMetrics.density).toInt()}dp)
-                    启动主题: 距顶部 ${splashThemeDistanceFromTop.toInt()}px (${(splashThemeDistanceFromTop / displayMetrics.density).toInt()}dp)
-                    差异: ${difference}px (${(difference / displayMetrics.density).toInt()}dp)
-                    ${if (difference > 0) "加载页面图标偏下" else if (difference < 0) "加载页面图标偏上" else "位置一致"}
-                """.trimIndent()
-                
-                detailText.text = distanceInfo
-                detailText.alpha = 1f
-                detailText.gravity = android.view.Gravity.CENTER
-                
-                Timber.d("图标位置信息: $distanceInfo")
-            } catch (e: Exception) {
-                Timber.e(e, "计算图标距离失败")
-                detailText.text = "加载页面"
-                detailText.alpha = 1f
-                detailText.gravity = android.view.Gravity.CENTER
+    private fun createCustomScaleDownInterpolator(): Interpolator {
+        // 使用贝塞尔曲线：前30%时间快速缩小，后70%时间缓慢缩小
+        // 控制点：(0.3, 0.7) 表示30%的时间完成70%的动画
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            PathInterpolator(0.3f, 0.7f, 0.9f, 0.9f)
+        } else {
+            // 降级方案
+            CustomBezierInterpolator(true)
+        }
+    }
+    
+    /**
+     * 创建旋转动画的自定义贝塞尔曲线插值器 - 前75%时间逐步加快，后25%时间逐步减速
+     */
+    private fun createCustomRotationInterpolator(): Interpolator {
+        // 使用贝塞尔曲线：前75%时间逐步加快，后25%时间逐步减速
+        // 控制点：(0.75, 0.25) 表示75%的时间只完成25%的动画
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            PathInterpolator(0.2f, 0.1f, 0.75f, 0.25f)
+        } else {
+            // 降级方案
+            CustomRotationBezierInterpolator()
+        }
+    }
+    
+    /**
+     * 创建移动动画的自定义贝塞尔曲线插值器 - 前30%慢，后70%快
+     */
+    private fun createCustomMoveInterpolator(): Interpolator {
+        // 使用贝塞尔曲线：前30%时间缓慢移动，后70%时间快速移动
+        // 控制点：(0.3, 0.1) 表示30%的时间只完成10%的动画
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            PathInterpolator(0.1f, 0.05f, 0.3f, 0.1f)
+        } else {
+            // 降级方案
+            CustomMoveBezierInterpolator()
+        }
+    }
+    
+    /**
+     * 自定义贝塞尔插值器（用于低版本Android的降级方案）
+     */
+    private class CustomBezierInterpolator(private val isReverse: Boolean = false) : Interpolator {
+        override fun getInterpolation(input: Float): Float {
+            return if (!isReverse) {
+                // 放大：前70%慢，后30%快
+                when {
+                    input <= 0.7f -> {
+                        // 前70%时间，只完成30%的动画，使用缓慢的二次曲线
+                        val normalizedInput = input / 0.7f
+                        0.3f * normalizedInput * normalizedInput
+                    }
+                    else -> {
+                        // 后30%时间，完成剩余70%的动画，使用快速的曲线
+                        val normalizedInput = (input - 0.7f) / 0.3f
+                        0.3f + 0.7f * (1 - (1 - normalizedInput) * (1 - normalizedInput))
+                    }
+                }
+            } else {
+                // 缩小：前30%快，后70%慢
+                when {
+                    input <= 0.3f -> {
+                        // 前30%时间，完成70%的动画
+                        val normalizedInput = input / 0.3f
+                        0.7f * (1 - (1 - normalizedInput) * (1 - normalizedInput))
+                    }
+                    else -> {
+                        // 后70%时间，完成剩余30%的动画
+                        val normalizedInput = (input - 0.3f) / 0.7f
+                        0.7f + 0.3f * normalizedInput * normalizedInput
+                    }
+                }
             }
         }
     }
+    
+    /**
+     * 旋转动画的自定义贝塞尔插值器（用于低版本Android的降级方案）
+     */
+    private class CustomRotationBezierInterpolator : Interpolator {
+        override fun getInterpolation(input: Float): Float {
+            // 旋转：前75%时间逐步加快，后25%时间逐步减速
+            return when {
+                input <= 0.75f -> {
+                    // 前75%时间，只完成25%的动画，使用逐步加快的三次曲线
+                    val normalizedInput = input / 0.75f
+                    0.25f * normalizedInput * normalizedInput * normalizedInput
+                }
+                else -> {
+                    // 后25%时间，完成剩余75%的动画，使用逐步减速的曲线
+                    val normalizedInput = (input - 0.75f) / 0.25f
+                    0.25f + 0.75f * (1 - (1 - normalizedInput) * (1 - normalizedInput) * (1 - normalizedInput))
+                }
+            }
+        }
+    }
+    
+    /**
+     * 移动动画的自定义贝塞尔插值器（用于低版本Android的降级方案）
+     */
+    private class CustomMoveBezierInterpolator : Interpolator {
+        override fun getInterpolation(input: Float): Float {
+            // 移动：前30%时间缓慢，后70%时间快速
+            return when {
+                input <= 0.3f -> {
+                    // 前30%时间，只完成10%的动画，使用缓慢的二次曲线
+                    val normalizedInput = input / 0.3f
+                    0.1f * normalizedInput * normalizedInput
+                }
+                else -> {
+                    // 后70%时间，完成剩余90%的动画，使用快速的曲线
+                    val normalizedInput = (input - 0.3f) / 0.7f
+                    0.1f + 0.9f * (1 - (1 - normalizedInput) * (1 - normalizedInput))
+                }
+            }
+        }
+    }
+
+    /**
+     * 启动图标贝塞尔曲线动画
+     */
+    private fun startIconBezierAnimation() {
+        // 设置图标可以超出父容器边界
+        splashIcon.parent?.let { parent ->
+            if (parent is android.view.ViewGroup) {
+                parent.clipChildren = false
+                parent.clipToPadding = false
+            }
+        }
+        
+        // 设置根布局也不裁剪子视图
+        findViewById<android.view.ViewGroup>(android.R.id.content)?.let { rootView ->
+            rootView.clipChildren = false
+            rootView.clipToPadding = false
+        }
+        
+        // 第一阶段：从1.0放大到30.0（3000%），使用自定义贝塞尔曲线（前70%慢，后30%快）
+        val scaleUpAnimatorX = ObjectAnimator.ofFloat(splashIcon, "scaleX", 1.0f, 30.0f)
+        val scaleUpAnimatorY = ObjectAnimator.ofFloat(splashIcon, "scaleY", 1.0f, 30.0f)
+        
+        scaleUpAnimatorX.duration = 2000 // 2秒放大动画
+        scaleUpAnimatorY.duration = 2000
+        scaleUpAnimatorX.interpolator = createCustomScaleUpInterpolator() // 自定义贝塞尔曲线
+        scaleUpAnimatorY.interpolator = createCustomScaleUpInterpolator()
+        
+        // 第二阶段：从30.0缩小回1.0，使用自定义贝塞尔曲线（前30%快，后70%慢）
+        val scaleDownAnimatorX = ObjectAnimator.ofFloat(splashIcon, "scaleX", 30.0f, 1.0f)
+        val scaleDownAnimatorY = ObjectAnimator.ofFloat(splashIcon, "scaleY", 30.0f, 1.0f)
+        
+        scaleDownAnimatorX.duration = 3000 // 3秒缩小动画
+        scaleDownAnimatorY.duration = 3000
+        scaleDownAnimatorX.interpolator = createCustomScaleDownInterpolator() // 自定义贝塞尔曲线
+        scaleDownAnimatorY.interpolator = createCustomScaleDownInterpolator()
+        
+        // 旋转动画：360°逆时针旋转，与整个缩放动画同步（5秒总时长）
+        val rotationAnimator = ObjectAnimator.ofFloat(splashIcon, "rotation", 0f, -360f)
+        rotationAnimator.duration = 5000 // 5秒旋转动画，与缩放动画总时长一致
+        rotationAnimator.interpolator = createCustomRotationInterpolator() // 前75%逐步加快，后25%逐步减速
+        
+        // 创建放大动画集合
+        val scaleUpSet = AnimatorSet()
+        scaleUpSet.playTogether(scaleUpAnimatorX, scaleUpAnimatorY)
+        
+        // 创建缩小动画集合
+        val scaleDownSet = AnimatorSet()
+        scaleDownSet.playTogether(scaleDownAnimatorX, scaleDownAnimatorY)
+        
+        // 创建缩放动画序列
+        val scaleAnimationSet = AnimatorSet()
+        scaleAnimationSet.playSequentially(scaleUpSet, scaleDownSet)
+        
+        // 创建完整的动画集合：缩放和旋转同时进行
+        val fullAnimationSet = AnimatorSet()
+        fullAnimationSet.playTogether(scaleAnimationSet, rotationAnimator)
+        
+        // 动画完成后显示加载页面
+        fullAnimationSet.addListener(object : android.animation.Animator.AnimatorListener {
+            override fun onAnimationStart(animation: android.animation.Animator) {
+                Timber.d("复合贝塞尔曲线动画开始 - 30倍放大+360°逆时针旋转，总时长5秒")
+                Timber.d("缩放：放大前70%慢后30%快，缩小前30%快后70%慢")
+                Timber.d("旋转：前75%逐步加快，后25%逐步减速")
+                // 提升图标的层级，确保在最前面显示
+                splashIcon.bringToFront()
+            }
+            
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                Timber.d("缩放旋转动画结束，等待2秒后开始移动动画")
+                // 动画结束后恢复裁剪设置
+                splashIcon.parent?.let { parent ->
+                    if (parent is android.view.ViewGroup) {
+                        parent.clipChildren = true
+                        parent.clipToPadding = true
+                    }
+                }
+                // 等待2秒后开始图标向上移动和按钮出现动画
+                handler.postDelayed({
+                    startMoveAndButtonAnimation()
+                }, 2000)
+            }
+            
+            override fun onAnimationCancel(animation: android.animation.Animator) {}
+            override fun onAnimationRepeat(animation: android.animation.Animator) {}
+        })
+        
+        // 启动动画
+        fullAnimationSet.start()
+    }
+    
+    /**
+     * 开始图标向上移动和按钮出现动画
+     */
+    private fun startMoveAndButtonAnimation() {
+        // 计算图标向上移动的距离（半个图标高度）
+        val iconHeight = splashIcon.height
+        val moveDistance = iconHeight / 2f
+        
+        // 1. 图标向上移动动画
+        val iconMoveAnimator = ObjectAnimator.ofFloat(splashIcon, "translationY", 0f, -moveDistance)
+        iconMoveAnimator.duration = 1500 // 1.5秒移动动画
+        iconMoveAnimator.interpolator = createCustomMoveInterpolator() // 前30%慢，后70%快
+        
+        // 2. 按钮从底部向上移动出现动画
+        // 首先设置按钮初始位置在屏幕底部外
+        buildDictButton.alpha = 1f // 确保按钮可见
+        
+        // 获取屏幕高度
+        val screenHeight = resources.displayMetrics.heightPixels
+        
+        // 设置按钮容器初始位置在屏幕底部外
+        buttonContainer.translationY = screenHeight.toFloat()
+        
+        // 按钮容器移动到原位置（布局中已经设置了正确的位置，距离进度条80dp）
+        val buttonMoveAnimator = ObjectAnimator.ofFloat(buttonContainer, "translationY", 
+            screenHeight.toFloat(), 0f)
+        buttonMoveAnimator.duration = 1500 // 1.5秒移动动画
+        buttonMoveAnimator.interpolator = createCustomMoveInterpolator() // 前30%慢，后70%快
+        
+        // 创建同步动画集合
+        val moveAnimationSet = AnimatorSet()
+        moveAnimationSet.playTogether(iconMoveAnimator, buttonMoveAnimator)
+        
+        // 动画完成后显示加载页面
+        moveAnimationSet.addListener(object : android.animation.Animator.AnimatorListener {
+            override fun onAnimationStart(animation: android.animation.Animator) {
+                Timber.d("移动动画开始 - 图标向上移动${moveDistance}px，按钮从底部出现")
+            }
+            
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                Timber.d("移动动画结束，图标和按钮已就位")
+                // 按钮显示完成后，延迟0.5秒显示底部版权信息
+                handler.postDelayed({
+                    detailText.text = "SHENJI@神迹输入法 2025"
+                    detailText.gravity = android.view.Gravity.CENTER
+                    detailText.animate().alpha(1f).setDuration(800).start()
+                }, 500)
+            }
+            override fun onAnimationCancel(animation: android.animation.Animator) {}
+            override fun onAnimationRepeat(animation: android.animation.Animator) {}
+        })
+        
+        // 启动移动动画
+        moveAnimationSet.start()
+    }
+    
+    /**
+     * 开始构建词典
+     */
+    private fun startDictionaryBuild() {
+        Timber.d("用户点击构建离线词典按钮")
+        
+        // 禁用按钮，防止重复点击
+        buildDictButton.isEnabled = false
+        buildDictButton.alpha = 0.5f
+        
+        // 显示进度条
+        progressBar.alpha = 1f
+        statusText.alpha = 1f
+        
+        // 开始初始化流程
+        startOptimizedInitialization()
+    }
+    
+
     
 
     

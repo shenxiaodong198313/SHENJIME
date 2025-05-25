@@ -3058,7 +3058,6 @@ drawable btn_radio_off_mtrl
 drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
-drawable build_dict_button_bg
 drawable button_refresh_background
 drawable candidate_background
 drawable candidate_button_bg

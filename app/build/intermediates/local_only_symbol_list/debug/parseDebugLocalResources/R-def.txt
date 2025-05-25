@@ -45,7 +45,6 @@ dimen candidate_word_margin
 drawable appcon
 drawable appicon
 drawable bg_permission_needed
-drawable build_dict_button_bg
 drawable button_refresh_background
 drawable candidate_background
 drawable candidate_button_bg
