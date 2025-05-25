@@ -198,19 +198,55 @@ def build_trie(entries: List[Tuple[str, str, int]]) -> PinyinTrie:
     return trie
 
 def save_trie_to_file(trie: PinyinTrie, output_path: str):
-    """保存Trie树到文件"""
+    """保存Trie树到文件 - 使用版本3简化格式"""
     print(f"正在保存Trie树到文件: {output_path}")
     
     try:
         # 确保输出目录存在
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
-        with open(output_path, 'wb') as f:
-            # 写入版本号（与Java代码兼容）
-            f.write(struct.pack('>i', 2))  # SERIALIZATION_VERSION = 2
+        # 收集所有拼音条目
+        trie_data = {}
+        
+        def collect_words(node, current_pinyin=""):
+            """递归收集所有词语"""
+            if node.words:
+                if current_pinyin not in trie_data:
+                    trie_data[current_pinyin] = []
+                for word_item in node.words:
+                    trie_data[current_pinyin].append({
+                        'word': word_item.word,
+                        'frequency': word_item.frequency
+                    })
             
-            # 序列化Trie对象
-            pickle.dump(trie, f, protocol=pickle.HIGHEST_PROTOCOL)
+            for char, child_node in node.children.items():
+                collect_words(child_node, current_pinyin + char)
+        
+        collect_words(trie.root)
+        
+        with open(output_path, 'wb') as f:
+            # 写入版本号（使用LITTLE_ENDIAN）
+            f.write(struct.pack('<i', 3))  # 版本3，简化格式，LITTLE_ENDIAN
+            
+            # 写入数据条目数量
+            f.write(struct.pack('<i', len(trie_data)))
+            
+            # 写入每个条目
+            for pinyin, words in trie_data.items():
+                # 写入拼音长度和拼音
+                pinyin_bytes = pinyin.encode('utf-8')
+                f.write(struct.pack('<i', len(pinyin_bytes)))
+                f.write(pinyin_bytes)
+                
+                # 写入词语数量
+                f.write(struct.pack('<i', len(words)))
+                
+                # 写入每个词语
+                for word_item in words:
+                    word_bytes = word_item['word'].encode('utf-8')
+                    f.write(struct.pack('<i', len(word_bytes)))
+                    f.write(word_bytes)
+                    f.write(struct.pack('<i', word_item['frequency']))
         
         # 验证文件
         file_size = os.path.getsize(output_path)
@@ -223,7 +259,7 @@ def save_trie_to_file(trie: PinyinTrie, output_path: str):
         return False
 
 def verify_trie_file(file_path: str) -> bool:
-    """验证生成的Trie文件是否可用"""
+    """验证生成的Trie文件是否可用 - 版本3格式"""
     print(f"正在验证Trie文件: {file_path}")
     
     try:
@@ -234,25 +270,27 @@ def verify_trie_file(file_path: str) -> bool:
                 print("错误：文件格式不正确，无法读取版本号")
                 return False
             
-            version = struct.unpack('>i', version_bytes)[0]
+            version = struct.unpack('<i', version_bytes)[0]
             print(f"文件版本号: {version}")
             
-            # 尝试加载Trie对象
-            trie = pickle.load(f)
-            
-            if not isinstance(trie, PinyinTrie):
-                print("错误：文件中的对象不是PinyinTrie类型")
+            if version != 3:
+                print(f"错误：不支持的版本号 {version}，期望版本3")
                 return False
             
-            # 检查Trie树是否为空
-            if trie.is_empty():
-                print("警告：Trie树为空")
+            # 读取条目数量
+            count_bytes = f.read(4)
+            if len(count_bytes) != 4:
+                print("错误：无法读取条目数量")
                 return False
             
-            # 获取统计信息
-            node_count, word_count = trie.get_memory_stats()
-            print(f"验证成功！Trie树统计：节点数 = {node_count}, 词语数 = {word_count}")
+            count = struct.unpack('<i', count_bytes)[0]
+            print(f"拼音条目数量: {count}")
             
+            if count <= 0:
+                print("错误：条目数量无效")
+                return False
+            
+            print(f"验证成功！文件包含 {count} 个拼音条目")
             return True
             
     except Exception as e:

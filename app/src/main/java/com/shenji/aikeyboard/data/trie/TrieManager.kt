@@ -37,6 +37,9 @@ class TrieManager private constructor() {
     // 加载状态映射
     private val loadedStatus = ConcurrentHashMap<TrieType, Boolean>()
     
+    // 加载中状态映射 - 新增
+    private val loadingStatus = ConcurrentHashMap<TrieType, Boolean>()
+    
     // 初始化状态
     private var isInitialized = false
     
@@ -315,68 +318,38 @@ class TrieManager private constructor() {
     }
     
     /**
-     * 优化的Trie反序列化方法
+     * 简化的Trie反序列化方法 - 统一使用版本3格式
      */
     private fun deserializeTrieOptimized(file: File): PinyinTrie? {
         return try {
-            FileInputStream(file).use { rawFis ->
-                val bufferedFis = rawFis.buffered(LARGE_BUFFER_SIZE)
-                
-                // 先读取版本号
-                val versionBytes = ByteArray(4)
-                if (bufferedFis.read(versionBytes) != 4) {
-                    Timber.w("无法读取版本号，尝试旧格式")
-                    return deserializeTrieLegacyFormat(file)
-                }
-                
-                val version = java.nio.ByteBuffer.wrap(versionBytes).order(java.nio.ByteOrder.BIG_ENDIAN).int
-                Timber.d("检测到文件版本: $version")
-                
-                when (version) {
-                    2 -> {
-                        // 版本2：Java序列化格式
-                        // 重新打开文件，跳过版本号
-                        FileInputStream(file).use { fis ->
-                            fis.skip(4) // 跳过版本号
-                            ObjectInputStream(fis.buffered(LARGE_BUFFER_SIZE)).use { ois ->
-                                ois.readObject() as PinyinTrie
-                            }
-                        }
-                    }
-                    3 -> {
-                        // 版本3：简化二进制格式
-                        // 重新打开文件从头开始读取
-                        FileInputStream(file).use { fis ->
-                            deserializeSimplifiedFormatFromStart(fis.buffered(LARGE_BUFFER_SIZE))
-                        }
-                    }
-                    else -> {
-                        Timber.w("未知版本号 $version，尝试旧格式")
-                        deserializeTrieLegacyFormat(file)
-                    }
-                }
+            FileInputStream(file).use { fis ->
+                deserializeSimplifiedFormat(fis.buffered(LARGE_BUFFER_SIZE))
             }
         } catch (e: Exception) {
-            Timber.e(e, "优化反序列化失败")
+            Timber.e(e, "Trie反序列化失败: ${file.name}")
             null
         }
     }
     
     /**
-     * 从文件开头反序列化简化格式（版本3）
+     * 统一的简化格式反序列化（版本3格式）
      */
-    private fun deserializeSimplifiedFormatFromStart(inputStream: java.io.InputStream): PinyinTrie? {
+    private fun deserializeSimplifiedFormat(inputStream: java.io.InputStream): PinyinTrie? {
         return try {
             val trie = PinyinTrie()
             
-            // 读取版本号
+            // 读取版本号（固定为3）
             val versionBytes = ByteArray(4)
             if (inputStream.read(versionBytes) != 4) {
                 Timber.e("无法读取版本号")
                 return null
             }
-            val version = java.nio.ByteBuffer.wrap(versionBytes).order(java.nio.ByteOrder.BIG_ENDIAN).int
-            Timber.d("版本号: $version")
+            val version = java.nio.ByteBuffer.wrap(versionBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
+            
+            if (version != 3) {
+                Timber.e("不支持的版本号: $version，期望版本3")
+                return null
+            }
             
             // 读取拼音条目数量
             val countBytes = ByteArray(4)
@@ -384,7 +357,7 @@ class TrieManager private constructor() {
                 Timber.e("无法读取拼音条目数量")
                 return null
             }
-            val count = java.nio.ByteBuffer.wrap(countBytes).order(java.nio.ByteOrder.BIG_ENDIAN).int
+            val count = java.nio.ByteBuffer.wrap(countBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
             Timber.d("开始加载 $count 个拼音条目")
             
             var loadedCount = 0
@@ -395,8 +368,6 @@ class TrieManager private constructor() {
             val runtime = Runtime.getRuntime()
             val maxMemory = runtime.maxMemory()
             val initialUsedMemory = runtime.totalMemory() - runtime.freeMemory()
-            
-            Timber.d("内存状态 - 最大: ${maxMemory/1024/1024}MB, 初始使用: ${initialUsedMemory/1024/1024}MB")
             
             for (i in 0 until count) {
                 try {
@@ -418,7 +389,7 @@ class TrieManager private constructor() {
                     // 读取拼音长度
                     val pinyinLenBytes = ByteArray(4)
                     if (inputStream.read(pinyinLenBytes) != 4) break
-                    val pinyinLen = java.nio.ByteBuffer.wrap(pinyinLenBytes).order(java.nio.ByteOrder.BIG_ENDIAN).int
+                    val pinyinLen = java.nio.ByteBuffer.wrap(pinyinLenBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                     
                     // 读取拼音
                     val pinyinBytes = ByteArray(pinyinLen)
@@ -428,7 +399,7 @@ class TrieManager private constructor() {
                     // 读取词语数量
                     val wordCountBytes = ByteArray(4)
                     if (inputStream.read(wordCountBytes) != 4) break
-                    val wordCount = java.nio.ByteBuffer.wrap(wordCountBytes).order(java.nio.ByteOrder.BIG_ENDIAN).int
+                    val wordCount = java.nio.ByteBuffer.wrap(wordCountBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                     
                     // 处理拼音格式：只保留连写格式
                     val normalizedPinyin = pinyin.replace(" ", "").lowercase()
@@ -438,7 +409,7 @@ class TrieManager private constructor() {
                         // 读取词语长度
                         val wordLenBytes = ByteArray(4)
                         if (inputStream.read(wordLenBytes) != 4) break
-                        val wordLen = java.nio.ByteBuffer.wrap(wordLenBytes).order(java.nio.ByteOrder.BIG_ENDIAN).int
+                        val wordLen = java.nio.ByteBuffer.wrap(wordLenBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                         
                         // 读取词语
                         val wordBytes = ByteArray(wordLen)
@@ -448,9 +419,9 @@ class TrieManager private constructor() {
                         // 读取词频
                         val frequencyBytes = ByteArray(4)
                         if (inputStream.read(frequencyBytes) != 4) break
-                        val frequency = java.nio.ByteBuffer.wrap(frequencyBytes).order(java.nio.ByteOrder.BIG_ENDIAN).int
+                        val frequency = java.nio.ByteBuffer.wrap(frequencyBytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).int
                         
-                        // 只插入连写格式，减少内存占用
+                        // 插入到Trie树
                         try {
                             // 只加载高频词汇（词频>100）以减少内存压力
                             if (frequency > 100) {
@@ -462,7 +433,6 @@ class TrieManager private constructor() {
                         } catch (e: OutOfMemoryError) {
                             Timber.w("内存不足，跳过词语: $word")
                             skippedWords++
-                            // 触发GC尝试释放内存
                             System.gc()
                         }
                     }
@@ -478,7 +448,7 @@ class TrieManager private constructor() {
             val finalUsedMemory = runtime.totalMemory() - runtime.freeMemory()
             val memoryIncrease = (finalUsedMemory - initialUsedMemory) / 1024 / 1024
             
-            Timber.d("简化格式加载完成:")
+            Timber.d("Trie加载完成:")
             Timber.d("  - 加载了 $loadedCount/$count 个拼音条目")
             Timber.d("  - 总词语数: $totalWords")
             Timber.d("  - 跳过词语数: $skippedWords")
@@ -498,22 +468,6 @@ class TrieManager private constructor() {
     }
     
     /**
-     * 旧格式Trie反序列化
-     */
-    private fun deserializeTrieLegacyFormat(file: File): PinyinTrie? {
-        return try {
-            FileInputStream(file).buffered(LARGE_BUFFER_SIZE).use { fis ->
-                ObjectInputStream(fis).use { ois ->
-                    ois.readObject() as PinyinTrie
-                }
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "旧格式反序列化失败")
-            null
-        }
-    }
-    
-    /**
      * 手动加载指定类型的Trie树到内存（优化版本）
      * @param type Trie树类型
      * @return 是否加载成功
@@ -522,6 +476,9 @@ class TrieManager private constructor() {
         val context = ShenjiApplication.appContext
         
         return try {
+            // 设置加载中状态
+            loadingStatus[type] = true
+            
             val startTime = System.currentTimeMillis()
             var trie: PinyinTrie? = null
             
@@ -550,6 +507,9 @@ class TrieManager private constructor() {
             Timber.e(e, "手动加载${getDisplayName(type)}Trie树失败")
             loadedStatus[type] = false
             false
+        } finally {
+            // 清除加载中状态
+            loadingStatus[type] = false
         }
     }
     
@@ -570,6 +530,24 @@ class TrieManager private constructor() {
      */
     fun isTrieLoaded(type: TrieType): Boolean {
         return loadedStatus[type] == true && trieMap.containsKey(type)
+    }
+    
+    /**
+     * 获取指定类型的Trie树实例
+     * @param type Trie树类型
+     * @return Trie树实例，如果未加载则返回null
+     */
+    fun getTrie(type: TrieType): PinyinTrie? {
+        return trieMap[type]
+    }
+    
+    /**
+     * 检查指定类型的Trie树是否正在加载中
+     * @param type Trie树类型
+     * @return 是否正在加载
+     */
+    fun isLoading(type: TrieType): Boolean {
+        return loadingStatus[type] == true
     }
     
     /**

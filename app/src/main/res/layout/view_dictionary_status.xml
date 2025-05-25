@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#F8F8F8"
+    android:padding="8dp">
+
+    <!-- 标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="词库状态监控"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#333333" />
+
+        <Button
+            android:id="@+id/refresh_button"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="刷新"
+            android:textSize="12sp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:background="@drawable/button_refresh_background"
+            android:textColor="#666666" />
+    </LinearLayout>
+
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Realm数据库状态 -->
+    <TextView
+        android:id="@+id/realm_status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Realm数据库状态：检查中..."
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:paddingBottom="4dp"
+        android:lineSpacingExtra="2dp" />
+
+    <!-- Trie词典状态 -->
+    <TextView
+        android:id="@+id/trie_status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trie词典状态：检查中..."
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:lineSpacingExtra="2dp" />
+
+</LinearLayout> 

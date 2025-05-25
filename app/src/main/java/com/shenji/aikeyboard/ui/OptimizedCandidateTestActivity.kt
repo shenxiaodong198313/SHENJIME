@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.keyboard.OptimizedCandidateEngine
+import com.shenji.aikeyboard.ui.DictionaryStatusView
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -30,6 +31,7 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
     private lateinit var performanceTextView: TextView
     private lateinit var clearCacheButton: Button
     private lateinit var testSamplesButton: Button
+    private lateinit var dictionaryStatusView: DictionaryStatusView
     
     private val candidateEngine = OptimizedCandidateEngine.getInstance()
     
@@ -51,10 +53,19 @@ class OptimizedCandidateTestActivity : AppCompatActivity() {
         performanceTextView = findViewById(R.id.performanceTextView)
         clearCacheButton = findViewById(R.id.clearCacheButton)
         testSamplesButton = findViewById(R.id.testSamplesButton)
+        dictionaryStatusView = findViewById(R.id.dictionary_status_view)
         
         // 设置初始提示
         candidatesTextView.text = "请输入拼音进行测试..."
         analysisTextView.text = "输入策略分析将在这里显示"
+        
+        // 初始化词库状态监控
+        try {
+            dictionaryStatusView.refreshStatus()
+            Timber.d("词库状态监控组件初始化成功")
+        } catch (e: Exception) {
+            Timber.e(e, "词库状态监控组件初始化失败")
+        }
     }
     
     private fun setupListeners() {

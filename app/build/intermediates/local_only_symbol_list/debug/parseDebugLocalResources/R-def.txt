@@ -41,6 +41,7 @@ color white
 dimen candidate_divider_height
 dimen candidate_word_margin
 drawable bg_permission_needed
+drawable button_refresh_background
 drawable candidate_background
 drawable candidate_button_bg
 drawable candidate_item_background
@@ -118,6 +119,7 @@ id copy_result_button
 id current_input_text_view
 id default_candidates_view
 id detailText
+id dictionary_status_view
 id divider1
 id divider2
 id enable_breakpoint_checkbox
@@ -192,6 +194,8 @@ id progressBarLoading
 id query_condition_text_view
 id query_process_text
 id query_process_text_view
+id realm_status_text
+id refresh_button
 id refresh_logs_button
 id request_permission_button
 id request_sms_permission_button
@@ -231,6 +235,7 @@ id title_text
 id title_text_view
 id toolbar
 id toolbar_view
+id trie_status_text
 id tvBuildTrieDesc
 id tvDbEntryCount
 id tvDbFileName
@@ -299,6 +304,7 @@ layout item_dictionary_module
 layout keyboard_layout
 layout shimmer_dictionary_module
 layout shimmer_dictionary_stat_card
+layout view_dictionary_status
 menu menu_dictionary_list
 menu menu_dictionary_manager
 menu trie_build_menu

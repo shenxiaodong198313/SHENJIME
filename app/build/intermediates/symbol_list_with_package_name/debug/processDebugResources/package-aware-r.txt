@@ -3054,6 +3054,7 @@ drawable btn_radio_off_mtrl
 drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
+drawable button_refresh_background
 drawable candidate_background
 drawable candidate_button_bg
 drawable candidate_item_background
@@ -3381,6 +3382,7 @@ id design_menu_item_text
 id design_navigation_view
 id detailText
 id dialog_button
+id dictionary_status_view
 id dimensions
 id direct
 id disableHome
@@ -3665,7 +3667,9 @@ id query_process_text_view
 id radial
 id radio
 id ratio
+id realm_status_text
 id rectangles
+id refresh_button
 id refresh_logs_button
 id report_drawn
 id request_permission_button
@@ -3827,6 +3831,7 @@ id transition_position
 id transition_scene_layoutid_cache
 id transition_transform
 id triangle
+id trie_status_text
 id tvBuildTrieDesc
 id tvDbEntryCount
 id tvDbFileName
@@ -4111,6 +4116,7 @@ layout select_dialog_singlechoice_material
 layout shimmer_dictionary_module
 layout shimmer_dictionary_stat_card
 layout support_simple_spinner_dropdown_item
+layout view_dictionary_status
 menu menu_dictionary_list
 menu menu_dictionary_manager
 menu trie_build_menu

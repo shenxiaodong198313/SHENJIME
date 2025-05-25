@@ -13,10 +13,10 @@ import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ShenjiApplication
 import com.shenji.aikeyboard.model.WordFrequency
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import timber.log.Timber
 import android.graphics.Color
+import kotlinx.coroutines.Dispatchers
 
 class ShenjiInputMethodService : InputMethodService() {
     
@@ -419,6 +419,9 @@ class ShenjiInputMethodService : InputMethodService() {
             return
         }
         
+        // 🔧 新增：在处理输入前确保chars词典可用
+        ensureCharsTrieLoaded()
+        
         showCandidates()
         
         // 使用简化的候选词查询
@@ -610,6 +613,10 @@ class ShenjiInputMethodService : InputMethodService() {
     
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        
+        // 🔧 新增：确保chars词典始终可用
+        ensureCharsTrieLoaded()
+        
         // 获取并显示当前应用名称
         if (::appNameDisplay.isInitialized) {
             val packageName = info?.packageName ?: ""
@@ -663,6 +670,37 @@ class ShenjiInputMethodService : InputMethodService() {
         } catch (e: Exception) {
             Timber.e(e, "获取应用名称失败")
             return "${packageName}已增强"
+        }
+    }
+    
+    /**
+     * 确保chars词典始终可用
+     * 如果检测到chars词典未加载，立即自动加载
+     */
+    private fun ensureCharsTrieLoaded() {
+        try {
+            val trieManager = ShenjiApplication.trieManager
+            if (!trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)) {
+                Timber.w("检测到chars词典未加载，开始自动加载...")
+                
+                // 在后台线程中加载，避免阻塞UI
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    try {
+                        val loaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                        if (loaded) {
+                            Timber.i("chars词典自动加载成功")
+                        } else {
+                            Timber.e("chars词典自动加载失败")
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "chars词典自动加载异常: ${e.message}")
+                    }
+                }
+            } else {
+                Timber.d("chars词典已加载，状态正常")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "检查chars词典状态失败: ${e.message}")
         }
     }
 }

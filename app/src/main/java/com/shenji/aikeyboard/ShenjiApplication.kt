@@ -95,6 +95,20 @@ class ShenjiApplication : MultiDexApplication() {
             // 初始化Trie管理器（轻量级初始化）
             trieManager.init()
             
+            // 🔧 新增：确保chars词典在启动时同步加载
+            logStartupMessage("开始加载基础chars词典...")
+            try {
+                val charsLoaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                if (charsLoaded) {
+                    logStartupMessage("chars词典加载成功")
+                } else {
+                    logStartupMessage("chars词典加载失败，但应用将继续运行")
+                }
+            } catch (e: Exception) {
+                logStartupMessage("chars词典加载异常: ${e.message}")
+                Timber.e(e, "chars词典加载异常")
+            }
+            
             // 异步初始化优化引擎（预加载核心Trie）
             GlobalScope.launch(Dispatchers.IO) {
                 try {

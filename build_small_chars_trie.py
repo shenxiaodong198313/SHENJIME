@@ -115,28 +115,28 @@ def save_trie_data_file(trie_data: Dict, output_path: str) -> bool:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         with open(output_path, 'wb') as f:
-            # 写入版本号
-            f.write(struct.pack('>i', 3))  # 使用版本3表示简化格式
+            # 写入版本号（使用LITTLE_ENDIAN）
+            f.write(struct.pack('<i', 3))  # 版本3，简化格式，LITTLE_ENDIAN
             
             # 写入数据条目数量
-            f.write(struct.pack('>i', len(trie_data)))
+            f.write(struct.pack('<i', len(trie_data)))
             
             # 写入每个条目
             for pinyin, words in trie_data.items():
                 # 写入拼音长度和拼音
                 pinyin_bytes = pinyin.encode('utf-8')
-                f.write(struct.pack('>i', len(pinyin_bytes)))
+                f.write(struct.pack('<i', len(pinyin_bytes)))
                 f.write(pinyin_bytes)
                 
                 # 写入词语数量
-                f.write(struct.pack('>i', len(words)))
+                f.write(struct.pack('<i', len(words)))
                 
                 # 写入每个词语
                 for word_item in words:
                     word_bytes = word_item['word'].encode('utf-8')
-                    f.write(struct.pack('>i', len(word_bytes)))
+                    f.write(struct.pack('<i', len(word_bytes)))
                     f.write(word_bytes)
-                    f.write(struct.pack('>i', word_item['frequency']))
+                    f.write(struct.pack('<i', word_item['frequency']))
         
         file_size = os.path.getsize(output_path)
         print(f"文件保存成功！文件大小: {file_size} 字节 ({file_size/1024:.2f} KB)")
@@ -153,21 +153,21 @@ def main():
     output_path = "app/src/main/assets/trie/chars_trie.dat"
     
     print("=" * 60)
-    print("神迹输入法 - 小型chars Trie构建工具")
+    print("神迹输入法 - 完整chars Trie构建工具")
     print("=" * 60)
     print(f"输入文件: {input_path}")
     print(f"输出文件: {output_path}")
-    print("策略: 保留30%高频词，每个拼音最多30个词")
+    print("策略: 保留100%全部词条，每个拼音最多50个词")
     print("=" * 60)
     
-    # 解析并筛选词典文件
-    entries = parse_and_filter_chars_dict(input_path, percentage=0.3)
+    # 解析并筛选词典文件 - 使用100%全部词条
+    entries = parse_and_filter_chars_dict(input_path, percentage=1.0)
     if not entries:
         print("❌ 解析词典文件失败")
         return 1
     
-    # 构建小型Trie数据
-    trie_data = build_small_trie_data(entries, max_words_per_pinyin=30)
+    # 构建完整Trie数据 - 增加每个拼音的词语数量限制
+    trie_data = build_small_trie_data(entries, max_words_per_pinyin=50)
     if not trie_data:
         print("❌ 构建Trie数据失败")
         return 1
@@ -178,7 +178,7 @@ def main():
         return 1
     
     print("=" * 60)
-    print("✅ 小型chars Trie文件构建成功！")
+    print("✅ 完整chars Trie文件构建成功！")
     print(f"📁 输出文件: {output_path}")
     print("=" * 60)
     
