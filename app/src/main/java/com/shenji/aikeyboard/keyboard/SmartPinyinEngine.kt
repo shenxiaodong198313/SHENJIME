@@ -19,7 +19,7 @@ import kotlin.system.measureTimeMillis
  * 3. 6分段以上停止查询的性能优化
  * 4. 清晰的查询优先级
  */
-class SmartPinyinEngine private constructor() {
+class SmartPinyinEngine private constructor() : CandidateEngine {
     
     private val trieManager = TrieManager.instance
     
@@ -78,10 +78,10 @@ class SmartPinyinEngine private constructor() {
         STOP_QUERY             // 停止查询
     }
     
-        /**
+    /**
      * 主要查询接口
      */
-    suspend fun getCandidates(currentPinyin: String, limit: Int = 25, offset: Int = 0): List<WordFrequency> {
+    override suspend fun getCandidates(currentPinyin: String, limit: Int, offset: Int): List<WordFrequency> {
         if (currentPinyin.isBlank()) return emptyList()
         
         val cleanInput = currentPinyin.trim().lowercase()
@@ -134,6 +134,13 @@ class SmartPinyinEngine private constructor() {
         } else {
             emptyList()
         }
+    }
+    
+    /**
+     * 带默认参数的便捷方法
+     */
+    suspend fun getCandidates(currentPinyin: String, limit: Int = 25): List<WordFrequency> {
+        return getCandidates(currentPinyin, limit, 0)
     }
     
     /**
@@ -231,7 +238,7 @@ class SmartPinyinEngine private constructor() {
         return validSyllables.contains(syllable.lowercase())
     }
     
-        /**
+    /**
      * 单字符查询（智能分层推荐）
      */
     private suspend fun querySingleChar(char: String, limit: Int): List<WordFrequency> {
@@ -414,7 +421,7 @@ class SmartPinyinEngine private constructor() {
         )
     }
     
-        /**
+    /**
      * 带回退机制的查询（Trie失败时查询Realm）
      */
     private suspend fun queryWithFallback(
@@ -571,7 +578,7 @@ class SmartPinyinEngine private constructor() {
         return segments
     }
     
-        /**
+    /**
      * 智能单字符查询
      * 分层推荐策略：
      * 1. 第一层：该字母+各韵母组合的高频单字（每个组合前3个）
@@ -716,9 +723,17 @@ class SmartPinyinEngine private constructor() {
     }
     
     /**
+     * 获取拼音分段结果
+     * 实现CandidateEngine接口
+     */
+    override fun getSegments(input: String): List<String> {
+        return simpleSegmentation(input)
+    }
+    
+    /**
      * 清理缓存
      */
-    fun clearCache() {
+    override fun clearCache() {
         queryCache.evictAll()
         Timber.d("SmartPinyinEngine: 缓存已清理")
     }
@@ -726,7 +741,7 @@ class SmartPinyinEngine private constructor() {
     /**
      * 获取性能统计
      */
-    fun getPerformanceStats(): String {
+    override fun getPerformanceStats(): String {
         val hitRate = if (queryCount.get() > 0) {
             (cacheHits.get() * 100.0 / queryCount.get()).toInt()
         } else 0

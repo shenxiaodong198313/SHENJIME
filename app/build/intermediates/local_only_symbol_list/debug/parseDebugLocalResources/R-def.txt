@@ -32,6 +32,8 @@ color purple_500
 color purple_700
 color secondary_gray
 color shimmer_color
+color splash_background_color
+color splash_text_color
 color success_green
 color teal_200
 color teal_50
@@ -63,6 +65,7 @@ drawable keyboard_function_key_bg
 drawable keyboard_key_bg
 drawable keyboard_space_key_bg
 drawable keyboard_special_key_bg
+drawable splash_background
 id accessibility_settings_button
 id action_build_trie
 id action_clear_cache
@@ -405,6 +408,7 @@ style KeyboardSpecialButton
 style Theme.AIKeyboard
 style Theme.AIKeyboard.PopupOverlay
 style Theme.SHENJI
+style Theme.SHENJI.Splash
 xml accessibility_service_config
 xml file_paths
 xml method

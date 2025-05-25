@@ -96,8 +96,8 @@
 57-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:43:13-43
 58            android:exported="true"
 58-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:44:13-36
-59            android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
-59-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:45:13-69
+59            android:theme="@style/Theme.SHENJI.Splash" >
+59-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:45:13-55
 60            <intent-filter>
 60-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:46:13-49:29
 61                <action android:name="android.intent.action.MAIN" />

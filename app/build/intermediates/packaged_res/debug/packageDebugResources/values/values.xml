@@ -31,6 +31,8 @@
     <color name="purple_700">#FF3700B3</color>
     <color name="secondary_gray">#FF757575</color>
     <color name="shimmer_color">#DDDDDD</color>
+    <color name="splash_background_color">#FFFFFF</color>
+    <color name="splash_text_color">#333333</color>
     <color name="success_green">#FF4CAF50</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_50">#E0F2F1</color>
@@ -207,5 +209,12 @@
         
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         
+    </style>
+    <style name="Theme.SHENJI.Splash" parent="Theme.SHENJI">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowIsTranslucent">false</item>
     </style>
 </resources>

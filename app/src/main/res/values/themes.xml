@@ -15,6 +15,15 @@
         <!-- Customize your theme here. -->
     </style>
     
+    <!-- 启动页主题 - 解决白屏问题 -->
+    <style name="Theme.SHENJI.Splash" parent="Theme.SHENJI">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowIsTranslucent">false</item>
+    </style>
+    
     <!-- AIKeyboard主题定义 -->
     <style name="Theme.AIKeyboard" parent="Theme.SHENJI">
         <!-- 在这里定义AIKeyboard主题特有属性 -->

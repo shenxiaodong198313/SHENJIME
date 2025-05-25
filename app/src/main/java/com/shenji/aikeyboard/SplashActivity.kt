@@ -185,43 +185,73 @@ class SplashActivity : AppCompatActivity() {
     }
     
     /**
-     * 阶段3: 加载核心chars词典
+     * 阶段3: 加载核心chars和base词典
      */
     private suspend fun loadCoreCharsDictionary() = withContext(Dispatchers.IO) {
-        updateDetail("正在加载核心单字词典...")
+        updateDetail("正在加载核心词典...")
         
         try {
             val trieManager = TrieManager.instance
             trieManager.init()
             
-            // 只加载chars词典
+            var loadedCount = 0
+            var totalTime = 0L
+            
+            // 加载chars词典
             if (trieManager.isTrieFileExists(TrieType.CHARS)) {
-                updateDetail("检测到chars词典文件...")
+                updateDetail("正在加载单字词典...")
                 
                 val startTime = System.currentTimeMillis()
                 val success = trieManager.loadTrieToMemory(TrieType.CHARS)
                 val loadTime = System.currentTimeMillis() - startTime
+                totalTime += loadTime
                 
                 if (success) {
-                    updateDetail("chars词典加载成功 (${loadTime}ms)")
+                    loadedCount++
+                    updateDetail("单字词典加载成功 (${loadTime}ms)")
                     Timber.i("chars词典加载成功，耗时: ${loadTime}ms")
-                    
-                    // 检查内存使用
-                    val runtime = Runtime.getRuntime()
-                    val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
-                    updateDetail("当前内存使用: ${usedMemory}MB")
-                    
                 } else {
-                    updateDetail("chars词典加载失败，将使用数据库查询")
+                    updateDetail("单字词典加载失败")
                     Timber.w("chars词典加载失败")
                 }
             } else {
-                updateDetail("未找到chars词典文件")
+                updateDetail("未找到单字词典文件")
                 Timber.w("chars词典文件不存在")
             }
             
+            // 加载base词典
+            if (trieManager.isTrieFileExists(TrieType.BASE)) {
+                updateDetail("正在加载基础词典...")
+                
+                val startTime = System.currentTimeMillis()
+                val success = trieManager.loadTrieToMemory(TrieType.BASE)
+                val loadTime = System.currentTimeMillis() - startTime
+                totalTime += loadTime
+                
+                if (success) {
+                    loadedCount++
+                    updateDetail("基础词典加载成功 (${loadTime}ms)")
+                    Timber.i("base词典加载成功，耗时: ${loadTime}ms")
+                } else {
+                    updateDetail("基础词典加载失败")
+                    Timber.w("base词典加载失败")
+                }
+            } else {
+                updateDetail("未找到基础词典文件")
+                Timber.w("base词典文件不存在")
+            }
+            
+            // 总结加载结果
+            updateDetail("词典加载完成: ${loadedCount}/2 (总耗时${totalTime}ms)")
+            Timber.i("核心词典加载完成: ${loadedCount}/2个成功，总耗时: ${totalTime}ms")
+            
+            // 检查内存使用
+            val runtime = Runtime.getRuntime()
+            val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+            updateDetail("当前内存使用: ${usedMemory}MB")
+            
         } catch (e: Exception) {
-            Timber.e(e, "加载chars词典时出错")
+            Timber.e(e, "加载核心词典时出错")
             updateDetail("词典加载异常: ${e.message}")
             // 不抛出异常，允许应用继续启动
         }
@@ -322,7 +352,7 @@ class SplashActivity : AppCompatActivity() {
         return when (phase) {
             StartupPhase.DATABASE_INIT -> "正在初始化Realm数据库..."
             StartupPhase.MEMORY_CLEANUP -> "正在清理内存，优化性能..."
-            StartupPhase.CORE_DICT_LOADING -> "正在加载核心单字词典..."
+            StartupPhase.CORE_DICT_LOADING -> "正在加载核心词典..."
             StartupPhase.STARTUP_COMPLETE -> "正在完成启动准备..."
         }
     }

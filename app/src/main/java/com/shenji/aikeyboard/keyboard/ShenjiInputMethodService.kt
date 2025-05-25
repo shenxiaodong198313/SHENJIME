@@ -424,12 +424,12 @@ class ShenjiInputMethodService : InputMethodService() {
         
         showCandidates()
         
-        // 使用简化的候选词查询
+        // 🚀 使用最新的SmartPinyinEngine通过适配器
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
             try {
-                val pinyinAdapter = PinyinIMEAdapter.getInstance()
+                val engineAdapter = InputMethodEngineAdapter.getInstance()
                 val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    pinyinAdapter.getCandidates(input, 20)
+                    engineAdapter.getCandidates(input, 20)
                 }
                 
                 // 更新拼音显示
@@ -438,14 +438,14 @@ class ShenjiInputMethodService : InputMethodService() {
                 if (result.isNotEmpty()) {
                     candidates = result
                     updateCandidatesView(result)
-                    Timber.d("加载候选词: ${result.size}个")
+                    Timber.d("🎯 新引擎加载候选词: ${result.size}个")
                 } else {
                     candidates = emptyList()
                     clearCandidatesView()
-                    Timber.d("未找到候选词")
+                    Timber.d("🎯 新引擎未找到候选词")
                 }
             } catch (e: Exception) {
-                Timber.e(e, "加载候选词失败")
+                Timber.e(e, "🎯 新引擎加载候选词失败")
                 candidates = emptyList()
                 clearCandidatesView()
             }
@@ -461,8 +461,8 @@ class ShenjiInputMethodService : InputMethodService() {
             Timber.d("开始更新键盘拼音显示，输入: '$input'")
             
             // 获取分段拆分结果
-            val pinyinAdapter = PinyinIMEAdapter.getInstance()
-            val syllables = pinyinAdapter.splitPinyin(input)
+            val engineAdapter = InputMethodEngineAdapter.getInstance()
+            val syllables = engineAdapter.getSegments(input)
             
             Timber.d("拼音拆分结果: ${syllables.joinToString("+")}")
             

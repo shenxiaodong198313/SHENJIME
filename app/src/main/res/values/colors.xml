@@ -43,4 +43,8 @@
     <color name="success_green">#FF4CAF50</color>
     <color name="warning_orange">#FFFF9800</color>
     <color name="error_red">#FFF44336</color>
+    
+    <!-- 启动页颜色 -->
+    <color name="splash_background_color">#FFFFFF</color>
+    <color name="splash_text_color">#333333</color>
 </resources> 

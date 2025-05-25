@@ -10,7 +10,7 @@ import androidx.multidex.MultiDexApplication
 import com.shenji.aikeyboard.data.Entry
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.logger.CrashReportingTree
-import com.shenji.aikeyboard.keyboard.OptimizedCandidateEngine
+import com.shenji.aikeyboard.keyboard.InputMethodEngineAdapter
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -39,9 +39,9 @@ class ShenjiApplication : MultiDexApplication() {
             
         lateinit var realm: Realm
             
-        // 优化的候选词引擎（新增）
-        val optimizedCandidateEngine by lazy {
-            OptimizedCandidateEngine.getInstance()
+        // 输入法引擎适配器（新增）
+        val inputMethodEngineAdapter by lazy {
+            InputMethodEngineAdapter.getInstance()
         }
         
         // Trie树管理器
@@ -95,18 +95,30 @@ class ShenjiApplication : MultiDexApplication() {
             // 初始化Trie管理器（轻量级初始化）
             trieManager.init()
             
-            // 🔧 新增：确保chars词典在启动时同步加载
-            logStartupMessage("开始加载基础chars词典...")
+            // 🔧 新增：确保chars和base词典在启动时同步加载
+            logStartupMessage("开始加载基础词典...")
             try {
+                // 加载chars词典
                 val charsLoaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
                 if (charsLoaded) {
                     logStartupMessage("chars词典加载成功")
                 } else {
-                    logStartupMessage("chars词典加载失败，但应用将继续运行")
+                    logStartupMessage("chars词典加载失败")
                 }
+                
+                // 加载base词典
+                val baseLoaded = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+                if (baseLoaded) {
+                    logStartupMessage("base词典加载成功")
+                } else {
+                    logStartupMessage("base词典加载失败")
+                }
+                
+                logStartupMessage("基础词典加载完成 - chars: ${if (charsLoaded) "✓" else "✗"}, base: ${if (baseLoaded) "✓" else "✗"}")
+                
             } catch (e: Exception) {
-                logStartupMessage("chars词典加载异常: ${e.message}")
-                Timber.e(e, "chars词典加载异常")
+                logStartupMessage("基础词典加载异常: ${e.message}")
+                Timber.e(e, "基础词典加载异常")
             }
             
             // 异步初始化优化引擎（预加载核心Trie）
@@ -114,7 +126,7 @@ class ShenjiApplication : MultiDexApplication() {
                 try {
                     Timber.d("开始初始化优化候选词引擎")
                     // 触发优化引擎的初始化，这会在后台预加载核心Trie
-                    optimizedCandidateEngine
+                    inputMethodEngineAdapter
                     Timber.d("优化候选词引擎初始化完成")
                 } catch (e: Exception) {
                     Timber.e(e, "优化候选词引擎初始化失败")
