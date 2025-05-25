@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
                 openLogDetail()
             }
             
-            // 智能候选词引擎测试
+            // 候选词引擎测试
             binding.btnOptimizedTest?.setOnClickListener {
                 Log.d("MainActivity", "btn_optimized_test 按钮被点击")
                 openOptimizedCandidateTest()
@@ -112,16 +112,16 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * 打开智能候选词引擎测试
+     * 打开候选词引擎测试
      */
     private fun openOptimizedCandidateTest() {
         try {
-            Timber.d("打开智能候选词引擎测试")
-            val intent = Intent(this, OptimizedCandidateTestActivity::class.java)
+            Timber.d("打开候选词引擎测试")
+            val intent = Intent(this, SmartPinyinMvpTestActivity::class.java)
             startActivity(intent)
         } catch (e: Exception) {
-            Log.e("MainActivity", "打开智能候选词引擎测试失败: ${e.message}", e)
-            Toast.makeText(this, "无法打开智能候选词引擎测试: ${e.message}", Toast.LENGTH_SHORT).show()
+            Log.e("MainActivity", "打开候选词引擎测试失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开候选词引擎测试: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     

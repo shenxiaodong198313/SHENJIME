@@ -35,6 +35,13 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- 词库状态监控 -->
+            <com.shenji.aikeyboard.ui.DictionaryStatusView
+                android:id="@+id/dictionary_status_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp" />
+
             <!-- 生成随机测试用例按钮 -->
             <Button
                 android:id="@+id/generateTestButton"

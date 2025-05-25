@@ -43,6 +43,7 @@ class SmartPinyinMvpTestActivity : AppCompatActivity() {
     private lateinit var lengthTest1to4Button: Button
     private lateinit var lengthTest1to5Button: Button
     private lateinit var lengthTest1to6Button: Button
+    private lateinit var dictionaryStatusView: DictionaryStatusView
     
     private val smartEngine = SmartPinyinEngine.getInstance()
     
@@ -108,16 +109,25 @@ class SmartPinyinMvpTestActivity : AppCompatActivity() {
         lengthTest1to4Button = findViewById(R.id.lengthTest1to4Button)
         lengthTest1to5Button = findViewById(R.id.lengthTest1to5Button)
         lengthTest1to6Button = findViewById(R.id.lengthTest1to6Button)
+        dictionaryStatusView = findViewById(R.id.dictionary_status_view)
         
         // 设置初始状态
         candidatesTextView.text = "候选词结果将在这里显示..."
         analysisTextView.text = "查询分析将在这里显示..."
+        
+        // 初始化词库状态监控
+        try {
+            dictionaryStatusView.refreshStatus()
+            Timber.d("词库状态监控组件初始化成功")
+        } catch (e: Exception) {
+            Timber.e(e, "词库状态监控组件初始化失败")
+        }
     }
     
     private fun setupToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "MVP引擎测试"
+        supportActionBar?.title = "候选词引擎测试"
     }
     
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

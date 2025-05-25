@@ -112,7 +112,6 @@ id checkDurationTextView
 id checkNameTextView
 id checkStatusTextView
 id check_all_permissions_button
-id clearCacheButton
 id clear_button
 id clear_cache_button
 id clear_logs_button
@@ -134,7 +133,6 @@ id expand_candidates_button
 id fragment_container
 id frequency_filter_spinner
 id generateTestButton
-id inputEditText
 id input_edit_text
 id key_0
 id key_1
@@ -194,8 +192,6 @@ id main_container
 id memory_card
 id memory_info_text
 id memory_usage_text
-id mvpTestButton
-id performanceTextView
 id performance_stats_text_view
 id permission_status_text_view
 id pinyin_container
@@ -237,7 +233,6 @@ id switch_s_sh
 id switch_select_all
 id switch_z_zh
 id tableModules
-id testSamplesButton
 id test_button
 id test_edit_text
 id thread_count_display
@@ -290,7 +285,6 @@ layout activity_input_debug
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
-layout activity_optimized_candidate_test
 layout activity_pinyin_test
 layout activity_smart_pinyin_mvp_test
 layout activity_splash

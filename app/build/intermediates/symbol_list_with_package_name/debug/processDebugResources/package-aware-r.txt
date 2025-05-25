@@ -3340,7 +3340,6 @@ id checkbox
 id checked
 id chronometer
 id circle_center
-id clearCacheButton
 id clear_button
 id clear_cache_button
 id clear_logs_button
@@ -3472,7 +3471,6 @@ id immediateStop
 id included
 id indeterminate
 id info
-id inputEditText
 id input_edit_text
 id invisible
 id inward
@@ -3609,7 +3607,6 @@ id mtrl_picker_text_input_range_start
 id mtrl_picker_title_text
 id mtrl_view_tag_bottom_padding
 id multiply
-id mvpTestButton
 id navigation_bar_item_active_indicator_view
 id navigation_bar_item_icon_container
 id navigation_bar_item_icon_view
@@ -3659,7 +3656,6 @@ id path
 id pathRelative
 id peekHeight
 id percent
-id performanceTextView
 id performance_stats_text_view
 id permission_status_text_view
 id pin
@@ -3797,7 +3793,6 @@ id tag_transition_group
 id tag_unhandled_key_event_manager
 id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
-id testSamplesButton
 id test_button
 id test_edit_text
 id text
@@ -4023,7 +4018,6 @@ layout activity_input_debug
 layout activity_input_method_settings
 layout activity_log_detail
 layout activity_main
-layout activity_optimized_candidate_test
 layout activity_pinyin_test
 layout activity_smart_pinyin_mvp_test
 layout activity_splash
