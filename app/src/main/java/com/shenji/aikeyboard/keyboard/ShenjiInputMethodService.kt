@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.Gravity
 import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.lifecycle.lifecycleScope
@@ -24,6 +25,9 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 键盘视图
     private lateinit var keyboardView: View
+    
+    // 候选词视图（独立）
+    private lateinit var candidatesViewLayout: View
     
     // 候选词容器
     private lateinit var candidatesContainer: LinearLayout
@@ -82,33 +86,42 @@ class ShenjiInputMethodService : InputMethodService() {
         Timber.d("输入法服务生命周期: onCreateInputView - 开始创建键盘视图")
         
         try {
-            // 加载键盘布局
-            keyboardView = layoutInflater.inflate(R.layout.keyboard_layout, null)
+            // 创建主容器，包含候选词和键盘
+            val mainContainer = LinearLayout(this)
+            mainContainer.orientation = LinearLayout.VERTICAL
+            mainContainer.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            mainContainer.setBackgroundColor(android.graphics.Color.parseColor("#F0F0F0")) // 调试背景色
+            
+            // 加载候选词布局
+            candidatesViewLayout = layoutInflater.inflate(R.layout.candidates_view, null)
             
             // 初始化候选词区域
-            candidatesContainer = keyboardView.findViewById(R.id.candidates_container)
-            defaultCandidatesView = keyboardView.findViewById(R.id.default_candidates_view)
-            candidatesView = keyboardView.findViewById(R.id.candidates_view)
-            expandCandidatesButton = keyboardView.findViewById(R.id.expand_candidates_button)
-            
-            // 确保候选词视图初始化正确
-            val params = defaultCandidatesView.layoutParams
-            params.height = 120 // 设置固定高度
-            defaultCandidatesView.layoutParams = params
+            candidatesContainer = candidatesViewLayout.findViewById(R.id.candidates_container)
+            defaultCandidatesView = candidatesViewLayout.findViewById(R.id.default_candidates_view)
+            candidatesView = candidatesViewLayout.findViewById(R.id.candidates_view)
+            expandCandidatesButton = candidatesViewLayout.findViewById(R.id.expand_candidates_button)
             
             // 初始化拼音显示区域
-            pinyinDisplay = keyboardView.findViewById(R.id.pinyin_display)
-            appNameDisplay = keyboardView.findViewById(R.id.app_name_display)
-            appIcon = keyboardView.findViewById(R.id.app_icon)
+            pinyinDisplay = candidatesViewLayout.findViewById(R.id.pinyin_display)
+            appNameDisplay = candidatesViewLayout.findViewById(R.id.app_name_display)
+            appIcon = candidatesViewLayout.findViewById(R.id.app_icon)
             // 初始化工具栏
-            toolbarView = keyboardView.findViewById(R.id.toolbar_view)
+            toolbarView = candidatesViewLayout.findViewById(R.id.toolbar_view)
             
             // 设置展开按钮点击事件
             expandCandidatesButton.setOnClickListener {
-                // 临时显示一个Toast提示，后续会替换为展开候选词网格
                 Toast.makeText(this, "展开候选词功能 - 正在开发中", Toast.LENGTH_SHORT).show()
                 Timber.d("点击了展开候选词按钮")
             }
+            
+            // 设置工具栏图标点击事件
+            setupToolbarIcons()
+            
+            // 加载键盘布局
+            keyboardView = layoutInflater.inflate(R.layout.keyboard_layout, null)
             
             // 设置字母按键监听器
             setupLetterKeys()
@@ -116,13 +129,48 @@ class ShenjiInputMethodService : InputMethodService() {
             // 设置功能按键监听器
             setupFunctionKeys()
             
-            Timber.d("键盘视图创建成功")
-            return keyboardView
+            // 设置候选词视图布局参数
+            val candidatesLayoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            candidatesViewLayout.layoutParams = candidatesLayoutParams
+            
+            // 设置键盘视图布局参数
+            val keyboardLayoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            keyboardView.layoutParams = keyboardLayoutParams
+            
+            // 创建分隔线
+            val separator = View(this)
+            separator.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                4 // 4dp高度
+            )
+            separator.setBackgroundColor(android.graphics.Color.parseColor("#FF5722")) // 橙色分隔线，便于调试
+            
+            // 将候选词视图和键盘视图添加到主容器（确保顺序正确）
+            mainContainer.addView(candidatesViewLayout, 0) // 候选词在顶部
+            mainContainer.addView(separator, 1)            // 分隔线
+            mainContainer.addView(keyboardView, 2)         // 键盘在底部
+            
+            Timber.d("🎯 布局层级: 候选词(index=0) -> 分隔线(index=1) -> 键盘(index=2)")
+            
+            Timber.d("🎯 整合视图创建成功：候选词+键盘")
+            return mainContainer
         } catch (e: Exception) {
             Timber.e(e, "键盘视图创建失败: ${e.message}")
             // 返回一个空的视图作为备选方案
             return LinearLayout(this)
         }
+    }
+    
+    override fun onCreateCandidatesView(): View? {
+        Timber.d("🎯 onCreateCandidatesView被调用，但我们已经在InputView中整合了候选词")
+        // 返回null，表示不使用独立的候选词视图
+        return null
     }
     
     // 设置字母按键监听器
@@ -233,6 +281,23 @@ class ShenjiInputMethodService : InputMethodService() {
         }
     }
     
+    /**
+     * 设置工具栏图标点击事件
+     */
+    private fun setupToolbarIcons() {
+        // 话术库图标
+        candidatesViewLayout.findViewById<ImageView>(R.id.speech_library_icon)?.setOnClickListener {
+            Toast.makeText(this, "话术库功能即将上线", Toast.LENGTH_SHORT).show()
+            Timber.d("点击了话术库图标")
+        }
+        
+        // AI助手图标
+        candidatesViewLayout.findViewById<ImageView>(R.id.ai_assistant_icon)?.setOnClickListener {
+            Toast.makeText(this, "AI助手功能即将上线", Toast.LENGTH_SHORT).show()
+            Timber.d("点击了AI助手图标")
+        }
+    }
+    
     // 处理字母输入
     private fun onInputLetter(letter: String) {
         // 检查是否刚刚提交了候选词，如果是则开始新的输入流程
@@ -244,7 +309,9 @@ class ShenjiInputMethodService : InputMethodService() {
             currentInputConnection?.finishComposingText()
             
             // 重置候选词滚动位置
-            keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+            if (::candidatesViewLayout.isInitialized) {
+                candidatesViewLayout.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+            }
         }
         
         // 添加字母到拼音组合中
@@ -328,8 +395,10 @@ class ShenjiInputMethodService : InputMethodService() {
                 pinyinDisplay.text = ""
                 hideCandidates()
                 
-                // 重置候选词滚动位置
-                keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+                            // 重置候选词滚动位置
+            if (::candidatesViewLayout.isInitialized) {
+                candidatesViewLayout.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+            }
             }
             
             // 清空候选词
@@ -349,7 +418,7 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 辅助方法：检查视图组件是否已初始化
     private fun areViewComponentsInitialized(): Boolean {
-        return ::keyboardView.isInitialized && 
+        return ::candidatesViewLayout.isInitialized &&
                ::candidatesContainer.isInitialized && 
                ::defaultCandidatesView.isInitialized &&
                ::candidatesView.isInitialized
@@ -380,17 +449,21 @@ class ShenjiInputMethodService : InputMethodService() {
     // 安全显示候选词区域
     private fun showCandidates() {
         if (areViewComponentsInitialized()) {
-            candidatesContainer.visibility = View.VISIBLE
-            defaultCandidatesView.visibility = View.VISIBLE
             // 显示候选词区域时隐藏工具栏
+            defaultCandidatesView.visibility = View.VISIBLE
             toolbarView.visibility = View.GONE
             
-            // 确保候选词视图有足够高度
-            val params = defaultCandidatesView.layoutParams
-            params.height = 120 // 设置固定高度，确保可见
-            defaultCandidatesView.layoutParams = params
+            // 🔧 固定高度，防止界面跳动
+            val fixedHeight = 46 // 固定46dp高度
+            val candidatesParams = defaultCandidatesView.layoutParams
+            candidatesParams.height = fixedHeight
+            candidatesParams.width = LinearLayout.LayoutParams.MATCH_PARENT
+            defaultCandidatesView.layoutParams = candidatesParams
             
-            Timber.d("显示候选词区域，设置高度为120")
+            // 强制设置候选词区域的背景，确保可见
+            defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#E3F2FD")) // 浅蓝背景
+            
+            Timber.d("🎯 显示候选词区域，固定高度: ${fixedHeight}dp")
             logCandidateViewState()
         }
     }
@@ -402,6 +475,8 @@ class ShenjiInputMethodService : InputMethodService() {
             defaultCandidatesView.visibility = View.GONE
             // 隐藏候选词区域时显示工具栏
             toolbarView.visibility = View.VISIBLE
+            
+            Timber.d("🎯 隐藏候选词区域，显示工具栏")
         }
     }
     
@@ -427,9 +502,18 @@ class ShenjiInputMethodService : InputMethodService() {
         // 🚀 使用最新的SmartPinyinEngine通过适配器
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
             try {
+                Timber.d("🔍 开始查询候选词: '$input'")
+                
                 val engineAdapter = InputMethodEngineAdapter.getInstance()
                 val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    engineAdapter.getCandidates(input, 20)
+                    // 添加详细的调试信息
+                    Timber.d("🔍 调用引擎查询: '$input'")
+                    val candidates = engineAdapter.getCandidates(input, 20)
+                    Timber.d("🔍 引擎返回结果: ${candidates.size}个候选词")
+                    if (candidates.isNotEmpty()) {
+                        Timber.d("🔍 前5个候选词: ${candidates.take(5).map { "${it.word}(${it.frequency})" }}")
+                    }
+                    candidates
                 }
                 
                 // 更新拼音显示
@@ -438,14 +522,29 @@ class ShenjiInputMethodService : InputMethodService() {
                 if (result.isNotEmpty()) {
                     candidates = result
                     updateCandidatesView(result)
-                    Timber.d("🎯 新引擎加载候选词: ${result.size}个")
+                    Timber.d("🎯 新引擎加载候选词成功: ${result.size}个")
                 } else {
                     candidates = emptyList()
                     clearCandidatesView()
-                    Timber.d("🎯 新引擎未找到候选词")
+                    Timber.w("🎯 新引擎未找到候选词: '$input'")
+                    
+                    // 🔧 添加词典状态检查
+                    val trieManager = com.shenji.aikeyboard.ShenjiApplication.trieManager
+                    Timber.w("📚 词典状态检查:")
+                    Timber.w("  - CHARS: ${if (trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)) "已加载" else "未加载"}")
+                    Timber.w("  - BASE: ${if (trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.BASE)) "已加载" else "未加载"}")
+                    
+                    // 🔧 尝试直接查询CHARS词典
+                    if (trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)) {
+                        val directResults = trieManager.searchByPrefix(com.shenji.aikeyboard.data.trie.TrieType.CHARS, input, 5)
+                        Timber.w("🔧 直接查询CHARS结果: ${directResults.size}个")
+                        if (directResults.isNotEmpty()) {
+                            Timber.w("🔧 直接查询结果: ${directResults.map { "${it.word}(${it.frequency})" }}")
+                        }
+                    }
                 }
             } catch (e: Exception) {
-                Timber.e(e, "🎯 新引擎加载候选词失败")
+                Timber.e(e, "🎯 新引擎加载候选词失败: '$input'")
                 candidates = emptyList()
                 clearCandidatesView()
             }
@@ -466,9 +565,9 @@ class ShenjiInputMethodService : InputMethodService() {
             
             Timber.d("拼音拆分结果: ${syllables.joinToString("+")}")
             
-            // 如果有分段结果，显示分段后的拼音（带空格）
+            // 如果有分段结果，显示分段后的拼音（用上引号代替空格）
             val displayText = if (syllables.isNotEmpty() && syllables.size > 1) {
-                val segmentedText = syllables.joinToString(" ")
+                val segmentedText = syllables.joinToString("'")
                 Timber.d("键盘显示分段拼音: '$segmentedText'")
                 segmentedText
             } else {
@@ -501,31 +600,40 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 更新候选词视图
     private fun updateCandidatesView(wordList: List<WordFrequency>) {
+        Timber.d("🎨 updateCandidatesView 开始，候选词数量: ${wordList.size}")
+        
         if (!areViewComponentsInitialized()) {
-            Timber.e("视图组件未初始化，无法更新候选词")
+            Timber.e("🎨 视图组件未初始化，无法更新候选词")
             return
         }
         
         try {
             // 清空现有的候选词
             candidatesView.removeAllViews()
+            Timber.d("🎨 已清空现有候选词")
             
             // 如果没有候选词，显示提示信息
             if (wordList.isEmpty()) {
-                Timber.d("没有候选词可显示")
+                Timber.d("🎨 没有候选词可显示")
                 return
             }
             
-            Timber.d("更新候选词视图，数量: ${wordList.size}")
+            Timber.d("🎨 开始更新候选词视图，数量: ${wordList.size}")
+            Timber.d("🎨 候选词列表: ${wordList.take(5).map { "${it.word}(${it.frequency})" }}")
             
             // 强制设置候选词容器可见性
-            candidatesContainer.visibility = View.VISIBLE
             defaultCandidatesView.visibility = View.VISIBLE
             toolbarView.visibility = View.GONE
             
-            // 确保候选词视图有足够高度
+            // 确保候选词视图有明显的背景色用于调试
+            defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#E8F5E8"))
+            
+            Timber.d("🎨 设置容器可见性完成，背景色已设置为浅绿色")
+            
+            // 🔧 确保候选词视图固定高度，防止跳动
             val params = defaultCandidatesView.layoutParams
-            params.height = 140 // 设置固定高度，确保可见
+            params.height = 46 // 固定高度
+            params.width = LinearLayout.LayoutParams.MATCH_PARENT // 固定宽度
             defaultCandidatesView.layoutParams = params
             
             // 获取拼音显示区域的左边距，确保候选词与拼音完全对齐
@@ -539,39 +647,62 @@ class ShenjiInputMethodService : InputMethodService() {
             candidatesRow.orientation = LinearLayout.HORIZONTAL
             candidatesRow.layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+                46 // 🔧 固定高度，防止跳动
             )
+            candidatesRow.gravity = Gravity.CENTER_VERTICAL // 垂直居中
             
             // 添加每个候选词按钮到水平布局
+            Timber.d("🎨 开始创建${wordList.size}个候选词TextView")
             wordList.forEachIndexed { index, word ->
+                Timber.d("🎨 创建候选词[$index]: ${word.word}")
+                
                 val candidateText = TextView(this)
                 
                 // 显示候选词文本
                 candidateText.text = word.word
                 
                 // 使用TextView而不是Button以减少默认样式的影响
-                candidateText.setTextSize(16f)
-                candidateText.setPadding(0, 8, 0, 8)
+                candidateText.gravity = Gravity.CENTER // 水平和垂直居中
                 
-                // 设置第一个候选词为绿色，其他保持黑色
+                // 设置候选词样式 - 使用高对比度颜色，确保可见
                 if (index == 0) {
-                    candidateText.setTextColor(Color.parseColor("#4CAF50")) // 绿色
+                    candidateText.setTextColor(Color.WHITE) // 白色文字
+                    candidateText.setBackgroundColor(Color.parseColor("#4CAF50")) // 绿色背景
                 } else {
-                    candidateText.setTextColor(Color.BLACK)
+                    candidateText.setTextColor(Color.WHITE) // 白色文字
+                    candidateText.setBackgroundColor(Color.parseColor("#2196F3")) // 蓝色背景
                 }
                 
-                // 设置左右margin（非常小的间距）
+                // 设置文字大小和样式
+                candidateText.setTextSize(16f) // 适中字体
+                candidateText.typeface = android.graphics.Typeface.DEFAULT_BOLD // 加粗
+                
+                // 添加边框，增强可见性
+                candidateText.setPadding(16, 8, 16, 8) // 增加内边距
+                
+                // 设置圆角背景
+                val drawable = android.graphics.drawable.GradientDrawable()
+                drawable.cornerRadius = 8f
+                if (index == 0) {
+                    drawable.setColor(Color.parseColor("#4CAF50")) // 绿色
+                } else {
+                    drawable.setColor(Color.parseColor("#2196F3")) // 蓝色
+                }
+                candidateText.background = drawable
+                
+                // 🔧 设置固定布局参数，防止跳动
                 val textParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT
+                    38 // 固定高度，比容器稍小留出边距
                 )
+                textParams.gravity = Gravity.CENTER_VERTICAL // 垂直居中
                 
                 if (index == 0) {
-                    // 第一个候选词，与拼音保持一致的左对齐，使用相同的padding
-                    textParams.setMargins(pinyinPaddingStart, 0, 20, 0)
+                    // 第一个候选词，与拼音保持一致的左对齐
+                    textParams.setMargins(pinyinPaddingStart, 4, 4, 4)
                 } else {
-                    // 其他候选词间距非常小
-                    textParams.setMargins(20, 0, 20, 0)
+                    // 其他候选词间距
+                    textParams.setMargins(4, 4, 4, 4)
                 }
                 
                 candidateText.layoutParams = textParams
@@ -583,18 +714,36 @@ class ShenjiInputMethodService : InputMethodService() {
                 
                 // 添加到候选词行
                 candidatesRow.addView(candidateText)
+                Timber.d("🎨 候选词[$index]已添加到行中: '${word.word}', 文字颜色: ${candidateText.currentTextColor}, 背景: ${candidateText.background}")
             }
+            
+            Timber.d("🎨 所有候选词TextView创建完成")
             
             // 将候选词行添加到候选词视图
             candidatesView.addView(candidatesRow)
+            Timber.d("🎨 候选词行已添加到candidatesView")
             
             // 重置水平滚动位置到起始位置
-            keyboardView.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+            if (::candidatesViewLayout.isInitialized) {
+            candidatesViewLayout.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+        }
+            Timber.d("🎨 滚动位置已重置")
+            
+            // 强制刷新UI
+            candidatesContainer.invalidate()
+            candidatesContainer.requestLayout()
+            defaultCandidatesView.invalidate()
+            defaultCandidatesView.requestLayout()
+            candidatesView.invalidate()
+            candidatesView.requestLayout()
+            Timber.d("🎨 UI刷新完成")
             
             // 记录日志，确认候选词视图状态
-            Timber.d("候选词容器可见性: ${this.candidatesContainer.visibility == View.VISIBLE}")
-            Timber.d("默认候选词视图可见性: ${defaultCandidatesView.visibility == View.VISIBLE}")
-            Timber.d("候选词视图子项数量: ${candidatesView.childCount}")
+            Timber.d("🎨 最终状态检查:")
+            Timber.d("🎨 候选词容器可见性: ${this.candidatesContainer.visibility == View.VISIBLE}")
+            Timber.d("🎨 默认候选词视图可见性: ${defaultCandidatesView.visibility == View.VISIBLE}")
+            Timber.d("🎨 候选词视图子项数量: ${candidatesView.childCount}")
+            Timber.d("🎨 候选词行子项数量: ${candidatesRow.childCount}")
             
             // 记录详细的候选词视图状态
             logCandidateViewState()
@@ -628,7 +777,6 @@ class ShenjiInputMethodService : InputMethodService() {
         composingText.clear()
         updatePinyinDisplay("")
         clearCandidatesView()
-        hideCandidates()
         candidates = emptyList()
         justCommittedText = false
         
@@ -637,16 +785,21 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 确保候选词视图正确初始化
         if (areViewComponentsInitialized()) {
-            // 设置候选词视图高度
+            // 🔧 设置候选词视图固定布局参数，防止跳动
             val params = defaultCandidatesView.layoutParams
-            params.height = 120 // 设置固定高度
+            params.height = 46 // 固定高度
+            params.width = LinearLayout.LayoutParams.MATCH_PARENT // 固定宽度
             defaultCandidatesView.layoutParams = params
+            
+            // 初始状态：显示工具栏，隐藏候选词
+            toolbarView.visibility = View.VISIBLE
+            defaultCandidatesView.visibility = View.GONE
             
             // 记录候选词视图状态
             logCandidateViewState()
         }
         
-        Timber.d("初始化输入视图，已清空所有状态")
+        Timber.d("🎯 初始化输入视图完成（整合模式），已清空所有状态")
     }
     
     override fun onInitializeInterface() {

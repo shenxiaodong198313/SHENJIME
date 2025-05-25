@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/candidates_container"
+    android:layout_width="match_parent"
+    android:layout_height="75dp"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <!-- 拼音显示区域 -->
+    <RelativeLayout
+        android:id="@+id/pinyin_container"
+        android:layout_width="match_parent"
+        android:layout_height="28dp"
+        android:background="#EEEEEE">
+        
+        <TextView
+            android:id="@+id/pinyin_display"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:gravity="center_vertical"
+            android:textColor="#333333"
+            android:textSize="14sp" />
+            
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+            
+            <ImageView
+                android:id="@+id/app_icon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="4dp"
+                android:src="@android:drawable/ic_menu_info_details" />
+                
+            <TextView
+                android:id="@+id/app_name_display"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:textColor="#333333"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- 🔧 工具栏和候选词共享区域 - 使用FrameLayout重叠布局 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="46dp">
+
+        <!-- 工具栏 - 默认显示，在输入拼音时隐藏，选择候选词后再显示 -->
+        <LinearLayout
+            android:id="@+id/toolbar_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:background="#F8F8F8"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+
+            <!-- 话术库图标 -->
+            <ImageView
+                android:id="@+id/speech_library_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/ic_speech_library"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="话术库" />
+
+            <!-- AI助手图标 -->
+            <ImageView
+                android:id="@+id/ai_assistant_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/ic_ai_assistant"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="AI助手" />
+
+            <!-- 占位空间，推送图标到左侧 -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+        </LinearLayout>
+
+        <!-- 候选词水平布局 - 与工具栏在同一位置 -->
+        <LinearLayout
+            android:id="@+id/default_candidates_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:background="#FFFFFF"
+            android:visibility="gone">
+
+        <HorizontalScrollView
+            android:id="@+id/candidates_scroll_view"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scrollbars="none"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:id="@+id/candidates_view"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:gravity="center_vertical"/>
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/expand_candidates_button"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="▼"
+            android:textSize="14sp"
+            android:textColor="#333333"/>
+    </LinearLayout>
+
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"/>
+</LinearLayout> 

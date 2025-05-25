@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- 主对话气泡 - 蓝色 -->
+    <path
+        android:fillColor="#4285F4"
+        android:pathData="M18,8c1.1,0 2,0.9 2,2v6c0,1.1 -0.9,2 -2,2h-3l-2,2l-2,-2H8c-1.1,0 -2,-0.9 -2,-2v-6c0,-1.1 0.9,-2 2,-2H18z" />
+    
+    <!-- 小对话气泡 - 黄色 -->
+    <path
+        android:fillColor="#FBBC04"
+        android:pathData="M14,4c0.8,0 1.5,0.7 1.5,1.5v3c0,0.8 -0.7,1.5 -1.5,1.5h-2l-1,1l-1,-1H8c-0.8,0 -1.5,-0.7 -1.5,-1.5v-3C6.5,4.7 7.2,4 8,4H14z" />
+    
+    <!-- 文字线条 - 白色 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M9,12h6c0.3,0 0.5,0.2 0.5,0.5s-0.2,0.5 -0.5,0.5H9c-0.3,0 -0.5,-0.2 -0.5,-0.5S8.7,12 9,12z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M9,14h4c0.3,0 0.5,0.2 0.5,0.5s-0.2,0.5 -0.5,0.5H9c-0.3,0 -0.5,-0.2 -0.5,-0.5S8.7,14 9,14z" />
+    
+    <!-- 小气泡中的点 - 深蓝色 -->
+    <path
+        android:fillColor="#1A73E8"
+        android:pathData="M9.5,6C9.22,6 9,6.22 9,6.5S9.22,7 9.5,7S10,6.78 10,6.5S9.78,6 9.5,6z" />
+    
+    <path
+        android:fillColor="#1A73E8"
+        android:pathData="M11,6C10.72,6 10.5,6.22 10.5,6.5S10.72,7 11,7S11.5,6.78 11.5,6.5S11.28,6 11,6z" />
+    
+    <path
+        android:fillColor="#1A73E8"
+        android:pathData="M12.5,6C12.22,6 12,6.22 12,6.5S12.22,7 12.5,7S13,6.78 13,6.5S12.78,6 12.5,6z" />
+</vector> 

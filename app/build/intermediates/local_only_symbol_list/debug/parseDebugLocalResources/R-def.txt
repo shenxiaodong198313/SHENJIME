@@ -51,9 +51,11 @@ drawable candidate_word_bg
 drawable candidate_word_selected_bg
 drawable circle_background
 drawable edit_text_background
+drawable ic_ai_assistant
 drawable ic_arrow_down
 drawable ic_export
 drawable ic_mic
+drawable ic_speech_library
 drawable ic_stage_acronym
 drawable ic_stage_initial
 drawable ic_stage_pinyin
@@ -76,6 +78,7 @@ id action_export
 id action_refresh_cache
 id action_settings
 id action_view_logs
+id ai_assistant_icon
 id analysisTextView
 id app_icon
 id app_name_display
@@ -202,7 +205,6 @@ id pinyin_display
 id progressBar
 id progressBarLoading
 id query_condition_text_view
-id query_process_text
 id query_process_text_view
 id realm_status_text
 id refresh_button
@@ -223,6 +225,7 @@ id shimmerEntryCount
 id shimmerMemoryStatus
 id shimmerMemoryUsage
 id simulate_button
+id speech_library_icon
 id split_result_text_view
 id stage_text_view
 id statusText
@@ -292,6 +295,7 @@ layout activity_pinyin_test
 layout activity_smart_pinyin_mvp_test
 layout activity_splash
 layout activity_trie_build
+layout candidates_view
 layout dialog_build_config
 layout dialog_build_status
 layout dialog_build_trie_settings
