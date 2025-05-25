@@ -5,11 +5,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.shenji.aikeyboard.R;
@@ -19,28 +20,37 @@ import java.lang.String;
 
 public final class ActivityLogDetailBinding implements ViewBinding {
   @NonNull
-  private final ConstraintLayout rootView;
+  private final RelativeLayout rootView;
 
   @NonNull
-  public final Button btnCopyLog;
+  public final Button btnBack;
 
   @NonNull
-  public final Toolbar toolbar;
+  public final FrameLayout btnCopyLogContainer;
+
+  @NonNull
+  public final ScrollView logScrollView;
+
+  @NonNull
+  public final TextView pageTitle;
 
   @NonNull
   public final TextView tvLogContent;
 
-  private ActivityLogDetailBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnCopyLog,
-      @NonNull Toolbar toolbar, @NonNull TextView tvLogContent) {
+  private ActivityLogDetailBinding(@NonNull RelativeLayout rootView, @NonNull Button btnBack,
+      @NonNull FrameLayout btnCopyLogContainer, @NonNull ScrollView logScrollView,
+      @NonNull TextView pageTitle, @NonNull TextView tvLogContent) {
     this.rootView = rootView;
-    this.btnCopyLog = btnCopyLog;
-    this.toolbar = toolbar;
+    this.btnBack = btnBack;
+    this.btnCopyLogContainer = btnCopyLogContainer;
+    this.logScrollView = logScrollView;
+    this.pageTitle = pageTitle;
     this.tvLogContent = tvLogContent;
   }
 
   @Override
   @NonNull
-  public ConstraintLayout getRoot() {
+  public RelativeLayout getRoot() {
     return rootView;
   }
 
@@ -65,15 +75,27 @@ public final class ActivityLogDetailBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.btnCopyLog;
-      Button btnCopyLog = ViewBindings.findChildViewById(rootView, id);
-      if (btnCopyLog == null) {
+      id = R.id.btnBack;
+      Button btnBack = ViewBindings.findChildViewById(rootView, id);
+      if (btnBack == null) {
         break missingId;
       }
 
-      id = R.id.toolbar;
-      Toolbar toolbar = ViewBindings.findChildViewById(rootView, id);
-      if (toolbar == null) {
+      id = R.id.btnCopyLogContainer;
+      FrameLayout btnCopyLogContainer = ViewBindings.findChildViewById(rootView, id);
+      if (btnCopyLogContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.logScrollView;
+      ScrollView logScrollView = ViewBindings.findChildViewById(rootView, id);
+      if (logScrollView == null) {
+        break missingId;
+      }
+
+      id = R.id.pageTitle;
+      TextView pageTitle = ViewBindings.findChildViewById(rootView, id);
+      if (pageTitle == null) {
         break missingId;
       }
 
@@ -83,8 +105,8 @@ public final class ActivityLogDetailBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityLogDetailBinding((ConstraintLayout) rootView, btnCopyLog, toolbar,
-          tvLogContent);
+      return new ActivityLogDetailBinding((RelativeLayout) rootView, btnBack, btnCopyLogContainer,
+          logScrollView, pageTitle, tvLogContent);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

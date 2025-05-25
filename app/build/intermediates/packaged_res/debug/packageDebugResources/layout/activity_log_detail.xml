@@ -1,35 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/splash_background_color"
+    android:padding="32dp"
     tools:context=".ui.LogDetailActivity">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:elevation="4dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="?attr/homeAsUpIndicator"
-        app:title="@string/log_details" />
+    <!-- 左上角返回按钮 -->
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:text="←"
+        android:textSize="20sp"
+        android:textColor="@android:color/white"
+        android:background="@android:color/transparent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="16dp" />
 
+    <!-- 页面标题 -->
+    <TextView
+        android:id="@+id/pageTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="查看日志"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/splash_text_color"
+        android:layout_centerHorizontal="true"
+        android:layout_alignTop="@+id/btnBack"
+        android:layout_marginTop="8dp" />
+
+    <!-- 日志内容滚动视图 -->
     <ScrollView
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
+        android:id="@+id/logScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/pageTitle"
+        android:layout_above="@+id/btnCopyLogContainer"
+        android:layout_marginTop="32dp"
         android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnCopyLog"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar">
+        android:background="#20FFFFFF"
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/tvLogContent"
@@ -38,19 +53,17 @@
             android:fontFamily="monospace"
             android:text=""
             android:textIsSelectable="true"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:textColor="@color/splash_text_color" />
     </ScrollView>
 
-    <Button
-        android:id="@+id/btnCopyLog"
-        android:layout_width="0dp"
+    <!-- 复制日志按钮容器 -->
+    <FrameLayout
+        android:id="@+id/btnCopyLogContainer"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/copy_log"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp">
+    </FrameLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout> 
+</RelativeLayout> 

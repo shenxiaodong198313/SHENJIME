@@ -3307,7 +3307,7 @@ id btnBuildTrie
 id btnCancel
 id btnClearLogs
 id btnCopyInfo
-id btnCopyLog
+id btnCopyLogContainer
 id btnCopyLogs
 id btnEnableImeContainer
 id btnExportRealm
@@ -3553,6 +3553,7 @@ id listMode
 id list_item
 id loadMoreButton
 id loadMoreProgress
+id logScrollView
 id logs_text_view
 id m3_side_sheet
 id mainButtonContainer
@@ -3659,6 +3660,7 @@ id outline
 id outward
 id overshoot
 id packed
+id pageTitle
 id parallax
 id parent
 id parentPanel

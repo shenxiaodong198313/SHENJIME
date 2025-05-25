@@ -167,7 +167,7 @@ class InputMethodSettingsActivity : AppCompatActivity() {
             setButtonStyle(btnEnableIme, false, false) // 浅色背景，深色文字
             setButtonStyle(btnSetDefaultIme, true, false) // 白色背景，深色文字
         } else {
-            // 情况3：输入法已启用且为默认 - 两个都是浅色
+            // 情况3：输入法已启用且为默认 - 两个都是浅色（已完成状态）
             setButtonStyle(btnEnableIme, false, false) // 浅色背景，深色文字
             setButtonStyle(btnSetDefaultIme, false, false) // 浅色背景，深色文字
         }

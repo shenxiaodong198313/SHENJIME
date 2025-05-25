@@ -96,7 +96,7 @@ id btnBuildTrie
 id btnCancel
 id btnClearLogs
 id btnCopyInfo
-id btnCopyLog
+id btnCopyLogContainer
 id btnCopyLogs
 id btnEnableImeContainer
 id btnExportRealm
@@ -198,6 +198,7 @@ id lengthTest1to6Button
 id lengthTestContainer
 id loadMoreButton
 id loadMoreProgress
+id logScrollView
 id logs_text_view
 id mainButtonContainer
 id mainContainer
@@ -205,6 +206,7 @@ id main_container
 id memory_card
 id memory_info_text
 id memory_usage_text
+id pageTitle
 id performance_stats_text_view
 id permission_status_text_view
 id pinyin_container
