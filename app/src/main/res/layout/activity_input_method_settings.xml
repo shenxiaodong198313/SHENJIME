@@ -18,6 +18,18 @@
         android:layout_alignParentStart="true"
         android:layout_marginTop="16dp" />
 
+    <!-- 右上角模糊音设置按钮 -->
+    <ImageButton
+        android:id="@+id/btnFuzzySettings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@android:drawable/ic_menu_preferences"
+        android:background="@android:color/transparent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="16dp"
+        android:contentDescription="模糊音设置" />
+
     <!-- 顶部应用图标 - 与首页相同大小和位置 -->
     <ImageView
         android:id="@+id/appIconTop"

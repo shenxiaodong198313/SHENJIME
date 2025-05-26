@@ -7,6 +7,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.Toast
 import android.widget.ImageView
+import android.widget.ImageButton
 import android.widget.FrameLayout
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
@@ -19,6 +20,7 @@ class InputMethodSettingsActivity : AppCompatActivity() {
     private lateinit var btnEnableIme: Button
     private lateinit var btnSetDefaultIme: Button
     private lateinit var appIconTop: ImageView
+    private lateinit var btnFuzzySettings: ImageButton
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +76,12 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         // 设置返回按钮
         findViewById<Button>(R.id.btnBack)?.setOnClickListener {
             finish()
+        }
+        
+        // 设置模糊音设置按钮
+        btnFuzzySettings = findViewById(R.id.btnFuzzySettings)
+        btnFuzzySettings.setOnClickListener {
+            openFuzzyPinyinSettings()
         }
     }
     
@@ -248,6 +256,18 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Timber.e(e, "打开输入法选择器失败")
             Toast.makeText(this, "打开输入法选择器失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    // 打开模糊音设置页面
+    private fun openFuzzyPinyinSettings() {
+        try {
+            val intent = Intent(this, FuzzyPinyinSettingsActivity::class.java)
+            startActivity(intent)
+            Timber.d("打开模糊音设置页面")
+        } catch (e: Exception) {
+            Timber.e(e, "打开模糊音设置页面失败")
+            Toast.makeText(this, "打开模糊音设置失败", Toast.LENGTH_SHORT).show()
         }
     }
 } 

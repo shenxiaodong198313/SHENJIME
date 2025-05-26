@@ -28,38 +28,67 @@ class FuzzyPinyinManager private constructor() {
         // SharedPreferences文件名和键值常量
         private const val PREFS_NAME = "fuzzy_pinyin_prefs"
         
+        // 总开关
+        private const val KEY_FUZZY_ENABLED = "fuzzy_enabled"
+        
         // 声母模糊匹配键
-        private const val KEY_Z_ZH = "fuzzy_z_zh"   // z = zh
-        private const val KEY_C_CH = "fuzzy_c_ch"   // c = ch
+        private const val KEY_C_CH = "fuzzy_c_ch"   // c = ch (默认启用)
         private const val KEY_S_SH = "fuzzy_s_sh"   // s = sh
+        private const val KEY_Z_ZH = "fuzzy_z_zh"   // z = zh (默认启用)
+        private const val KEY_K_G = "fuzzy_k_g"     // k = g
+        private const val KEY_F_H = "fuzzy_f_h"     // f = h
+        private const val KEY_N_L = "fuzzy_n_l"     // n = l
+        private const val KEY_R_L = "fuzzy_r_l"     // r = l
         
         // 韵母模糊匹配键
-        private const val KEY_AN_ANG = "fuzzy_an_ang"  // an = ang
-        private const val KEY_EN_ENG = "fuzzy_en_eng"  // en = eng
-        private const val KEY_IN_ING = "fuzzy_in_ing"  // in = ing
+        private const val KEY_AN_ANG = "fuzzy_an_ang"  // an = ang (默认启用)
+        private const val KEY_EN_ENG = "fuzzy_en_eng"  // en = eng (默认启用)
+        private const val KEY_IN_ING = "fuzzy_in_ing"  // in = ing (默认启用)
+        private const val KEY_IAN_IANG = "fuzzy_ian_iang"  // ian = iang
+        private const val KEY_UAN_UANG = "fuzzy_uan_uang"  // uan = uang
+        private const val KEY_AN_AI = "fuzzy_an_ai"    // an = ai
+        private const val KEY_UN_ONG = "fuzzy_un_ong"  // un = ong
         
-        // 其他模糊匹配键
-        private const val KEY_L_N = "fuzzy_l_n"     // l = n
-        private const val KEY_V_U = "fuzzy_v_u"     // v = ü (支持v代替ü的输入)
+        // 拼音音节
+        private const val KEY_HUI_FEI = "fuzzy_hui_fei"      // hui = fei
+        private const val KEY_HUANG_WANG = "fuzzy_huang_wang" // huang = wang
+        private const val KEY_FENG_HONG = "fuzzy_feng_hong"  // feng = hong
+        private const val KEY_FU_HU = "fuzzy_fu_hu"          // fu = hu
+        
+        // v/ü模糊匹配（为了向后兼容）
+        private const val KEY_V_U = "fuzzy_v_u"             // v = ü
     }
     
-    // 模糊拼音配置状态
+    // 模糊拼音总开关状态
     private var fuzzyEnabled = false
     
     // 声母模糊匹配
-    private var zEqualsZh = false    // z = zh
-    private var cEqualsCh = false    // c = ch
+    private var cEqualsCh = true     // c = ch (默认启用)
     private var sEqualsSh = false    // s = sh
+    private var zEqualsZh = true     // z = zh (默认启用)
+    private var kEqualsG = false     // k = g
+    private var fEqualsH = false     // f = h
+    private var nEqualsL = false     // n = l
+    private var rEqualsL = false     // r = l
     
     // 韵母模糊匹配
-    private var anEqualsAng = false  // an = ang
-    private var enEqualsEng = false  // en = eng
-    private var inEqualsIng = false  // in = ing
+    private var anEqualsAng = true   // an = ang (默认启用)
+    private var enEqualsEng = true   // en = eng (默认启用)
+    private var inEqualsIng = true   // in = ing (默认启用)
+    private var ianEqualsIang = false // ian = iang
+    private var uanEqualsUang = false // uan = uang
+    private var anEqualsAi = false   // an = ai
+    private var unEqualsOng = false  // un = ong
     
-    // 其他模糊匹配
-    private var lEqualsN = false     // l = n
-    private var vEqualsU = true      // v = ü (默认启用，支持v代替ü的输入)
+    // 拼音音节
+    private var huiEqualsFei = false    // hui = fei
+    private var huangEqualsWang = false // huang = wang
+    private var fengEqualsHong = false  // feng = hong
+    private var fuEqualsHu = false      // fu = hu
     
+    // v/ü模糊匹配（为了向后兼容）
+    private var vEqualsU = true         // v = ü (默认启用，支持v代替ü的输入)
+
     // SharedPreferences实例
     private val prefs: SharedPreferences by lazy {
         ShenjiApplication.appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -77,36 +106,66 @@ class FuzzyPinyinManager private constructor() {
      */
     private fun loadSettings() {
         try {
+            // 总开关
+            fuzzyEnabled = prefs.getBoolean(KEY_FUZZY_ENABLED, false)
+            
             // 声母模糊匹配
-            zEqualsZh = prefs.getBoolean(KEY_Z_ZH, false)
-            cEqualsCh = prefs.getBoolean(KEY_C_CH, false)
+            cEqualsCh = prefs.getBoolean(KEY_C_CH, true)
             sEqualsSh = prefs.getBoolean(KEY_S_SH, false)
+            zEqualsZh = prefs.getBoolean(KEY_Z_ZH, true)
+            kEqualsG = prefs.getBoolean(KEY_K_G, false)
+            fEqualsH = prefs.getBoolean(KEY_F_H, false)
+            nEqualsL = prefs.getBoolean(KEY_N_L, false)
+            rEqualsL = prefs.getBoolean(KEY_R_L, false)
             
             // 韵母模糊匹配
-            anEqualsAng = prefs.getBoolean(KEY_AN_ANG, false)
-            enEqualsEng = prefs.getBoolean(KEY_EN_ENG, false)
-            inEqualsIng = prefs.getBoolean(KEY_IN_ING, false)
+            anEqualsAng = prefs.getBoolean(KEY_AN_ANG, true)
+            enEqualsEng = prefs.getBoolean(KEY_EN_ENG, true)
+            inEqualsIng = prefs.getBoolean(KEY_IN_ING, true)
+            ianEqualsIang = prefs.getBoolean(KEY_IAN_IANG, false)
+            uanEqualsUang = prefs.getBoolean(KEY_UAN_UANG, false)
+            anEqualsAi = prefs.getBoolean(KEY_AN_AI, false)
+            unEqualsOng = prefs.getBoolean(KEY_UN_ONG, false)
             
-            // 其他模糊匹配
-            lEqualsN = prefs.getBoolean(KEY_L_N, false)
-            vEqualsU = prefs.getBoolean(KEY_V_U, true) // 默认启用v/ü转换
+            // 拼音音节
+            huiEqualsFei = prefs.getBoolean(KEY_HUI_FEI, false)
+            huangEqualsWang = prefs.getBoolean(KEY_HUANG_WANG, false)
+            fengEqualsHong = prefs.getBoolean(KEY_FENG_HONG, false)
+            fuEqualsHu = prefs.getBoolean(KEY_FU_HU, false)
             
-            // 检查是否有任何一个模糊拼音设置被启用
-            fuzzyEnabled = zEqualsZh || cEqualsCh || sEqualsSh || 
-                          anEqualsAng || enEqualsEng || inEqualsIng || 
-                          lEqualsN || vEqualsU
+            // v/ü模糊匹配（为了向后兼容）
+            vEqualsU = prefs.getBoolean(KEY_V_U, true)
                           
-            Timber.d("已加载模糊拼音设置，v/ü转换: $vEqualsU")
+            Timber.d("已加载模糊拼音设置，总开关: $fuzzyEnabled")
         } catch (e: Exception) {
             Timber.e(e, "加载模糊拼音设置失败")
         }
     }
     
     /**
-     * 判断是否有任何模糊拼音设置启用
+     * 判断是否启用模糊拼音
      */
     fun isFuzzyEnabled(): Boolean {
         return fuzzyEnabled
+    }
+    
+    /**
+     * 设置模糊拼音总开关
+     */
+    fun setFuzzyEnabled(enabled: Boolean) {
+        fuzzyEnabled = enabled
+        prefs.edit().putBoolean(KEY_FUZZY_ENABLED, enabled).apply()
+        Timber.d("设置模糊拼音总开关: $enabled")
+    }
+    
+    /**
+     * 检查某个选项是否为默认启用项
+     */
+    fun isDefaultEnabled(key: String): Boolean {
+        return when (key) {
+            KEY_C_CH, KEY_Z_ZH, KEY_AN_ANG, KEY_EN_ENG, KEY_IN_ING -> true
+            else -> false
+        }
     }
     
     /**
@@ -117,7 +176,7 @@ class FuzzyPinyinManager private constructor() {
      * @return 包含原始音节和所有可能的模糊匹配音节的列表
      */
     fun applyFuzzyRules(syllable: String): List<String> {
-        // 如果没有启用任何模糊拼音规则，直接返回原始音节
+        // 如果没有启用模糊拼音总开关，直接返回原始音节
         if (!fuzzyEnabled) {
             return listOf(syllable)
         }
@@ -125,16 +184,32 @@ class FuzzyPinyinManager private constructor() {
         val result = mutableSetOf(syllable)
         
         // 声母模糊匹配
-        if (zEqualsZh) {
-            applyInitialFuzzy(result, syllable, "z", "zh")
-        }
-        
         if (cEqualsCh) {
             applyInitialFuzzy(result, syllable, "c", "ch")
         }
         
         if (sEqualsSh) {
             applyInitialFuzzy(result, syllable, "s", "sh")
+        }
+        
+        if (zEqualsZh) {
+            applyInitialFuzzy(result, syllable, "z", "zh")
+        }
+        
+        if (kEqualsG) {
+            applyInitialFuzzy(result, syllable, "k", "g")
+        }
+        
+        if (fEqualsH) {
+            applyInitialFuzzy(result, syllable, "f", "h")
+        }
+        
+        if (nEqualsL) {
+            applyInitialFuzzy(result, syllable, "n", "l")
+        }
+        
+        if (rEqualsL) {
+            applyInitialFuzzy(result, syllable, "r", "l")
         }
         
         // 韵母模糊匹配
@@ -150,14 +225,41 @@ class FuzzyPinyinManager private constructor() {
             applyFinalFuzzy(result, syllable, "in", "ing")
         }
         
-        // 其他模糊匹配
-        if (lEqualsN) {
-            applyInitialFuzzy(result, syllable, "l", "n")
+        if (ianEqualsIang) {
+            applyFinalFuzzy(result, syllable, "ian", "iang")
         }
         
-        // v/ü模糊匹配
-        if (vEqualsU) {
-            applyVUFuzzy(result, syllable)
+        if (uanEqualsUang) {
+            applyFinalFuzzy(result, syllable, "uan", "uang")
+        }
+        
+        if (anEqualsAi) {
+            applyFinalFuzzy(result, syllable, "an", "ai")
+        }
+        
+        if (unEqualsOng) {
+            applyFinalFuzzy(result, syllable, "un", "ong")
+        }
+        
+        // 拼音音节
+        if (huiEqualsFei) {
+            if (syllable == "hui") result.add("fei")
+            else if (syllable == "fei") result.add("hui")
+        }
+        
+        if (huangEqualsWang) {
+            if (syllable == "huang") result.add("wang")
+            else if (syllable == "wang") result.add("huang")
+        }
+        
+        if (fengEqualsHong) {
+            if (syllable == "feng") result.add("hong")
+            else if (syllable == "hong") result.add("feng")
+        }
+        
+        if (fuEqualsHu) {
+            if (syllable == "fu") result.add("hu")
+            else if (syllable == "hu") result.add("fu")
         }
         
         return result.toList()
@@ -184,152 +286,169 @@ class FuzzyPinyinManager private constructor() {
             result.add(syllable.substring(0, syllable.length - b.length) + a)
         }
     }
-    
-    /**
-     * 应用v/ü模糊匹配规则
-     * 处理v代替ü的各种情况
-     */
-    private fun applyVUFuzzy(result: MutableSet<String>, syllable: String) {
-        // lü <-> lv
-        if (syllable.startsWith("lü")) {
-            result.add(syllable.replace("lü", "lv"))
-        } else if (syllable.startsWith("lv")) {
-            result.add(syllable.replace("lv", "lü"))
-        }
-        
-        // nü <-> nv  
-        if (syllable.startsWith("nü")) {
-            result.add(syllable.replace("nü", "nv"))
-        } else if (syllable.startsWith("nv")) {
-            result.add(syllable.replace("nv", "nü"))
-        }
-        
-        // 处理j/q/x/y + u <-> j/q/x/y + v的情况
-        val jqxyPattern = Regex("^([jqxy])u(.*)$")
-        val jqxyVPattern = Regex("^([jqxy])v(.*)$")
-        
-        if (jqxyPattern.matches(syllable)) {
-            val match = jqxyPattern.find(syllable)
-            if (match != null) {
-                val (initial, final) = match.destructured
-                result.add("${initial}v$final")
-            }
-        } else if (jqxyVPattern.matches(syllable)) {
-            val match = jqxyVPattern.find(syllable)
-            if (match != null) {
-                val (initial, final) = match.destructured
-                result.add("${initial}u$final")
-            }
-        }
-        
-        // 处理独立的ü <-> v
-        if (syllable == "ü") {
-            result.add("v")
-        } else if (syllable == "v") {
-            result.add("ü")
-        }
-        
-        // 处理包含ü的其他音节
-        if (syllable.contains("ü")) {
-            result.add(syllable.replace("ü", "v"))
-        } else if (syllable.contains("v")) {
-            result.add(syllable.replace("v", "ü"))
-        }
-    }
-    
+
     // Getters
-    fun isZEqualsZh(): Boolean = zEqualsZh
     fun isCEqualsCh(): Boolean = cEqualsCh
     fun isSEqualsSh(): Boolean = sEqualsSh
+    fun isZEqualsZh(): Boolean = zEqualsZh
+    fun isKEqualsG(): Boolean = kEqualsG
+    fun isFEqualsH(): Boolean = fEqualsH
+    fun isNEqualsL(): Boolean = nEqualsL
+    fun isREqualsL(): Boolean = rEqualsL
     fun isAnEqualsAng(): Boolean = anEqualsAng
     fun isEnEqualsEng(): Boolean = enEqualsEng
     fun isInEqualsIng(): Boolean = inEqualsIng
-    fun isLEqualsN(): Boolean = lEqualsN
+    fun isIanEqualsIang(): Boolean = ianEqualsIang
+    fun isUanEqualsUang(): Boolean = uanEqualsUang
+    fun isAnEqualsAi(): Boolean = anEqualsAi
+    fun isUnEqualsOng(): Boolean = unEqualsOng
+    fun isHuiEqualsFei(): Boolean = huiEqualsFei
+    fun isHuangEqualsWang(): Boolean = huangEqualsWang
+    fun isFengEqualsHong(): Boolean = fengEqualsHong
+    fun isFuEqualsHu(): Boolean = fuEqualsHu
+    
+    // v/ü模糊匹配getter（为了向后兼容）
     fun isVEqualsU(): Boolean = vEqualsU
     
     // Setters with automatic saving
-    fun setZEqualsZh(enabled: Boolean) {
-        zEqualsZh = enabled
-        prefs.edit().putBoolean(KEY_Z_ZH, enabled).apply()
-        updateFuzzyEnabledStatus()
-    }
-    
     fun setCEqualsCh(enabled: Boolean) {
         cEqualsCh = enabled
         prefs.edit().putBoolean(KEY_C_CH, enabled).apply()
-        updateFuzzyEnabledStatus()
     }
     
     fun setSEqualsSh(enabled: Boolean) {
         sEqualsSh = enabled
         prefs.edit().putBoolean(KEY_S_SH, enabled).apply()
-        updateFuzzyEnabledStatus()
+    }
+    
+    fun setZEqualsZh(enabled: Boolean) {
+        zEqualsZh = enabled
+        prefs.edit().putBoolean(KEY_Z_ZH, enabled).apply()
+    }
+    
+    fun setKEqualsG(enabled: Boolean) {
+        kEqualsG = enabled
+        prefs.edit().putBoolean(KEY_K_G, enabled).apply()
+    }
+    
+    fun setFEqualsH(enabled: Boolean) {
+        fEqualsH = enabled
+        prefs.edit().putBoolean(KEY_F_H, enabled).apply()
+    }
+    
+    fun setNEqualsL(enabled: Boolean) {
+        nEqualsL = enabled
+        prefs.edit().putBoolean(KEY_N_L, enabled).apply()
+    }
+    
+    fun setREqualsL(enabled: Boolean) {
+        rEqualsL = enabled
+        prefs.edit().putBoolean(KEY_R_L, enabled).apply()
     }
     
     fun setAnEqualsAng(enabled: Boolean) {
         anEqualsAng = enabled
         prefs.edit().putBoolean(KEY_AN_ANG, enabled).apply()
-        updateFuzzyEnabledStatus()
     }
     
     fun setEnEqualsEng(enabled: Boolean) {
         enEqualsEng = enabled
         prefs.edit().putBoolean(KEY_EN_ENG, enabled).apply()
-        updateFuzzyEnabledStatus()
     }
     
     fun setInEqualsIng(enabled: Boolean) {
         inEqualsIng = enabled
         prefs.edit().putBoolean(KEY_IN_ING, enabled).apply()
-        updateFuzzyEnabledStatus()
     }
     
-    fun setLEqualsN(enabled: Boolean) {
-        lEqualsN = enabled
-        prefs.edit().putBoolean(KEY_L_N, enabled).apply()
-        updateFuzzyEnabledStatus()
+    fun setIanEqualsIang(enabled: Boolean) {
+        ianEqualsIang = enabled
+        prefs.edit().putBoolean(KEY_IAN_IANG, enabled).apply()
     }
     
+    fun setUanEqualsUang(enabled: Boolean) {
+        uanEqualsUang = enabled
+        prefs.edit().putBoolean(KEY_UAN_UANG, enabled).apply()
+    }
+    
+    fun setAnEqualsAi(enabled: Boolean) {
+        anEqualsAi = enabled
+        prefs.edit().putBoolean(KEY_AN_AI, enabled).apply()
+    }
+    
+    fun setUnEqualsOng(enabled: Boolean) {
+        unEqualsOng = enabled
+        prefs.edit().putBoolean(KEY_UN_ONG, enabled).apply()
+    }
+    
+    fun setHuiEqualsFei(enabled: Boolean) {
+        huiEqualsFei = enabled
+        prefs.edit().putBoolean(KEY_HUI_FEI, enabled).apply()
+    }
+    
+    fun setHuangEqualsWang(enabled: Boolean) {
+        huangEqualsWang = enabled
+        prefs.edit().putBoolean(KEY_HUANG_WANG, enabled).apply()
+    }
+    
+    fun setFengEqualsHong(enabled: Boolean) {
+        fengEqualsHong = enabled
+        prefs.edit().putBoolean(KEY_FENG_HONG, enabled).apply()
+    }
+    
+    fun setFuEqualsHu(enabled: Boolean) {
+        fuEqualsHu = enabled
+        prefs.edit().putBoolean(KEY_FU_HU, enabled).apply()
+    }
+    
+    // v/ü模糊匹配setter（为了向后兼容）
     fun setVEqualsU(enabled: Boolean) {
         vEqualsU = enabled
         prefs.edit().putBoolean(KEY_V_U, enabled).apply()
-        updateFuzzyEnabledStatus()
-        Timber.d("设置v/ü模糊匹配: $enabled")
     }
     
     /**
      * 设置全部模糊拼音规则
      */
     fun setAll(enabled: Boolean) {
-        zEqualsZh = enabled
         cEqualsCh = enabled
         sEqualsSh = enabled
+        zEqualsZh = enabled
+        kEqualsG = enabled
+        fEqualsH = enabled
+        nEqualsL = enabled
+        rEqualsL = enabled
         anEqualsAng = enabled
         enEqualsEng = enabled
         inEqualsIng = enabled
-        lEqualsN = enabled
-        vEqualsU = enabled
+        ianEqualsIang = enabled
+        uanEqualsUang = enabled
+        anEqualsAi = enabled
+        unEqualsOng = enabled
+        huiEqualsFei = enabled
+        huangEqualsWang = enabled
+        fengEqualsHong = enabled
+        fuEqualsHu = enabled
         
         prefs.edit()
-            .putBoolean(KEY_Z_ZH, enabled)
             .putBoolean(KEY_C_CH, enabled)
             .putBoolean(KEY_S_SH, enabled)
+            .putBoolean(KEY_Z_ZH, enabled)
+            .putBoolean(KEY_K_G, enabled)
+            .putBoolean(KEY_F_H, enabled)
+            .putBoolean(KEY_N_L, enabled)
+            .putBoolean(KEY_R_L, enabled)
             .putBoolean(KEY_AN_ANG, enabled)
             .putBoolean(KEY_EN_ENG, enabled)
             .putBoolean(KEY_IN_ING, enabled)
-            .putBoolean(KEY_L_N, enabled)
-            .putBoolean(KEY_V_U, enabled)
+            .putBoolean(KEY_IAN_IANG, enabled)
+            .putBoolean(KEY_UAN_UANG, enabled)
+            .putBoolean(KEY_AN_AI, enabled)
+            .putBoolean(KEY_UN_ONG, enabled)
+            .putBoolean(KEY_HUI_FEI, enabled)
+            .putBoolean(KEY_HUANG_WANG, enabled)
+            .putBoolean(KEY_FENG_HONG, enabled)
+            .putBoolean(KEY_FU_HU, enabled)
             .apply()
-            
-        updateFuzzyEnabledStatus()
-    }
-    
-    /**
-     * 更新模糊拼音总开关状态
-     */
-    private fun updateFuzzyEnabledStatus() {
-        fuzzyEnabled = zEqualsZh || cEqualsCh || sEqualsSh || 
-                      anEqualsAng || enEqualsEng || inEqualsIng || 
-                      lEqualsN || vEqualsU
     }
 } 

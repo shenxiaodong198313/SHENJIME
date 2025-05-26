@@ -24,10 +24,6 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-6:\\layout\\item_debug_stage.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_activity_smart_pinyin_mvp_test.xml.flat",
-        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_smart_pinyin_mvp_test.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\drawable_candidate_item_background.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-6:\\drawable\\candidate_item_background.xml"
     },
@@ -186,6 +182,10 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\drawable_ic_stage_split.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-6:\\drawable\\ic_stage_split.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_activity_input_method_settings.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_input_method_settings.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\drawable_appicon.png.flat",
@@ -362,6 +362,10 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\drawable_ic_smile_face.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-6:\\drawable\\ic_smile_face.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\drawable_ic_settings_white.xml.flat",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-6:\\drawable\\ic_settings_white.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-debug-4:\\layout_activity_dictionary_logs.xml.flat",
