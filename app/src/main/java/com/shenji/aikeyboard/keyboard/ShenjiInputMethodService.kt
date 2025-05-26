@@ -105,39 +105,275 @@ class ShenjiInputMethodService : InputMethodService() {
     
     /**
      * 🚀 智能输入法服务初始化机制
-     * 覆盖安装优化：立即检测Trie状态，自动异步重建，确保输入法立即可用
+     * 自愈式设计：无论什么情况都让输入法立即可用
      */
     private fun initializeInputMethodServiceSmart() {
         try {
             Timber.i("🚀 启动智能输入法服务初始化...")
             
-            // 🎯 第一步：快速检查应用基础状态
-            val isAppInitialized = checkAppInitializationStatus()
-            if (!isAppInitialized) {
-                Timber.w("⚠️ 应用未完全初始化，延迟启动Trie检测")
-                scheduleDelayedTrieCheck()
-                return
-            }
+            // 🎯 关键修复：精确区分安装场景
+            val dictFile = getDictionaryFile()
+            val databaseExists = dictFile.exists()
+            val databaseSize = if (databaseExists) dictFile.length() else 0L
             
-            // 🎯 第二步：立即检测Trie内存状态
-            val trieStatus = checkTrieMemoryStatus()
-            Timber.i("📊 Trie内存状态检测完成: $trieStatus")
-            
-            // 🎯 第三步：根据状态决定处理策略
-            when (trieStatus.needsReload) {
-                true -> {
-                    Timber.i("🔄 检测到Trie内存需要重建，启动异步重建...")
-                    startAsyncTrieRebuilding(trieStatus)
+            when {
+                !databaseExists -> {
+                    Timber.i("🆕 数据库文件不存在，启动自愈机制")
+                    Timber.i("输入法立即可用，后台自动初始化数据库...")
+                    startSelfHealingMode()
                 }
-                false -> {
-                    Timber.i("✅ Trie内存状态正常，执行预热...")
-                    performQuickPreheat()
+                databaseSize > 1024 * 1024 -> { // 大于1MB，说明是完整数据库
+                    Timber.i("✅ 发现完整数据库文件 (${databaseSize / (1024 * 1024)} MB)")
+                    Timber.i("判定为覆盖安装，输入法立即可用")
+                    // 覆盖安装：数据库完整，输入法立即可用
+                    return
+                }
+                else -> {
+                    Timber.i("⚠️ 数据库文件过小 (${databaseSize} bytes)，启动自愈机制")
+                    Timber.i("输入法立即可用，后台重新初始化数据库...")
+                    startSelfHealingMode()
                 }
             }
             
         } catch (e: Exception) {
-            Timber.e(e, "❌ 智能初始化异常，启动降级模式: ${e.message}")
-            startFallbackMode()
+            Timber.e(e, "❌ 输入法服务初始化异常，启动自愈机制: ${e.message}")
+            startSelfHealingMode()
+        }
+    }
+    
+    /**
+     * 🎯 获取数据库文件路径
+     */
+    private fun getDictionaryFile(): java.io.File {
+        val internalDir = java.io.File(filesDir, "dictionaries")
+        return java.io.File(internalDir, "shenji_dict.realm")
+    }
+    
+    /**
+     * 🛠️ 自愈机制：输入法立即可用，后台自动修复数据库
+     * 核心思想：永远不阻塞用户使用，在后台静默修复
+     */
+    private fun startSelfHealingMode() {
+        Timber.i("🛠️ 启动自愈机制：输入法立即可用，后台自动修复...")
+        
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                Timber.i("🔧 开始后台自愈流程...")
+                
+                // 第一步：确保应用基础组件可用
+                ensureApplicationComponents()
+                
+                // 第二步：自动初始化或修复数据库
+                autoInitializeDatabase()
+                
+                // 第三步：重建Trie内存结构
+                autoRebuildTrieMemory()
+                
+                // 第四步：验证修复结果
+                validateSelfHealing()
+                
+                Timber.i("🎉 自愈流程完成，输入法已完全恢复")
+                
+            } catch (e: Exception) {
+                Timber.e(e, "❌ 自愈流程失败，但输入法仍可基础使用: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * 🔧 确保应用基础组件可用
+     */
+    private suspend fun ensureApplicationComponents() {
+        try {
+            Timber.d("🔧 检查应用基础组件...")
+            
+            // 等待应用初始化（最多等待10秒）
+            var retryCount = 0
+            val maxRetries = 10
+            
+            while (retryCount < maxRetries) {
+                if (checkAppInitializationStatus()) {
+                    Timber.i("✅ 应用基础组件已可用")
+                    return
+                }
+                
+                delay(1000)
+                retryCount++
+                Timber.d("⏳ 等待应用组件初始化... (${retryCount}/${maxRetries})")
+            }
+            
+            Timber.w("⚠️ 应用组件初始化超时，尝试强制初始化...")
+            
+            // 如果等待超时，尝试强制触发初始化
+            try {
+                ShenjiApplication.instance.initRealm()
+                Timber.i("✅ 强制初始化成功")
+            } catch (e: Exception) {
+                Timber.e(e, "强制初始化失败")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "确保应用组件失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 🗄️ 自动初始化或修复数据库
+     */
+    private suspend fun autoInitializeDatabase() {
+        try {
+            Timber.d("🗄️ 开始自动数据库修复...")
+            
+            val dictFile = getDictionaryFile()
+            val needsInitialization = !dictFile.exists() || dictFile.length() < 1024 * 1024
+            
+            if (needsInitialization) {
+                Timber.i("🔧 数据库需要修复，开始自动初始化...")
+                
+                // 确保目录存在
+                dictFile.parentFile?.mkdirs()
+                
+                // 检查Application是否有初始化方法可用
+                try {
+                    val app = ShenjiApplication.instance
+                    
+                    // 如果数据库文件不存在或损坏，触发重新初始化
+                    if (!dictFile.exists()) {
+                        Timber.i("🔧 数据库文件不存在，触发重新初始化...")
+                        app.initRealm()
+                    } else if (dictFile.length() < 1024 * 1024) {
+                        Timber.i("🔧 数据库文件损坏，删除并重新初始化...")
+                        dictFile.delete()
+                        app.initRealm()
+                    }
+                    
+                    // 等待初始化完成
+                    var waitCount = 0
+                    while (waitCount < 30) { // 最多等待30秒
+                        delay(1000)
+                        waitCount++
+                        
+                        if (dictFile.exists() && dictFile.length() > 1024 * 1024) {
+                            Timber.i("✅ 数据库自动修复成功，大小: ${dictFile.length() / (1024 * 1024)} MB")
+                            return
+                        }
+                        
+                        if (waitCount % 5 == 0) {
+                            Timber.d("⏳ 等待数据库修复... (${waitCount}/30秒)")
+                        }
+                    }
+                    
+                    Timber.w("⚠️ 数据库修复超时，但输入法仍可基础使用")
+                    
+                } catch (e: Exception) {
+                    Timber.e(e, "自动数据库修复失败: ${e.message}")
+                }
+            } else {
+                Timber.i("✅ 数据库状态正常，无需修复")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "自动数据库修复异常: ${e.message}")
+        }
+    }
+    
+    /**
+     * 🧠 自动重建Trie内存结构
+     */
+    private suspend fun autoRebuildTrieMemory() {
+        try {
+            Timber.d("🧠 开始自动重建Trie内存...")
+            
+            val trieManager = ShenjiApplication.trieManager
+            
+            // 检查核心词典状态
+            val charsLoaded = trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+            val baseLoaded = trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+            
+            if (!charsLoaded || !baseLoaded) {
+                Timber.i("🔧 Trie内存需要重建...")
+                
+                // 优先重建CHARS词典
+                if (!charsLoaded) {
+                    Timber.d("🔧 重建CHARS词典...")
+                    val charsSuccess = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                    if (charsSuccess) {
+                        Timber.i("✅ CHARS词典重建成功")
+                    } else {
+                        Timber.w("⚠️ CHARS词典重建失败，但不影响基础使用")
+                    }
+                }
+                
+                // 然后重建BASE词典
+                if (!baseLoaded) {
+                    Timber.d("🔧 重建BASE词典...")
+                    val baseSuccess = trieManager.loadTrieToMemory(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+                    if (baseSuccess) {
+                        Timber.i("✅ BASE词典重建成功")
+                    } else {
+                        Timber.w("⚠️ BASE词典重建失败，但不影响基础使用")
+                    }
+                }
+                
+                val loadedTypes = trieManager.getLoadedTrieTypes()
+                Timber.i("📚 Trie重建完成，已加载: ${loadedTypes.map { getTrieDisplayName(it) }}")
+                
+            } else {
+                Timber.i("✅ Trie内存状态正常，无需重建")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "自动Trie重建失败，但不影响基础使用: ${e.message}")
+        }
+    }
+    
+    /**
+     * ✅ 验证自愈结果
+     */
+    private suspend fun validateSelfHealing() {
+        try {
+            Timber.d("✅ 开始验证自愈结果...")
+            
+            // 测试数据库查询
+            val dbTestResult = try {
+                val realm = ShenjiApplication.realm
+                val entryCount = realm.query(com.shenji.aikeyboard.data.Entry::class).count().find()
+                Timber.i("📊 数据库测试: ${entryCount}个词条")
+                entryCount > 0
+            } catch (e: Exception) {
+                Timber.w("数据库测试失败: ${e.message}")
+                false
+            }
+            
+            // 测试候选词引擎
+            val engineTestResult = try {
+                val engineAdapter = InputMethodEngineAdapter.getInstance()
+                val testResults = engineAdapter.getCandidates("ni", 3)
+                Timber.i("🔍 引擎测试: ${testResults.size}个候选词")
+                testResults.isNotEmpty()
+            } catch (e: Exception) {
+                Timber.w("引擎测试失败: ${e.message}")
+                false
+            }
+            
+            // 汇总结果
+            when {
+                dbTestResult && engineTestResult -> {
+                    Timber.i("🎉 自愈验证成功：数据库✅ 引擎✅")
+                }
+                dbTestResult -> {
+                    Timber.i("🎯 自愈部分成功：数据库✅ 引擎⚠️（可基础使用）")
+                }
+                engineTestResult -> {
+                    Timber.i("🎯 自愈部分成功：数据库⚠️ 引擎✅")
+                }
+                else -> {
+                    Timber.w("⚠️ 自愈验证失败，但输入法仍可尝试使用")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "自愈验证异常: ${e.message}")
         }
     }
     
@@ -221,9 +457,9 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     /**
-     * 🎯 延迟启动Trie检测（应用未完全初始化时）
+     * 🎯 延迟启动Trie优化（应用未完全初始化时）
      */
-    private fun scheduleDelayedTrieCheck() {
+    private fun scheduleDelayedTrieOptimization() {
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             try {
                 // 等待应用初始化完成
@@ -235,11 +471,11 @@ class ShenjiInputMethodService : InputMethodService() {
                     retryCount++
                     
                     if (checkAppInitializationStatus()) {
-                        Timber.i("✅ 应用初始化完成，开始Trie检测 (重试${retryCount}次)")
+                        Timber.i("✅ 应用初始化完成，开始Trie优化 (重试${retryCount}次)")
                         
                         val trieStatus = checkTrieMemoryStatus()
                         if (trieStatus.needsReload) {
-                            startAsyncTrieRebuilding(trieStatus)
+                            startAsyncTrieOptimization(trieStatus)
                         } else {
                             performQuickPreheat()
                         }
@@ -249,23 +485,23 @@ class ShenjiInputMethodService : InputMethodService() {
                     Timber.d("⏳ 等待应用初始化... (${retryCount}/${maxRetries})")
                 }
                 
-                Timber.w("⚠️ 应用初始化超时，启动降级模式")
-                startFallbackMode()
+                Timber.w("⚠️ 应用初始化超时，Trie优化将跳过")
+                // 不启动降级模式，输入法基于Realm仍可正常使用
                 
             } catch (e: Exception) {
-                Timber.e(e, "延迟Trie检测失败: ${e.message}")
-                startFallbackMode()
+                Timber.e(e, "延迟Trie优化失败: ${e.message}")
+                // 不影响输入法使用，只记录日志
             }
         }
     }
     
     /**
-     * 🎯 启动异步Trie重建
+     * 🎯 启动异步Trie优化（不阻塞输入法使用）
      */
-    private fun startAsyncTrieRebuilding(status: TrieMemoryStatus) {
+    private fun startAsyncTrieOptimization(status: TrieMemoryStatus) {
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             try {
-                Timber.i("🔧 开始异步Trie重建，优先级: ${status.priority}")
+                Timber.i("🔧 开始异步Trie优化，优先级: ${status.priority}")
                 val startTime = System.currentTimeMillis()
                 
                 val trieManager = ShenjiApplication.trieManager
@@ -296,16 +532,16 @@ class ShenjiInputMethodService : InputMethodService() {
                 val endTime = System.currentTimeMillis()
                 val finalStatus = checkTrieMemoryStatus()
                 
-                Timber.i("🎉 异步Trie重建完成！")
+                Timber.i("🎉 异步Trie优化完成！")
                 Timber.i("⏱️ 耗时: ${endTime - startTime}ms")
                 Timber.i("📊 最终状态: $finalStatus")
                 
-                // 重建完成后预热引擎
+                // 优化完成后预热引擎
                 performQuickPreheat()
                 
             } catch (e: Exception) {
-                Timber.e(e, "❌ 异步Trie重建失败: ${e.message}")
-                startFallbackMode()
+                Timber.e(e, "❌ 异步Trie优化失败: ${e.message}")
+                // 不影响输入法使用，只记录日志
             }
         }
     }
@@ -2184,8 +2420,26 @@ class ShenjiInputMethodService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         
-        // 🔧 智能Trie状态检测：只在需要时重建
-        performSmartTrieCheck()
+        // 🔧 关键修复：自愈式Trie检查，永不阻塞用户
+        val dictFile = getDictionaryFile()
+        val databaseExists = dictFile.exists()
+        val databaseSize = if (databaseExists) dictFile.length() else 0L
+        
+        when {
+            !databaseExists -> {
+                Timber.d("🆕 数据库不存在，启动后台自愈")
+                performAsyncSelfHealing()
+            }
+            databaseSize > 1024 * 1024 -> {
+                Timber.d("✅ 覆盖安装场景，检查Trie状态")
+                // 覆盖安装：数据库完整，但可能需要重建Trie
+                performAsyncTrieCheck()
+            }
+            else -> {
+                Timber.d("⚠️ 数据库文件异常，启动后台自愈")
+                performAsyncSelfHealing()
+            }
+        }
         
         // 获取并显示当前应用名称
         if (::appNameDisplay.isInitialized) {
@@ -2267,26 +2521,42 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     /**
-     * 🎯 智能Trie状态检测（输入视图启动时）
+     * 🛠️ 异步自愈（数据库问题时）
      */
-    private fun performSmartTrieCheck() {
-        try {
-            if (!checkAppInitializationStatus()) {
-                Timber.d("🎯 应用未完全初始化，跳过Trie检测")
-                return
+    private fun performAsyncSelfHealing() {
+        Timber.d("🛠️ 启动异步自愈流程...")
+        startSelfHealingMode()
+    }
+    
+    /**
+     * 🔧 异步Trie检查（覆盖安装时）
+     */
+    private fun performAsyncTrieCheck() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                Timber.d("🔧 开始异步Trie检查...")
+                
+                if (!checkAppInitializationStatus()) {
+                    Timber.d("🎯 应用未完全初始化，等待后再检查")
+                    delay(2000) // 等待2秒
+                    if (!checkAppInitializationStatus()) {
+                        Timber.w("应用初始化超时，跳过Trie检查")
+                        return@launch
+                    }
+                }
+                
+                val trieStatus = checkTrieMemoryStatus()
+                
+                if (trieStatus.needsReload) {
+                    Timber.i("🔄 检测到Trie需要重建: $trieStatus")
+                    startAsyncTrieOptimization(trieStatus)
+                } else {
+                    Timber.d("✅ Trie状态正常: $trieStatus")
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "异步Trie检查失败: ${e.message}")
             }
-            
-            val trieStatus = checkTrieMemoryStatus()
-            
-            if (trieStatus.needsReload) {
-                Timber.i("🔄 输入视图启动时检测到Trie需要重建: $trieStatus")
-                startAsyncTrieRebuilding(trieStatus)
-            } else {
-                Timber.d("✅ Trie状态正常: $trieStatus")
-            }
-            
-        } catch (e: Exception) {
-            Timber.e(e, "智能Trie检测失败: ${e.message}")
         }
     }
     

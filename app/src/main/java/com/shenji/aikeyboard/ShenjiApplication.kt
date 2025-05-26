@@ -269,28 +269,75 @@ class ShenjiApplication : MultiDexApplication() {
             
             val dictFile = File(internalDir, "shenji_dict.realm")
             
-            // 检查assets中是否有预构建的数据库文件
-            val hasAssetsDb = try {
-                assets.open("shenji_dict.realm").use { true }
-            } catch (e: Exception) {
-                logStartupMessage("assets中未找到预构建数据库")
-                false
-            }
+            // 🔧 关键修复：精确区分覆盖安装和清理数据场景
+            val databaseExists = dictFile.exists()
+            val databaseSize = if (databaseExists) dictFile.length() else 0L
+            val needsInitialization = !databaseExists || databaseSize < 1024 * 1024 // 小于1MB认为需要初始化
             
-            if (hasAssetsDb) {
-                // 如果assets中有数据库文件，检查是否需要更新本地文件
-                val shouldCopyFromAssets = !dictFile.exists() || 
-                    dictFile.length() < 1000 || 
-                    isAssetsDatabaseNewer(dictFile)
-                
-                if (shouldCopyFromAssets) {
-                    logStartupMessage("从assets复制预构建数据库...")
-                    copyDatabaseFromAssets(dictFile)
+            if (needsInitialization) {
+                if (!databaseExists) {
+                    logStartupMessage("🆕 检测到首次安装或数据清理，采用渐进式初始化策略")
                 } else {
-                    logStartupMessage("使用现有的数据库文件")
+                    logStartupMessage("⚠️ 数据库文件异常 (${databaseSize} bytes)，重新初始化")
                 }
+                
+                // 🚀 第一步：立即创建空数据库，确保输入法可用
+                logStartupMessage("第一步：创建空数据库，确保输入法立即可用...")
+                createEmptyDatabase(dictFile)
+                
+                // 🚀 第二步：异步复制完整数据库
+                GlobalScope.launch(Dispatchers.IO) {
+                    try {
+                        logStartupMessage("第二步：后台复制完整数据库...")
+                        
+                        val hasAssetsDb = try {
+                            assets.open("shenji_dict.realm").use { true }
+                        } catch (e: Exception) {
+                            logStartupMessage("assets中未找到预构建数据库")
+                            false
+                        }
+                        
+                        if (hasAssetsDb) {
+                            // 复制到临时文件，然后替换
+                            val tempFile = File(internalDir, "shenji_dict_temp.realm")
+                            logStartupMessage("复制完整数据库到临时文件...")
+                            copyDatabaseFromAssets(tempFile)
+                            
+                            // 关闭当前数据库连接
+                            try {
+                                realm.close()
+                                logStartupMessage("已关闭当前数据库连接")
+                            } catch (e: Exception) {
+                                logStartupMessage("关闭数据库连接失败: ${e.message}")
+                            }
+                            
+                            // 替换数据库文件
+                            if (tempFile.renameTo(dictFile)) {
+                                logStartupMessage("✅ 完整数据库复制完成，重新打开数据库")
+                                
+                                // 重新打开数据库
+                                val config = RealmConfiguration.Builder(schema = setOf(Entry::class))
+                                    .directory(filesDir.path + "/dictionaries")
+                                    .name("shenji_dict.realm")
+                                    .deleteRealmIfMigrationNeeded()
+                                    .build()
+                                realm = Realm.open(config)
+                                
+                                val entryCount = realm.query(Entry::class).count().find()
+                                logStartupMessage("🎉 完整数据库加载完成，词条数: $entryCount")
+                            } else {
+                                logStartupMessage("❌ 数据库文件替换失败")
+                            }
+                        }
+                        
+                    } catch (e: Exception) {
+                        logStartupMessage("❌ 后台数据库复制失败: ${e.message}")
+                    }
+                }
+                
             } else {
-                logStartupMessage("assets中未找到预构建数据库，使用现有文件或创建空数据库")
+                logStartupMessage("✅ 使用现有数据库文件")
+                logStartupMessage("数据库文件大小: ${dictFile.length() / (1024 * 1024)} MB")
             }
             
             // 配置Realm
@@ -376,6 +423,31 @@ class ShenjiApplication : MultiDexApplication() {
             }
         } catch (e: Exception) {
             false
+        }
+    }
+    
+    /**
+     * 🚀 创建空数据库（确保输入法立即可用）
+     */
+    private fun createEmptyDatabase(targetFile: File) {
+        try {
+            logStartupMessage("创建空数据库: ${targetFile.absolutePath}")
+            
+            // 创建空的Realm数据库
+            val config = RealmConfiguration.Builder(schema = setOf(Entry::class))
+                .directory(targetFile.parent!!)
+                .name(targetFile.name)
+                .deleteRealmIfMigrationNeeded()
+                .build()
+            
+            val emptyRealm = Realm.open(config)
+            emptyRealm.close()
+            
+            logStartupMessage("✅ 空数据库创建成功，大小: ${targetFile.length()} bytes")
+            
+        } catch (e: Exception) {
+            logStartupMessage("❌ 创建空数据库失败: ${e.message}")
+            throw e
         }
     }
     
