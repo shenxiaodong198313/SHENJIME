@@ -3072,6 +3072,7 @@ drawable design_password_eye
 drawable design_snackbar_background
 drawable edit_text_background
 drawable ic_ai_assistant
+drawable ic_app_icon
 drawable ic_arrow_back_black_24
 drawable ic_arrow_down
 drawable ic_call_answer
@@ -3082,17 +3083,26 @@ drawable ic_call_decline
 drawable ic_call_decline_low
 drawable ic_clear_black_24
 drawable ic_clock_black_24dp
+drawable ic_collapse_arrow
+drawable ic_comment
+drawable ic_du_icon
+drawable ic_edit
 drawable ic_export
 drawable ic_keyboard_black_24dp
+drawable ic_keyboard_icon
 drawable ic_m3_chip_check
 drawable ic_m3_chip_checked_circle
 drawable ic_m3_chip_close
 drawable ic_mic
+drawable ic_microphone
 drawable ic_mtrl_checked_circle
 drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
 drawable ic_mtrl_chip_close_circle
+drawable ic_order
+drawable ic_plan
 drawable ic_search_black_24
+drawable ic_smile_face
 drawable ic_speech_library
 drawable ic_stage_acronym
 drawable ic_stage_initial
@@ -3263,7 +3273,6 @@ id action_view_logs
 id actions
 id activity_chooser_view_content
 id add
-id ai_assistant_icon
 id alertTitle
 id aligned
 id all
@@ -3279,6 +3288,7 @@ id appNameTopLeft
 id appSubtitle
 id appTitle
 id app_icon
+id app_icon_toolbar
 id app_name_display
 id arc
 id asConfigured
@@ -3362,6 +3372,8 @@ id clip_vertical
 id clockwise
 id closest
 id collapseActionView
+id collapse_keyboard_icon
+id comment_icon
 id compress
 id confirm_button
 id constraint
@@ -3420,6 +3432,7 @@ id easeInOut
 id easeOut
 id east
 id edge
+id edit_icon
 id edit_query
 id edit_text_id
 id elastic
@@ -3656,6 +3669,7 @@ id open_search_view_search_prefix
 id open_search_view_status_bar_spacer
 id open_search_view_toolbar
 id open_search_view_toolbar_container
+id order_icon
 id outline
 id outward
 id overshoot
@@ -3676,6 +3690,7 @@ id permission_status_text_view
 id pin
 id pinyin_container
 id pinyin_display
+id plan_icon
 id position
 id postLayout
 id pressed
@@ -3759,7 +3774,6 @@ id snapMargins
 id south
 id spacer
 id special_effects_controller_view_tag
-id speech_library_icon
 id splashIcon
 id spline
 id split_action_bar

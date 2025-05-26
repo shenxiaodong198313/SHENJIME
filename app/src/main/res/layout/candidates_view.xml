@@ -66,35 +66,82 @@
             android:paddingStart="10dp"
             android:paddingEnd="10dp">
 
-            <!-- 话术库图标 -->
+            <!-- 订单图标 -->
             <ImageView
-                android:id="@+id/speech_library_icon"
+                android:id="@+id/order_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_marginEnd="16dp"
-                android:src="@drawable/ic_speech_library"
+                android:layout_marginEnd="36dp"
+                android:src="@drawable/ic_order"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"
-                android:contentDescription="话术库" />
+                android:contentDescription="订单" />
 
-            <!-- AI助手图标 -->
+            <!-- 计划图标 -->
             <ImageView
-                android:id="@+id/ai_assistant_icon"
+                android:id="@+id/plan_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_marginEnd="16dp"
-                android:src="@drawable/ic_ai_assistant"
+                android:layout_marginEnd="36dp"
+                android:src="@drawable/ic_plan"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"
-                android:contentDescription="AI助手" />
+                android:contentDescription="计划" />
 
-            <!-- 占位空间，推送图标到左侧 -->
+            <!-- 编辑图标 -->
+            <ImageView
+                android:id="@+id/edit_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="36dp"
+                android:src="@drawable/ic_edit"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="编辑" />
+
+            <!-- 评论图标 -->
+            <ImageView
+                android:id="@+id/comment_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="36dp"
+                android:src="@drawable/ic_comment"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="评论" />
+
+            <!-- 占位空间，推送图标到左侧，app图标和箭头到右侧 -->
             <View
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
+
+            <!-- App图标 -->
+            <ImageView
+                android:id="@+id/app_icon_toolbar"
+                android:layout_width="29dp"
+                android:layout_height="29dp"
+                android:layout_marginEnd="18dp"
+                android:src="@drawable/ic_app_icon"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="应用" />
+
+            <!-- 收起键盘箭头 -->
+            <ImageView
+                android:id="@+id/collapse_keyboard_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_collapse_arrow"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="收起键盘" />
 
         </LinearLayout>
 

@@ -472,16 +472,41 @@ class ShenjiInputMethodService : InputMethodService() {
      * 设置工具栏图标点击事件
      */
     private fun setupToolbarIcons() {
-        // 话术库图标
-        candidatesViewLayout.findViewById<ImageView>(R.id.speech_library_icon)?.setOnClickListener {
-            Toast.makeText(this, "话术库功能即将上线", Toast.LENGTH_SHORT).show()
-            Timber.d("点击了话术库图标")
+        // 订单图标
+        candidatesViewLayout.findViewById<ImageView>(R.id.order_icon)?.setOnClickListener {
+            Toast.makeText(this, "订单功能即将上线", Toast.LENGTH_SHORT).show()
+            Timber.d("点击了订单图标")
         }
         
-        // AI助手图标
-        candidatesViewLayout.findViewById<ImageView>(R.id.ai_assistant_icon)?.setOnClickListener {
-            Toast.makeText(this, "AI助手功能即将上线", Toast.LENGTH_SHORT).show()
-            Timber.d("点击了AI助手图标")
+        // 计划图标
+        candidatesViewLayout.findViewById<ImageView>(R.id.plan_icon)?.setOnClickListener {
+            Toast.makeText(this, "计划功能即将上线", Toast.LENGTH_SHORT).show()
+            Timber.d("点击了计划图标")
+        }
+        
+        // 编辑图标
+        candidatesViewLayout.findViewById<ImageView>(R.id.edit_icon)?.setOnClickListener {
+            Toast.makeText(this, "编辑功能即将上线", Toast.LENGTH_SHORT).show()
+            Timber.d("点击了编辑图标")
+        }
+        
+        // 评论图标
+        candidatesViewLayout.findViewById<ImageView>(R.id.comment_icon)?.setOnClickListener {
+            Toast.makeText(this, "评论功能即将上线", Toast.LENGTH_SHORT).show()
+            Timber.d("点击了评论图标")
+        }
+        
+        // App图标
+        candidatesViewLayout.findViewById<ImageView>(R.id.app_icon_toolbar)?.setOnClickListener {
+            Toast.makeText(this, "应用功能即将上线", Toast.LENGTH_SHORT).show()
+            Timber.d("点击了App图标")
+        }
+        
+        // 收起键盘箭头
+        candidatesViewLayout.findViewById<ImageView>(R.id.collapse_keyboard_icon)?.setOnClickListener {
+            // 收起键盘
+            requestHideSelf(0)
+            Timber.d("点击了收起键盘箭头，键盘已收起")
         }
     }
     
@@ -1268,7 +1293,7 @@ class ShenjiInputMethodService : InputMethodService() {
         Timber.d("输入法接口初始化，清空所有状态")
     }
     
-    // 获取应用名称
+    // 获取应用名称和图标
     private fun getAppNameFromPackage(packageName: String): String {
         if (packageName.isEmpty()) return ""
         
@@ -1276,10 +1301,29 @@ class ShenjiInputMethodService : InputMethodService() {
         try {
             val appInfo = packageManager.getApplicationInfo(packageName, 0)
             val appName = packageManager.getApplicationLabel(appInfo).toString()
-            return "${appName}已增强"
+            
+            // 设置应用图标
+            try {
+                val appIcon = packageManager.getApplicationIcon(packageName)
+                if (::appIcon.isInitialized) {
+                    this.appIcon.setImageDrawable(appIcon)
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "获取应用图标失败")
+                // 如果获取失败，使用默认图标
+                if (::appIcon.isInitialized) {
+                    this.appIcon.setImageResource(android.R.drawable.ic_menu_info_details)
+                }
+            }
+            
+            return "${appName}插件已加持"
         } catch (e: Exception) {
-            Timber.e(e, "获取应用名称失败")
-            return "${packageName}已增强"
+            Timber.e(e, "获取应用信息失败")
+            // 设置默认图标
+            if (::appIcon.isInitialized) {
+                this.appIcon.setImageResource(android.R.drawable.ic_menu_info_details)
+            }
+            return "插件已加持"
         }
     }
     
