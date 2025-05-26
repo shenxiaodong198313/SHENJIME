@@ -29,9 +29,16 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     // 简化缓存策略
     private val queryCache = LruCache<String, List<WordFrequency>>(100)
     
+    // 🚀 新增：简化的输入同步机制
+    @Volatile
+    private var currentQueryVersion = AtomicLong(0)
+    private var lastInputTime = 0L
+    private val INPUT_DEBOUNCE_DELAY = 50L // 50ms防抖动延迟
+    
     // 性能统计
     private val queryCount = AtomicLong(0)
     private val cacheHits = AtomicLong(0)
+    private val outdatedQueries = AtomicLong(0)
     
     companion object {
         @Volatile
@@ -82,58 +89,224 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     }
     
     /**
-     * 主要查询接口
+     * 主要查询接口 - 简化版输入同步
      */
     override suspend fun getCandidates(currentPinyin: String, limit: Int, offset: Int): List<WordFrequency> {
         if (currentPinyin.isBlank()) return emptyList()
         
-        val cleanInput = currentPinyin.trim().lowercase()
-        queryCount.incrementAndGet()
+        val cleanInput = currentPinyin.trim()
+        val currentTime = System.currentTimeMillis()
         
-        // 检查缓存（使用原始输入作为缓存键）
-        val cacheKey = "${cleanInput}_${limit}_${offset}"
-        queryCache.get(cacheKey)?.let { cached ->
-            cacheHits.incrementAndGet()
-            return cached
+        // 🚀 输入防抖动：如果输入太频繁，延迟处理
+        if (currentTime - lastInputTime < INPUT_DEBOUNCE_DELAY) {
+            delay(INPUT_DEBOUNCE_DELAY)
         }
+        lastInputTime = currentTime
         
-        val startTime = System.currentTimeMillis()
+        // 🚀 生成查询版本号
+        val queryVersion = currentQueryVersion.incrementAndGet()
         
-        // 🚀 连续拼音检测和处理
-        val isContinuousPinyin = detectContinuousPinyin(cleanInput)
-        
-        val results = if (isContinuousPinyin && offset == 0) {
-            // 使用连续拼音引擎处理
-            Timber.d("🎯 检测到连续拼音，使用连续拼音引擎: '$cleanInput'")
-            val continuousResult = continuousEngine.queryContinuous(cleanInput, limit)
-            
-            if (continuousResult.bestCombinations.isNotEmpty()) {
-                Timber.d("✅ 连续拼音查询成功: ${continuousResult.bestCombinations.size}个结果")
-                continuousResult.bestCombinations
-            } else {
-                // 回退到原有逻辑
-                Timber.d("🔄 连续拼音无结果，回退到原有逻辑")
-                performOriginalQuery(cleanInput, limit, offset)
+        return withContext(Dispatchers.IO) {
+            try {
+                queryCount.incrementAndGet()
+                
+                // 🚀 检查查询是否已过时
+                if (queryVersion != currentQueryVersion.get()) {
+                    outdatedQueries.incrementAndGet()
+                    Timber.d("🚫 查询已过时，跳过: '$cleanInput' (版本: $queryVersion)")
+                    return@withContext emptyList()
+                }
+                
+                // 🚀 智能输入分离 - 区分已选中文和待处理拼音
+                val inputSeparation = separateMixedInput(cleanInput)
+                val actualPinyinInput = inputSeparation.pinyinPart.lowercase()
+                
+                // 如果没有拼音部分需要处理，直接返回空结果
+                if (actualPinyinInput.isBlank()) {
+                    Timber.d("🔍 输入分离结果：无拼音部分需要处理")
+                    return@withContext emptyList()
+                }
+                
+                // 记录输入分离信息
+                if (inputSeparation.chinesePart.isNotEmpty()) {
+                    Timber.d("🔍 输入分离：中文部分='${inputSeparation.chinesePart}', 拼音部分='${actualPinyinInput}'")
+                }
+                
+                // 🚀 再次检查查询是否已过时
+                if (queryVersion != currentQueryVersion.get()) {
+                    outdatedQueries.incrementAndGet()
+                    return@withContext emptyList()
+                }
+                
+                // 检查缓存（使用实际拼音输入作为缓存键）
+                val cacheKey = "${actualPinyinInput}_${limit}_${offset}"
+                queryCache.get(cacheKey)?.let { cached ->
+                    cacheHits.incrementAndGet()
+                    Timber.d("💾 缓存命中: $actualPinyinInput -> ${cached.size}个结果")
+                    return@withContext cached
+                }
+                
+                val startTime = System.currentTimeMillis()
+                
+                // 🚀 连续拼音检测和处理（只对拼音部分）
+                val isContinuousPinyin = detectContinuousPinyin(actualPinyinInput)
+                
+                // 🚀 再次检查查询是否已过时
+                if (queryVersion != currentQueryVersion.get()) {
+                    outdatedQueries.incrementAndGet()
+                    return@withContext emptyList()
+                }
+                
+                val results = if (isContinuousPinyin && offset == 0) {
+                    // 使用连续拼音引擎处理
+                    Timber.d("🎯 检测到连续拼音，使用连续拼音引擎: '$actualPinyinInput'")
+                    val continuousResult = continuousEngine.queryContinuous(actualPinyinInput, limit)
+                    
+                    // 🚀 检查查询过程中是否已过时
+                    if (queryVersion != currentQueryVersion.get()) {
+                        outdatedQueries.incrementAndGet()
+                        return@withContext emptyList()
+                    }
+                    
+                    if (continuousResult.bestCombinations.isNotEmpty()) {
+                        Timber.d("✅ 连续拼音查询成功: ${continuousResult.bestCombinations.size}个结果")
+                        continuousResult.bestCombinations
+                    } else {
+                        // 回退到原有逻辑
+                        Timber.d("🔄 连续拼音无结果，回退到原有逻辑")
+                        performOriginalQuery(actualPinyinInput, limit, offset, queryVersion)
+                    }
+                } else {
+                    // 使用原有查询逻辑
+                    performOriginalQuery(actualPinyinInput, limit, offset, queryVersion)
+                }
+                
+                // 🚀 最终检查查询是否已过时
+                if (queryVersion != currentQueryVersion.get()) {
+                    outdatedQueries.incrementAndGet()
+                    return@withContext emptyList()
+                }
+                
+                val queryTime = System.currentTimeMillis() - startTime
+                Timber.d("查询完成: $actualPinyinInput -> ${results.size}结果 (${queryTime}ms)")
+                
+                // 缓存结果（使用实际拼音输入作为缓存键）
+                queryCache.put(cacheKey, results)
+                
+                // 分页返回
+                val startIndex = offset
+                val endIndex = minOf(offset + limit, results.size)
+                
+                if (startIndex < results.size) {
+                    results.subList(startIndex, endIndex)
+                } else {
+                    emptyList()
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "查询失败: '$cleanInput'")
+                emptyList()
             }
-        } else {
-            // 使用原有查询逻辑
-            performOriginalQuery(cleanInput, limit, offset)
+        }
+    }
+    
+    /**
+     * 🚀 简化版原始查询 - 支持版本检查
+     */
+    private suspend fun performOriginalQuery(cleanInput: String, limit: Int, offset: Int, queryVersion: Long): List<WordFrequency> {
+        // 🔧 生成查询变体（包括原始输入和v/ü转换）
+        val queryVariants = generateInputVariants(cleanInput)
+        Timber.d("🔄 输入变体: $cleanInput -> ${queryVariants.joinToString(", ")}")
+        
+        // 🚀 检查查询是否已过时
+        if (queryVersion != currentQueryVersion.get()) {
+            outdatedQueries.incrementAndGet()
+            return emptyList()
         }
         
-        val queryTime = System.currentTimeMillis() - startTime
-        Timber.d("查询完成: $cleanInput -> ${results.size}结果 (${queryTime}ms)")
+        // 对每个变体进行输入分析，选择最佳的分析结果
+        val bestAnalysis = queryVariants.map { variant ->
+            analyzeInput(variant)
+        }.maxByOrNull { it.confidence } ?: analyzeInput(cleanInput)
         
-        // 缓存结果（使用原始输入作为缓存键）
-        queryCache.put(cacheKey, results)
-        
-        // 分页返回
-        val startIndex = offset
-        val endIndex = minOf(offset + limit, results.size)
-        return if (startIndex < results.size) {
-            results.subList(startIndex, endIndex)
-        } else {
-            emptyList()
+        // 🚀 再次检查查询是否已过时
+        if (queryVersion != currentQueryVersion.get()) {
+            outdatedQueries.incrementAndGet()
+            return emptyList()
         }
+        
+        // 根据输入分析选择查询策略
+        return when (bestAnalysis.type) {
+            InputType.SINGLE_CHAR -> {
+                if (offset == 0) {
+                    // 首次查询：分层推荐
+                    queryMultiVariantSingleChar(queryVariants, limit, queryVersion)
+                } else {
+                    // 懒加载：更多内容
+                    queryMultiVariantSingleCharLazyLoad(queryVariants, limit, offset, queryVersion)
+                }
+            }
+            InputType.ABBREVIATION -> queryMultiVariantAbbreviation(queryVariants, limit, queryVersion)
+            InputType.SHORT_INPUT -> queryMultiVariantShortInput(queryVariants, bestAnalysis.segments, limit, queryVersion)
+            InputType.MEDIUM_INPUT -> queryMultiVariantMediumInput(queryVariants, bestAnalysis.segments, limit, queryVersion)
+            InputType.LONG_INPUT -> queryMultiVariantLongInput(queryVariants, bestAnalysis.segments, limit, queryVersion)
+            InputType.OVER_LIMIT -> {
+                Timber.d("输入超过限制(${bestAnalysis.segments.size}分段)，停止查询")
+                emptyList()
+            }
+        }
+    }
+    
+    /**
+     * 🚀 新增：混合输入分离数据类
+     */
+    data class InputSeparation(
+        val chinesePart: String,    // 已选择的中文部分
+        val pinyinPart: String,     // 待处理的拼音部分
+        val originalInput: String   // 原始输入
+    )
+    
+    /**
+     * 🚀 新增：智能分离混合输入（中文+拼音）
+     */
+    private fun separateMixedInput(input: String): InputSeparation {
+        if (input.isBlank()) {
+            return InputSeparation("", "", input)
+        }
+        
+        // 查找最后一个中文字符的位置
+        var lastChineseIndex = -1
+        for (i in input.indices) {
+            val char = input[i]
+            if (isChinese(char)) {
+                lastChineseIndex = i
+            }
+        }
+        
+        return if (lastChineseIndex >= 0) {
+            // 有中文字符，分离中文和拼音部分
+            val chinesePart = input.substring(0, lastChineseIndex + 1)
+            val pinyinPart = input.substring(lastChineseIndex + 1).trim()
+            
+            InputSeparation(chinesePart, pinyinPart, input)
+        } else {
+            // 没有中文字符，全部是拼音
+            InputSeparation("", input, input)
+        }
+    }
+    
+    /**
+     * 🚀 新增：判断字符是否为中文
+     */
+    private fun isChinese(char: Char): Boolean {
+        val codePoint = char.code
+        return (codePoint >= 0x4E00 && codePoint <= 0x9FFF) ||  // CJK统一汉字
+               (codePoint >= 0x3400 && codePoint <= 0x4DBF) ||  // CJK扩展A
+               (codePoint >= 0x20000 && codePoint <= 0x2A6DF) || // CJK扩展B
+               (codePoint >= 0x2A700 && codePoint <= 0x2B73F) || // CJK扩展C
+               (codePoint >= 0x2B740 && codePoint <= 0x2B81F) || // CJK扩展D
+               (codePoint >= 0x2B820 && codePoint <= 0x2CEAF) || // CJK扩展E
+               (codePoint >= 0x2CEB0 && codePoint <= 0x2EBEF)    // CJK扩展F
     }
     
     /**
@@ -160,40 +333,7 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         return isContiguous
     }
     
-    /**
-     * 执行原有查询逻辑
-     */
-    private suspend fun performOriginalQuery(cleanInput: String, limit: Int, offset: Int): List<WordFrequency> {
-        // 🔧 生成查询变体（包括原始输入和v/ü转换）
-        val queryVariants = generateInputVariants(cleanInput)
-        Timber.d("🔄 输入变体: $cleanInput -> ${queryVariants.joinToString(", ")}")
-        
-        // 对每个变体进行输入分析，选择最佳的分析结果
-        val bestAnalysis = queryVariants.map { variant ->
-            analyzeInput(variant)
-        }.maxByOrNull { it.confidence } ?: analyzeInput(cleanInput)
-        
-        // 根据输入分析选择查询策略
-        return when (bestAnalysis.type) {
-            InputType.SINGLE_CHAR -> {
-                if (offset == 0) {
-                    // 首次查询：分层推荐
-                    queryMultiVariantSingleChar(queryVariants, limit)
-                } else {
-                    // 懒加载：更多内容
-                    queryMultiVariantSingleCharLazyLoad(queryVariants, limit, offset)
-                }
-            }
-            InputType.ABBREVIATION -> queryMultiVariantAbbreviation(queryVariants, limit)
-            InputType.SHORT_INPUT -> queryMultiVariantShortInput(queryVariants, bestAnalysis.segments, limit)
-            InputType.MEDIUM_INPUT -> queryMultiVariantMediumInput(queryVariants, bestAnalysis.segments, limit)
-            InputType.LONG_INPUT -> queryMultiVariantLongInput(queryVariants, bestAnalysis.segments, limit)
-            InputType.OVER_LIMIT -> {
-                Timber.d("输入超过限制(${bestAnalysis.segments.size}分段)，停止查询")
-                emptyList()
-            }
-        }
-    }
+
     
     /**
      * 带默认参数的便捷方法
@@ -1187,8 +1327,19 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
             )
         }
         
-        val cleanInput = currentPinyin.trim().lowercase()
-        val segments = simpleSegmentation(cleanInput)
+        // 🚀 使用输入分离功能，只分析拼音部分
+        val inputSeparation = separateMixedInput(currentPinyin.trim())
+        val actualPinyinInput = inputSeparation.pinyinPart.lowercase()
+        
+        // 如果没有拼音部分，返回特殊状态
+        if (actualPinyinInput.isBlank()) {
+            return QueryAnalysis(
+                InputType.SINGLE_CHAR, QueryStrategy.STOP_QUERY, 
+                0, emptyList(), getTrieStatus(), 0, 0, false
+            )
+        }
+        
+        val segments = simpleSegmentation(actualPinyinInput)
         val segmentCount = segments.size
         
         val inputType = when {
@@ -1309,10 +1460,15 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
             (cacheHits.get() * 100.0 / queryCount.get()).toInt()
         } else 0
         
+        val outdatedRate = if (queryCount.get() > 0) {
+            (outdatedQueries.get() * 100.0 / queryCount.get()).toInt()
+        } else 0
+        
         return buildString {
             appendLine("📊 SmartPinyinEngine 性能统计:")
             appendLine("查询总数: ${queryCount.get()}")
             appendLine("缓存命中: ${cacheHits.get()} (${hitRate}%)")
+            appendLine("🚫 过时查询: ${outdatedQueries.get()} (${outdatedRate}%)")
             appendLine("缓存大小: ${queryCache.size()}/100")
             appendLine()
             appendLine(continuousEngine.getPerformanceStats())
@@ -1346,10 +1502,16 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     /**
      * 多变体单字符查询
      */
-    private suspend fun queryMultiVariantSingleChar(variants: List<String>, limit: Int): List<WordFrequency> {
+    private suspend fun queryMultiVariantSingleChar(variants: List<String>, limit: Int, queryVersion: Long): List<WordFrequency> {
         val results = mutableListOf<WordFrequency>()
         
         for (variant in variants) {
+            // 🚀 检查查询是否已过时
+            if (queryVersion != currentQueryVersion.get()) {
+                outdatedQueries.incrementAndGet()
+                return emptyList()
+            }
+            
             if (variant.length == 1) {
                 val singleCharResults = querySmartSingleChar(variant, limit)
                 results.addAll(singleCharResults)
@@ -1366,10 +1528,16 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     /**
      * 多变体单字符懒加载查询
      */
-    private suspend fun queryMultiVariantSingleCharLazyLoad(variants: List<String>, limit: Int, offset: Int): List<WordFrequency> {
+    private suspend fun queryMultiVariantSingleCharLazyLoad(variants: List<String>, limit: Int, offset: Int, queryVersion: Long): List<WordFrequency> {
         val results = mutableListOf<WordFrequency>()
         
         for (variant in variants) {
+            // 🚀 检查查询是否已过时
+            if (queryVersion != currentQueryVersion.get()) {
+                outdatedQueries.incrementAndGet()
+                return emptyList()
+            }
+            
             val lazyResults = querySingleCharLazyLoad(variant, limit, offset)
             results.addAll(lazyResults)
         }
@@ -1380,10 +1548,16 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     /**
      * 多变体缩写查询
      */
-    private suspend fun queryMultiVariantAbbreviation(variants: List<String>, limit: Int): List<WordFrequency> {
+    private suspend fun queryMultiVariantAbbreviation(variants: List<String>, limit: Int, queryVersion: Long): List<WordFrequency> {
         val results = mutableListOf<WordFrequency>()
         
         for (variant in variants) {
+            // 🚀 检查查询是否已过时
+            if (queryVersion != currentQueryVersion.get()) {
+                outdatedQueries.incrementAndGet()
+                return emptyList()
+            }
+            
             val abbrevResults = queryAbbreviation(variant, limit)
             results.addAll(abbrevResults)
         }
@@ -1394,7 +1568,7 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     /**
      * 多变体短输入查询
      */
-    private suspend fun queryMultiVariantShortInput(variants: List<String>, segments: List<String>, limit: Int): List<WordFrequency> {
+    private suspend fun queryMultiVariantShortInput(variants: List<String>, segments: List<String>, limit: Int, queryVersion: Long): List<WordFrequency> {
         val results = mutableListOf<WordFrequency>()
         
         Timber.d("🔍 多变体短输入查询开始")
@@ -1402,6 +1576,12 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         Timber.d("📋 分段结果: ${segments.joinToString(" + ")}")
         
         for (variant in variants) {
+            // 🚀 检查查询是否已过时
+            if (queryVersion != currentQueryVersion.get()) {
+                outdatedQueries.incrementAndGet()
+                return emptyList()
+            }
+            
             Timber.d("🔄 查询变体: '$variant'")
             val shortResults = queryWithFallback(
                 listOf(TrieType.CHARS, TrieType.BASE, TrieType.PLACE, TrieType.PEOPLE),
@@ -1421,10 +1601,16 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     /**
      * 多变体中等输入查询
      */
-    private suspend fun queryMultiVariantMediumInput(variants: List<String>, segments: List<String>, limit: Int): List<WordFrequency> {
+    private suspend fun queryMultiVariantMediumInput(variants: List<String>, segments: List<String>, limit: Int, queryVersion: Long): List<WordFrequency> {
         val results = mutableListOf<WordFrequency>()
         
         for (variant in variants) {
+            // 🚀 检查查询是否已过时
+            if (queryVersion != currentQueryVersion.get()) {
+                outdatedQueries.incrementAndGet()
+                return emptyList()
+            }
+            
             val mediumResults = queryWithFallback(
                 listOf(TrieType.CORRELATION, TrieType.ASSOCIATIONAL, TrieType.PLACE, TrieType.PEOPLE),
                 variant,
@@ -1439,10 +1625,16 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     /**
      * 多变体长输入查询
      */
-    private suspend fun queryMultiVariantLongInput(variants: List<String>, segments: List<String>, limit: Int): List<WordFrequency> {
+    private suspend fun queryMultiVariantLongInput(variants: List<String>, segments: List<String>, limit: Int, queryVersion: Long): List<WordFrequency> {
         val results = mutableListOf<WordFrequency>()
         
         for (variant in variants) {
+            // 🚀 检查查询是否已过时
+            if (queryVersion != currentQueryVersion.get()) {
+                outdatedQueries.incrementAndGet()
+                return emptyList()
+            }
+            
             val longResults = queryWithFallback(
                 listOf(TrieType.ASSOCIATIONAL, TrieType.PLACE, TrieType.PEOPLE, TrieType.POETRY),
                 variant,
@@ -1453,4 +1645,12 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         
         return sortByLengthAndFrequency(results.distinctBy { it.word }).take(limit)
     }
+    
+
+    
+
+    
+
+    
+
 } 
