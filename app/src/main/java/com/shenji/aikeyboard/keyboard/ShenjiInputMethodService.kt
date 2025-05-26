@@ -99,57 +99,327 @@ class ShenjiInputMethodService : InputMethodService() {
         Timber.d("神迹输入法服务已创建")
         Timber.d("输入法服务生命周期: onCreate")
         
-        // 🔧 新增：输入法服务自启动初始化机制
-        initializeInputMethodService()
+        // 🔧 新增：智能Trie状态检测和自动重建机制
+        initializeInputMethodServiceSmart()
     }
     
     /**
-     * 输入法服务自启动初始化机制
-     * 确保覆盖安装后输入法服务能够自动加载必要的词典数据
+     * 🚀 智能输入法服务初始化机制
+     * 覆盖安装优化：立即检测Trie状态，自动异步重建，确保输入法立即可用
      */
-    private fun initializeInputMethodService() {
+    private fun initializeInputMethodServiceSmart() {
         try {
-            Timber.d("🚀 开始输入法服务自启动初始化...")
+            Timber.i("🚀 启动智能输入法服务初始化...")
             
-            // 检查应用是否已经初始化
-            val isAppInitialized = try {
-                ShenjiApplication.instance
-                ShenjiApplication.appContext
-                true
-            } catch (e: Exception) {
-                Timber.w("应用尚未完全初始化: ${e.message}")
-                false
-            }
-            
+            // 🎯 第一步：快速检查应用基础状态
+            val isAppInitialized = checkAppInitializationStatus()
             if (!isAppInitialized) {
-                Timber.w("应用未初始化，跳过输入法服务初始化")
+                Timber.w("⚠️ 应用未完全初始化，延迟启动Trie检测")
+                scheduleDelayedTrieCheck()
                 return
             }
             
-            // 在后台线程中执行初始化，避免阻塞输入法服务启动
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                try {
-                    // 1. 确保Realm数据库可用
-                    ensureRealmInitialized()
-                    
-                    // 2. 确保TrieManager已初始化
-                    ensureTrieManagerInitialized()
-                    
-                    // 3. 自动加载核心词典（chars和base）
-                    autoLoadCoreTrieDictionaries()
-                    
-                    // 4. 预热候选词引擎
-                    preheatCandidateEngine()
-                    
-                    Timber.i("✅ 输入法服务自启动初始化完成")
-                    
-                } catch (e: Exception) {
-                    Timber.e(e, "❌ 输入法服务自启动初始化失败: ${e.message}")
+            // 🎯 第二步：立即检测Trie内存状态
+            val trieStatus = checkTrieMemoryStatus()
+            Timber.i("📊 Trie内存状态检测完成: $trieStatus")
+            
+            // 🎯 第三步：根据状态决定处理策略
+            when (trieStatus.needsReload) {
+                true -> {
+                    Timber.i("🔄 检测到Trie内存需要重建，启动异步重建...")
+                    startAsyncTrieRebuilding(trieStatus)
+                }
+                false -> {
+                    Timber.i("✅ Trie内存状态正常，执行预热...")
+                    performQuickPreheat()
                 }
             }
             
         } catch (e: Exception) {
-            Timber.e(e, "输入法服务初始化异常: ${e.message}")
+            Timber.e(e, "❌ 智能初始化异常，启动降级模式: ${e.message}")
+            startFallbackMode()
+        }
+    }
+    
+    /**
+     * 🎯 Trie内存状态数据类
+     */
+    private data class TrieMemoryStatus(
+        val charsLoaded: Boolean,
+        val baseLoaded: Boolean,
+        val totalLoadedTypes: Int,
+        val needsReload: Boolean,
+        val priority: String // "HIGH", "MEDIUM", "LOW"
+    ) {
+        override fun toString(): String {
+            return "TrieStatus(CHARS:${if(charsLoaded) "✓" else "✗"}, BASE:${if(baseLoaded) "✓" else "✗"}, " +
+                   "总计:$totalLoadedTypes, 需重建:$needsReload, 优先级:$priority)"
+        }
+    }
+    
+    /**
+     * 🎯 快速检查应用初始化状态
+     */
+    private fun checkAppInitializationStatus(): Boolean {
+        return try {
+            ShenjiApplication.instance
+            ShenjiApplication.appContext
+            ShenjiApplication.realm
+            ShenjiApplication.trieManager
+            true
+        } catch (e: Exception) {
+            Timber.w("应用组件未完全初始化: ${e.message}")
+            false
+        }
+    }
+    
+    /**
+     * 🎯 检测Trie内存状态
+     */
+    private fun checkTrieMemoryStatus(): TrieMemoryStatus {
+        return try {
+            val trieManager = ShenjiApplication.trieManager
+            
+            // 检查核心词典状态
+            val charsLoaded = trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+            val baseLoaded = trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.BASE)
+            
+            // 检查所有已加载的词典类型
+            val loadedTypes = trieManager.getLoadedTrieTypes()
+            val totalLoaded = loadedTypes.size
+            
+            // 判断是否需要重建
+            val needsReload = !charsLoaded || !baseLoaded
+            
+            // 确定优先级
+            val priority = when {
+                !charsLoaded && !baseLoaded -> "HIGH"    // 核心词典都没有，高优先级
+                !charsLoaded || !baseLoaded -> "MEDIUM"  // 缺少一个核心词典，中优先级
+                totalLoaded < 3 -> "LOW"                 // 核心词典有，但其他词典少，低优先级
+                else -> "NONE"                           // 状态良好，无需重建
+            }
+            
+            TrieMemoryStatus(
+                charsLoaded = charsLoaded,
+                baseLoaded = baseLoaded,
+                totalLoadedTypes = totalLoaded,
+                needsReload = needsReload,
+                priority = priority
+            )
+            
+        } catch (e: Exception) {
+            Timber.e(e, "检测Trie状态失败: ${e.message}")
+            // 返回需要重建的状态作为安全回退
+            TrieMemoryStatus(
+                charsLoaded = false,
+                baseLoaded = false,
+                totalLoadedTypes = 0,
+                needsReload = true,
+                priority = "HIGH"
+            )
+        }
+    }
+    
+    /**
+     * 🎯 延迟启动Trie检测（应用未完全初始化时）
+     */
+    private fun scheduleDelayedTrieCheck() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                // 等待应用初始化完成
+                var retryCount = 0
+                val maxRetries = 10
+                
+                while (retryCount < maxRetries) {
+                    delay(1000) // 等待1秒
+                    retryCount++
+                    
+                    if (checkAppInitializationStatus()) {
+                        Timber.i("✅ 应用初始化完成，开始Trie检测 (重试${retryCount}次)")
+                        
+                        val trieStatus = checkTrieMemoryStatus()
+                        if (trieStatus.needsReload) {
+                            startAsyncTrieRebuilding(trieStatus)
+                        } else {
+                            performQuickPreheat()
+                        }
+                        return@launch
+                    }
+                    
+                    Timber.d("⏳ 等待应用初始化... (${retryCount}/${maxRetries})")
+                }
+                
+                Timber.w("⚠️ 应用初始化超时，启动降级模式")
+                startFallbackMode()
+                
+            } catch (e: Exception) {
+                Timber.e(e, "延迟Trie检测失败: ${e.message}")
+                startFallbackMode()
+            }
+        }
+    }
+    
+    /**
+     * 🎯 启动异步Trie重建
+     */
+    private fun startAsyncTrieRebuilding(status: TrieMemoryStatus) {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                Timber.i("🔧 开始异步Trie重建，优先级: ${status.priority}")
+                val startTime = System.currentTimeMillis()
+                
+                val trieManager = ShenjiApplication.trieManager
+                
+                // 🎯 优先级重建策略
+                when (status.priority) {
+                    "HIGH" -> {
+                        // 高优先级：立即重建核心词典
+                        rebuildCoreTrieDictionaries(trieManager)
+                        // 然后异步加载其他词典
+                        loadAdditionalTrieDictionaries(trieManager)
+                    }
+                    "MEDIUM" -> {
+                        // 中优先级：重建缺失的核心词典
+                        if (!status.charsLoaded) {
+                            loadTrieWithLogging(trieManager, com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                        }
+                        if (!status.baseLoaded) {
+                            loadTrieWithLogging(trieManager, com.shenji.aikeyboard.data.trie.TrieType.BASE)
+                        }
+                    }
+                    "LOW" -> {
+                        // 低优先级：加载额外词典
+                        loadAdditionalTrieDictionaries(trieManager)
+                    }
+                }
+                
+                val endTime = System.currentTimeMillis()
+                val finalStatus = checkTrieMemoryStatus()
+                
+                Timber.i("🎉 异步Trie重建完成！")
+                Timber.i("⏱️ 耗时: ${endTime - startTime}ms")
+                Timber.i("📊 最终状态: $finalStatus")
+                
+                // 重建完成后预热引擎
+                performQuickPreheat()
+                
+            } catch (e: Exception) {
+                Timber.e(e, "❌ 异步Trie重建失败: ${e.message}")
+                startFallbackMode()
+            }
+        }
+    }
+    
+    /**
+     * 🎯 重建核心Trie词典
+     */
+    private suspend fun rebuildCoreTrieDictionaries(trieManager: com.shenji.aikeyboard.data.trie.TrieManager) {
+        val coreTypes = listOf(
+            com.shenji.aikeyboard.data.trie.TrieType.CHARS,
+            com.shenji.aikeyboard.data.trie.TrieType.BASE
+        )
+        
+        for (trieType in coreTypes) {
+            loadTrieWithLogging(trieManager, trieType)
+        }
+    }
+    
+    /**
+     * 🎯 加载额外Trie词典
+     */
+    private suspend fun loadAdditionalTrieDictionaries(trieManager: com.shenji.aikeyboard.data.trie.TrieManager) {
+        val additionalTypes = listOf(
+            com.shenji.aikeyboard.data.trie.TrieType.CORRELATION,
+            com.shenji.aikeyboard.data.trie.TrieType.ASSOCIATIONAL,
+            com.shenji.aikeyboard.data.trie.TrieType.PLACE
+        )
+        
+        for (trieType in additionalTypes) {
+            try {
+                if (!trieManager.isTrieLoaded(trieType)) {
+                    loadTrieWithLogging(trieManager, trieType)
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "加载额外词典${getTrieDisplayName(trieType)}失败，跳过")
+            }
+        }
+    }
+    
+    /**
+     * 🎯 带日志的Trie加载
+     */
+    private suspend fun loadTrieWithLogging(
+        trieManager: com.shenji.aikeyboard.data.trie.TrieManager, 
+        trieType: com.shenji.aikeyboard.data.trie.TrieType
+    ) {
+        try {
+            val startTime = System.currentTimeMillis()
+            val loaded = trieManager.loadTrieToMemory(trieType)
+            val endTime = System.currentTimeMillis()
+            
+            if (loaded) {
+                Timber.i("✅ ${getTrieDisplayName(trieType)}词典加载成功，耗时${endTime - startTime}ms")
+            } else {
+                Timber.e("❌ ${getTrieDisplayName(trieType)}词典加载失败")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "${getTrieDisplayName(trieType)}词典加载异常: ${e.message}")
+        }
+    }
+    
+    /**
+     * 🎯 快速预热（Trie状态正常时）
+     */
+    private fun performQuickPreheat() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                Timber.d("🔥 开始快速预热...")
+                val startTime = System.currentTimeMillis()
+                
+                val engineAdapter = InputMethodEngineAdapter.getInstance()
+                val testResults = engineAdapter.getCandidates("ni", 3)
+                
+                val endTime = System.currentTimeMillis()
+                
+                if (testResults.isNotEmpty()) {
+                    Timber.i("🔥 快速预热成功，耗时${endTime - startTime}ms，测试结果: ${testResults.map { it.word }}")
+                } else {
+                    Timber.w("⚠️ 快速预热完成，但测试查询无结果")
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "快速预热失败: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * 🎯 启动降级模式（异常情况下的安全回退）
+     */
+    private fun startFallbackMode() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                Timber.w("🛡️ 启动降级模式，尝试基础初始化...")
+                
+                // 基础检查和初始化
+                delay(2000) // 等待2秒
+                
+                if (checkAppInitializationStatus()) {
+                    val trieManager = ShenjiApplication.trieManager
+                    
+                    // 尝试至少加载CHARS词典
+                    if (!trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)) {
+                        loadTrieWithLogging(trieManager, com.shenji.aikeyboard.data.trie.TrieType.CHARS)
+                    }
+                    
+                    Timber.i("🛡️ 降级模式初始化完成")
+                } else {
+                    Timber.e("🛡️ 降级模式也无法初始化，输入法将使用数据库查询")
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "降级模式失败: ${e.message}")
+            }
         }
     }
     
@@ -1851,8 +2121,8 @@ class ShenjiInputMethodService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         
-        // 🔧 修复：异步确保Trie可用，不阻塞输入法启动
-        ensureTrieLoadedAsync()
+        // 🔧 智能Trie状态检测：只在需要时重建
+        performSmartTrieCheck()
         
         // 获取并显示当前应用名称
         if (::appNameDisplay.isInitialized) {
@@ -1930,6 +2200,30 @@ class ShenjiInputMethodService : InputMethodService() {
                 this.appIcon.setImageResource(android.R.drawable.ic_menu_info_details)
             }
             return "插件已加持"
+        }
+    }
+    
+    /**
+     * 🎯 智能Trie状态检测（输入视图启动时）
+     */
+    private fun performSmartTrieCheck() {
+        try {
+            if (!checkAppInitializationStatus()) {
+                Timber.d("🎯 应用未完全初始化，跳过Trie检测")
+                return
+            }
+            
+            val trieStatus = checkTrieMemoryStatus()
+            
+            if (trieStatus.needsReload) {
+                Timber.i("🔄 输入视图启动时检测到Trie需要重建: $trieStatus")
+                startAsyncTrieRebuilding(trieStatus)
+            } else {
+                Timber.d("✅ Trie状态正常: $trieStatus")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "智能Trie检测失败: ${e.message}")
         }
     }
     
