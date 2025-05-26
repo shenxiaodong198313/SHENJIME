@@ -307,7 +307,7 @@ class SyllableTestTool(private val context: Context) {
         
         // 合并所有测试用例
         val allTests = singleSyllableTests + doubleSyllableTests + multiSyllableTests + 
-                      homophoneTests + boundaryTests + abbreviationTests + 
+                           homophoneTests + boundaryTests + abbreviationTests + 
                       vUTests + specialTests +
                       invalidInputTests + extremeInputTests + specialTests
         

@@ -62,6 +62,24 @@ class ShenjiInputMethodService : InputMethodService() {
     // 标记是否刚提交过候选词，用于处理连续输入
     private var justCommittedText = false
     
+    // 🔧 新增：智能防抖和双缓冲相关变量
+    private var currentQueryJob: Job? = null
+    private var debounceJob: Job? = null
+    
+    // 🎯 防抖配置：极低延迟，减少抖动感知
+    private val DEBOUNCE_DELAY_CHINESE = 50L // 中文输入防抖时间（极低延迟）
+    private val DEBOUNCE_DELAY_ENGLISH = 30L  // 英文输入防抖时间（极低延迟）
+    private val DEBOUNCE_DELAY_SINGLE_CHAR = 20L // 单字符输入防抖时间（极低延迟）
+    
+    // 🎯 双缓冲：候选词缓存
+    private var lastDisplayedCandidates = listOf<WordFrequency>()
+    private var pendingCandidates = listOf<WordFrequency>()
+    private var isUpdatingCandidates = false
+    
+    // 🎯 预测显示：快速响应缓存
+    private val quickResponseCache = mutableMapOf<String, List<WordFrequency>>()
+    private val maxCacheSize = 50
+    
     // 长按删除键自动删除的处理器和任务
     private val deleteHandler = Handler(Looper.getMainLooper())
     private val deleteRunnable = object : Runnable {
@@ -76,9 +94,6 @@ class ShenjiInputMethodService : InputMethodService() {
     private val DELETE_INITIAL_DELAY = 400L  // 长按后首次触发的延迟
     private val DELETE_REPEAT_DELAY = 50L   // 连续触发的间隔
     
-    // 🎯 新增：当前查询任务，用于取消过期的查询（防止闪烁）
-    private var currentQueryJob: Job? = null
-
     override fun onCreate() {
         super.onCreate()
         Timber.d("神迹输入法服务已创建")
@@ -529,16 +544,22 @@ class ShenjiInputMethodService : InputMethodService() {
         // 添加字母到拼音组合中
         composingText.append(letter)
         
+        Timber.d("🎯 输入字母: '$letter', 当前拼音: '${composingText}'")
+        
         // 输入框显示原始拼音（不带空格）
         currentInputConnection?.setComposingText(composingText, 1)
         
         // 显示候选词区域并获取候选词（包含拼音分段显示）
-        loadCandidates(composingText.toString())
+        loadCandidatesUltraSimple(composingText.toString())
     }
     
     // 处理删除操作
     private fun onDelete() {
         if (composingText.isNotEmpty()) {
+            // 🎯 取消防抖任务，立即响应删除操作
+            debounceJob?.cancel()
+            currentQueryJob?.cancel()
+            
             // 删除拼音中的最后一个字母
             composingText.deleteCharAt(composingText.length - 1)
             
@@ -547,14 +568,19 @@ class ShenjiInputMethodService : InputMethodService() {
                 updatePinyinDisplay("")
                 hideCandidates()
                 
+                // 🎯 清空双缓冲状态
+                lastDisplayedCandidates = emptyList()
+                pendingCandidates = emptyList()
+                isUpdatingCandidates = false
+                
                 // 结束组合文本状态
                 currentInputConnection?.finishComposingText()
             } else {
                 // 输入框显示原始拼音（不带空格）
                 currentInputConnection?.setComposingText(composingText, 1)
                 
-                // 获取候选词并更新拼音显示（包含分段）
-                loadCandidates(composingText.toString())
+                // 🎯 立即查询候选词，不使用防抖（删除操作需要即时响应）
+                loadCandidatesImmediate(composingText.toString())
             }
         } else {
             // 如果没有拼音，执行标准删除操作
@@ -596,8 +622,9 @@ class ShenjiInputMethodService : InputMethodService() {
         val hadComposingText = composingText.isNotEmpty()
         
         try {
-            // 🎯 取消当前查询任务，避免提交后还有查询结果覆盖
+            // 🎯 取消所有查询任务，避免提交后还有查询结果覆盖
             currentQueryJob?.cancel()
+            debounceJob?.cancel()
             
             // 提交文本到输入框
             currentInputConnection?.commitText(text, 1)
@@ -610,14 +637,19 @@ class ShenjiInputMethodService : InputMethodService() {
                 pinyinDisplay.text = ""
                 hideCandidates()
                 
-                            // 重置候选词滚动位置
-            if (::candidatesViewLayout.isInitialized) {
-                candidatesViewLayout.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
-            }
+                // 重置候选词滚动位置
+                if (::candidatesViewLayout.isInitialized) {
+                    candidatesViewLayout.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+                }
             }
             
             // 清空候选词
             candidates = emptyList()
+            
+            // 🎯 清空双缓冲状态
+            lastDisplayedCandidates = emptyList()
+            pendingCandidates = emptyList()
+            isUpdatingCandidates = false
             
             // 确保完全结束组合状态
             currentInputConnection?.finishComposingText()
@@ -625,7 +657,7 @@ class ShenjiInputMethodService : InputMethodService() {
             // 标记刚刚提交了候选词，下次输入时需要重置状态
             justCommittedText = true
             
-            Timber.d("提交文本: '$text', 之前有输入: $hadComposingText")
+            Timber.d("🎯 提交文本: '$text', 之前有输入: $hadComposingText，已清空所有状态")
         } catch (e: Exception) {
             Timber.e(e, "提交文本失败: ${e.message}")
         }
@@ -633,10 +665,22 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 辅助方法：检查视图组件是否已初始化
     private fun areViewComponentsInitialized(): Boolean {
-        return ::candidatesViewLayout.isInitialized &&
-               ::candidatesContainer.isInitialized && 
-               ::defaultCandidatesView.isInitialized &&
-               ::candidatesView.isInitialized
+        val layoutInit = ::candidatesViewLayout.isInitialized
+        val containerInit = ::candidatesContainer.isInitialized
+        val defaultViewInit = ::defaultCandidatesView.isInitialized
+        val candidatesViewInit = ::candidatesView.isInitialized
+        
+        val allInitialized = layoutInit && containerInit && defaultViewInit && candidatesViewInit
+        
+        if (!allInitialized) {
+            Timber.e("🎯 视图组件初始化状态检查:")
+            Timber.e("  - candidatesViewLayout: $layoutInit")
+            Timber.e("  - candidatesContainer: $containerInit") 
+            Timber.e("  - defaultCandidatesView: $defaultViewInit")
+            Timber.e("  - candidatesView: $candidatesViewInit")
+        }
+        
+        return allInitialized
     }
     
     // 添加调试方法：记录候选词视图状态
@@ -686,6 +730,8 @@ class ShenjiInputMethodService : InputMethodService() {
     // 🎯 新增：显示候选词区域但不清空现有内容（防止闪烁）
     private fun showCandidatesWithoutClearing() {
         if (areViewComponentsInitialized()) {
+            Timber.d("🎯 视图组件已初始化，开始显示候选词区域")
+            
             // 显示候选词区域时隐藏工具栏
             defaultCandidatesView.visibility = View.VISIBLE
             toolbarView.visibility = View.GONE
@@ -700,7 +746,10 @@ class ShenjiInputMethodService : InputMethodService() {
             // 🎯 关键：设置固定的背景色，避免透明背景导致的闪烁
             defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#F8F8F8")) // 浅灰色背景
             
-            Timber.d("🎯 显示候选词区域（不清空），固定高度: ${fixedHeight}dp，固定背景色")
+            Timber.d("🎯 候选词区域已显示，固定高度: ${fixedHeight}dp，背景色: #F8F8F8")
+            logCandidateViewState()
+        } else {
+            Timber.e("🎯 视图组件未初始化，无法显示候选词区域")
         }
     }
     
@@ -723,40 +772,225 @@ class ShenjiInputMethodService : InputMethodService() {
         }
     }
     
-    // 加载候选词 - 优化版本，避免闪烁
+    // 🎯 新增：智能防抖候选词加载
     private fun loadCandidates(input: String) {
+        if (input.isEmpty()) {
+            hideCandidates()
+            clearQuickResponseCache()
+            return
+        }
+        
+        Timber.d("🎯 开始加载候选词: '$input'")
+        
+        // 🔧 修复：不阻塞输入法使用，异步检查并加载Trie
+        ensureTrieLoadedAsync()
+        
+        // 🎯 关键修复：立即显示候选词区域，确保用户看到响应
+        showCandidatesWithoutClearing()
+        
+        // 🎯 第一阶段：立即显示预测候选词（如果有缓存）
+        val hasPreview = showPredictiveCandidates(input)
+        
+        // 🎯 如果没有预览内容，显示加载提示
+        if (!hasPreview) {
+            Timber.d("🎯 没有缓存，显示加载提示")
+            showLoadingHint()
+        }
+        
+        // 🎯 第二阶段：智能防抖查询
+        startDebouncedQuery(input)
+    }
+    
+    /**
+     * 🎯 超简单的候选词加载方法（真实查询版本）
+     */
+    private fun loadCandidatesUltraSimple(input: String) {
         if (input.isEmpty()) {
             hideCandidates()
             return
         }
         
-        // 🔧 修复：不阻塞输入法使用，异步检查并加载Trie
-        ensureTrieLoadedAsync()
+        Timber.d("🎯 超简单加载候选词: '$input'")
         
-        // 🎯 关键优化：先显示候选词区域，但不清空现有内容
+        // 检查视图是否初始化
+        if (!areViewComponentsInitialized()) {
+            Timber.e("🎯 视图未初始化，无法显示候选词")
+            return
+        }
+        
+        try {
+            // 强制显示候选词区域
+            defaultCandidatesView.visibility = View.VISIBLE
+            toolbarView.visibility = View.GONE
+            defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#F8F8F8"))
+            
+            // 更新拼音显示
+            updatePinyinDisplayWithSegmentation(input)
+            
+            // 🎯 关键修复：使用简单的协程，不取消之前的查询
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                try {
+                    Timber.d("🎯 开始查询候选词: '$input'")
+                    
+                    val engineAdapter = InputMethodEngineAdapter.getInstance()
+                    val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        engineAdapter.getCandidates(input, 15)
+                    }
+                    
+                    Timber.d("🎯 查询完成: '$input' -> ${result.size}个候选词")
+                    
+                    if (result.isNotEmpty()) {
+                        candidates = result
+                        displayCandidatesDirectly(result)
+                        Timber.d("🎯 候选词显示成功: ${result.take(3).map { it.word }}")
+                    } else {
+                        displayNoResultsDirectly()
+                        Timber.w("🎯 无候选词结果")
+                    }
+                    
+                } catch (e: Exception) {
+                    Timber.e(e, "🎯 查询候选词失败: ${e.message}")
+                    displayErrorDirectly("查询失败")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "🎯 超简单加载失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 🎯 简单的候选词加载方法（用于调试）
+     */
+    private fun loadCandidatesSimple(input: String) {
+        if (input.isEmpty()) {
+            hideCandidates()
+            return
+        }
+        
+        Timber.d("🎯 简单加载候选词: '$input'")
+        
+        // 立即显示候选词区域
         showCandidatesWithoutClearing()
         
-        // 取消之前的查询任务，避免过期结果覆盖新结果
+        // 立即查询候选词
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            try {
+                val engineAdapter = InputMethodEngineAdapter.getInstance()
+                val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    engineAdapter.getCandidates(input, 20)
+                }
+                
+                // 更新拼音显示
+                updatePinyinDisplayWithSegmentation(input)
+                
+                if (result.isNotEmpty()) {
+                    candidates = result
+                    Timber.d("🎯 简单查询成功: '$input' -> ${result.size}个候选词: ${result.take(3).map { it.word }}")
+                    
+                    // 🎯 直接更新候选词视图，确保显示
+                    updateCandidatesViewDirect(result)
+                } else {
+                    candidates = emptyList()
+                    showNoResultsHintSmooth()
+                    Timber.w("🎯 简单查询无结果: '$input'")
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "🎯 简单查询失败: '$input'")
+                candidates = emptyList()
+                showNoResultsHintSmooth()
+            }
+        }
+    }
+    
+    /**
+     * 🎯 立即加载候选词（用于删除操作等需要即时响应的场景）
+     */
+    private fun loadCandidatesImmediate(input: String) {
+        if (input.isEmpty()) {
+            hideCandidates()
+            clearQuickResponseCache()
+            return
+        }
+        
+        // 🎯 立即显示候选词区域
+        showCandidatesWithoutClearing()
+        
+        // 🎯 检查缓存，如果有则立即显示
+        val hasPreview = showPredictiveCandidates(input)
+        
+        // 🎯 立即执行查询，不使用防抖
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            executeActualQuery(input)
+        }
+    }
+    
+    /**
+     * 🎯 第一阶段：显示预测候选词（立即响应）
+     * @return 是否有预览内容显示
+     */
+    private fun showPredictiveCandidates(input: String): Boolean {
+        // 检查快速响应缓存
+        val cachedCandidates = quickResponseCache[input]
+        if (cachedCandidates != null) {
+            Timber.d("🚀 使用缓存候选词: '$input' -> ${cachedCandidates.size}个")
+            updateCandidatesViewInstant(cachedCandidates, isPreview = true)
+            return true
+        }
+        
+        // 检查前缀匹配缓存（部分匹配）
+        val prefixMatch = quickResponseCache.entries.find { (key, _) ->
+            input.startsWith(key) && key.isNotEmpty()
+        }
+        
+        if (prefixMatch != null) {
+            Timber.d("🚀 使用前缀匹配缓存: '$input' 匹配 '${prefixMatch.key}' -> ${prefixMatch.value.size}个")
+            updateCandidatesViewInstant(prefixMatch.value, isPreview = true)
+            return true
+        }
+        
+        // 没有缓存，返回false表示没有预览内容
+        return false
+    }
+    
+    /**
+     * 🎯 第二阶段：智能防抖查询
+     */
+    private fun startDebouncedQuery(input: String) {
+        // 取消之前的防抖任务
+        debounceJob?.cancel()
+        
+        // 确定防抖延迟时间
+        val debounceDelay = when {
+            input.length == 1 -> DEBOUNCE_DELAY_SINGLE_CHAR
+            isChineseInput() -> DEBOUNCE_DELAY_CHINESE
+            else -> DEBOUNCE_DELAY_ENGLISH
+        }
+        
+        Timber.d("🎯 启动防抖查询: '$input', 延迟${debounceDelay}ms")
+        
+        debounceJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            delay(debounceDelay)
+            
+            // 防抖结束，执行实际查询
+            executeActualQuery(input)
+        }
+    }
+    
+    /**
+     * 🎯 执行实际查询（防抖后）
+     */
+    private suspend fun executeActualQuery(input: String) {
+        // 取消之前的查询任务
         currentQueryJob?.cancel()
         
-        // 🚀 使用最新的SmartPinyinEngine通过适配器
         currentQueryJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
             try {
-                Timber.d("🔍 开始查询候选词: '$input'")
-                
-                // 🎯 显示加载状态（可选）
-                showLoadingHint()
+                Timber.d("🔍 执行实际查询: '$input'")
                 
                 val engineAdapter = InputMethodEngineAdapter.getInstance()
                 val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    // 添加详细的调试信息
-                    Timber.d("🔍 调用引擎查询: '$input'")
-                    val candidates = engineAdapter.getCandidates(input, 20)
-                    Timber.d("🔍 引擎返回结果: ${candidates.size}个候选词")
-                    if (candidates.isNotEmpty()) {
-                        Timber.d("🔍 前5个候选词: ${candidates.take(5).map { "${it.word}(${it.frequency})" }}")
-                    }
-                    candidates
+                    engineAdapter.getCandidates(input, 20)
                 }
                 
                 // 检查任务是否被取消
@@ -770,38 +1004,40 @@ class ShenjiInputMethodService : InputMethodService() {
                 
                 if (result.isNotEmpty()) {
                     candidates = result
-                    updateCandidatesViewSmooth(result)
-                    Timber.d("🎯 新引擎加载候选词成功: ${result.size}个")
+                    
+                    Timber.d("🎯 查询成功: '$input' -> ${result.size}个候选词: ${result.take(3).map { it.word }}")
+                    
+                    // 🎯 缓存结果到快速响应缓存
+                    updateQuickResponseCache(input, result)
+                    
+                    // 🎯 双缓冲更新
+                    updateCandidatesViewBuffered(result)
+                    
+                    Timber.d("🎯 候选词视图更新完成")
                 } else {
                     candidates = emptyList()
                     showNoResultsHintSmooth()
-                    Timber.w("🎯 新引擎未找到候选词: '$input'")
-                    
-                    // 🔧 添加词典状态检查
-                    val trieManager = com.shenji.aikeyboard.ShenjiApplication.trieManager
-                    Timber.w("📚 词典状态检查:")
-                    Timber.w("  - CHARS: ${if (trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)) "已加载" else "未加载"}")
-                    Timber.w("  - BASE: ${if (trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.BASE)) "已加载" else "未加载"}")
-                    
-                    // 🔧 尝试直接查询CHARS词典
-                    if (trieManager.isTrieLoaded(com.shenji.aikeyboard.data.trie.TrieType.CHARS)) {
-                        val directResults = trieManager.searchByPrefix(com.shenji.aikeyboard.data.trie.TrieType.CHARS, input, 5)
-                        Timber.w("🔧 直接查询CHARS结果: ${directResults.size}个")
-                        if (directResults.isNotEmpty()) {
-                            Timber.w("🔧 直接查询结果: ${directResults.map { "${it.word}(${it.frequency})" }}")
-                        }
-                    }
+                    Timber.w("🎯 未找到候选词: '$input'")
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) {
                     Timber.d("🔍 查询任务被取消: '$input'")
                 } else {
-                    Timber.e(e, "🎯 新引擎加载候选词失败: '$input'")
+                    Timber.e(e, "🎯 查询失败: '$input'")
                     candidates = emptyList()
                     showNoResultsHintSmooth()
                 }
             }
         }
+    }
+    
+    /**
+     * 🎯 判断是否为中文输入模式
+     */
+    private fun isChineseInput(): Boolean {
+        // 简单判断：如果包含拼音字符，认为是中文输入
+        val pinyinChars = setOf('a', 'e', 'i', 'o', 'u', 'v', 'n', 'g', 'h', 'r')
+        return composingText.any { it.lowercaseChar() in pinyinChars }
     }
     
     /**
@@ -858,31 +1094,436 @@ class ShenjiInputMethodService : InputMethodService() {
         }
         
         try {
-            // 如果当前没有候选词，显示加载提示
-            if (candidatesView.childCount == 0) {
-                val loadingText = TextView(this)
-                loadingText.text = "正在查询..."
-                loadingText.setTextColor(android.graphics.Color.parseColor("#666666")) // 深灰色文字
-                loadingText.setTextSize(12f) // 小字体
-                loadingText.gravity = Gravity.CENTER_VERTICAL or Gravity.START
-                loadingText.typeface = android.graphics.Typeface.DEFAULT
-                
-                val loadingParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT
-                )
-                loadingParams.gravity = Gravity.CENTER_VERTICAL or Gravity.START
-                loadingParams.setMargins(pinyinDisplay.paddingStart, 0, 0, 0)
-                loadingText.layoutParams = loadingParams
-                
-                candidatesView.addView(loadingText)
-                Timber.d("🎯 显示加载提示")
-            }
+            // 清空现有内容
+            candidatesView.removeAllViews()
+            
+            // 创建加载提示
+            val loadingText = TextView(this)
+            loadingText.text = "正在查询..."
+            loadingText.setTextColor(android.graphics.Color.parseColor("#999999")) // 浅灰色文字
+            loadingText.setTextSize(14f) // 适中字体
+            loadingText.gravity = Gravity.CENTER_VERTICAL or Gravity.START
+            loadingText.typeface = android.graphics.Typeface.DEFAULT
+            
+            // 🔧 修复：使用像素值设置固定高度
+            val density = resources.displayMetrics.density
+            val heightInPx = (46 * density).toInt()
+            
+            val loadingParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                heightInPx
+            )
+            loadingParams.gravity = Gravity.CENTER_VERTICAL or Gravity.START
+            loadingParams.setMargins(0, 0, 0, 0)
+            loadingText.layoutParams = loadingParams
+            
+            candidatesView.addView(loadingText)
+            Timber.d("🎯 显示加载提示")
         } catch (e: Exception) {
             Timber.e(e, "显示加载提示失败: ${e.message}")
         }
     }
     
+    /**
+     * 🎯 快速响应缓存管理
+     */
+    private fun updateQuickResponseCache(input: String, candidates: List<WordFrequency>) {
+        // 限制缓存大小
+        if (quickResponseCache.size >= maxCacheSize) {
+            // 移除最旧的条目（简单的LRU策略）
+            val oldestKey = quickResponseCache.keys.first()
+            quickResponseCache.remove(oldestKey)
+        }
+        
+        quickResponseCache[input] = candidates
+        Timber.d("🎯 更新缓存: '$input' -> ${candidates.size}个候选词，缓存大小: ${quickResponseCache.size}")
+    }
+    
+    private fun clearQuickResponseCache() {
+        quickResponseCache.clear()
+        Timber.d("🎯 清空快速响应缓存")
+    }
+    
+    /**
+     * 🎯 立即更新候选词视图（用于预测显示）
+     */
+    private fun updateCandidatesViewInstant(wordList: List<WordFrequency>, isPreview: Boolean = false) {
+        if (!areViewComponentsInitialized() || isUpdatingCandidates) {
+            return
+        }
+        
+        try {
+            // 如果是预览模式且内容相同，不更新
+            if (isPreview && wordList == lastDisplayedCandidates) {
+                return
+            }
+            
+            Timber.d("🚀 立即更新候选词: ${wordList.size}个${if (isPreview) "（预览）" else ""}")
+            
+            // 快速更新，不清空现有内容，直接替换
+            updateCandidatesViewDirect(wordList)
+            lastDisplayedCandidates = wordList
+            
+        } catch (e: Exception) {
+            Timber.e(e, "立即更新候选词失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 🎯 双缓冲更新候选词视图
+     */
+    private fun updateCandidatesViewBuffered(wordList: List<WordFrequency>) {
+        if (!areViewComponentsInitialized()) {
+            Timber.e("🎯 视图组件未初始化，无法更新候选词")
+            return
+        }
+        
+        // 如果内容相同，不更新
+        if (wordList == lastDisplayedCandidates) {
+            Timber.d("🎯 候选词内容相同，跳过更新")
+            return
+        }
+        
+        // 如果正在更新，缓存待更新的内容
+        if (isUpdatingCandidates) {
+            pendingCandidates = wordList
+            Timber.d("🎯 正在更新中，缓存待更新内容: ${wordList.size}个")
+            return
+        }
+        
+        try {
+            isUpdatingCandidates = true
+            
+            Timber.d("🎯 开始双缓冲更新候选词: ${wordList.size}个，前3个: ${wordList.take(3).map { it.word }}")
+            
+            // 使用平滑更新
+            updateCandidatesViewDirect(wordList)
+            lastDisplayedCandidates = wordList
+            
+            Timber.d("🎯 双缓冲更新完成")
+            
+            // 检查是否有待更新的内容
+            if (pendingCandidates.isNotEmpty() && pendingCandidates != wordList) {
+                Timber.d("🎯 处理待更新内容: ${pendingCandidates.size}个")
+                val pending = pendingCandidates
+                pendingCandidates = emptyList()
+                
+                // 延迟处理待更新内容，避免频繁更新
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                    delay(50) // 短暂延迟
+                    if (!isUpdatingCandidates) {
+                        updateCandidatesViewBuffered(pending)
+                    }
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "双缓冲更新候选词失败: ${e.message}")
+        } finally {
+            isUpdatingCandidates = false
+        }
+    }
+    
+    /**
+     * 🎯 直接更新候选词视图（简化版，确保可靠显示）
+     */
+    private fun updateCandidatesViewDirect(wordList: List<WordFrequency>) {
+        if (!areViewComponentsInitialized()) {
+            Timber.e("🎯 视图组件未初始化")
+            return
+        }
+        
+        try {
+            Timber.d("🎯 开始直接更新候选词: ${wordList.size}个")
+            
+            // 🎯 确保候选词区域可见
+            defaultCandidatesView.visibility = View.VISIBLE
+            toolbarView.visibility = View.GONE
+            defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#F8F8F8"))
+            
+            // 🎯 简化逻辑：直接重建，确保可靠性
+            rebuildCandidateViews(wordList)
+            
+            Timber.d("🎯 直接更新完成")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "直接更新候选词视图失败: ${e.message}")
+            // 最后的回退：显示错误提示
+            try {
+                candidatesView.removeAllViews()
+                val errorText = TextView(this)
+                errorText.text = "显示错误"
+                errorText.setTextColor(android.graphics.Color.RED)
+                candidatesView.addView(errorText)
+            } catch (ex: Exception) {
+                Timber.e(ex, "连错误提示都显示失败")
+            }
+        }
+    }
+    
+    /**
+     * 🎯 更新现有候选词视图（复用视图，减少闪烁）
+     */
+    private fun updateExistingCandidateViews(wordList: List<WordFrequency>) {
+        val candidatesRow = candidatesView.getChildAt(0) as? LinearLayout
+        if (candidatesRow == null) {
+            rebuildCandidateViews(wordList)
+            return
+        }
+        
+        val existingCount = candidatesRow.childCount
+        val newCount = wordList.size
+        
+        Timber.d("🔄 复用视图更新: 现有${existingCount}个，新增${newCount}个")
+        
+        // 更新现有的TextView
+        for (i in 0 until minOf(existingCount, newCount)) {
+            val textView = candidatesRow.getChildAt(i) as? TextView
+            if (textView != null) {
+                val word = wordList[i]
+                textView.text = word.word
+                
+                // 更新颜色
+                if (i == 0) {
+                    textView.setTextColor(Color.parseColor("#2196F3")) // 第一个候选词蓝色
+                } else {
+                    textView.setTextColor(Color.parseColor("#333333")) // 其他候选词深灰色
+                }
+                
+                // 更新点击事件
+                textView.setOnClickListener {
+                    commitText(word.word)
+                }
+            }
+        }
+        
+        // 如果新候选词更多，添加新的TextView
+        if (newCount > existingCount) {
+            for (i in existingCount until newCount) {
+                val word = wordList[i]
+                val candidateText = createCandidateTextView(word, i)
+                candidatesRow.addView(candidateText)
+            }
+        }
+        
+        // 如果新候选词更少，移除多余的TextView
+        if (newCount < existingCount) {
+            candidatesRow.removeViews(newCount, existingCount - newCount)
+        }
+    }
+    
+    /**
+     * 🎯 重建候选词视图（简化版，确保可靠显示）
+     */
+    private fun rebuildCandidateViews(wordList: List<WordFrequency>) {
+        try {
+            Timber.d("🔧 开始重建候选词视图: ${wordList.size}个")
+            
+            // 清空现有内容
+            candidatesView.removeAllViews()
+            
+            if (wordList.isEmpty()) {
+                // 显示无结果提示
+                val hintText = createNoResultsHintView()
+                candidatesView.addView(hintText)
+                Timber.d("🔧 显示无结果提示")
+                return
+            }
+            
+            // 创建候选词行
+            val candidatesRow = LinearLayout(this)
+            candidatesRow.orientation = LinearLayout.HORIZONTAL
+            candidatesRow.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            candidatesRow.gravity = Gravity.CENTER_VERTICAL
+            
+            // 添加候选词
+            wordList.forEachIndexed { index, word ->
+                try {
+                    val candidateText = createCandidateTextView(word, index)
+                    candidatesRow.addView(candidateText)
+                    Timber.d("🔧 添加候选词[$index]: ${word.word}")
+                } catch (e: Exception) {
+                    Timber.e(e, "创建候选词[$index]失败: ${word.word}")
+                }
+            }
+            
+            // 添加到容器
+            candidatesView.addView(candidatesRow)
+            
+            // 重置滚动位置
+            if (::candidatesViewLayout.isInitialized) {
+                candidatesViewLayout.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+            }
+            
+            Timber.d("🔧 重建完成: ${wordList.size}个候选词")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "重建候选词视图失败: ${e.message}")
+            // 最后的回退
+            try {
+                candidatesView.removeAllViews()
+                val errorText = TextView(this)
+                errorText.text = "重建失败"
+                errorText.setTextColor(android.graphics.Color.RED)
+                candidatesView.addView(errorText)
+            } catch (ex: Exception) {
+                Timber.e(ex, "连错误提示都显示失败")
+            }
+        }
+    }
+    
+    /**
+     * 🎯 创建候选词TextView
+     */
+    private fun createCandidateTextView(word: WordFrequency, index: Int): TextView {
+        val candidateText = TextView(this)
+        candidateText.text = word.word
+        candidateText.gravity = Gravity.CENTER
+        
+        // 设置颜色
+        if (index == 0) {
+            candidateText.setTextColor(Color.parseColor("#2196F3")) // 第一个候选词蓝色
+        } else {
+            candidateText.setTextColor(Color.parseColor("#333333")) // 其他候选词深灰色
+        }
+        
+        candidateText.setBackgroundColor(Color.TRANSPARENT)
+        candidateText.setTextSize(16f)
+        candidateText.typeface = android.graphics.Typeface.DEFAULT
+        candidateText.setPadding(12, 8, 12, 8)
+        
+        val textParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.MATCH_PARENT
+        )
+        textParams.gravity = Gravity.CENTER_VERTICAL
+        
+        if (index == 0) {
+            textParams.setMargins(0, 4, 4, 4)
+        } else {
+            textParams.setMargins(4, 4, 4, 4)
+        }
+        
+        candidateText.layoutParams = textParams
+        candidateText.setOnClickListener {
+            commitText(word.word)
+        }
+        
+        return candidateText
+    }
+    
+    /**
+     * 🎯 创建无结果提示视图
+     */
+    private fun createNoResultsHintView(): TextView {
+        val hintText = TextView(this)
+        hintText.text = "请输入正确拼音"
+        hintText.setTextColor(android.graphics.Color.parseColor("#999999"))
+        hintText.setTextSize(14f)
+        hintText.gravity = Gravity.CENTER_VERTICAL or Gravity.START
+        hintText.typeface = android.graphics.Typeface.DEFAULT
+        
+        val hintParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.MATCH_PARENT
+        )
+        hintParams.gravity = Gravity.CENTER_VERTICAL or Gravity.START
+        hintParams.setMargins(0, 0, 0, 0)
+        hintText.layoutParams = hintParams
+        
+        return hintText
+    }
+    
+    /**
+     * 🎯 直接显示候选词（最简单版本）
+     */
+    private fun displayCandidatesDirectly(wordList: List<WordFrequency>) {
+        try {
+            candidatesView.removeAllViews()
+            
+            val candidatesRow = LinearLayout(this)
+            candidatesRow.orientation = LinearLayout.HORIZONTAL
+            candidatesRow.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            candidatesRow.gravity = Gravity.CENTER_VERTICAL
+            
+            wordList.forEachIndexed { index, word ->
+                val candidateText = TextView(this)
+                candidateText.text = word.word
+                candidateText.gravity = Gravity.CENTER
+                
+                if (index == 0) {
+                    candidateText.setTextColor(Color.parseColor("#2196F3"))
+                } else {
+                    candidateText.setTextColor(Color.parseColor("#333333"))
+                }
+                
+                candidateText.setBackgroundColor(Color.TRANSPARENT)
+                candidateText.setTextSize(16f)
+                candidateText.setPadding(12, 8, 12, 8)
+                
+                val textParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT
+                )
+                textParams.gravity = Gravity.CENTER_VERTICAL
+                textParams.setMargins(if (index == 0) 0 else 4, 4, 4, 4)
+                candidateText.layoutParams = textParams
+                
+                candidateText.setOnClickListener {
+                    commitText(word.word)
+                }
+                
+                candidatesRow.addView(candidateText)
+            }
+            
+            candidatesView.addView(candidatesRow)
+            
+            // 重置滚动位置
+            if (::candidatesViewLayout.isInitialized) {
+                candidatesViewLayout.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "直接显示候选词失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 🎯 直接显示无结果提示
+     */
+    private fun displayNoResultsDirectly() {
+        try {
+            candidatesView.removeAllViews()
+            val hintText = createNoResultsHintView()
+            candidatesView.addView(hintText)
+        } catch (e: Exception) {
+            Timber.e(e, "显示无结果提示失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 🎯 直接显示错误信息
+     */
+    private fun displayErrorDirectly(message: String) {
+        try {
+            candidatesView.removeAllViews()
+            val errorText = TextView(this)
+            errorText.text = message
+            errorText.setTextColor(android.graphics.Color.RED)
+            errorText.setTextSize(14f)
+            errorText.setPadding(12, 8, 12, 8)
+            candidatesView.addView(errorText)
+        } catch (e: Exception) {
+            Timber.e(e, "显示错误信息失败: ${e.message}")
+        }
+    }
+
     // 🎯 新增：平滑更新候选词视图（避免闪烁）
     private fun updateCandidatesViewSmooth(wordList: List<WordFrequency>) {
         Timber.d("🎨 updateCandidatesViewSmooth 开始，候选词数量: ${wordList.size}")
@@ -995,49 +1636,14 @@ class ShenjiInputMethodService : InputMethodService() {
         }
         
         try {
-            // 清空现有内容
+            // 🎯 先创建提示内容，再替换，减少空白时间
+            val hintText = createNoResultsHintView()
+            
+            // 🎯 原子操作：快速替换内容
             candidatesView.removeAllViews()
-            
-            // 确保容器可见且有固定背景
-            defaultCandidatesView.visibility = View.VISIBLE
-            toolbarView.visibility = View.GONE
-            defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#F8F8F8")) // 保持固定背景色
-            
-            // 🔧 修复：使用像素值设置固定高度
-            val density = resources.displayMetrics.density
-            val heightInPx = (46 * density).toInt() // 将46dp转换为像素
-            
-            val params = defaultCandidatesView.layoutParams
-            params.height = heightInPx // 使用像素值
-            params.width = LinearLayout.LayoutParams.MATCH_PARENT
-            defaultCandidatesView.layoutParams = params
-            
-            // 🔧 修复：确保candidatesView也有正确的高度
-            val candidatesParams = candidatesView.layoutParams
-            candidatesParams.height = heightInPx
-            candidatesView.layoutParams = candidatesParams
-            
-            // 创建提示文本
-            val hintText = TextView(this)
-            hintText.text = "请输入正确拼音"
-            hintText.setTextColor(android.graphics.Color.parseColor("#999999"))
-            hintText.setTextSize(14f)
-            hintText.gravity = Gravity.CENTER_VERTICAL or Gravity.START
-            hintText.typeface = android.graphics.Typeface.DEFAULT
-            
-            // 🔧 修复：使用像素值设置提示文字高度，并去掉额外的margin
-            val hintParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                heightInPx // 使用像素值，与容器高度一致
-            )
-            hintParams.gravity = Gravity.CENTER_VERTICAL or Gravity.START
-            // 🎯 修复：不添加额外margin，让提示文字与拼音完全左对齐
-            hintParams.setMargins(0, 0, 0, 0)
-            hintText.layoutParams = hintParams
-            
             candidatesView.addView(hintText)
             
-            Timber.d("🎨 平滑显示无结果提示，使用像素高度: ${heightInPx}px，完全左对齐")
+            Timber.d("🎨 平滑显示无结果提示")
             
         } catch (e: Exception) {
             Timber.e(e, "平滑显示无结果提示失败: ${e.message}")
