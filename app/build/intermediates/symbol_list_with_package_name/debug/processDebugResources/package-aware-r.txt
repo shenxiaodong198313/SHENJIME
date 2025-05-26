@@ -3574,6 +3574,7 @@ id line3
 id linear
 id listMode
 id list_item
+id ll_preset_tests
 id loadMoreButton
 id loadMoreProgress
 id logScrollView
@@ -3737,6 +3738,7 @@ id run_cache_test_button
 id run_full_test_suite_button
 id rvEntries
 id rvLogs
+id rv_candidates
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -3914,8 +3916,10 @@ id tvWord
 id tv_candidate_weight
 id tv_candidate_word
 id tv_frequency
+id tv_performance
 id tv_pinyin
 id tv_rank
+id tv_result
 id tv_results
 id tv_source
 id tv_stage_results
@@ -4059,6 +4063,7 @@ layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
 layout activity_combination_test
+layout activity_continuous_pinyin_test
 layout activity_dictionary_detail
 layout activity_dictionary_logs
 layout activity_fragment_container

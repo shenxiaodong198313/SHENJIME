@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:2:1-141:12
-INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:2:1-141:12
-INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:2:1-141:12
-INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:2:1-141:12
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:2:1-148:12
+INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:2:1-148:12
+INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:2:1-148:12
+INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:2:1-148:12
 MERGED from [androidx.databinding:viewbinding:8.6.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\6dd6e9708da76a7f05ec547d7fd3e169\transformed\jetified-viewbinding-8.6.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\93ce180f08b6afd29d0178442d245684\transformed\material-1.12.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\aadae23b8a63cb4d7f794853ba45a2a3\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -111,8 +111,8 @@ ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:25:5-114
 	android:name
 		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:25:22-75
 application
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:27:5-139:19
-INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:27:5-139:19
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:27:5-146:19
+INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:27:5-146:19
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\93ce180f08b6afd29d0178442d245684\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\93ce180f08b6afd29d0178442d245684\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\transforms-4\aadae23b8a63cb4d7f794853ba45a2a3\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -219,86 +219,96 @@ ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:77:9-81:58
 		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:79:13-37
 	android:name
 		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:78:13-56
+activity#com.shenji.aikeyboard.ui.ContinuousPinyinTestActivity
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:84:9-88:58
+	android:label
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:87:13-35
+	android:windowSoftInputMode
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:88:13-55
+	android:exported
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:86:13-36
+	android:name
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:85:13-60
 service#com.shenji.aikeyboard.keyboard.ShenjiInputMethodService
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:84:9-96:19
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:91:9-103:19
 	android:label
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:86:13-45
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:93:13-45
 	android:hardwareAccelerated
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:88:13-47
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:95:13-47
 	android:exported
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:89:13-36
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:96:13-36
 	android:permission
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:87:13-70
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:94:13-70
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:85:13-62
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:92:13-62
 intent-filter#action:name:android.view.InputMethod
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:90:13-92:29
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:97:13-99:29
 action#android.view.InputMethod
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:91:17-67
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:98:17-67
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:91:25-64
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:98:25-64
 meta-data#android.view.im
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:93:13-95:50
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:100:13-102:50
 	android:resource
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:95:17-47
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:102:17-47
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:94:17-47
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:101:17-47
 service#com.shenji.aikeyboard.utils.AutofillAccessibilityService
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:99:9-110:19
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:106:9-117:19
 	android:label
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:101:13-40
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:108:13-40
 	android:exported
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:103:13-36
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:110:13-36
 	android:permission
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:102:13-79
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:109:13-79
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:100:13-63
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:107:13-63
 intent-filter#action:name:android.accessibilityservice.AccessibilityService
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:104:13-106:29
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:111:13-113:29
 action#android.accessibilityservice.AccessibilityService
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:105:17-92
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:112:17-92
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:105:25-89
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:112:25-89
 meta-data#android.accessibilityservice
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:107:13-109:72
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:114:13-116:72
 	android:resource
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:109:17-69
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:116:17-69
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:108:17-60
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:115:17-60
 activity#com.shenji.aikeyboard.settings.InputMethodSettingsActivity
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:113:9-120:20
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:120:9-127:20
 	android:label
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:115:13-49
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:122:13-49
 	android:exported
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:116:13-36
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:123:13-36
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:114:13-65
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:121:13-65
 intent-filter#action:name:android.intent.action.MAIN
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:117:13-119:29
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:124:13-126:29
 activity#com.shenji.aikeyboard.settings.FuzzyPinyinSettingsActivity
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:123:9-126:40
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:130:9-133:40
 	android:label
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:125:13-35
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:132:13-35
 	android:exported
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:126:13-37
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:133:13-37
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:124:13-65
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:131:13-65
 provider#androidx.core.content.FileProvider
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:129:9-137:20
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:136:9-144:20
 	android:grantUriPermissions
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:133:13-47
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:140:13-47
 	android:authorities
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:131:13-69
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:138:13-69
 	android:exported
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:132:13-37
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:139:13-37
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:130:13-62
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:137:13-62
 meta-data#android.support.FILE_PROVIDER_PATHS
-ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:134:13-136:54
+ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:141:13-143:54
 	android:resource
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:136:17-51
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:143:17-51
 	android:name
-		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:135:17-67
+		ADDED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:142:17-67
 uses-sdk
 INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml

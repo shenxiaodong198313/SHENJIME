@@ -23,6 +23,9 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     
     private val trieManager = TrieManager.instance
     
+    // 连续拼音引擎
+    private val continuousEngine = ContinuousPinyinEngine.getInstance()
+    
     // 简化缓存策略
     private val queryCache = LruCache<String, List<WordFrequency>>(100)
     
@@ -96,6 +99,71 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         
         val startTime = System.currentTimeMillis()
         
+        // 🚀 连续拼音检测和处理
+        val isContinuousPinyin = detectContinuousPinyin(cleanInput)
+        
+        val results = if (isContinuousPinyin && offset == 0) {
+            // 使用连续拼音引擎处理
+            Timber.d("🎯 检测到连续拼音，使用连续拼音引擎: '$cleanInput'")
+            val continuousResult = continuousEngine.queryContinuous(cleanInput, limit)
+            
+            if (continuousResult.bestCombinations.isNotEmpty()) {
+                Timber.d("✅ 连续拼音查询成功: ${continuousResult.bestCombinations.size}个结果")
+                continuousResult.bestCombinations
+            } else {
+                // 回退到原有逻辑
+                Timber.d("🔄 连续拼音无结果，回退到原有逻辑")
+                performOriginalQuery(cleanInput, limit, offset)
+            }
+        } else {
+            // 使用原有查询逻辑
+            performOriginalQuery(cleanInput, limit, offset)
+        }
+        
+        val queryTime = System.currentTimeMillis() - startTime
+        Timber.d("查询完成: $cleanInput -> ${results.size}结果 (${queryTime}ms)")
+        
+        // 缓存结果（使用原始输入作为缓存键）
+        queryCache.put(cacheKey, results)
+        
+        // 分页返回
+        val startIndex = offset
+        val endIndex = minOf(offset + limit, results.size)
+        return if (startIndex < results.size) {
+            results.subList(startIndex, endIndex)
+        } else {
+            emptyList()
+        }
+    }
+    
+    /**
+     * 检测是否为连续拼音输入
+     */
+    private fun detectContinuousPinyin(input: String): Boolean {
+        // 连续拼音特征：
+        // 1. 长度大于6个字符
+        // 2. 包含多个有效拼音音节
+        // 3. 没有空格分隔
+        
+        if (input.length < 6 || input.contains(" ")) {
+            return false
+        }
+        
+        // 简单检测：尝试分词，如果能分成3个以上音节，认为是连续拼音
+        val segments = simpleSegmentation(input)
+        val isContiguous = segments.size >= 3 && segments.joinToString("") == input
+        
+        if (isContiguous) {
+            Timber.d("🔍 连续拼音检测: '$input' -> ${segments.size}个音节: ${segments.joinToString(" + ")}")
+        }
+        
+        return isContiguous
+    }
+    
+    /**
+     * 执行原有查询逻辑
+     */
+    private suspend fun performOriginalQuery(cleanInput: String, limit: Int, offset: Int): List<WordFrequency> {
         // 🔧 生成查询变体（包括原始输入和v/ü转换）
         val queryVariants = generateInputVariants(cleanInput)
         Timber.d("🔄 输入变体: $cleanInput -> ${queryVariants.joinToString(", ")}")
@@ -106,7 +174,7 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         }.maxByOrNull { it.confidence } ?: analyzeInput(cleanInput)
         
         // 根据输入分析选择查询策略
-        val results = when (bestAnalysis.type) {
+        return when (bestAnalysis.type) {
             InputType.SINGLE_CHAR -> {
                 if (offset == 0) {
                     // 首次查询：分层推荐
@@ -124,21 +192,6 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
                 Timber.d("输入超过限制(${bestAnalysis.segments.size}分段)，停止查询")
                 emptyList()
             }
-        }
-        
-        val queryTime = System.currentTimeMillis() - startTime
-        Timber.d("查询完成: $cleanInput -> ${bestAnalysis.type} -> ${results.size}结果 (${queryTime}ms)")
-        
-        // 缓存结果（使用原始输入作为缓存键）
-        queryCache.put(cacheKey, results)
-        
-        // 分页返回
-        val startIndex = offset
-        val endIndex = minOf(offset + limit, results.size)
-        return if (startIndex < results.size) {
-            results.subList(startIndex, endIndex)
-        } else {
-            emptyList()
         }
     }
     
@@ -1244,6 +1297,7 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
      */
     override fun clearCache() {
         queryCache.evictAll()
+        continuousEngine.clearCache()
         Timber.d("SmartPinyinEngine: 缓存已清理")
     }
     
@@ -1260,6 +1314,8 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
             appendLine("查询总数: ${queryCount.get()}")
             appendLine("缓存命中: ${cacheHits.get()} (${hitRate}%)")
             appendLine("缓存大小: ${queryCache.size()}/100")
+            appendLine()
+            appendLine(continuousEngine.getPerformanceStats())
         }
     }
 

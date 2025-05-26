@@ -219,6 +219,7 @@ id lengthTest1to4Button
 id lengthTest1to5Button
 id lengthTest1to6Button
 id lengthTestContainer
+id ll_preset_tests
 id loadMoreButton
 id loadMoreProgress
 id logScrollView
@@ -252,6 +253,7 @@ id run_cache_test_button
 id run_full_test_suite_button
 id rvEntries
 id rvLogs
+id rv_candidates
 id scroll_view
 id shimmerDictName
 id shimmerDictType
@@ -318,14 +320,17 @@ id tvWord
 id tv_candidate_weight
 id tv_candidate_word
 id tv_frequency
+id tv_performance
 id tv_pinyin
 id tv_rank
+id tv_result
 id tv_results
 id tv_source
 id tv_stage_results
 id tv_stage_title
 id tv_word
 layout activity_combination_test
+layout activity_continuous_pinyin_test
 layout activity_dictionary_detail
 layout activity_dictionary_logs
 layout activity_fragment_container

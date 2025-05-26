@@ -80,6 +80,13 @@
             android:label="v/ü转换功能测试"
             android:windowSoftInputMode="adjustResize" />
             
+        <!-- 连续拼音测试活动 -->
+        <activity
+            android:name=".ui.ContinuousPinyinTestActivity"
+            android:exported="true"
+            android:label="连续拼音测试"
+            android:windowSoftInputMode="adjustResize" />
+            
         <!-- 输入法服务 -->
         <service
             android:name=".keyboard.ShenjiInputMethodService"
