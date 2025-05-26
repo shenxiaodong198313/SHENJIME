@@ -3,10 +3,13 @@ package com.shenji.aikeyboard.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -33,6 +36,8 @@ class SmartPinyinMvpTestActivity : AppCompatActivity() {
     private lateinit var toolbar: Toolbar
     private lateinit var generateTestButton: Button
     private lateinit var loadMoreButton: Button
+    private lateinit var customInputEditText: EditText
+    private lateinit var customTestButton: Button
     
     private lateinit var candidatesTextView: TextView
     private lateinit var analysisTextView: TextView
@@ -99,6 +104,8 @@ class SmartPinyinMvpTestActivity : AppCompatActivity() {
         toolbar = findViewById(R.id.toolbar)
         generateTestButton = findViewById(R.id.generateTestButton)
         loadMoreButton = findViewById(R.id.loadMoreButton)
+        customInputEditText = findViewById(R.id.customInputEditText)
+        customTestButton = findViewById(R.id.customTestButton)
         
         candidatesTextView = findViewById(R.id.candidatesTextView)
         analysisTextView = findViewById(R.id.analysisTextView)
@@ -149,6 +156,10 @@ class SmartPinyinMvpTestActivity : AppCompatActivity() {
                 copyAnalysisToClipboard()
                 true
             }
+            R.id.action_vu_conversion_test -> {
+                openVUConversionTest()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -162,6 +173,21 @@ class SmartPinyinMvpTestActivity : AppCompatActivity() {
         // 查看更多按钮
         loadMoreButton.setOnClickListener {
             loadMoreCandidates()
+        }
+        
+        // 自定义输入测试
+        customTestButton.setOnClickListener {
+            performCustomTest()
+        }
+        
+        // 输入框回车键监听
+        customInputEditText.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                performCustomTest()
+                true
+            } else {
+                false
+            }
         }
         
         // 按拼音长度分类的测试按钮
@@ -184,6 +210,39 @@ class SmartPinyinMvpTestActivity : AppCompatActivity() {
         
         // 执行查询测试
         performQueryTest(currentTestInput)
+    }
+    
+    /**
+     * 执行自定义输入测试
+     */
+    private fun performCustomTest() {
+        val input = customInputEditText.text.toString().trim()
+        if (input.isEmpty()) {
+            Toast.makeText(this, "请输入拼音", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        currentTestInput = input
+        generateTestButton.text = "🎯 当前测试: $currentTestInput"
+        
+        // 执行查询测试
+        performQueryTest(currentTestInput)
+        
+        // 隐藏软键盘
+        customInputEditText.clearFocus()
+    }
+    
+    /**
+     * 打开v/ü转换测试页面
+     */
+    private fun openVUConversionTest() {
+        try {
+            val intent = Intent(this, VUConversionTestActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Timber.e(e, "打开v/ü转换测试页面失败")
+            Toast.makeText(this, "无法打开v/ü转换测试页面: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
     
     /**

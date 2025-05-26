@@ -87,7 +87,7 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         val cleanInput = currentPinyin.trim().lowercase()
         queryCount.incrementAndGet()
         
-        // 检查缓存
+        // 检查缓存（使用原始输入作为缓存键）
         val cacheKey = "${cleanInput}_${limit}_${offset}"
         queryCache.get(cacheKey)?.let { cached ->
             cacheHits.incrementAndGet()
@@ -96,34 +96,40 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         
         val startTime = System.currentTimeMillis()
         
-        // 智能输入类型检测
-        val inputAnalysis = analyzeInput(cleanInput)
+        // 🔧 生成查询变体（包括原始输入和v/ü转换）
+        val queryVariants = generateInputVariants(cleanInput)
+        Timber.d("🔄 输入变体: $cleanInput -> ${queryVariants.joinToString(", ")}")
+        
+        // 对每个变体进行输入分析，选择最佳的分析结果
+        val bestAnalysis = queryVariants.map { variant ->
+            analyzeInput(variant)
+        }.maxByOrNull { it.confidence } ?: analyzeInput(cleanInput)
         
         // 根据输入分析选择查询策略
-        val results = when (inputAnalysis.type) {
+        val results = when (bestAnalysis.type) {
             InputType.SINGLE_CHAR -> {
                 if (offset == 0) {
                     // 首次查询：分层推荐
-                    querySingleChar(cleanInput, limit)
+                    queryMultiVariantSingleChar(queryVariants, limit)
                 } else {
                     // 懒加载：更多内容
-                    querySingleCharLazyLoad(cleanInput, limit, offset)
+                    queryMultiVariantSingleCharLazyLoad(queryVariants, limit, offset)
                 }
             }
-            InputType.ABBREVIATION -> queryAbbreviation(cleanInput, limit)
-            InputType.SHORT_INPUT -> queryShortInput(inputAnalysis.segments, limit)
-            InputType.MEDIUM_INPUT -> queryMediumInput(inputAnalysis.segments, limit)
-            InputType.LONG_INPUT -> queryLongInput(inputAnalysis.segments, limit)
+            InputType.ABBREVIATION -> queryMultiVariantAbbreviation(queryVariants, limit)
+            InputType.SHORT_INPUT -> queryMultiVariantShortInput(queryVariants, bestAnalysis.segments, limit)
+            InputType.MEDIUM_INPUT -> queryMultiVariantMediumInput(queryVariants, bestAnalysis.segments, limit)
+            InputType.LONG_INPUT -> queryMultiVariantLongInput(queryVariants, bestAnalysis.segments, limit)
             InputType.OVER_LIMIT -> {
-                Timber.d("输入超过限制(${inputAnalysis.segments.size}分段)，停止查询")
+                Timber.d("输入超过限制(${bestAnalysis.segments.size}分段)，停止查询")
                 emptyList()
             }
         }
         
         val queryTime = System.currentTimeMillis() - startTime
-        Timber.d("查询完成: $cleanInput -> ${inputAnalysis.type} -> ${results.size}结果 (${queryTime}ms)")
+        Timber.d("查询完成: $cleanInput -> ${bestAnalysis.type} -> ${results.size}结果 (${queryTime}ms)")
         
-        // 缓存结果
+        // 缓存结果（使用原始输入作为缓存键）
         queryCache.put(cacheKey, results)
         
         // 分页返回
@@ -423,6 +429,7 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     
     /**
      * 带回退机制的查询（Trie失败时查询Realm）
+     * 支持v/ü双向匹配
      */
     private suspend fun queryWithFallback(
         trieTypes: List<TrieType>,
@@ -431,16 +438,23 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     ): List<WordFrequency> {
         val results = mutableListOf<WordFrequency>()
         
+        // 生成查询变体（支持v/ü双向匹配）
+        val queryVariants = generateVUQueryVariants(query)
+        Timber.d("🔄 生成查询变体: $query -> ${queryVariants.joinToString(", ")}")
+        
         // 首先尝试Trie查询
         for (trieType in trieTypes) {
             if (results.size >= limit * 2) break // 获取更多结果用于排序
             
             if (trieManager.isTrieLoaded(trieType)) {
-                val trieResults = trieManager.searchByPrefix(trieType, query, limit * 2)
-                results.addAll(trieResults)
-                
-                if (trieResults.isNotEmpty()) {
-                    Timber.d("${getTrieTypeName(trieType)}Trie查询成功: ${trieResults.size}个结果")
+                // 对每个查询变体进行查询
+                for (variant in queryVariants) {
+                    val trieResults = trieManager.searchByPrefix(trieType, variant, limit * 2)
+                    results.addAll(trieResults)
+                    
+                    if (trieResults.isNotEmpty()) {
+                        Timber.d("${getTrieTypeName(trieType)}Trie查询'$variant'成功: ${trieResults.size}个结果")
+                    }
                 }
             }
         }
@@ -448,11 +462,13 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         // 如果Trie查询结果不足，回退到Realm数据库
         if (results.size < limit) {
             Timber.d("Trie结果不足(${results.size})，回退到Realm查询")
-            val realmResults = queryFromRealm(query, limit * 2)
-            results.addAll(realmResults)
-            
-            if (realmResults.isNotEmpty()) {
-                Timber.d("Realm回退查询成功: ${realmResults.size}个结果")
+            for (variant in queryVariants) {
+                val realmResults = queryFromRealm(variant, limit * 2)
+                results.addAll(realmResults)
+                
+                if (realmResults.isNotEmpty()) {
+                    Timber.d("Realm查询'$variant'成功: ${realmResults.size}个结果")
+                }
             }
         }
         
@@ -460,6 +476,56 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         val sortedResults = sortByLengthAndFrequency(results.distinctBy { it.word })
         
         return sortedResults.take(limit)
+    }
+    
+    /**
+     * 生成v/ü查询变体
+     * 支持双向转换：lü ↔ lv, nü ↔ nv
+     * 注意：词典中存储的是无声调拼音
+     */
+    private fun generateVUQueryVariants(query: String): List<String> {
+        val variants = mutableSetOf<String>()
+        variants.add(query) // 原始查询
+        
+        // 如果包含ü，生成v版本
+        if (query.contains('ü')) {
+            val vVersion = query.replace('ü', 'v')
+            variants.add(vVersion)
+            Timber.d("🔄 ü->v变体: '$query' -> '$vVersion'")
+        }
+        
+        // 如果包含v，生成ü版本（仅限lv和nv）
+        if (query.contains('v')) {
+            var uVersion = query
+            
+            // lv -> lü (词典中存储为无声调的lü)
+            uVersion = uVersion.replace(Regex("\\blv\\b"), "lü")
+            uVersion = uVersion.replace(Regex("lv([aeiou])"), "lü$1")
+            
+            // nv -> nü (词典中存储为无声调的nü)
+            uVersion = uVersion.replace(Regex("\\bnv\\b"), "nü")
+            uVersion = uVersion.replace(Regex("nv([aeiou])"), "nü$1")
+            
+            if (uVersion != query) {
+                variants.add(uVersion)
+                Timber.d("🔄 v->ü变体: '$query' -> '$uVersion'")
+            }
+        }
+        
+        // 处理连续拼音的情况，如 nvhai -> nühai
+        if (query.contains("nv") && !query.contains("nü")) {
+            val nvToNuVersion = query.replace("nv", "nü")
+            variants.add(nvToNuVersion)
+            Timber.d("🔄 连续拼音nv->nü: '$query' -> '$nvToNuVersion'")
+        }
+        
+        if (query.contains("lv") && !query.contains("lü")) {
+            val lvToLuVersion = query.replace("lv", "lü")
+            variants.add(lvToLuVersion)
+            Timber.d("🔄 连续拼音lv->lü: '$query' -> '$lvToLuVersion'")
+        }
+        
+        return variants.toList()
     }
     
     /**
@@ -608,15 +674,20 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
             for (final in finals) {
                 val combination = char + final
                 
-                val charResults = trieManager.searchByPrefix(TrieType.CHARS, combination, 3)
-                    .filter { it.word.length == 1 }
-                    .sortedByDescending { it.frequency }
-                    .take(3)
+                // 生成v/ü变体进行查询
+                val combinationVariants = generateVUQueryVariants(combination)
                 
-                if (charResults.isNotEmpty()) {
-                    firstLayerResults.addAll(charResults)
-                    charResults.forEach { usedSingleChars.add(it.word) }
-                    Timber.d("📋 $combination -> ${charResults.size}个高频单字: ${charResults.map { "${it.word}(${it.frequency})" }}")
+                for (variant in combinationVariants) {
+                    val charResults = trieManager.searchByPrefix(TrieType.CHARS, variant, 3)
+                        .filter { it.word.length == 1 }
+                        .sortedByDescending { it.frequency }
+                        .take(3)
+                    
+                    if (charResults.isNotEmpty()) {
+                        firstLayerResults.addAll(charResults)
+                        charResults.forEach { usedSingleChars.add(it.word) }
+                        Timber.d("📋 $variant -> ${charResults.size}个高频单字: ${charResults.map { "${it.word}(${it.frequency})" }}")
+                    }
                 }
             }
         }
@@ -628,16 +699,16 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         Timber.d("🥇 第一层单字总数: ${sortedFirstLayer.size}个")
         
         // 添加第一层结果（优先级最高）
-        val firstLayerLimit = minOf(limit * 2 / 3, sortedFirstLayer.size) // 占总数的2/3
+        val firstLayerLimit = minOf(15, sortedFirstLayer.size) // 增加单字数量到15个
         finalResults.addAll(sortedFirstLayer.take(firstLayerLimit))
         
         // 第二层：剩余的单字（去重已使用的）
-        if (finalResults.size < limit && trieManager.isTrieLoaded(TrieType.CHARS)) {
-            val remainingChars = trieManager.searchByPrefix(TrieType.CHARS, char, 50)
+        if (finalResults.size < 20 && trieManager.isTrieLoaded(TrieType.CHARS)) {
+            val remainingChars = trieManager.searchByPrefix(TrieType.CHARS, char, 50) // 增加查询数量
                 .filter { it.word.length == 1 && !usedSingleChars.contains(it.word) }
                 .sortedByDescending { it.frequency }
             
-            val secondLayerLimit = minOf(limit - finalResults.size, remainingChars.size)
+            val secondLayerLimit = minOf(20 - finalResults.size, remainingChars.size)
             finalResults.addAll(remainingChars.take(secondLayerLimit))
             
             Timber.d("🥈 第二层补充单字: ${remainingChars.take(secondLayerLimit).size}个")
@@ -723,6 +794,55 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     }
     
     /**
+     * v到ü的预处理方法
+     * 处理汉语拼音中v代替ü的规则
+     * 注意：生成无声调的ü以匹配词典格式
+     */
+    private fun preprocessVToU(input: String): String {
+        if (!input.contains('v')) return input
+        
+        var result = input
+        
+        // 处理规则（生成无声调拼音以匹配词典）：
+        // 1. lv -> lü (绿) - 词典中存储为lü
+        // 2. nv -> nü (女) - 词典中存储为nü
+        // 3. jv -> ju (居) - j后面的v转为u
+        // 4. qv -> qu (去) - q后面的v转为u
+        // 5. xv -> xu (虚) - x后面的v转为u
+        // 6. yv -> yu (鱼) - y后面的v转为u
+        
+        // 处理连续拼音中的v转换
+        result = result.replace(Regex("lv([aeiou])")) { matchResult ->
+            "lü${matchResult.groupValues[1]}"
+        }
+        
+        result = result.replace(Regex("nv([aeiou])")) { matchResult ->
+            "nü${matchResult.groupValues[1]}"
+        }
+        
+        // 处理j、q、x、y后的v转为u
+        result = result.replace(Regex("([jqxy])v")) { matchResult ->
+            "${matchResult.groupValues[1]}u"
+        }
+        
+        // 处理单独的lv和nv（最重要的转换）
+        result = result.replace(Regex("\\blv\\b"), "lü")
+        result = result.replace(Regex("\\bnv\\b"), "nü")
+        
+        // 处理连续拼音情况，如nvhai -> nühai, lvse -> lüse
+        result = result.replace("nvhai", "nühai")
+        result = result.replace("lvse", "lüse")
+        result = result.replace("nvshen", "nüshen")
+        result = result.replace("lvcha", "lücha")
+        
+        if (result != input) {
+            Timber.d("🔄 v转换(无声调): '$input' -> '$result'")
+        }
+        
+        return result
+    }
+    
+    /**
      * 获取拼音分段结果
      * 实现CandidateEngine接口
      */
@@ -752,5 +872,140 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
             appendLine("缓存命中: ${cacheHits.get()} (${hitRate}%)")
             appendLine("缓存大小: ${queryCache.size()}/100")
         }
+    }
+
+    /**
+     * 生成输入变体（包括原始输入和v/ü转换）
+     */
+    private fun generateInputVariants(input: String): List<String> {
+        val variants = mutableSetOf<String>()
+        variants.add(input) // 原始输入
+        
+        // 添加v到ü的转换
+        val vToUConverted = preprocessVToU(input)
+        if (vToUConverted != input) {
+            variants.add(vToUConverted)
+            Timber.d("🔄 v->ü转换: '$input' -> '$vToUConverted'")
+        }
+        
+        // 添加ü到v的转换
+        if (input.contains('ü')) {
+            val uToVConverted = input.replace('ü', 'v')
+            variants.add(uToVConverted)
+            Timber.d("🔄 ü->v转换: '$input' -> '$uToVConverted'")
+        }
+        
+        return variants.toList()
+    }
+    
+    /**
+     * 多变体单字符查询
+     */
+    private suspend fun queryMultiVariantSingleChar(variants: List<String>, limit: Int): List<WordFrequency> {
+        val results = mutableListOf<WordFrequency>()
+        
+        for (variant in variants) {
+            if (variant.length == 1) {
+                val singleCharResults = querySmartSingleChar(variant, limit)
+                results.addAll(singleCharResults)
+            } else {
+                // 完整音节查询
+                val syllableResults = queryWithFallback(listOf(TrieType.CHARS, TrieType.BASE), variant, limit)
+                results.addAll(syllableResults)
+            }
+        }
+        
+        return sortByLengthAndFrequency(results.distinctBy { it.word }).take(limit)
+    }
+    
+    /**
+     * 多变体单字符懒加载查询
+     */
+    private suspend fun queryMultiVariantSingleCharLazyLoad(variants: List<String>, limit: Int, offset: Int): List<WordFrequency> {
+        val results = mutableListOf<WordFrequency>()
+        
+        for (variant in variants) {
+            val lazyResults = querySingleCharLazyLoad(variant, limit, offset)
+            results.addAll(lazyResults)
+        }
+        
+        return sortByLengthAndFrequency(results.distinctBy { it.word }).take(limit)
+    }
+    
+    /**
+     * 多变体缩写查询
+     */
+    private suspend fun queryMultiVariantAbbreviation(variants: List<String>, limit: Int): List<WordFrequency> {
+        val results = mutableListOf<WordFrequency>()
+        
+        for (variant in variants) {
+            val abbrevResults = queryAbbreviation(variant, limit)
+            results.addAll(abbrevResults)
+        }
+        
+        return sortByLengthAndFrequency(results.distinctBy { it.word }).take(limit)
+    }
+    
+    /**
+     * 多变体短输入查询
+     */
+    private suspend fun queryMultiVariantShortInput(variants: List<String>, segments: List<String>, limit: Int): List<WordFrequency> {
+        val results = mutableListOf<WordFrequency>()
+        
+        Timber.d("🔍 多变体短输入查询开始")
+        Timber.d("📝 输入变体: ${variants.joinToString(", ")}")
+        Timber.d("📋 分段结果: ${segments.joinToString(" + ")}")
+        
+        for (variant in variants) {
+            Timber.d("🔄 查询变体: '$variant'")
+            val shortResults = queryWithFallback(
+                listOf(TrieType.CHARS, TrieType.BASE, TrieType.PLACE, TrieType.PEOPLE),
+                variant,
+                limit
+            )
+            results.addAll(shortResults)
+            Timber.d("✅ 变体'$variant'查询结果: ${shortResults.size}个")
+        }
+        
+        val finalResults = sortByLengthAndFrequency(results.distinctBy { it.word }).take(limit)
+        Timber.d("🎯 多变体短输入查询完成: ${finalResults.size}个结果")
+        
+        return finalResults
+    }
+    
+    /**
+     * 多变体中等输入查询
+     */
+    private suspend fun queryMultiVariantMediumInput(variants: List<String>, segments: List<String>, limit: Int): List<WordFrequency> {
+        val results = mutableListOf<WordFrequency>()
+        
+        for (variant in variants) {
+            val mediumResults = queryWithFallback(
+                listOf(TrieType.CORRELATION, TrieType.ASSOCIATIONAL, TrieType.PLACE, TrieType.PEOPLE),
+                variant,
+                limit
+            )
+            results.addAll(mediumResults)
+        }
+        
+        return sortByLengthAndFrequency(results.distinctBy { it.word }).take(limit)
+    }
+    
+    /**
+     * 多变体长输入查询
+     */
+    private suspend fun queryMultiVariantLongInput(variants: List<String>, segments: List<String>, limit: Int): List<WordFrequency> {
+        val results = mutableListOf<WordFrequency>()
+        
+        for (variant in variants) {
+            val longResults = queryWithFallback(
+                listOf(TrieType.ASSOCIATIONAL, TrieType.PLACE, TrieType.PEOPLE, TrieType.POETRY),
+                variant,
+                limit
+            )
+            results.addAll(longResults)
+        }
+        
+        return sortByLengthAndFrequency(results.distinctBy { it.word }).take(limit)
     }
 } 

@@ -40,6 +40,7 @@ class FuzzyPinyinManager private constructor() {
         
         // 其他模糊匹配键
         private const val KEY_L_N = "fuzzy_l_n"     // l = n
+        private const val KEY_V_U = "fuzzy_v_u"     // v = ü (支持v代替ü的输入)
     }
     
     // 模糊拼音配置状态
@@ -57,6 +58,7 @@ class FuzzyPinyinManager private constructor() {
     
     // 其他模糊匹配
     private var lEqualsN = false     // l = n
+    private var vEqualsU = true      // v = ü (默认启用，支持v代替ü的输入)
     
     // SharedPreferences实例
     private val prefs: SharedPreferences by lazy {
@@ -87,13 +89,14 @@ class FuzzyPinyinManager private constructor() {
             
             // 其他模糊匹配
             lEqualsN = prefs.getBoolean(KEY_L_N, false)
+            vEqualsU = prefs.getBoolean(KEY_V_U, true) // 默认启用v/ü转换
             
             // 检查是否有任何一个模糊拼音设置被启用
             fuzzyEnabled = zEqualsZh || cEqualsCh || sEqualsSh || 
                           anEqualsAng || enEqualsEng || inEqualsIng || 
-                          lEqualsN
+                          lEqualsN || vEqualsU
                           
-            Timber.d("已加载模糊拼音设置")
+            Timber.d("已加载模糊拼音设置，v/ü转换: $vEqualsU")
         } catch (e: Exception) {
             Timber.e(e, "加载模糊拼音设置失败")
         }
@@ -152,6 +155,11 @@ class FuzzyPinyinManager private constructor() {
             applyInitialFuzzy(result, syllable, "l", "n")
         }
         
+        // v/ü模糊匹配
+        if (vEqualsU) {
+            applyVUFuzzy(result, syllable)
+        }
+        
         return result.toList()
     }
     
@@ -177,6 +185,58 @@ class FuzzyPinyinManager private constructor() {
         }
     }
     
+    /**
+     * 应用v/ü模糊匹配规则
+     * 处理v代替ü的各种情况
+     */
+    private fun applyVUFuzzy(result: MutableSet<String>, syllable: String) {
+        // lü <-> lv
+        if (syllable.startsWith("lü")) {
+            result.add(syllable.replace("lü", "lv"))
+        } else if (syllable.startsWith("lv")) {
+            result.add(syllable.replace("lv", "lü"))
+        }
+        
+        // nü <-> nv  
+        if (syllable.startsWith("nü")) {
+            result.add(syllable.replace("nü", "nv"))
+        } else if (syllable.startsWith("nv")) {
+            result.add(syllable.replace("nv", "nü"))
+        }
+        
+        // 处理j/q/x/y + u <-> j/q/x/y + v的情况
+        val jqxyPattern = Regex("^([jqxy])u(.*)$")
+        val jqxyVPattern = Regex("^([jqxy])v(.*)$")
+        
+        if (jqxyPattern.matches(syllable)) {
+            val match = jqxyPattern.find(syllable)
+            if (match != null) {
+                val (initial, final) = match.destructured
+                result.add("${initial}v$final")
+            }
+        } else if (jqxyVPattern.matches(syllable)) {
+            val match = jqxyVPattern.find(syllable)
+            if (match != null) {
+                val (initial, final) = match.destructured
+                result.add("${initial}u$final")
+            }
+        }
+        
+        // 处理独立的ü <-> v
+        if (syllable == "ü") {
+            result.add("v")
+        } else if (syllable == "v") {
+            result.add("ü")
+        }
+        
+        // 处理包含ü的其他音节
+        if (syllable.contains("ü")) {
+            result.add(syllable.replace("ü", "v"))
+        } else if (syllable.contains("v")) {
+            result.add(syllable.replace("v", "ü"))
+        }
+    }
+    
     // Getters
     fun isZEqualsZh(): Boolean = zEqualsZh
     fun isCEqualsCh(): Boolean = cEqualsCh
@@ -185,6 +245,7 @@ class FuzzyPinyinManager private constructor() {
     fun isEnEqualsEng(): Boolean = enEqualsEng
     fun isInEqualsIng(): Boolean = inEqualsIng
     fun isLEqualsN(): Boolean = lEqualsN
+    fun isVEqualsU(): Boolean = vEqualsU
     
     // Setters with automatic saving
     fun setZEqualsZh(enabled: Boolean) {
@@ -229,6 +290,13 @@ class FuzzyPinyinManager private constructor() {
         updateFuzzyEnabledStatus()
     }
     
+    fun setVEqualsU(enabled: Boolean) {
+        vEqualsU = enabled
+        prefs.edit().putBoolean(KEY_V_U, enabled).apply()
+        updateFuzzyEnabledStatus()
+        Timber.d("设置v/ü模糊匹配: $enabled")
+    }
+    
     /**
      * 设置全部模糊拼音规则
      */
@@ -240,6 +308,7 @@ class FuzzyPinyinManager private constructor() {
         enEqualsEng = enabled
         inEqualsIng = enabled
         lEqualsN = enabled
+        vEqualsU = enabled
         
         prefs.edit()
             .putBoolean(KEY_Z_ZH, enabled)
@@ -249,6 +318,7 @@ class FuzzyPinyinManager private constructor() {
             .putBoolean(KEY_EN_ENG, enabled)
             .putBoolean(KEY_IN_ING, enabled)
             .putBoolean(KEY_L_N, enabled)
+            .putBoolean(KEY_V_U, enabled)
             .apply()
             
         updateFuzzyEnabledStatus()
@@ -260,6 +330,6 @@ class FuzzyPinyinManager private constructor() {
     private fun updateFuzzyEnabledStatus() {
         fuzzyEnabled = zEqualsZh || cEqualsCh || sEqualsSh || 
                       anEqualsAng || enEqualsEng || inEqualsIng || 
-                      lEqualsN
+                      lEqualsN || vEqualsU
     }
 } 

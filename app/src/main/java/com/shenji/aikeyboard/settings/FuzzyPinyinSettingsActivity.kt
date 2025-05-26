@@ -33,6 +33,7 @@ class FuzzyPinyinSettingsActivity : AppCompatActivity() {
     
     // 其他模糊匹配开关
     private lateinit var switchLN: SwitchMaterial
+    private lateinit var switchVU: SwitchMaterial
     
     // 是否正在批量更新（避免开关状态变化时的循环更新）
     private var isBatchUpdating = false
@@ -125,6 +126,16 @@ class FuzzyPinyinSettingsActivity : AppCompatActivity() {
                 updateSelectAllSwitch()
             }
         }
+        
+        // v/ü模糊匹配开关
+        switchVU = findViewById(R.id.switch_v_u)
+        switchVU.setOnCheckedChangeListener { _, isChecked ->
+            if (!isBatchUpdating) {
+                fuzzyPinyinManager.setVEqualsU(isChecked)
+                updateSelectAllSwitch()
+                showToast(if (isChecked) "已启用v/ü模糊匹配" else "已禁用v/ü模糊匹配")
+            }
+        }
     }
     
     /**
@@ -146,6 +157,7 @@ class FuzzyPinyinSettingsActivity : AppCompatActivity() {
             
             // 其他模糊匹配
             switchLN.isChecked = fuzzyPinyinManager.isLEqualsN()
+            switchVU.isChecked = fuzzyPinyinManager.isVEqualsU()
             
             // 更新全选开关状态
             updateSelectAllSwitch()
@@ -176,6 +188,7 @@ class FuzzyPinyinSettingsActivity : AppCompatActivity() {
             
             // 其他模糊匹配
             switchLN.isChecked = checked
+            switchVU.isChecked = checked
         } finally {
             isBatchUpdating = false
         }
@@ -188,7 +201,7 @@ class FuzzyPinyinSettingsActivity : AppCompatActivity() {
     private fun updateSelectAllSwitch() {
         val allChecked = switchZZh.isChecked && switchCCh.isChecked && switchSSh.isChecked &&
                         switchAnAng.isChecked && switchEnEng.isChecked && switchInIng.isChecked &&
-                        switchLN.isChecked
+                        switchLN.isChecked && switchVU.isChecked
         
         // 避免循环触发
         isBatchUpdating = true

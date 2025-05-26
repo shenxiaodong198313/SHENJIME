@@ -85,8 +85,15 @@
         <!-- SmartPinyinEngine MVP测试活动 -->
         <activity
             android:name="com.shenji.aikeyboard.ui.SmartPinyinMvpTestActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="SmartPinyinEngine MVP测试"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- v/ü转换功能测试活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.VUConversionTestActivity"
+            android:exported="false"
+            android:label="v/ü转换功能测试"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 输入法服务 -->

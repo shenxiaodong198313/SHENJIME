@@ -45,7 +45,10 @@ dimen candidate_word_margin
 drawable appcon
 drawable appicon
 drawable bg_permission_needed
+drawable button_outline
+drawable button_primary
 drawable button_refresh_background
+drawable button_secondary
 drawable candidate_background
 drawable candidate_button_bg
 drawable candidate_item_background
@@ -90,6 +93,7 @@ id action_export
 id action_refresh_cache
 id action_settings
 id action_view_logs
+id action_vu_conversion_test
 id analysisTextView
 id appIconTop
 id appNameTopLeft
@@ -118,7 +122,10 @@ id btnSetDefaultImeContainer
 id btnStart
 id btn_back
 id btn_clear
+id btn_clear_results
 id btn_copy
+id btn_quick_test
+id btn_run_test
 id btn_test
 id buildDictButton
 id build_progress
@@ -143,6 +150,8 @@ id comment_icon
 id copy_logs_button
 id copy_result_button
 id current_input_text_view
+id customInputEditText
+id customTestButton
 id default_candidates_view
 id detailText
 id dictionary_status_view
@@ -261,6 +270,7 @@ id switch_in_ing
 id switch_l_n
 id switch_s_sh
 id switch_select_all
+id switch_v_u
 id switch_z_zh
 id tableModules
 id test_button
@@ -317,6 +327,7 @@ layout activity_pinyin_test
 layout activity_smart_pinyin_mvp_test
 layout activity_splash
 layout activity_trie_build
+layout activity_vu_conversion_test
 layout candidates_view
 layout dialog_build_config
 layout dialog_build_status

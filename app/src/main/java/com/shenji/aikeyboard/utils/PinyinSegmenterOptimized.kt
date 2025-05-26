@@ -303,27 +303,30 @@ object PinyinSegmenterOptimized {
             return emptyList()
         }
         
+        // v/ü预处理：处理v代替ü的情况
+        val processedInput = preprocessVToU(cleanInput)
+        
         // 更新统计信息
         totalRequests.incrementAndGet()
         
         // 更新最大输入长度记录
-        if (cleanInput.length > maxInputLength.get()) {
-            maxInputLength.set(cleanInput.length)
+        if (processedInput.length > maxInputLength.get()) {
+            maxInputLength.set(processedInput.length)
         }
         
         // 快速路径：单字符或已知单音节
-        if (cleanInput.length == 1 || syllableMap.containsKey(cleanInput)) {
+        if (processedInput.length == 1 || syllableMap.containsKey(processedInput)) {
             fastPathHits.incrementAndGet()
-            val result = listOf(cleanInput)
-            Timber.v("拼音拆分快速路径: '$cleanInput' -> ${result.joinToString("+")}")
+            val result = listOf(processedInput)
+            Timber.v("拼音拆分快速路径: '$cleanInput' -> '$processedInput' -> ${result.joinToString("+")}")
             return result
         }
         
         // 检查分层缓存
-        val cache = if (cleanInput.length <= 3) shortPinyinCache else longPinyinCache
-        cache.get(cleanInput)?.let { cachedResult ->
+        val cache = if (processedInput.length <= 3) shortPinyinCache else longPinyinCache
+        cache.get(processedInput)?.let { cachedResult ->
             cacheHits.incrementAndGet()
-            Timber.v("拼音拆分缓存命中: '$cleanInput' -> ${cachedResult.joinToString("+")}")
+            Timber.v("拼音拆分缓存命中: '$cleanInput' -> '$processedInput' -> ${cachedResult.joinToString("+")}")
             return cachedResult
         }
         
@@ -332,30 +335,73 @@ object PinyinSegmenterOptimized {
         val startTime = System.nanoTime()
         
         try {
-            val result = performOptimizedSplit(cleanInput)
+            val result = performOptimizedSplit(processedInput)
             val endTime = System.nanoTime()
             val splitTime = endTime - startTime
             totalSplitTime.addAndGet(splitTime)
             
             // 缓存结果
-            cache.put(cleanInput, result)
+            cache.put(processedInput, result)
             
             // 记录调试信息
             val splitTimeMs = splitTime / 1_000_000.0
-            Timber.v("拼音拆分完成: '$cleanInput' -> ${result.joinToString("+")} (耗时: ${String.format("%.2f", splitTimeMs)}ms)")
+            Timber.v("拼音拆分完成: '$cleanInput' -> '$processedInput' -> ${result.joinToString("+")} (耗时: ${String.format("%.2f", splitTimeMs)}ms)")
             
             // 定期输出性能统计（每100次请求）
             if (totalRequests.get() % 100 == 0L) {
-                Timber.d(getPerformanceStats().toString())
+                Timber.d("拼音拆分性能统计: ${getPerformanceStats()}")
             }
             
             return result
-            
         } catch (e: Exception) {
-            Timber.e(e, "拼音拆分异常: '$cleanInput'")
-            // 异常情况下返回原输入
-            return listOf(cleanInput)
+            Timber.e(e, "拼音拆分异常: '$cleanInput' -> '$processedInput'")
+            return emptyList()
         }
+    }
+    
+    /**
+     * v/ü预处理：处理v代替ü的汉语拼音规则
+     * 
+     * 转换规则：
+     * 1. lv -> lü (绿)
+     * 2. nv -> nü (女)
+     * 3. jv -> ju (居) - j后面的v转为u
+     * 4. qv -> qu (去) - q后面的v转为u  
+     * 5. xv -> xu (虚) - x后面的v转为u
+     * 6. yv -> yu (鱼) - y后面的v转为u
+     */
+    private fun preprocessVToU(input: String): String {
+        if (!input.contains('v')) {
+            return input
+        }
+        
+        var result = input
+        
+        // 处理 lv -> lü
+        result = result.replace(Regex("\\blv\\b"), "lü")
+        result = result.replace(Regex("\\blv([aeiou])"), "lü$1")
+        result = result.replace(Regex("\\blv([ng])"), "lü$1")
+        
+        // 处理 nv -> nü
+        result = result.replace(Regex("\\bnv\\b"), "nü")
+        result = result.replace(Regex("\\bnv([aeiou])"), "nü$1")
+        result = result.replace(Regex("\\bnv([ng])"), "nü$1")
+        
+        // 处理 j/q/x/y + v -> j/q/x/y + u
+        result = result.replace(Regex("\\b([jqxy])v\\b"), "$1u")
+        result = result.replace(Regex("\\b([jqxy])v([aeiou])"), "$1u$2")
+        result = result.replace(Regex("\\b([jqxy])v([ng])"), "$1u$2")
+        
+        // 处理连续拼音中的v转换
+        result = result.replace(Regex("lv([^aeiouüng])"), "lü$1")
+        result = result.replace(Regex("nv([^aeiouüng])"), "nü$1")
+        result = result.replace(Regex("([jqxy])v([^aeiouüng])"), "$1u$2")
+        
+        if (result != input) {
+            Timber.d("v/ü预处理: '$input' -> '$result'")
+        }
+        
+        return result
     }
     
     /**

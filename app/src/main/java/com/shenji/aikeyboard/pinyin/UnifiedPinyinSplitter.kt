@@ -11,6 +11,7 @@ import timber.log.Timber
  * 2. 性能优化：集成最优算法和缓存策略
  * 3. 功能完整：支持多种拆分模式和场景
  * 4. 易于维护：单一职责，清晰架构
+ * 5. v/ü转换：支持汉语拼音v代替ü的输入规则
  * 
  * 替代原有的多个拆分器：
  * - PinyinSplitter (pinyin包)
@@ -30,7 +31,56 @@ object UnifiedPinyinSplitter {
      * @return 拆分后的音节列表
      */
     fun split(input: String): List<String> {
-        return PinyinSegmenterOptimized.cut(input)
+        // 预处理：处理v到ü的转换
+        val processedInput = preprocessVToU(input)
+        return PinyinSegmenterOptimized.cut(processedInput)
+    }
+    
+    /**
+     * 预处理v到ü的转换
+     * 根据汉语拼音规则，处理v代替ü的情况
+     * 
+     * 规则：
+     * 1. lv -> lü (绿)
+     * 2. nv -> nü (女) 
+     * 3. jv -> ju (居) - j后面的v转为u
+     * 4. qv -> qu (去) - q后面的v转为u
+     * 5. xv -> xu (虚) - x后面的v转为u
+     * 6. yv -> yu (鱼) - y后面的v转为u
+     * 
+     * @param input 原始拼音输入
+     * @return 处理后的拼音字符串
+     */
+    fun preprocessVToU(input: String): String {
+        if (input.isEmpty() || !input.contains('v')) {
+            return input
+        }
+        
+        var result = input.lowercase()
+        
+        // 🔧 修复：更精确的v转换规则
+        // 1. lv -> lü (绿色)
+        result = result.replace(Regex("\\blv\\b"), "lü")
+        result = result.replace(Regex("\\blv([aeiou])"), "lü$1") 
+        result = result.replace(Regex("\\blv([ng])"), "lü$1")
+        result = result.replace(Regex("lv([bcdfghjklmnpqrstvwxyz])"), "lü$1") // 连续拼音
+        
+        // 2. nv -> nü (女性)
+        result = result.replace(Regex("\\bnv\\b"), "nü")
+        result = result.replace(Regex("\\bnv([aeiou])"), "nü$1")
+        result = result.replace(Regex("\\bnv([ng])"), "nü$1") 
+        result = result.replace(Regex("nv([bcdfghjklmnpqrstvwxyz])"), "nü$1") // 连续拼音
+        
+        // 3. j/q/x/y + v -> j/q/x/y + u (居、去、虚、鱼)
+        result = result.replace(Regex("\\b([jqxy])v\\b"), "$1u")
+        result = result.replace(Regex("\\b([jqxy])v([aeiou])"), "$1u$2")
+        result = result.replace(Regex("\\b([jqxy])v([ng])"), "$1u$2")
+        result = result.replace(Regex("([jqxy])v([bcdfghjklmnpqrstvwxyz])"), "$1u$2") // 连续拼音
+        
+        if (result != input) {
+            Timber.d("🔄 拼音v转换: '$input' -> '$result'")
+        }
+        return result
     }
     
     /**

@@ -230,7 +230,66 @@ class InputStrategy {
             variants.add(current.replace("an", "ang"))
         }
         
+        if (current.contains("eng")) {
+            variants.add(current.replace("eng", "en"))
+        }
+        if (current.contains("en") && !current.contains("eng")) {
+            variants.add(current.replace("en", "eng"))
+        }
+        
+        if (current.contains("ing")) {
+            variants.add(current.replace("ing", "in"))
+        }
+        if (current.contains("in") && !current.contains("ing")) {
+            variants.add(current.replace("in", "ing"))
+        }
+        
+        // v/ü 模糊匹配
+        generateVUFuzzyVariants(variants, input)
+        
         return variants.toList()
+    }
+    
+    /**
+     * 生成v/ü模糊变体
+     * 处理v代替ü的汉语拼音规则
+     */
+    private fun generateVUFuzzyVariants(variants: MutableSet<String>, input: String) {
+        // lv <-> lü 转换
+        if (input.contains("lv")) {
+            variants.add(input.replace("lv", "lü"))
+        }
+        if (input.contains("lü")) {
+            variants.add(input.replace("lü", "lv"))
+        }
+        
+        // nv <-> nü 转换
+        if (input.contains("nv")) {
+            variants.add(input.replace("nv", "nü"))
+        }
+        if (input.contains("nü")) {
+            variants.add(input.replace("nü", "nv"))
+        }
+        
+        // j/q/x/y + v <-> j/q/x/y + u 转换
+        val jqxyVPattern = Regex("([jqxy])v")
+        val jqxyUPattern = Regex("([jqxy])u")
+        
+        if (jqxyVPattern.containsMatchIn(input)) {
+            variants.add(jqxyVPattern.replace(input) { "${it.groupValues[1]}u" })
+        }
+        if (jqxyUPattern.containsMatchIn(input)) {
+            variants.add(jqxyUPattern.replace(input) { "${it.groupValues[1]}v" })
+        }
+        
+        // 通用v <-> ü 转换（作为后备方案）
+        if (input.contains("v") && !input.contains("lv") && !input.contains("nv") && 
+            !jqxyVPattern.containsMatchIn(input)) {
+            variants.add(input.replace("v", "ü"))
+        }
+        if (input.contains("ü") && !input.contains("lü") && !input.contains("nü")) {
+            variants.add(input.replace("ü", "v"))
+        }
     }
     
     /**

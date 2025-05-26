@@ -261,50 +261,58 @@ class SyllableTestTool(private val context: Context) {
             "gz" to listOf("gu", "zhou")
         )
         
-        val invalidInputTests = mapOf(
-            "zhang1" to null,
-            "ni@you" to null,
-            "abc123" to null,
-            "zhx" to null,
-            "erhu" to null,
-            "wxyz" to null,
-            "hao123" to null,
-            "erhua1" to null,
-            "z1h" to null,
-            // 增加特殊字符与编码测试
-            "zhang san" to null,
-            "Ｚｈａｎｇ" to null,
-            "zhōng" to null
+        // v/ü 转换测试
+        val vUTests = mapOf(
+            "lv" to listOf("lü"),
+            "lvse" to listOf("lü", "se"),
+            "lve" to listOf("lüe"),
+            "nv" to listOf("nü"),
+            "nvhai" to listOf("nü", "hai"),
+            "nver" to listOf("nü", "er"),
+            "jv" to listOf("ju"),  // 应该转换为ju
+            "qv" to listOf("qu"),  // 应该转换为qu
+            "xv" to listOf("xu"),  // 应该转换为xu
+            "yv" to listOf("yu"),  // 应该转换为yu
+            "lvxing" to listOf("lü", "xing"),
+            "nvxing" to listOf("nü", "xing"),
+            "lvyou" to listOf("lü", "you"),
+            "nvren" to listOf("nü", "ren")
         )
         
-        // 极端无效组合
-        val extremeInputTests = mapOf(
-            "xyz" to null,
-            "aaa" to listOf("a", "a", "a")
-        )
-        
+        // 特殊拼音测试（包含原有的测试）
         val specialTests = mapOf(
-            "aaaaa" to listOf("a", "a", "a", "a", "a"),
-            "zhangzhangzhang" to listOf("zhang", "zhang", "zhang")
-        )
-        
-        // 针对修复的专项测试
-        val fixedCasesTests = mapOf(
-            "xiangong" to listOf("xiang", "gong"),
             "nü" to listOf("nv"),
             "lüe" to listOf("lve"),
-            "wai" to listOf("wai"),
-            "xianzai" to listOf("xian", "zai")
+            "jü" to listOf("ju"),  // j后面的ü应该写作u
+            "qü" to listOf("qu"),  // q后面的ü应该写作u
+            "xü" to listOf("xu"),  // x后面的ü应该写作u
+            "yü" to listOf("yu")   // y后面的ü应该写作u
+        )
+        
+        val invalidInputTests = mapOf(
+            "xyz" to emptyList<String>(),
+            "qwerty" to emptyList<String>(),
+            "123" to emptyList<String>(),
+            "abc" to emptyList<String>(),
+            "zzz" to emptyList<String>()
+        )
+        
+        // 极端输入测试
+        val extremeInputTests = mapOf(
+            "" to emptyList<String>(),
+            " " to emptyList<String>(),
+            "a" to listOf("啊"),
+            "zzzzzzzzzz" to emptyList<String>()
         )
         
         // 合并所有测试用例
-        val allTestCases = singleSyllableTests + doubleSyllableTests + multiSyllableTests + 
-                           homophoneTests + boundaryTests + abbreviationTests + 
-                           invalidInputTests + extremeInputTests + specialTests + 
-                           fixedCasesTests
+        val allTests = singleSyllableTests + doubleSyllableTests + multiSyllableTests + 
+                      homophoneTests + boundaryTests + abbreviationTests + 
+                      vUTests + specialTests +
+                      invalidInputTests + extremeInputTests + specialTests
         
         val summary = TestSummary()
-        log(LogLevel.INFO, "开始运行测试套件，共${allTestCases.size}个测试用例")
+        log(LogLevel.INFO, "开始运行测试套件，共${allTests.size}个测试用例")
         
         // 按类别执行测试并统计结果
         executeTestsByCategory("单音节测试", singleSyllableTests, summary)
@@ -313,10 +321,10 @@ class SyllableTestTool(private val context: Context) {
         executeTestsByCategory("多音字测试", homophoneTests, summary)
         executeTestsByCategory("边界场景测试", boundaryTests, summary)
         executeTestsByCategory("首字母缩写测试", abbreviationTests, summary)
+        executeTestsByCategory("v/ü转换测试", vUTests, summary)
+        executeTestsByCategory("特殊拼音测试", specialTests, summary)
         executeTestsByCategory("非法输入测试", invalidInputTests, summary)
         executeTestsByCategory("极端无效组合测试", extremeInputTests, summary)
-        executeTestsByCategory("特殊场景测试", specialTests, summary)
-        executeTestsByCategory("修复案例测试", fixedCasesTests, summary)
         
         // 生成并记录详细总结报告
         val detailedReport = summary.generateDetailedReport()

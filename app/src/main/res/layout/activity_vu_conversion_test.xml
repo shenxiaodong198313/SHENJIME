@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <!-- 标题栏 -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:title="v/ü转换功能测试"
+            app:titleTextColor="@android:color/white" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- 操作按钮区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="#FFFFFF"
+        android:elevation="2dp">
+
+        <Button
+            android:id="@+id/btn_run_test"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="运行完整测试"
+            android:textColor="@android:color/white"
+            android:background="@drawable/button_primary"
+            android:padding="12dp" />
+
+        <Button
+            android:id="@+id/btn_quick_test"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="快速测试"
+            android:textColor="@android:color/white"
+            android:background="@drawable/button_secondary"
+            android:padding="12dp" />
+
+        <Button
+            android:id="@+id/btn_clear_results"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="清空结果"
+            android:textColor="#666666"
+            android:background="@drawable/button_outline"
+            android:padding="12dp" />
+
+    </LinearLayout>
+
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0" />
+
+    <!-- 测试说明 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#FFFFFF">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试说明"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="• 完整测试：测试所有v/ü转换功能模块\n• 快速测试：仅测试基础转换规则\n• 测试内容：lv→绿，nv→女，jv→居等拼音规则"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:lineSpacingExtra="2dp" />
+
+    </LinearLayout>
+
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0" />
+
+    <!-- 测试结果区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="#FFFFFF">
+
+        <!-- 结果标题 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:background="#F8F9FA">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="测试结果"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="实时更新"
+                android:textSize="12sp"
+                android:textColor="#4CAF50"
+                android:background="#E8F5E8"
+                android:padding="4dp"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- 滚动结果区域 -->
+        <ScrollView
+            android:id="@+id/scroll_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="16dp"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/tv_results"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="点击测试按钮开始..."
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="2dp"
+                android:background="#FAFAFA"
+                android:padding="12dp" />
+
+        </ScrollView>
+
+    </LinearLayout>
+
+    <!-- 底部状态栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="#F0F0F0"
+        android:elevation="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="神迹输入法 v/ü转换测试工具"
+            android:textSize="12sp"
+            android:textColor="#666666" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="v1.0"
+            android:textSize="12sp"
+            android:textColor="#999999" />
+
+    </LinearLayout>
+
+</LinearLayout> 

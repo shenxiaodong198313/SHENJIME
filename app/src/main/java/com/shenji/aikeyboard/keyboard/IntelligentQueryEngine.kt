@@ -3,6 +3,7 @@ package com.shenji.aikeyboard.keyboard
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.data.trie.TrieType
 import com.shenji.aikeyboard.model.WordFrequency
+import com.shenji.aikeyboard.settings.FuzzyPinyinManager
 import timber.log.Timber
 
 /**
@@ -11,7 +12,7 @@ import timber.log.Timber
  * 实现各种输入策略的具体查询方法：
  * - 精确匹配
  * - 前缀匹配
- * - 模糊匹配
+ * - 模糊匹配（包括v/ü转换）
  * - 缩写匹配
  * - 分段匹配
  * - 音节匹配
@@ -20,6 +21,7 @@ class IntelligentQueryEngine {
     
     private val trieManager = TrieManager.instance
     private val inputStrategy = InputStrategy()
+    private val fuzzyPinyinManager = FuzzyPinyinManager.getInstance()
     
     /**
      * 执行智能查询
@@ -125,9 +127,19 @@ class IntelligentQueryEngine {
         if (!trieManager.isTrieLoaded(trieType)) return emptyList()
         
         val results = mutableListOf<WordFrequency>()
-        val variants = inputStrategy.generateFuzzyVariants(input)
         
-        for (variant in variants) {
+        // 生成基础模糊变体
+        val basicVariants = inputStrategy.generateFuzzyVariants(input)
+        
+        // 生成v/ü模糊变体
+        val vUVariants = generateVUVariants(input)
+        
+        // 合并所有变体
+        val allVariants = (basicVariants + vUVariants).distinct()
+        
+        Timber.d("模糊匹配变体生成: '$input' -> ${allVariants.size}个变体")
+        
+        for (variant in allVariants) {
             if (results.size >= limit) break
             
             try {
@@ -143,6 +155,98 @@ class IntelligentQueryEngine {
         }
         
         return results.distinctBy { it.word }
+    }
+    
+    /**
+     * 生成v/ü模糊变体
+     * 处理v代替ü的各种情况
+     */
+    private fun generateVUVariants(input: String): List<String> {
+        if (!fuzzyPinyinManager.isVEqualsU()) {
+            return emptyList()
+        }
+        
+        val variants = mutableSetOf<String>()
+        variants.add(input)
+        
+        // 处理整个输入字符串的v/ü转换
+        if (input.contains('v')) {
+            // lv -> lü
+            val lvToLu = input.replace(Regex("\\blv\\b"), "lü")
+                .replace(Regex("\\blv([aeiou])"), "lü$1")
+                .replace(Regex("\\blv([ng])"), "lü$1")
+            if (lvToLu != input) variants.add(lvToLu)
+            
+            // nv -> nü
+            val nvToNu = input.replace(Regex("\\bnv\\b"), "nü")
+                .replace(Regex("\\bnv([aeiou])"), "nü$1")
+                .replace(Regex("\\bnv([ng])"), "nü$1")
+            if (nvToNu != input) variants.add(nvToNu)
+            
+            // jv/qv/xv/yv -> ju/qu/xu/yu
+            val jqxyVToU = input.replace(Regex("\\b([jqxy])v\\b"), "$1u")
+                .replace(Regex("\\b([jqxy])v([aeiou])"), "$1u$2")
+                .replace(Regex("\\b([jqxy])v([ng])"), "$1u$2")
+            if (jqxyVToU != input) variants.add(jqxyVToU)
+            
+            // 通用v -> ü转换
+            val vToU = input.replace('v', 'ü')
+            if (vToU != input) variants.add(vToU)
+        }
+        
+        if (input.contains('ü')) {
+            // 反向转换：ü -> v
+            val uToV = input.replace('ü', 'v')
+            if (uToV != input) variants.add(uToV)
+        }
+        
+        // 处理连续拼音的情况（如lvse, nvhai等）
+        if (input.length > 2) {
+            val segmentVariants = generateSegmentVUVariants(input)
+            variants.addAll(segmentVariants)
+        }
+        
+        val result = variants.toList()
+        if (result.size > 1) {
+            Timber.d("v/ü变体生成: '$input' -> ${result.joinToString(", ")}")
+        }
+        
+        return result
+    }
+    
+    /**
+     * 生成分段v/ü变体
+     * 处理连续拼音中的v/ü转换
+     */
+    private fun generateSegmentVUVariants(input: String): List<String> {
+        val variants = mutableListOf<String>()
+        
+        // 查找可能的v位置并尝试转换
+        var pos = 0
+        while (pos < input.length) {
+            val vIndex = input.indexOf('v', pos)
+            if (vIndex == -1) break
+            
+            // 检查v前面的字符，判断转换规则
+            val beforeV = if (vIndex > 0) input.substring(maxOf(0, vIndex - 2), vIndex) else ""
+            
+            var replacement = ""
+            when {
+                beforeV.endsWith("l") -> replacement = "ü"  // lv -> lü
+                beforeV.endsWith("n") -> replacement = "ü"  // nv -> nü  
+                beforeV.matches(Regex(".*[jqxy]$")) -> replacement = "u"  // jv/qv/xv/yv -> ju/qu/xu/yu
+                else -> replacement = "ü"  // 默认v -> ü
+            }
+            
+            if (replacement.isNotEmpty()) {
+                val variant = input.substring(0, vIndex) + replacement + input.substring(vIndex + 1)
+                variants.add(variant)
+            }
+            
+            pos = vIndex + 1
+        }
+        
+        return variants
     }
     
     /**

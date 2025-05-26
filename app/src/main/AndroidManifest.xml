@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.shenji.aikeyboard">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- 写入外部存储权限（日志写入） -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -70,8 +69,15 @@
         <!-- SmartPinyinEngine MVP测试活动 -->
         <activity
             android:name=".ui.SmartPinyinMvpTestActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="SmartPinyinEngine MVP测试"
+            android:windowSoftInputMode="adjustResize" />
+            
+        <!-- v/ü转换功能测试活动 -->
+        <activity
+            android:name=".ui.VUConversionTestActivity"
+            android:exported="false"
+            android:label="v/ü转换功能测试"
             android:windowSoftInputMode="adjustResize" />
             
         <!-- 输入法服务 -->
