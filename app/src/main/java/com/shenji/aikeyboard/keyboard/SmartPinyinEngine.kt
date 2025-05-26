@@ -428,7 +428,7 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
     }
     
     /**
-     * 带回退机制的查询（Trie失败时查询Realm）
+     * 🔧 强化回退机制的查询（确保Trie未加载时输入法仍可用）
      * 支持v/ü双向匹配
      */
     private suspend fun queryWithFallback(
@@ -442,33 +442,64 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
         val queryVariants = generateVUQueryVariants(query)
         Timber.d("🔄 生成查询变体: $query -> ${queryVariants.joinToString(", ")}")
         
-        // 首先尝试Trie查询
-        for (trieType in trieTypes) {
-            if (results.size >= limit * 2) break // 获取更多结果用于排序
-            
-            if (trieManager.isTrieLoaded(trieType)) {
-                // 对每个查询变体进行查询
-                for (variant in queryVariants) {
-                    val trieResults = trieManager.searchByPrefix(trieType, variant, limit * 2)
-                    results.addAll(trieResults)
-                    
-                    if (trieResults.isNotEmpty()) {
-                        Timber.d("${getTrieTypeName(trieType)}Trie查询'$variant'成功: ${trieResults.size}个结果")
+        // 🔧 检查是否有任何Trie已加载
+        val hasAnyTrieLoaded = trieTypes.any { trieManager.isTrieLoaded(it) }
+        
+        if (hasAnyTrieLoaded) {
+            // 有Trie可用，优先使用Trie查询
+            Timber.d("🎯 检测到Trie可用，优先使用Trie查询")
+            for (trieType in trieTypes) {
+                if (results.size >= limit * 2) break // 获取更多结果用于排序
+                
+                if (trieManager.isTrieLoaded(trieType)) {
+                    // 对每个查询变体进行查询
+                    for (variant in queryVariants) {
+                        try {
+                            val trieResults = trieManager.searchByPrefix(trieType, variant, limit * 2)
+                            results.addAll(trieResults)
+                            
+                            if (trieResults.isNotEmpty()) {
+                                Timber.d("${getTrieTypeName(trieType)}Trie查询'$variant'成功: ${trieResults.size}个结果")
+                            }
+                        } catch (e: Exception) {
+                            Timber.w(e, "${getTrieTypeName(trieType)}Trie查询'$variant'失败，将回退到Realm")
+                        }
                     }
                 }
             }
-        }
-        
-        // 如果Trie查询结果不足，回退到Realm数据库
-        if (results.size < limit) {
-            Timber.d("Trie结果不足(${results.size})，回退到Realm查询")
-            for (variant in queryVariants) {
-                val realmResults = queryFromRealm(variant, limit * 2)
-                results.addAll(realmResults)
-                
-                if (realmResults.isNotEmpty()) {
-                    Timber.d("Realm查询'$variant'成功: ${realmResults.size}个结果")
+            
+            // 如果Trie查询结果不足，补充Realm查询
+            if (results.size < limit) {
+                Timber.d("🔄 Trie结果不足(${results.size})，补充Realm查询")
+                for (variant in queryVariants) {
+                    val realmResults = queryFromRealm(variant, limit * 2)
+                    results.addAll(realmResults)
+                    
+                    if (realmResults.isNotEmpty()) {
+                        Timber.d("Realm补充查询'$variant'成功: ${realmResults.size}个结果")
+                    }
                 }
+            }
+        } else {
+            // 🔧 关键修复：没有Trie可用，直接使用Realm查询
+            Timber.w("⚠️ 没有Trie可用，直接使用Realm数据库查询")
+            for (variant in queryVariants) {
+                try {
+                    val realmResults = queryFromRealm(variant, limit * 2)
+                    results.addAll(realmResults)
+                    
+                    if (realmResults.isNotEmpty()) {
+                        Timber.d("Realm直接查询'$variant'成功: ${realmResults.size}个结果")
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Realm查询'$variant'失败")
+                }
+            }
+            
+            // 🔧 如果Realm查询也失败，提供基础候选词
+            if (results.isEmpty()) {
+                Timber.w("⚠️ Realm查询也无结果，提供基础候选词")
+                results.addAll(generateBasicCandidates(query, limit))
             }
         }
         
@@ -553,6 +584,364 @@ class SmartPinyinEngine private constructor() : CandidateEngine {
                 emptyList()
             }
         }
+    }
+    
+    /**
+     * 🔧 生成基础候选词（最后的回退机制）
+     * 当Trie和Realm都不可用时，提供基本的候选词
+     */
+    private fun generateBasicCandidates(query: String, limit: Int): List<WordFrequency> {
+        val basicCandidates = mutableListOf<WordFrequency>()
+        
+        try {
+            // 基础拼音到汉字的映射（常用字）
+            val basicMapping = mapOf(
+                "a" to listOf("啊", "阿"),
+                "ai" to listOf("爱", "哀", "埃"),
+                "an" to listOf("安", "按", "案"),
+                "ba" to listOf("把", "吧", "八", "爸"),
+                "bai" to listOf("白", "百", "拜"),
+                "ban" to listOf("半", "办", "班"),
+                "bei" to listOf("被", "北", "背"),
+                "ben" to listOf("本", "奔"),
+                "bi" to listOf("比", "必", "笔", "闭"),
+                "bian" to listOf("变", "边", "便"),
+                "biao" to listOf("表", "标"),
+                "bie" to listOf("别"),
+                "bu" to listOf("不", "部", "步"),
+                "ca" to listOf("擦"),
+                "cai" to listOf("才", "菜", "财"),
+                "can" to listOf("参", "残"),
+                "ce" to listOf("测", "策"),
+                "cha" to listOf("查", "茶", "差"),
+                "chang" to listOf("长", "常", "场", "唱"),
+                "che" to listOf("车", "彻"),
+                "chen" to listOf("陈", "沉"),
+                "cheng" to listOf("成", "城", "程"),
+                "chi" to listOf("吃", "持", "迟"),
+                "chu" to listOf("出", "初", "除"),
+                "da" to listOf("大", "打", "达"),
+                "dai" to listOf("带", "代", "待"),
+                "dan" to listOf("但", "单", "担"),
+                "dao" to listOf("到", "道", "倒"),
+                "de" to listOf("的", "得", "德"),
+                "deng" to listOf("等", "登"),
+                "di" to listOf("地", "第", "低"),
+                "dian" to listOf("点", "电", "店"),
+                "ding" to listOf("定", "顶"),
+                "dong" to listOf("东", "动", "懂"),
+                "du" to listOf("都", "读", "度"),
+                "dui" to listOf("对", "队"),
+                "duo" to listOf("多", "朵"),
+                "e" to listOf("额", "恶"),
+                "er" to listOf("而", "二", "儿"),
+                "fa" to listOf("发", "法"),
+                "fan" to listOf("反", "返", "范"),
+                "fang" to listOf("方", "房", "放"),
+                "fei" to listOf("非", "飞", "费"),
+                "fen" to listOf("分", "份"),
+                "feng" to listOf("风", "封"),
+                "fu" to listOf("服", "复", "付"),
+                "ga" to listOf("嘎"),
+                "gai" to listOf("改", "该"),
+                "gan" to listOf("干", "感", "敢"),
+                "gang" to listOf("刚", "港"),
+                "gao" to listOf("高", "告"),
+                "ge" to listOf("个", "各", "格"),
+                "gei" to listOf("给"),
+                "gen" to listOf("根", "跟"),
+                "gong" to listOf("工", "公", "共"),
+                "gou" to listOf("够", "狗"),
+                "gu" to listOf("古", "故", "顾"),
+                "gua" to listOf("挂", "瓜"),
+                "guan" to listOf("关", "管", "观"),
+                "gui" to listOf("贵", "规"),
+                "guo" to listOf("过", "国", "果"),
+                "ha" to listOf("哈"),
+                "hai" to listOf("还", "海", "害"),
+                "han" to listOf("汉", "含"),
+                "hao" to listOf("好", "号"),
+                "he" to listOf("和", "河", "何"),
+                "hei" to listOf("黑"),
+                "hen" to listOf("很", "恨"),
+                "hong" to listOf("红", "洪"),
+                "hou" to listOf("后", "候"),
+                "hu" to listOf("护", "户", "湖"),
+                "hua" to listOf("话", "花", "华"),
+                "huai" to listOf("坏", "怀"),
+                "huan" to listOf("换", "还", "欢"),
+                "huang" to listOf("黄", "皇"),
+                "hui" to listOf("会", "回", "灰"),
+                "huo" to listOf("或", "火", "活"),
+                "ji" to listOf("机", "及", "几", "记"),
+                "jia" to listOf("家", "加", "价"),
+                "jian" to listOf("见", "间", "建"),
+                "jiang" to listOf("将", "江", "讲"),
+                "jiao" to listOf("教", "叫", "交"),
+                "jie" to listOf("接", "结", "解"),
+                "jin" to listOf("进", "金", "今"),
+                "jing" to listOf("经", "精", "京"),
+                "jiu" to listOf("就", "九", "久"),
+                "ju" to listOf("就", "局", "举"),
+                "juan" to listOf("卷"),
+                "jue" to listOf("决", "觉"),
+                "jun" to listOf("军", "君"),
+                "ka" to listOf("卡"),
+                "kai" to listOf("开", "看"),
+                "kan" to listOf("看", "刊"),
+                "kao" to listOf("考", "靠"),
+                "ke" to listOf("可", "课", "客"),
+                "kong" to listOf("空", "控"),
+                "kou" to listOf("口"),
+                "ku" to listOf("苦", "库"),
+                "kuai" to listOf("快", "块"),
+                "kuan" to listOf("宽"),
+                "la" to listOf("拉", "啦"),
+                "lai" to listOf("来", "赖"),
+                "lan" to listOf("蓝", "兰"),
+                "lao" to listOf("老", "劳"),
+                "le" to listOf("了", "乐"),
+                "lei" to listOf("累", "类"),
+                "li" to listOf("里", "理", "力"),
+                "lian" to listOf("连", "联", "脸"),
+                "liang" to listOf("两", "亮", "量"),
+                "liao" to listOf("了", "料"),
+                "lie" to listOf("列", "烈"),
+                "lin" to listOf("林", "临"),
+                "ling" to listOf("零", "领", "另"),
+                "liu" to listOf("六", "流", "留"),
+                "long" to listOf("龙", "隆"),
+                "lou" to listOf("楼", "漏"),
+                "lu" to listOf("路", "录", "绿"),
+                "lv" to listOf("绿", "律"),
+                "luan" to listOf("乱"),
+                "lun" to listOf("论", "轮"),
+                "luo" to listOf("落", "罗"),
+                "ma" to listOf("马", "妈", "吗"),
+                "mai" to listOf("买", "卖"),
+                "man" to listOf("满", "慢"),
+                "mao" to listOf("毛", "猫"),
+                "me" to listOf("么"),
+                "mei" to listOf("没", "美", "每"),
+                "men" to listOf("们", "门"),
+                "mi" to listOf("米", "密"),
+                "mian" to listOf("面", "免"),
+                "min" to listOf("民", "敏"),
+                "ming" to listOf("明", "名"),
+                "mo" to listOf("么", "模"),
+                "mu" to listOf("目", "母"),
+                "na" to listOf("那", "拿"),
+                "nai" to listOf("奶"),
+                "nan" to listOf("南", "男", "难"),
+                "nao" to listOf("脑", "闹"),
+                "ne" to listOf("呢"),
+                "nei" to listOf("内"),
+                "nen" to listOf("嫩"),
+                "neng" to listOf("能"),
+                "ni" to listOf("你", "尼"),
+                "nian" to listOf("年", "念"),
+                "niang" to listOf("娘"),
+                "niao" to listOf("鸟"),
+                "nie" to listOf("捏"),
+                "nin" to listOf("您"),
+                "niu" to listOf("牛"),
+                "nong" to listOf("农", "浓"),
+                "nu" to listOf("怒", "努"),
+                "nv" to listOf("女"),
+                "nuan" to listOf("暖"),
+                "nuo" to listOf("诺"),
+                "pa" to listOf("怕", "爬"),
+                "pai" to listOf("排", "派"),
+                "pan" to listOf("盘", "判"),
+                "pang" to listOf("旁", "胖"),
+                "pao" to listOf("跑", "泡"),
+                "pei" to listOf("配", "陪"),
+                "pen" to listOf("盆"),
+                "peng" to listOf("朋", "碰"),
+                "pi" to listOf("皮", "批"),
+                "pian" to listOf("片", "骗"),
+                "piao" to listOf("票", "飘"),
+                "pie" to listOf("撇"),
+                "pin" to listOf("品", "拼"),
+                "ping" to listOf("平", "评"),
+                "po" to listOf("破", "婆"),
+                "pu" to listOf("普", "铺"),
+                "qi" to listOf("七", "起", "其"),
+                "qia" to listOf("恰"),
+                "qian" to listOf("前", "钱", "千"),
+                "qiang" to listOf("强", "墙"),
+                "qiao" to listOf("桥", "巧"),
+                "qie" to listOf("切", "且"),
+                "qin" to listOf("亲", "琴"),
+                "qing" to listOf("请", "清", "情"),
+                "qiu" to listOf("求", "球"),
+                "qu" to listOf("去", "取", "区"),
+                "quan" to listOf("全", "权"),
+                "que" to listOf("却", "确"),
+                "qun" to listOf("群", "裙"),
+                "ran" to listOf("然", "燃"),
+                "rang" to listOf("让", "嚷"),
+                "rao" to listOf("绕"),
+                "re" to listOf("热"),
+                "ren" to listOf("人", "认"),
+                "reng" to listOf("仍"),
+                "ri" to listOf("日"),
+                "rong" to listOf("容", "荣"),
+                "rou" to listOf("肉", "柔"),
+                "ru" to listOf("如", "入"),
+                "ruan" to listOf("软"),
+                "rui" to listOf("瑞"),
+                "run" to listOf("润"),
+                "ruo" to listOf("若"),
+                "sa" to listOf("撒"),
+                "sai" to listOf("赛"),
+                "san" to listOf("三", "散"),
+                "sang" to listOf("桑"),
+                "sao" to listOf("扫", "嫂"),
+                "se" to listOf("色"),
+                "sen" to listOf("森"),
+                "sha" to listOf("沙", "杀"),
+                "shai" to listOf("晒"),
+                "shan" to listOf("山", "善"),
+                "shang" to listOf("上", "商"),
+                "shao" to listOf("少", "烧"),
+                "she" to listOf("设", "社", "她"),
+                "shei" to listOf("谁"),
+                "shen" to listOf("什", "身", "深"),
+                "sheng" to listOf("生", "声"),
+                "shi" to listOf("是", "时", "十"),
+                "shou" to listOf("手", "收"),
+                "shu" to listOf("书", "数", "树"),
+                "shua" to listOf("刷"),
+                "shuai" to listOf("帅", "摔"),
+                "shuan" to listOf("拴"),
+                "shuang" to listOf("双", "爽"),
+                "shui" to listOf("水", "睡"),
+                "shun" to listOf("顺"),
+                "shuo" to listOf("说", "硕"),
+                "si" to listOf("四", "死", "思"),
+                "song" to listOf("送", "松"),
+                "sou" to listOf("搜"),
+                "su" to listOf("速", "素"),
+                "suan" to listOf("算", "酸"),
+                "sui" to listOf("随", "岁"),
+                "sun" to listOf("孙", "损"),
+                "suo" to listOf("所", "锁"),
+                "ta" to listOf("他", "她", "它"),
+                "tai" to listOf("太", "台"),
+                "tan" to listOf("谈", "弹"),
+                "tang" to listOf("糖", "汤"),
+                "tao" to listOf("套", "桃"),
+                "te" to listOf("特"),
+                "teng" to listOf("疼", "腾"),
+                "ti" to listOf("提", "题", "体"),
+                "tian" to listOf("天", "田", "甜"),
+                "tiao" to listOf("条", "跳"),
+                "tie" to listOf("铁", "贴"),
+                "ting" to listOf("听", "停"),
+                "tong" to listOf("同", "通", "痛"),
+                "tou" to listOf("头", "投"),
+                "tu" to listOf("图", "土"),
+                "tuan" to listOf("团"),
+                "tui" to listOf("推", "退"),
+                "tun" to listOf("吞"),
+                "tuo" to listOf("拖", "脱"),
+                "wa" to listOf("挖", "娃"),
+                "wai" to listOf("外", "歪"),
+                "wan" to listOf("完", "万", "晚"),
+                "wang" to listOf("王", "往", "忘"),
+                "wei" to listOf("为", "位", "未"),
+                "wen" to listOf("问", "文", "闻"),
+                "weng" to listOf("翁"),
+                "wo" to listOf("我", "握"),
+                "wu" to listOf("无", "五", "物"),
+                "xi" to listOf("西", "希", "习"),
+                "xia" to listOf("下", "夏"),
+                "xian" to listOf("先", "现", "线"),
+                "xiang" to listOf("想", "向", "象"),
+                "xiao" to listOf("小", "笑", "校"),
+                "xie" to listOf("写", "些", "谢"),
+                "xin" to listOf("新", "心", "信"),
+                "xing" to listOf("行", "性", "星"),
+                "xiong" to listOf("雄", "胸"),
+                "xiu" to listOf("修", "秀"),
+                "xu" to listOf("需", "许", "续"),
+                "xuan" to listOf("选", "宣"),
+                "xue" to listOf("学", "雪"),
+                "xun" to listOf("寻", "训"),
+                "ya" to listOf("压", "牙"),
+                "yan" to listOf("眼", "言", "严"),
+                "yang" to listOf("样", "阳", "养"),
+                "yao" to listOf("要", "药"),
+                "ye" to listOf("也", "夜", "叶"),
+                "yi" to listOf("一", "以", "已"),
+                "yin" to listOf("因", "音", "银"),
+                "ying" to listOf("应", "英", "影"),
+                "yo" to listOf("哟"),
+                "yong" to listOf("用", "永", "勇"),
+                "you" to listOf("有", "又", "右"),
+                "yu" to listOf("与", "于", "语"),
+                "yuan" to listOf("元", "原", "远"),
+                "yue" to listOf("月", "越", "约"),
+                "yun" to listOf("云", "运"),
+                "za" to listOf("杂", "咋"),
+                "zai" to listOf("在", "再"),
+                "zan" to listOf("赞", "暂"),
+                "zang" to listOf("脏"),
+                "zao" to listOf("早", "造"),
+                "ze" to listOf("则", "择"),
+                "zen" to listOf("怎"),
+                "zeng" to listOf("增", "曾"),
+                "zha" to listOf("查", "扎"),
+                "zhai" to listOf("摘", "宅"),
+                "zhan" to listOf("站", "战"),
+                "zhang" to listOf("张", "长", "章"),
+                "zhao" to listOf("找", "照"),
+                "zhe" to listOf("这", "着", "者"),
+                "zhei" to listOf("这"),
+                "zhen" to listOf("真", "镇"),
+                "zheng" to listOf("正", "整"),
+                "zhi" to listOf("知", "只", "直"),
+                "zhong" to listOf("中", "重", "种"),
+                "zhou" to listOf("周", "州"),
+                "zhu" to listOf("主", "住", "注"),
+                "zhua" to listOf("抓"),
+                "zhuai" to listOf("拽"),
+                "zhuan" to listOf("转", "专"),
+                "zhuang" to listOf("装", "庄"),
+                "zhui" to listOf("追"),
+                "zhun" to listOf("准"),
+                "zhuo" to listOf("桌", "捉"),
+                "zi" to listOf("自", "字", "子"),
+                "zong" to listOf("总", "宗"),
+                "zou" to listOf("走", "邹"),
+                "zu" to listOf("组", "足"),
+                "zuan" to listOf("钻"),
+                "zui" to listOf("最", "嘴"),
+                "zun" to listOf("尊"),
+                "zuo" to listOf("做", "作", "左")
+            )
+            
+            // 查找匹配的候选词
+            val candidates = basicMapping[query.lowercase()]
+            if (candidates != null) {
+                candidates.forEachIndexed { index, word ->
+                    basicCandidates.add(WordFrequency(word, 1000 - index)) // 按顺序递减频率
+                }
+                Timber.d("🔧 生成基础候选词: '$query' -> ${candidates.joinToString(", ")}")
+            } else {
+                // 如果没有匹配，返回拼音本身
+                basicCandidates.add(WordFrequency(query, 1))
+                Timber.d("🔧 无匹配基础候选词，返回拼音: '$query'")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "生成基础候选词失败")
+            // 最后的回退：返回输入本身
+            basicCandidates.add(WordFrequency(query, 1))
+        }
+        
+        return basicCandidates.take(limit)
     }
     
     /**

@@ -828,7 +828,8 @@ class ShenjiInputMethodService : InputMethodService() {
         if (composingText.isNotEmpty()) {
             // 🎯 取消防抖任务，立即响应删除操作
             debounceJob?.cancel()
-            currentQueryJob?.cancel()
+            // 🔧 修复：不取消当前查询任务，避免删除后候选词消失
+            // currentQueryJob?.cancel()
             
             // 删除拼音中的最后一个字母
             composingText.deleteCharAt(composingText.length - 1)
@@ -849,8 +850,8 @@ class ShenjiInputMethodService : InputMethodService() {
                 // 输入框显示原始拼音（不带空格）
                 currentInputConnection?.setComposingText(composingText, 1)
                 
-                // 🎯 立即查询候选词，不使用防抖（删除操作需要即时响应）
-                loadCandidatesImmediate(composingText.toString())
+                // 🎯 修复：使用专门的删除后候选词加载方法
+                loadCandidatesAfterDelete(composingText.toString())
             }
         } else {
             // 如果没有拼音，执行标准删除操作
@@ -1192,6 +1193,68 @@ class ShenjiInputMethodService : InputMethodService() {
         // 🎯 立即执行查询，不使用防抖
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
             executeActualQuery(input)
+        }
+    }
+    
+    /**
+     * 🔧 删除操作后的候选词加载（修复删除后候选词消失问题）
+     */
+    private fun loadCandidatesAfterDelete(input: String) {
+        if (input.isEmpty()) {
+            hideCandidates()
+            return
+        }
+        
+        Timber.d("🔧 删除后加载候选词: '$input'")
+        
+        try {
+            // 🎯 确保候选词区域可见
+            if (areViewComponentsInitialized()) {
+                defaultCandidatesView.visibility = View.VISIBLE
+                toolbarView.visibility = View.GONE
+                defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#F8F8F8"))
+            }
+            
+            // 🎯 立即更新拼音显示
+            updatePinyinDisplayWithSegmentation(input)
+            
+            // 🎯 使用新的协程，不取消之前的任务
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                try {
+                    Timber.d("🔧 开始删除后查询: '$input'")
+                    
+                    val engineAdapter = InputMethodEngineAdapter.getInstance()
+                    val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        engineAdapter.getCandidates(input, 15)
+                    }
+                    
+                    Timber.d("🔧 删除后查询完成: '$input' -> ${result.size}个候选词")
+                    
+                    if (result.isNotEmpty()) {
+                        candidates = result
+                        
+                        // 🎯 直接显示候选词，确保可见
+                        displayCandidatesDirectly(result)
+                        
+                        // 🎯 更新缓存
+                        updateQuickResponseCache(input, result)
+                        
+                        Timber.d("🔧 删除后候选词显示成功: ${result.take(3).map { it.word }}")
+                    } else {
+                        candidates = emptyList()
+                        displayNoResultsDirectly()
+                        Timber.w("🔧 删除后无候选词结果")
+                    }
+                    
+                } catch (e: Exception) {
+                    Timber.e(e, "🔧 删除后查询失败: ${e.message}")
+                    candidates = emptyList()
+                    displayErrorDirectly("查询失败")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "🔧 删除后加载候选词失败: ${e.message}")
         }
     }
     
