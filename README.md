@@ -395,7 +395,6 @@ suspend fun ensureTrieLoaded(trieType: TrieType) {
 - **Android Studio**: Arctic Fox+
 - **Gradle**: 8.7+
 - **Android SDK**: 34+
-- **最小内存**: 8GB RAM (推荐16GB)
 
 ### 🔧 安装步骤
 
