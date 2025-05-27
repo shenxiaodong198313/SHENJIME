@@ -49,7 +49,7 @@ class SymbolKeyboardManager {
                 arrayOf("√", "∛", "∜", "∫", "∮", "∑", "∏", "∆", "∇", "∂")
             )
         ),
-        "fraction" to SymbolSet(
+        "chinese_num" to SymbolSet(
             "中文数字",
             arrayOf(
                 arrayOf("一", "二", "三", "四", "五", "六", "七", "八", "九", "十"),
@@ -57,7 +57,7 @@ class SymbolKeyboardManager {
                 arrayOf("百", "千", "万", "亿", "零", "〇", "○", "●", "◯", "◎")
             )
         ),
-        "circle_numbers" to SymbolSet(
+        "circle_num" to SymbolSet(
             "圆圈数字",
             arrayOf(
                 arrayOf("①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"),
@@ -65,7 +65,7 @@ class SymbolKeyboardManager {
                 arrayOf("Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ")
             )
         ),
-        "numbers" to SymbolSet(
+        "superscript" to SymbolSet(
             "角标数字",
             arrayOf(
                 arrayOf("⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"),
@@ -107,14 +107,14 @@ class SymbolKeyboardManager {
             for (buttonIndex in 0 until minOf(rowLayout.childCount, symbols.size)) {
                 val button = rowLayout.getChildAt(buttonIndex) as? Button
                 
-                // 跳过特殊按钮（123按钮和删除按钮）
-                if (button?.id == R.id.symbol_123_btn || button?.id == R.id.symbol_delete) {
+                // 跳过特殊按钮（ABC按钮和删除按钮）
+                if (button?.id == R.id.symbol_abc_btn || button?.id == R.id.symbol_delete) {
                     continue
                 }
                 
-                // 调整按钮索引，考虑第三行的123按钮
+                // 调整按钮索引，考虑第三行的ABC按钮
                 val symbolIndex = if (rowIndex == 2 && buttonIndex > 0) {
-                    buttonIndex - 1  // 第三行第一个是123按钮，所以符号索引要减1
+                    buttonIndex - 1  // 第三行第一个是ABC按钮，所以符号索引要减1
                 } else {
                     buttonIndex
                 }

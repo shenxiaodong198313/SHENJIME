@@ -1370,8 +1370,8 @@ class ShenjiInputMethodService : InputMethodService() {
             for (buttonIndex in 0 until rowLayout.childCount) {
                 val button = rowLayout.getChildAt(buttonIndex) as? Button ?: continue
                 
-                // 跳过特殊按钮（123按钮和删除按钮）
-                if (button.id == R.id.symbol_123_btn || button.id == R.id.symbol_delete) {
+                // 跳过特殊按钮（ABC按钮和删除按钮）
+                if (button.id == R.id.symbol_abc_btn || button.id == R.id.symbol_delete) {
                     continue
                 }
                 
@@ -1394,13 +1394,13 @@ class ShenjiInputMethodService : InputMethodService() {
             R.id.nav_brackets to "brackets",
             R.id.nav_currency to "currency",
             R.id.nav_math to "math",
-            R.id.nav_fraction to "fraction",
-            R.id.nav_circle_numbers to "circle_numbers",
-            R.id.nav_numbers to "numbers"
+            R.id.nav_chinese_num to "chinese_num",
+            R.id.nav_circle_num to "circle_num",
+            R.id.nav_superscript to "superscript"
         )
         
-        navigationButtons.forEach { (buttonId, symbolSetKey) ->
-            symbolKeyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
+        navigationButtons.forEach { (textViewId, symbolSetKey) ->
+            symbolKeyboardView.findViewById<TextView>(textViewId)?.setOnClickListener {
                 switchSymbolSet(symbolSetKey, symbolKeyboardView)
             }
         }
@@ -1408,9 +1408,14 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 设置新符号键盘的特殊按钮监听器
     private fun setupNewSymbolSpecialButtons(symbolKeyboardView: View) {
-        // 123按钮 - 切换到数字键盘
-        symbolKeyboardView.findViewById<Button>(R.id.symbol_123_btn)?.setOnClickListener {
-            switchToNumberKeyboard()
+        // ABC按钮 - 返回字母键盘
+        symbolKeyboardView.findViewById<Button>(R.id.symbol_abc_btn)?.setOnClickListener {
+            switchToQwertyKeyboard()
+        }
+        
+        // 返回按钮 - 返回字母键盘
+        symbolKeyboardView.findViewById<Button>(R.id.symbol_back_btn)?.setOnClickListener {
+            switchToQwertyKeyboard()
         }
         
         // 删除按钮
@@ -1435,10 +1440,7 @@ class ShenjiInputMethodService : InputMethodService() {
             false
         }
         
-        // 返回按钮
-        symbolKeyboardView.findViewById<Button>(R.id.symbol_back_btn)?.setOnClickListener {
-            switchToQwertyKeyboard()
-        }
+
     }
     
     // 切换符号集合
@@ -1460,19 +1462,19 @@ class ShenjiInputMethodService : InputMethodService() {
             "brackets" to R.id.nav_brackets,
             "currency" to R.id.nav_currency,
             "math" to R.id.nav_math,
-            "fraction" to R.id.nav_fraction,
-            "circle_numbers" to R.id.nav_circle_numbers,
-            "numbers" to R.id.nav_numbers
+            "chinese_num" to R.id.nav_chinese_num,
+            "circle_num" to R.id.nav_circle_num,
+            "superscript" to R.id.nav_superscript
         )
         
-        navigationButtons.forEach { (key, buttonId) ->
-            val button = symbolKeyboardView.findViewById<Button>(buttonId)
+        navigationButtons.forEach { (key, textViewId) ->
+            val textView = symbolKeyboardView.findViewById<TextView>(textViewId)
             if (key == selectedKey) {
-                // 选中状态 - 使用特殊按钮样式
-                button?.setBackgroundResource(R.drawable.keyboard_special_key_bg)
+                // 选中状态 - 蓝色文字
+                textView?.setTextColor(android.graphics.Color.parseColor("#2196F3"))
             } else {
-                // 未选中状态 - 使用普通按钮样式
-                button?.setBackgroundResource(R.drawable.keyboard_key_bg)
+                // 未选中状态 - 灰色文字
+                textView?.setTextColor(android.graphics.Color.parseColor("#666666"))
             }
         }
     }

@@ -406,12 +406,15 @@ id memory_info_text
 id memory_usage_text
 id nav_brackets
 id nav_chinese
+id nav_chinese_num
+id nav_circle_num
 id nav_circle_numbers
 id nav_currency
 id nav_english
 id nav_fraction
 id nav_math
 id nav_numbers
+id nav_superscript
 id num_key_0
 id num_key_1
 id num_key_2
@@ -551,7 +554,7 @@ id sym_rparen
 id sym_rsquare
 id sym_semicolon
 id sym_underscore
-id symbol_123_btn
+id symbol_abc_btn
 id symbol_back_btn
 id symbol_btn_1_1
 id symbol_btn_1_10
