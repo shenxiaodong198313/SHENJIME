@@ -63,3 +63,4 @@ app/build/intermediates/assets/debug/mergeDebugAssets/cn_dicts/associational.dic
 *.apk
 *.apk
 *.apk
+app/build/outputs/apk/debug/app-debug.apk
