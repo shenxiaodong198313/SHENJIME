@@ -19,6 +19,19 @@ android {
         
         // 增加内存配置
         multiDexEnabled = true
+        
+        // NDK配置
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+        
+        // CMake配置
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+                arguments += listOf("-DANDROID_STL=c++_shared")
+            }
+        }
     }
 
     buildTypes {
@@ -33,6 +46,14 @@ android {
     
     buildFeatures {
         viewBinding = true
+    }
+    
+    // CMake外部构建配置
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
     
     compileOptions {
@@ -53,6 +74,13 @@ android {
         kotlinOptions {
             jvmTarget = "17"
         }
+    }
+    
+    // 打包配置，确保包含所有必要的库文件
+    packagingOptions {
+        pickFirst("**/libc++_shared.so")
+        pickFirst("**/libMNN.so")
+        pickFirst("**/libMNN_Express.so")
     }
 }
 

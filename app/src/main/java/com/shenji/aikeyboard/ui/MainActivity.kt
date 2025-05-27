@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.settings.InputMethodSettingsActivity
+import com.shenji.aikeyboard.llm.LLMTestActivity
 import timber.log.Timber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnImeSettings: Button
     private lateinit var btnLogs: Button
     private lateinit var btnOptimizedTest: Button
+    private lateinit var btnLLMTest: Button
     private lateinit var appIconTop: ImageView
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,6 +141,12 @@ class MainActivity : AppCompatActivity() {
             "候选词引擎测试"
         ) { openOptimizedCandidateTest() }.also { btnOptimizedTest = it }
         
+        // 创建LLM大模型测试按钮
+        createWhiteButton(
+            R.id.btnLLMTestContainer,
+            "🤖 AI大模型测试"
+        ) { openLLMTest() }.also { btnLLMTest = it }
+        
         Log.d("MainActivity", "所有按钮创建完成")
     }
     
@@ -225,6 +233,20 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "打开候选词引擎测试失败: ${e.message}", e)
             Toast.makeText(this, "无法打开候选词引擎测试: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 打开LLM大模型测试
+     */
+    private fun openLLMTest() {
+        try {
+            Timber.d("打开LLM大模型测试")
+            val intent = Intent(this, LLMTestActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开LLM大模型测试失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开LLM大模型测试: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     

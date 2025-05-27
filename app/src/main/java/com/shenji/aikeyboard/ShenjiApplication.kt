@@ -11,6 +11,7 @@ import com.shenji.aikeyboard.data.Entry
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.logger.CrashReportingTree
 import com.shenji.aikeyboard.keyboard.InputMethodEngineAdapter
+import com.shenji.aikeyboard.llm.LLMService
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -49,6 +50,11 @@ class ShenjiApplication : MultiDexApplication() {
         // Trie树管理器
         val trieManager by lazy {
             TrieManager.instance
+        }
+        
+        // LLM服务
+        val llmService by lazy {
+            LLMService.getInstance()
         }
     }
     
@@ -160,6 +166,24 @@ class ShenjiApplication : MultiDexApplication() {
                     Timber.d("优化候选词引擎初始化完成")
                 } catch (e: Exception) {
                     Timber.e(e, "优化候选词引擎初始化失败")
+                }
+            }
+            
+            // 异步初始化LLM服务
+            GlobalScope.launch(Dispatchers.IO) {
+                try {
+                    logStartupMessage("开始初始化LLM服务...")
+                    val success = llmService.initialize(appContext)
+                    if (success) {
+                        logStartupMessage("✅ LLM服务初始化成功")
+                        Timber.d("LLM服务初始化成功")
+                    } else {
+                        logStartupMessage("❌ LLM服务初始化失败")
+                        Timber.w("LLM服务初始化失败")
+                    }
+                } catch (e: Exception) {
+                    logStartupMessage("❌ LLM服务初始化异常: ${e.message}")
+                    Timber.e(e, "LLM服务初始化异常")
                 }
             }
             

@@ -1,0 +1,20 @@
+{
+    "llm_model": "llm.mnn",
+    "llm_weight": "llm.mnn.weight",
+    "backend_type": "cpu",
+    "thread_num": 4,
+    "precision": "low",
+    "memory": "low",
+    "system_prompt": "You are a helpful assistant.",
+    "sampler_type": "mixed",
+    "mixed_samplers": [
+        "topK",
+        "topP",
+        "min_p",
+        "temperature"
+    ],
+    "temperature": 0.6,
+    "topP": 0.95,
+    "topK": 20,
+    "min_p": 0
+}

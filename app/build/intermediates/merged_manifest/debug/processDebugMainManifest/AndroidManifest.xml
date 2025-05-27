@@ -150,6 +150,13 @@
             android:exported="false"
             android:label="模糊拼音设置" />
 
+        <!-- LLM大模型测试 -->
+        <activity
+            android:name="com.shenji.aikeyboard.llm.LLMTestActivity"
+            android:exported="true"
+            android:label="LLM大模型测试"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- FileProvider配置 -->
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -132,6 +132,13 @@
             android:label="模糊拼音设置"
             android:exported="false" />
             
+        <!-- LLM大模型测试 -->
+        <activity
+            android:name=".llm.LLMTestActivity"
+            android:label="LLM大模型测试"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
+            
         <!-- FileProvider配置 -->
         <provider
             android:name="androidx.core.content.FileProvider"
