@@ -205,7 +205,9 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1.2"
                 style="@style/KeyboardSpecialButton"
-                android:text="↑"/>
+                android:drawableTop="@drawable/ic_shift_up"
+                android:text=""
+                android:paddingTop="8dp"/>
 
             <Button
                 android:id="@+id/key_z"
@@ -248,7 +250,9 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1.2"
                 style="@style/KeyboardSpecialButton"
-                android:text="←"/>
+                android:drawableTop="@drawable/ic_backspace"
+                android:text=""
+                android:paddingTop="8dp"/>
         </LinearLayout>
 
         <!-- 第五行 功能键 -->
@@ -263,7 +267,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1.2"
                 style="@style/KeyboardSpecialButton"
-                android:text="123"/>
+                android:text="符"/>
 
             <Button
                 android:id="@+id/key_split"
@@ -271,13 +275,21 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 style="@style/KeyboardSpecialButton"
-                android:text="分词"/>
+                android:text="123"/>
+
+            <Button
+                android:id="@+id/key_comma"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                style="@style/KeyboardButton"
+                android:text=","/>
 
             <Button
                 android:id="@+id/key_space"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="4"
+                android:layout_weight="2.5"
                 style="@style/KeyboardSpaceButton"
                 android:drawableTop="@drawable/ic_mic"
                 android:paddingTop="8dp"
@@ -290,6 +302,15 @@
                 android:layout_weight="1"
                 style="@style/KeyboardButton"
                 android:text="."/>
+
+            <Button
+                android:id="@+id/key_lang_switch"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.2"
+                style="@style/KeyboardSpecialButton"
+                android:text="中/英"
+                android:textSize="12sp"/>
 
             <Button
                 android:id="@+id/key_enter"

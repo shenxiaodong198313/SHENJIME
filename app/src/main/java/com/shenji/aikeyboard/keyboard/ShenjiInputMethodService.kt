@@ -62,6 +62,30 @@ class ShenjiInputMethodService : InputMethodService() {
     // 标记是否刚提交过候选词，用于处理连续输入
     private var justCommittedText = false
     
+    // 中/英输入模式状态
+    private var isChineseMode = true
+    
+    // 键盘模式状态
+    private enum class KeyboardMode {
+        QWERTY,    // 字母键盘
+        NUMBER,    // 数字键盘
+        SYMBOL     // 符号键盘
+    }
+    private var currentKeyboardMode = KeyboardMode.QWERTY
+    
+    // 符号键盘页面状态
+    private enum class SymbolPage {
+        CHINESE,        // 中文符号
+        ENGLISH,        // 英文符号
+        BRACKETS,       // 括号符号
+        CURRENCY,       // 货币符号
+        MATH,           // 数学符号
+        CHINESE_NUM,    // 中文数字
+        CIRCLE_NUM,     // 圆圈数字
+        NORMAL_NUM      // 普通数字
+    }
+    private var currentSymbolPage = SymbolPage.CHINESE
+    
     // 🔧 新增：智能防抖和双缓冲相关变量
     private var currentQueryJob: Job? = null
     private var debounceJob: Job? = null
@@ -93,6 +117,9 @@ class ShenjiInputMethodService : InputMethodService() {
     // 长按删除键的延迟时间（毫秒）
     private val DELETE_INITIAL_DELAY = 400L  // 长按后首次触发的延迟
     private val DELETE_REPEAT_DELAY = 50L   // 连续触发的间隔
+    
+    // 符号键盘管理器
+    private lateinit var symbolKeyboardManager: SymbolKeyboardManager
     
     override fun onCreate() {
         super.onCreate()
@@ -828,7 +855,7 @@ class ShenjiInputMethodService : InputMethodService() {
             // 设置工具栏图标点击事件
             setupToolbarIcons()
             
-            // 加载键盘布局
+            // 加载键盘布局（默认字母键盘）
             keyboardView = layoutInflater.inflate(R.layout.keyboard_layout, null)
             
             // 设置字母按键监听器
@@ -836,6 +863,9 @@ class ShenjiInputMethodService : InputMethodService() {
             
             // 设置功能按键监听器
             setupFunctionKeys()
+            
+            // 初始化中/英切换按钮状态
+            updateLanguageSwitchButton()
             
             // 设置候选词视图布局参数
             val candidatesLayoutParams = LinearLayout.LayoutParams(
@@ -960,25 +990,50 @@ class ShenjiInputMethodService : InputMethodService() {
             onEnter()
         }
         
-        // 符号键
+        // 符号键（原123键）
         keyboardView.findViewById<Button>(R.id.key_symbol)?.setOnClickListener {
-            // 暂不实现符号键盘
-            Toast.makeText(this, "符号键盘功能开发中", Toast.LENGTH_SHORT).show()
-            Timber.d("符号键盘暂未实现")
+            Timber.d("符号键被点击，准备切换到符号键盘")
+            try {
+                switchToSymbolKeyboard()
+            } catch (e: Exception) {
+                Toast.makeText(this, "切换符号键盘失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                Timber.e(e, "切换符号键盘异常")
+            }
         }
         
-        // 分词键
-        keyboardView.findViewById<Button>(R.id.key_split)?.setOnClickListener {
-            if (composingText.isNotEmpty()) {
-                Toast.makeText(this, "分词功能已停用", Toast.LENGTH_SHORT).show()
-            } else {
-                commitText("|")
+        // 123键（原分词键）
+        val splitButton = keyboardView.findViewById<Button>(R.id.key_split)
+        if (splitButton != null) {
+            splitButton.setOnClickListener {
+                Timber.d("123键被点击，准备切换到数字键盘")
+                Toast.makeText(this, "123键被点击了！", Toast.LENGTH_LONG).show()
+                try {
+                    switchToNumberKeyboard()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "切换失败: ${e.message}", Toast.LENGTH_LONG).show()
+                    Timber.e(e, "切换数字键盘异常")
+                }
             }
+            Timber.d("123键事件监听器设置成功，按钮文本: ${splitButton.text}")
+            Toast.makeText(this, "123键监听器已设置", Toast.LENGTH_SHORT).show()
+        } else {
+            Timber.e("找不到123键(key_split)，无法设置点击事件")
+            Toast.makeText(this, "找不到123键！", Toast.LENGTH_LONG).show()
+        }
+        
+        // 逗号键
+        keyboardView.findViewById<Button>(R.id.key_comma)?.setOnClickListener {
+            commitText(",")
         }
         
         // 句号键
         keyboardView.findViewById<Button>(R.id.key_period)?.setOnClickListener {
             commitText(".")
+        }
+        
+        // 中/英切换键
+        keyboardView.findViewById<Button>(R.id.key_lang_switch)?.setOnClickListener {
+            onLanguageSwitch()
         }
         
         // Shift键
@@ -1033,6 +1088,13 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 处理字母输入
     private fun onInputLetter(letter: String) {
+        // 如果是英文模式，直接输入字母
+        if (!isChineseMode) {
+            commitText(letter)
+            return
+        }
+        
+        // 中文模式下的拼音输入处理
         // 检查是否刚刚提交了候选词，如果是则开始新的输入流程
         if (justCommittedText) {
             // 确保开始新的输入流程
@@ -1061,37 +1123,58 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // 处理删除操作
     private fun onDelete() {
-        if (composingText.isNotEmpty()) {
-            // 🎯 取消防抖任务，立即响应删除操作
-            debounceJob?.cancel()
-            // 🔧 修复：不取消当前查询任务，避免删除后候选词消失
-            // currentQueryJob?.cancel()
-            
-            // 删除拼音中的最后一个字母
-            composingText.deleteCharAt(composingText.length - 1)
-            
-            if (composingText.isEmpty()) {
-                // 如果拼音为空，清空拼音显示并隐藏候选词区域
-                updatePinyinDisplay("")
-                hideCandidates()
-                
-                // 🎯 清空双缓冲状态
-                lastDisplayedCandidates = emptyList()
-                pendingCandidates = emptyList()
-                isUpdatingCandidates = false
-                
-                // 结束组合文本状态
-                currentInputConnection?.finishComposingText()
-            } else {
-                // 输入框显示原始拼音（不带空格）
-                currentInputConnection?.setComposingText(composingText, 1)
-                
-                // 🎯 修复：使用专门的删除后候选词加载方法
-                loadCandidatesAfterDelete(composingText.toString())
+        val ic = currentInputConnection
+        if (ic == null) {
+            Timber.w("InputConnection为空，无法执行删除操作")
+            return
+        }
+        
+        try {
+            // 首先检查是否有选中的文本
+            val selectedText = ic.getSelectedText(0)
+            if (!selectedText.isNullOrEmpty()) {
+                // 如果有选中文本，直接删除选中的内容
+                Timber.d("删除选中文本: '$selectedText'")
+                ic.commitText("", 1)
+                return
             }
-        } else {
-            // 如果没有拼音，执行标准删除操作
-            currentInputConnection?.deleteSurroundingText(1, 0)
+            
+            if (composingText.isNotEmpty()) {
+                // 🎯 取消防抖任务，立即响应删除操作
+                debounceJob?.cancel()
+                // 🔧 修复：不取消当前查询任务，避免删除后候选词消失
+                // currentQueryJob?.cancel()
+                
+                // 删除拼音中的最后一个字母
+                composingText.deleteCharAt(composingText.length - 1)
+                
+                if (composingText.isEmpty()) {
+                    // 如果拼音为空，清空拼音显示并隐藏候选词区域
+                    updatePinyinDisplay("")
+                    hideCandidates()
+                    
+                    // 🎯 清空双缓冲状态
+                    lastDisplayedCandidates = emptyList()
+                    pendingCandidates = emptyList()
+                    isUpdatingCandidates = false
+                    
+                    // 结束组合文本状态
+                    ic.finishComposingText()
+                } else {
+                    // 输入框显示原始拼音（不带空格）
+                    ic.setComposingText(composingText, 1)
+                    
+                    // 🎯 修复：使用专门的删除后候选词加载方法
+                    loadCandidatesAfterDelete(composingText.toString())
+                }
+            } else {
+                // 如果没有拼音，执行标准删除操作
+                ic.deleteSurroundingText(1, 0)
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "删除操作失败: ${e.message}")
+            // 回退到基本删除操作
+            ic.deleteSurroundingText(1, 0)
         }
     }
     
@@ -1122,6 +1205,639 @@ class ShenjiInputMethodService : InputMethodService() {
             ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
         }
     }
+    
+    // 处理中/英切换
+    private fun onLanguageSwitch() {
+        isChineseMode = !isChineseMode
+        updateLanguageSwitchButton()
+        
+        // 如果有正在输入的拼音，清空它
+        if (composingText.isNotEmpty()) {
+            composingText.clear()
+            currentInputConnection?.finishComposingText()
+            updatePinyinDisplay("")
+            hideCandidates()
+        }
+        
+        val modeText = if (isChineseMode) "中文" else "英文"
+        Toast.makeText(this, "已切换到${modeText}输入", Toast.LENGTH_SHORT).show()
+        Timber.d("切换输入模式: $modeText")
+    }
+    
+    // 更新中/英切换按钮的显示
+    private fun updateLanguageSwitchButton() {
+        keyboardView.findViewById<Button>(R.id.key_lang_switch)?.let { button ->
+            if (isChineseMode) {
+                button.text = "中/英"
+                button.setTextColor(getColor(R.color.keyboard_text)) // 黑色
+            } else {
+                button.text = "中/英"
+                button.setTextColor(getColor(R.color.secondary_gray)) // 浅色
+            }
+        }
+    }
+    
+    // 切换到数字键盘
+    private fun switchToNumberKeyboard() {
+        try {
+            Timber.d("🔢 开始切换到数字键盘...")
+            currentKeyboardMode = KeyboardMode.NUMBER
+            
+            // 加载数字键盘布局
+            val numberKeyboardView = layoutInflater.inflate(R.layout.number_keyboard_layout, null)
+            Timber.d("🔢 数字键盘布局加载成功")
+            
+            // 替换键盘视图
+            val mainContainer = keyboardView.parent as LinearLayout
+            val keyboardIndex = mainContainer.indexOfChild(keyboardView)
+            Timber.d("🔢 准备替换键盘视图，索引: $keyboardIndex")
+            
+            mainContainer.removeView(keyboardView)
+            keyboardView = numberKeyboardView
+            mainContainer.addView(keyboardView, keyboardIndex)
+            Timber.d("🔢 键盘视图替换完成")
+            
+            // 设置数字键盘事件监听器（必须在视图替换后设置）
+            setupNumberKeyboardListeners(keyboardView)
+            Timber.d("🔢 数字键盘事件监听器设置完成")
+            
+            Toast.makeText(this, "已切换到数字键盘", Toast.LENGTH_SHORT).show()
+            Timber.d("🔢 数字键盘切换成功")
+        } catch (e: Exception) {
+            Timber.e(e, "🔢 切换到数字键盘失败: ${e.message}")
+            Toast.makeText(this, "切换数字键盘失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    // 切换到字母键盘
+    private fun switchToQwertyKeyboard() {
+        try {
+            currentKeyboardMode = KeyboardMode.QWERTY
+            
+            // 加载字母键盘布局
+            val qwertyKeyboardView = layoutInflater.inflate(R.layout.keyboard_layout, null)
+            
+            // 替换键盘视图
+            val mainContainer = keyboardView.parent as LinearLayout
+            val keyboardIndex = mainContainer.indexOfChild(keyboardView)
+            mainContainer.removeView(keyboardView)
+            keyboardView = qwertyKeyboardView
+            mainContainer.addView(keyboardView, keyboardIndex)
+            
+            // 设置字母键盘事件监听器（必须在视图替换后设置）
+            setupLetterKeys()
+            setupFunctionKeys()
+            updateLanguageSwitchButton()
+            
+            Timber.d("已切换到字母键盘")
+        } catch (e: Exception) {
+            Timber.e(e, "切换到字母键盘失败: ${e.message}")
+        }
+    }
+    
+    // 切换到符号键盘
+    private fun switchToSymbolKeyboard() {
+        try {
+            Timber.d("🔣 开始切换到符号键盘...")
+            currentKeyboardMode = KeyboardMode.SYMBOL
+            
+            // 加载新的符号键盘布局
+            val symbolKeyboardView = layoutInflater.inflate(R.layout.symbol_keyboard_layout_new, null)
+            Timber.d("🔣 符号键盘布局加载成功")
+            
+            // 替换键盘视图
+            val mainContainer = keyboardView.parent as LinearLayout
+            val keyboardIndex = mainContainer.indexOfChild(keyboardView)
+            Timber.d("🔣 准备替换键盘视图，索引: $keyboardIndex")
+            
+            mainContainer.removeView(keyboardView)
+            keyboardView = symbolKeyboardView
+            mainContainer.addView(keyboardView, keyboardIndex)
+            Timber.d("🔣 键盘视图替换完成")
+            
+            // 初始化符号键盘管理器
+            initializeNewSymbolKeyboard(keyboardView)
+            Timber.d("🔣 符号键盘管理器初始化完成")
+            
+            Toast.makeText(this, "已切换到符号键盘", Toast.LENGTH_SHORT).show()
+            Timber.d("🔣 符号键盘切换成功")
+        } catch (e: Exception) {
+            Timber.e(e, "🔣 切换到符号键盘失败: ${e.message}")
+            Toast.makeText(this, "切换符号键盘失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    // 初始化新的符号键盘
+    private fun initializeNewSymbolKeyboard(symbolKeyboardView: View) {
+        try {
+            // 初始化符号键盘管理器
+            symbolKeyboardManager = SymbolKeyboardManager()
+            
+            // 获取符号内容区域
+            val symbolContentArea = symbolKeyboardView.findViewById<LinearLayout>(R.id.symbol_content_area)
+            if (symbolContentArea != null) {
+                symbolKeyboardManager.initialize(symbolContentArea)
+                Timber.d("🔣 符号键盘管理器初始化成功")
+            } else {
+                Timber.e("🔣 找不到符号内容区域")
+                return
+            }
+            
+            // 设置符号按钮监听器
+            setupNewSymbolButtonListeners(symbolKeyboardView)
+            
+            // 设置导航按钮监听器
+            setupNewSymbolNavigationListeners(symbolKeyboardView)
+            
+            // 设置特殊按钮监听器
+            setupNewSymbolSpecialButtons(symbolKeyboardView)
+            
+            Timber.d("🔣 新符号键盘初始化完成")
+        } catch (e: Exception) {
+            Timber.e(e, "🔣 初始化新符号键盘失败: ${e.message}")
+        }
+    }
+    
+    // 设置新符号键盘的按钮监听器
+    private fun setupNewSymbolButtonListeners(symbolKeyboardView: View) {
+        val symbolContentArea = symbolKeyboardView.findViewById<LinearLayout>(R.id.symbol_content_area)
+        if (symbolContentArea == null) return
+        
+        // 为三行符号按钮设置监听器
+        for (rowIndex in 0..2) {
+            val rowLayout = symbolContentArea.getChildAt(rowIndex) as? LinearLayout ?: continue
+            
+            for (buttonIndex in 0 until rowLayout.childCount) {
+                val button = rowLayout.getChildAt(buttonIndex) as? Button ?: continue
+                
+                // 跳过特殊按钮（123按钮和删除按钮）
+                if (button.id == R.id.symbol_123_btn || button.id == R.id.symbol_delete) {
+                    continue
+                }
+                
+                // 为普通符号按钮设置点击监听器
+                button.setOnClickListener { v ->
+                    val symbol = (v as Button).text.toString()
+                    if (symbol.isNotEmpty()) {
+                        commitText(symbol)
+                    }
+                }
+            }
+        }
+    }
+    
+    // 设置新符号键盘的导航按钮监听器
+    private fun setupNewSymbolNavigationListeners(symbolKeyboardView: View) {
+        val navigationButtons = mapOf(
+            R.id.nav_chinese to "chinese",
+            R.id.nav_english to "english", 
+            R.id.nav_brackets to "brackets",
+            R.id.nav_currency to "currency",
+            R.id.nav_math to "math",
+            R.id.nav_fraction to "fraction",
+            R.id.nav_circle_numbers to "circle_numbers",
+            R.id.nav_numbers to "numbers"
+        )
+        
+        navigationButtons.forEach { (buttonId, symbolSetKey) ->
+            symbolKeyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
+                switchSymbolSet(symbolSetKey, symbolKeyboardView)
+            }
+        }
+    }
+    
+    // 设置新符号键盘的特殊按钮监听器
+    private fun setupNewSymbolSpecialButtons(symbolKeyboardView: View) {
+        // 123按钮 - 切换到数字键盘
+        symbolKeyboardView.findViewById<Button>(R.id.symbol_123_btn)?.setOnClickListener {
+            switchToNumberKeyboard()
+        }
+        
+        // 删除按钮
+        val deleteButton = symbolKeyboardView.findViewById<Button>(R.id.symbol_delete)
+        deleteButton?.setOnClickListener {
+            onDelete()
+        }
+        
+        // 删除按钮长按
+        deleteButton?.setOnLongClickListener { 
+            deleteHandler.postDelayed(deleteRunnable, DELETE_INITIAL_DELAY)
+            true
+        }
+        
+        // 删除按钮触摸监听
+        deleteButton?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    deleteHandler.removeCallbacks(deleteRunnable)
+                }
+            }
+            false
+        }
+        
+        // 返回按钮
+        symbolKeyboardView.findViewById<Button>(R.id.symbol_back_btn)?.setOnClickListener {
+            switchToQwertyKeyboard()
+        }
+    }
+    
+    // 切换符号集合
+    private fun switchSymbolSet(symbolSetKey: String, symbolKeyboardView: View) {
+        try {
+            symbolKeyboardManager.switchToSymbolSet(symbolSetKey)
+            updateNavigationButtonSelection(symbolSetKey, symbolKeyboardView)
+            Timber.d("🔣 切换到符号集合: $symbolSetKey")
+        } catch (e: Exception) {
+            Timber.e(e, "🔣 切换符号集合失败: ${e.message}")
+        }
+    }
+    
+    // 更新导航按钮选中状态
+    private fun updateNavigationButtonSelection(selectedKey: String, symbolKeyboardView: View) {
+        val navigationButtons = mapOf(
+            "chinese" to R.id.nav_chinese,
+            "english" to R.id.nav_english,
+            "brackets" to R.id.nav_brackets,
+            "currency" to R.id.nav_currency,
+            "math" to R.id.nav_math,
+            "fraction" to R.id.nav_fraction,
+            "circle_numbers" to R.id.nav_circle_numbers,
+            "numbers" to R.id.nav_numbers
+        )
+        
+        navigationButtons.forEach { (key, buttonId) ->
+            val button = symbolKeyboardView.findViewById<Button>(buttonId)
+            if (key == selectedKey) {
+                // 选中状态 - 使用特殊按钮样式
+                button?.setBackgroundResource(R.drawable.keyboard_special_key_bg)
+            } else {
+                // 未选中状态 - 使用普通按钮样式
+                button?.setBackgroundResource(R.drawable.keyboard_key_bg)
+            }
+        }
+    }
+    
+    // 设置数字键盘事件监听器
+    private fun setupNumberKeyboardListeners(numberKeyboardView: View) {
+        // 数字键 0-9
+        val numberIds = listOf(
+            R.id.num_key_0, R.id.num_key_1, R.id.num_key_2, R.id.num_key_3, R.id.num_key_4,
+            R.id.num_key_5, R.id.num_key_6, R.id.num_key_7, R.id.num_key_8, R.id.num_key_9
+        )
+        
+        numberIds.forEach { id ->
+            numberKeyboardView.findViewById<Button>(id)?.setOnClickListener { v ->
+                val number = (v as Button).text.toString()
+                commitText(number)
+            }
+        }
+        
+        // 运算符号键
+        numberKeyboardView.findViewById<Button>(R.id.num_key_plus)?.setOnClickListener {
+            commitText("+")
+        }
+        
+        numberKeyboardView.findViewById<Button>(R.id.num_key_minus)?.setOnClickListener {
+            commitText("-")
+        }
+        
+        numberKeyboardView.findViewById<Button>(R.id.num_key_multiply)?.setOnClickListener {
+            commitText("*")
+        }
+        
+        // 新添加的第四行按钮
+        numberKeyboardView.findViewById<Button>(R.id.num_key_divide)?.setOnClickListener {
+            commitText("/")
+        }
+        
+        numberKeyboardView.findViewById<Button>(R.id.num_key_lparen)?.setOnClickListener {
+            commitText("(")
+        }
+        
+        numberKeyboardView.findViewById<Button>(R.id.num_key_rparen)?.setOnClickListener {
+            commitText(")")
+        }
+        
+        numberKeyboardView.findViewById<Button>(R.id.num_key_equal)?.setOnClickListener {
+            commitText("=")
+        }
+        
+        numberKeyboardView.findViewById<Button>(R.id.num_key_percent)?.setOnClickListener {
+            commitText("%")
+        }
+        
+        // 其他符号键
+        numberKeyboardView.findViewById<Button>(R.id.num_key_at)?.setOnClickListener {
+            commitText("@")
+        }
+        
+        numberKeyboardView.findViewById<Button>(R.id.num_key_dot)?.setOnClickListener {
+            commitText(".")
+        }
+        
+        numberKeyboardView.findViewById<Button>(R.id.num_key_space)?.setOnClickListener {
+            commitText(" ")
+        }
+        
+        // 删除键
+        numberKeyboardView.findViewById<Button>(R.id.num_key_delete)?.setOnClickListener {
+            onDelete()
+        }
+        
+        // 删除键长按
+        numberKeyboardView.findViewById<Button>(R.id.num_key_delete)?.setOnLongClickListener { 
+            deleteHandler.postDelayed(deleteRunnable, DELETE_INITIAL_DELAY)
+            true
+        }
+        
+        // 删除键触摸监听
+        numberKeyboardView.findViewById<Button>(R.id.num_key_delete)?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    deleteHandler.removeCallbacks(deleteRunnable)
+                }
+            }
+            false
+        }
+        
+        // 返回字母键盘
+        numberKeyboardView.findViewById<Button>(R.id.num_key_back)?.setOnClickListener {
+            switchToQwertyKeyboard()
+        }
+        
+        // 符号键
+        numberKeyboardView.findViewById<Button>(R.id.num_key_symbol)?.setOnClickListener {
+            switchToSymbolKeyboard()
+        }
+        
+        // 确定键
+        numberKeyboardView.findViewById<Button>(R.id.num_key_enter)?.setOnClickListener {
+            onEnter()
+        }
+    }
+    
+    // 设置符号键盘事件监听器
+    private fun setupSymbolKeyboardListeners(symbolKeyboardView: View) {
+        // 设置所有页面的符号按键监听器
+        setupAllSymbolPageListeners(symbolKeyboardView)
+        
+        // 返回字母键盘
+        symbolKeyboardView.findViewById<Button>(R.id.sym_back_btn)?.setOnClickListener {
+            switchToQwertyKeyboard()
+        }
+    }
+    
+    // 设置所有符号页面的按键监听器
+    private fun setupAllSymbolPageListeners(symbolKeyboardView: View) {
+        // 为所有页面设置通用的符号按钮监听器
+        setupUniversalSymbolListeners(symbolKeyboardView)
+        
+        // 为所有页面设置123键和删除键
+        val allPrefixes = listOf("sym", "eng", "bracket", "currency", "math", "chinese", "circle", "normal")
+        allPrefixes.forEach { prefix ->
+            setupCommonSymbolButtons(symbolKeyboardView, prefix)
+        }
+    }
+    
+    // 通用符号按钮监听器设置
+    private fun setupUniversalSymbolListeners(symbolKeyboardView: View) {
+        // 为ViewFlipper中的所有页面设置按钮监听器
+        val viewFlipper = symbolKeyboardView.findViewById<android.widget.ViewFlipper>(R.id.symbol_view_flipper)
+        if (viewFlipper != null) {
+            for (i in 0 until viewFlipper.childCount) {
+                val pageView = viewFlipper.getChildAt(i)
+                setupPageButtonListeners(pageView)
+            }
+        }
+    }
+    
+    // 第一页：中文符号监听器
+    private fun setupChineseSymbolListeners(symbolKeyboardView: View) {
+        val chineseSymbols = mapOf(
+            R.id.sym_minus to "-",
+            R.id.sym_underscore to "_",
+            R.id.sym_semicolon to ";",
+            R.id.sym_pipe to "|",
+            R.id.sym_percent to "%",
+            R.id.sym_plus to "+",
+            R.id.sym_minus2 to "-",
+            R.id.sym_multiply to "×",
+            R.id.sym_divide to "÷",
+            R.id.sym_equal to "=",
+            R.id.sym_lparen to "(",
+            R.id.sym_rparen to ")",
+            R.id.sym_lbrace to "{",
+            R.id.sym_rbrace to "}",
+            R.id.sym_langle to "《",
+            R.id.sym_rangle to "》",
+            R.id.sym_hash to "#",
+            R.id.sym_dollar to "$",
+            R.id.sym_ampersand to "&",
+            R.id.sym_dot to ".",
+            R.id.sym_gamma to "Γ",
+            R.id.sym_lsquare to "[",
+            R.id.sym_less to "<",
+            R.id.sym_greater to ">",
+            R.id.sym_rsquare to "]",
+            R.id.sym_caret to "^",
+            R.id.sym_asterisk to "*"
+        )
+        
+        chineseSymbols.forEach { (id, symbol) ->
+            symbolKeyboardView.findViewById<Button>(id)?.setOnClickListener {
+                commitText(symbol)
+            }
+        }
+        
+        // 123键和删除键
+        setupCommonSymbolButtons(symbolKeyboardView, "sym")
+    }
+    
+    // 通用符号按钮设置（123键、删除键等）
+    private fun setupCommonSymbolButtons(symbolKeyboardView: View, prefix: String) {
+        // 为所有页面设置123键和删除键
+        val buttonIds = when (prefix) {
+            "sym" -> listOf("sym_123_btn" to R.id.sym_123_btn, "sym_delete" to R.id.sym_delete)
+            "eng" -> listOf("eng_123_btn" to R.id.eng_123_btn, "eng_delete" to R.id.eng_delete)
+            "bracket" -> listOf("bracket_123_btn" to R.id.bracket_123_btn, "bracket_delete" to R.id.bracket_delete)
+            "currency" -> listOf("currency_123_btn" to R.id.currency_123_btn, "currency_delete" to R.id.currency_delete)
+            "math" -> listOf("math_123_btn" to R.id.math_123_btn, "math_delete" to R.id.math_delete)
+            "chinese" -> listOf("chinese_123_btn" to R.id.chinese_123_btn, "chinese_delete" to R.id.chinese_delete)
+            "circle" -> listOf("circle_123_btn" to R.id.circle_123_btn, "circle_delete" to R.id.circle_delete)
+            "normal" -> listOf("subscript_123_btn" to R.id.subscript_123_btn, "subscript_delete" to R.id.subscript_delete)
+            else -> emptyList()
+        }
+        
+        buttonIds.forEach { (buttonName, buttonId) ->
+            val button = symbolKeyboardView.findViewById<Button>(buttonId)
+            if (button != null) {
+                if (buttonName.contains("123")) {
+                    // 123键 - 切换到数字键盘
+                    button.setOnClickListener {
+                        switchToNumberKeyboard()
+                    }
+                } else if (buttonName.contains("delete")) {
+                    // 删除键
+                    button.setOnClickListener {
+                        onDelete()
+                    }
+                    
+                    // 删除键长按
+                    button.setOnLongClickListener { 
+                        deleteHandler.postDelayed(deleteRunnable, DELETE_INITIAL_DELAY)
+                        true
+                    }
+                    
+                    // 删除键触摸监听
+                    button.setOnTouchListener { _, event ->
+                        when (event.action) {
+                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                                deleteHandler.removeCallbacks(deleteRunnable)
+                            }
+                        }
+                        false
+                    }
+                }
+            }
+        }
+    }
+    
+
+    
+    // 为页面中的所有按钮设置监听器
+    private fun setupPageButtonListeners(pageView: android.view.View) {
+        if (pageView is android.view.ViewGroup) {
+            for (i in 0 until pageView.childCount) {
+                val child = pageView.getChildAt(i)
+                if (child is android.view.ViewGroup) {
+                    setupPageButtonListeners(child) // 递归处理子视图组
+                } else if (child is Button) {
+                    val buttonId = child.id
+                    val text = child.text.toString()
+                    
+                    // 跳过123键和删除键，这些由setupCommonSymbolButtons处理
+                    val isSpecialButton = text == "123" || 
+                                        text.isEmpty() || // 删除键通常没有文字，只有图标
+                                        buttonId.toString().contains("123") ||
+                                        buttonId.toString().contains("delete")
+                    
+                    if (!isSpecialButton && text.isNotEmpty()) {
+                        // 为普通符号按钮设置点击监听器
+                        child.setOnClickListener {
+                            commitText(text)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // 设置符号键盘底部导航监听器
+    private fun setupSymbolNavigationListeners(symbolKeyboardView: View) {
+        // 8个符号页面切换按钮
+        symbolKeyboardView.findViewById<Button>(R.id.nav_chinese)?.setOnClickListener {
+            switchToSymbolPage(SymbolPage.CHINESE)
+        }
+        
+        symbolKeyboardView.findViewById<Button>(R.id.nav_english)?.setOnClickListener {
+            switchToSymbolPage(SymbolPage.ENGLISH)
+        }
+        
+        symbolKeyboardView.findViewById<Button>(R.id.nav_brackets)?.setOnClickListener {
+            switchToSymbolPage(SymbolPage.BRACKETS)
+        }
+        
+        symbolKeyboardView.findViewById<Button>(R.id.nav_currency)?.setOnClickListener {
+            switchToSymbolPage(SymbolPage.CURRENCY)
+        }
+        
+        symbolKeyboardView.findViewById<Button>(R.id.nav_math)?.setOnClickListener {
+            switchToSymbolPage(SymbolPage.MATH)
+        }
+        
+        symbolKeyboardView.findViewById<Button>(R.id.nav_fraction)?.setOnClickListener {
+            switchToSymbolPage(SymbolPage.CHINESE_NUM)
+        }
+        
+        symbolKeyboardView.findViewById<Button>(R.id.nav_circle_numbers)?.setOnClickListener {
+            switchToSymbolPage(SymbolPage.CIRCLE_NUM)
+        }
+        
+        symbolKeyboardView.findViewById<Button>(R.id.nav_numbers)?.setOnClickListener {
+            switchToSymbolPage(SymbolPage.NORMAL_NUM)
+        }
+    }
+    
+    // 切换符号页面
+    private fun switchToSymbolPage(page: SymbolPage) {
+        try {
+            currentSymbolPage = page
+            
+            // 获取ViewFlipper并切换页面
+            val viewFlipper = keyboardView.findViewById<android.widget.ViewFlipper>(R.id.symbol_view_flipper)
+            if (viewFlipper != null) {
+                val pageIndex = when (page) {
+                    SymbolPage.CHINESE -> 0
+                    SymbolPage.ENGLISH -> 1
+                    SymbolPage.BRACKETS -> 2
+                    SymbolPage.CURRENCY -> 3
+                    SymbolPage.MATH -> 4
+                    SymbolPage.CHINESE_NUM -> 5
+                    SymbolPage.CIRCLE_NUM -> 6
+                    SymbolPage.NORMAL_NUM -> 7
+                }
+                
+                viewFlipper.displayedChild = pageIndex
+                updateSymbolPageSelection()
+                
+                Timber.d("🔣 切换到符号页面: $page (索引: $pageIndex)")
+            } else {
+                Timber.e("🔣 ViewFlipper未找到，无法切换页面")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "🔣 切换符号页面失败: ${e.message}")
+        }
+    }
+    
+    // 更新符号页面选中状态
+    private fun updateSymbolPageSelection() {
+        try {
+            // 重置所有按钮为普通样式
+            val allNavButtons = listOf(
+                R.id.nav_chinese, R.id.nav_english, R.id.nav_brackets, R.id.nav_currency,
+                R.id.nav_math, R.id.nav_fraction, R.id.nav_circle_numbers, R.id.nav_numbers
+            )
+            
+            allNavButtons.forEach { buttonId ->
+                keyboardView.findViewById<Button>(buttonId)?.let { button ->
+                    button.setBackgroundResource(R.drawable.keyboard_key_bg)
+                    button.setTextColor(resources.getColor(android.R.color.black, null))
+                }
+            }
+            
+            // 设置当前选中按钮为高亮样式
+            val selectedButtonId = when (currentSymbolPage) {
+                SymbolPage.CHINESE -> R.id.nav_chinese
+                SymbolPage.ENGLISH -> R.id.nav_english
+                SymbolPage.BRACKETS -> R.id.nav_brackets
+                SymbolPage.CURRENCY -> R.id.nav_currency
+                SymbolPage.MATH -> R.id.nav_math
+                SymbolPage.CHINESE_NUM -> R.id.nav_fraction
+                SymbolPage.CIRCLE_NUM -> R.id.nav_circle_numbers
+                SymbolPage.NORMAL_NUM -> R.id.nav_numbers
+            }
+            
+            keyboardView.findViewById<Button>(selectedButtonId)?.let { button ->
+                button.setBackgroundResource(R.drawable.keyboard_special_key_bg)
+                button.setTextColor(resources.getColor(android.R.color.white, null))
+            }
+            
+            Timber.d("🔣 更新符号页面选中状态: $currentSymbolPage")
+        } catch (e: Exception) {
+            Timber.e(e, "🔣 更新符号页面选中状态失败: ${e.message}")
+        }
+    }
+
     
     // 提交文本到输入框
     private fun commitText(text: String) {
@@ -2454,6 +3170,19 @@ class ShenjiInputMethodService : InputMethodService() {
         clearCandidatesView()
         candidates = emptyList()
         justCommittedText = false
+        
+        // 🔧 重置键盘模式为默认拼音输入键盘
+        if (currentKeyboardMode != KeyboardMode.QWERTY) {
+            Timber.d("🔄 重置键盘模式为默认拼音输入键盘")
+            try {
+                switchToQwertyKeyboard()
+            } catch (e: Exception) {
+                Timber.e(e, "重置键盘模式失败: ${e.message}")
+                // 如果切换失败，至少重置状态变量
+                currentKeyboardMode = KeyboardMode.QWERTY
+                currentSymbolPage = SymbolPage.CHINESE
+            }
+        }
         
         // 确保输入连接上的组合文本也被清除
         currentInputConnection?.finishComposingText()

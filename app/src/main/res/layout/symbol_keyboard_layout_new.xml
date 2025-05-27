@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="248dp"
+    android:orientation="vertical"
+    android:background="#E8E8E8"
+    android:paddingStart="5dp"
+    android:paddingEnd="5dp"
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp">
+
+    <!-- 符号键盘主要内容区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:id="@+id/symbol_content_area">
+        
+        <!-- 第一行符号按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:id="@+id/symbol_row_1">
+            
+            <Button android:id="@+id/symbol_btn_1_1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="-"/>
+            <Button android:id="@+id/symbol_btn_1_2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="_"/>
+            <Button android:id="@+id/symbol_btn_1_3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text=";"/>
+            <Button android:id="@+id/symbol_btn_1_4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="|"/>
+            <Button android:id="@+id/symbol_btn_1_5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="%"/>
+            <Button android:id="@+id/symbol_btn_1_6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="+"/>
+            <Button android:id="@+id/symbol_btn_1_7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="-"/>
+            <Button android:id="@+id/symbol_btn_1_8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="×"/>
+            <Button android:id="@+id/symbol_btn_1_9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="÷"/>
+            <Button android:id="@+id/symbol_btn_1_10" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="="/>
+        </LinearLayout>
+        
+        <!-- 第二行符号按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:id="@+id/symbol_row_2">
+            
+            <Button android:id="@+id/symbol_btn_2_1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="("/>
+            <Button android:id="@+id/symbol_btn_2_2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text=")"/>
+            <Button android:id="@+id/symbol_btn_2_3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="{"/>
+            <Button android:id="@+id/symbol_btn_2_4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="}"/>
+            <Button android:id="@+id/symbol_btn_2_5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="《"/>
+            <Button android:id="@+id/symbol_btn_2_6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="》"/>
+            <Button android:id="@+id/symbol_btn_2_7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="#"/>
+            <Button android:id="@+id/symbol_btn_2_8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="$"/>
+            <Button android:id="@+id/symbol_btn_2_9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="&amp;"/>
+            <Button android:id="@+id/symbol_btn_2_10" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="."/>
+        </LinearLayout>
+        
+        <!-- 第三行符号按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:id="@+id/symbol_row_3">
+            
+            <Button 
+                android:id="@+id/symbol_123_btn" 
+                android:layout_width="0dp" 
+                android:layout_height="match_parent" 
+                style="@style/KeyboardSpecialButton" 
+                android:text="123" 
+                android:layout_weight="1.2"/>
+            <Button android:id="@+id/symbol_btn_3_2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="Γ"/>
+            <Button android:id="@+id/symbol_btn_3_3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="["/>
+            <Button android:id="@+id/symbol_btn_3_4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="&lt;"/>
+            <Button android:id="@+id/symbol_btn_3_5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="&gt;"/>
+            <Button android:id="@+id/symbol_btn_3_6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="]"/>
+            <Button android:id="@+id/symbol_btn_3_7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="^"/>
+            <Button android:id="@+id/symbol_btn_3_8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" style="@style/KeyboardButton" android:text="*"/>
+            
+            <Button
+                android:id="@+id/symbol_delete"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.2"
+                style="@style/KeyboardSpecialButton"
+                android:drawableTop="@drawable/ic_backspace"
+                android:text=""
+                android:paddingTop="8dp"/>
+        </LinearLayout>
+    </LinearLayout>
+    
+    <!-- 底部导航栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/symbol_back_btn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.2"
+            style="@style/KeyboardSpecialButton"
+            android:text="返回"
+            android:textSize="12sp"/>
+
+        <!-- 8个符号类别切换按钮 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="7.2"
+            android:orientation="horizontal">
+            
+            <Button android:id="@+id/nav_chinese" android:layout_width="0dp" android:layout_height="match_parent" style="@style/KeyboardSpecialButton" android:text="中" android:layout_weight="1"/>
+            <Button android:id="@+id/nav_english" android:layout_width="0dp" android:layout_height="match_parent" style="@style/KeyboardButton" android:text="英" android:layout_weight="1"/>
+            <Button android:id="@+id/nav_brackets" android:layout_width="0dp" android:layout_height="match_parent" style="@style/KeyboardButton" android:text="{}" android:layout_weight="1"/>
+            <Button android:id="@+id/nav_currency" android:layout_width="0dp" android:layout_height="match_parent" style="@style/KeyboardButton" android:text="$¥" android:layout_weight="1"/>
+            <Button android:id="@+id/nav_math" android:layout_width="0dp" android:layout_height="match_parent" style="@style/KeyboardButton" android:text="+=" android:layout_weight="1"/>
+            <Button android:id="@+id/nav_fraction" android:layout_width="0dp" android:layout_height="match_parent" style="@style/KeyboardButton" android:text="三四" android:layout_weight="1"/>
+            <Button android:id="@+id/nav_circle_numbers" android:layout_width="0dp" android:layout_height="match_parent" style="@style/KeyboardButton" android:text="⚪⚪" android:layout_weight="1"/>
+            <Button android:id="@+id/nav_numbers" android:layout_width="0dp" android:layout_height="match_parent" style="@style/KeyboardButton" android:text="¹²" android:layout_weight="1"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout> 

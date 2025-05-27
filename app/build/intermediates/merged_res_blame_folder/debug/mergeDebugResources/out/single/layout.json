@@ -1,15 +1,15 @@
 [
     {
-        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_dictionary_detail.xml",
-        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_detail.xml"
-    },
-    {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_dictionary_logs.xml",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_logs.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_log_detail.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_log_detail.xml"
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_dictionary_detail.xml",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_dictionary_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\symbol_keyboard_layout_fixed.xml",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\symbol_keyboard_layout_fixed.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_combination_test.xml",
@@ -54,6 +54,14 @@
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\item_dictionary_group_header.xml",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\item_dictionary_group_header.xml"
+    },
+    {
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\number_keyboard_layout.xml",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\number_keyboard_layout.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/symbol_keyboard_layout_new.xml",
+        "source": "com.shenji.aikeyboard.app-main-37:/layout/symbol_keyboard_layout_new.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\fragment_log_viewer.xml",
@@ -112,10 +120,6 @@
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\candidates_view.xml"
     },
     {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-34:/layout/activity_input_method_settings.xml",
-        "source": "com.shenji.aikeyboard.app-main-37:/layout/activity_input_method_settings.xml"
-    },
-    {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_main.xml",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_main.xml"
     },
@@ -138,6 +142,10 @@
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\activity_smart_pinyin_mvp_test.xml",
         "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\activity_smart_pinyin_mvp_test.xml"
+    },
+    {
+        "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\symbol_keyboard_layout.xml",
+        "source": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-main-37:\\layout\\symbol_keyboard_layout.xml"
     },
     {
         "merged": "C:\\Users\\shenxiaodong\\.gradle\\daemon\\8.7\\com.shenji.aikeyboard.app-mergeDebugResources-34:\\layout\\dialog_build_trie_settings.xml",

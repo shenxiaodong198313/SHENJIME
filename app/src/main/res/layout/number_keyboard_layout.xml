@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#E8E8E8"
+    android:paddingStart="0dp"
+    android:paddingEnd="0dp"
+    android:paddingTop="0dp"
+    android:paddingBottom="0dp">
+
+    <!-- 键盘顶部额外边距 -->
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:visibility="visible" />
+
+    <!-- 数字键盘布局区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp">
+        
+        <!-- 主要数字键盘区域 - 使用水平布局：左侧运算符容器 + 右侧数字区域 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="203dp"
+            android:orientation="horizontal">
+            
+            <!-- 左侧运算符容器 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                
+                <Button
+                    android:id="@+id/num_key_plus"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    style="@style/KeyboardSpecialButton"
+                    android:text="+"/>
+                
+                <Button
+                    android:id="@+id/num_key_minus"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    style="@style/KeyboardSpecialButton"
+                    android:text="-"/>
+                
+                <Button
+                    android:id="@+id/num_key_multiply"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    style="@style/KeyboardSpecialButton"
+                    android:text="*"/>
+                
+                <Button
+                    android:id="@+id/num_key_divide"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    style="@style/KeyboardSpecialButton"
+                    android:text="/"/>
+            </LinearLayout>
+            
+            <!-- 右侧数字和其他按键区域 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="4"
+                android:orientation="vertical">
+                
+                <!-- 第一行：1 2 3 删除 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/num_key_1"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="1"/>
+
+                    <Button
+                        android:id="@+id/num_key_2"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="2"/>
+
+                    <Button
+                        android:id="@+id/num_key_3"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="3"/>
+
+                    <Button
+                        android:id="@+id/num_key_delete"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardSpecialButton"
+                        android:drawableTop="@drawable/ic_backspace"
+                        android:text=""
+                        android:paddingTop="8dp"/>
+                </LinearLayout>
+
+                <!-- 第二行：4 5 6 @ -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/num_key_4"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="4"/>
+
+                    <Button
+                        android:id="@+id/num_key_5"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="5"/>
+
+                    <Button
+                        android:id="@+id/num_key_6"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="6"/>
+
+                    <Button
+                        android:id="@+id/num_key_at"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="@"/>
+                </LinearLayout>
+
+                <!-- 第三行：7 8 9 . -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/num_key_7"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="7"/>
+
+                    <Button
+                        android:id="@+id/num_key_8"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="8"/>
+
+                    <Button
+                        android:id="@+id/num_key_9"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="9"/>
+
+                    <Button
+                        android:id="@+id/num_key_dot"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="."/>
+                </LinearLayout>
+
+                <!-- 第四行：( ) = % -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/num_key_lparen"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="("/>
+
+                    <Button
+                        android:id="@+id/num_key_rparen"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text=")"/>
+
+                    <Button
+                        android:id="@+id/num_key_equal"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="="/>
+
+                    <Button
+                        android:id="@+id/num_key_percent"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        style="@style/KeyboardButton"
+                        android:text="%"/>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 第五行：返回 空格 0 符号 ↵ （对应默认键盘功能键行，45dp高度）-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/num_key_back"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.2"
+                style="@style/KeyboardSpecialButton"
+                android:text="返回"
+                android:textSize="12sp"/>
+
+            <Button
+                android:id="@+id/num_key_space"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                style="@style/KeyboardButton"
+                android:drawableTop="@drawable/ic_space"
+                android:text=""
+                android:paddingTop="8dp"/>
+
+            <Button
+                android:id="@+id/num_key_0"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                style="@style/KeyboardButton"
+                android:text="0"/>
+
+            <Button
+                android:id="@+id/num_key_symbol"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.2"
+                style="@style/KeyboardSpecialButton"
+                android:text="符号"
+                android:textSize="12sp"/>
+
+            <Button
+                android:id="@+id/num_key_enter"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.2"
+                style="@style/KeyboardSpecialButton"
+                android:text="确定"
+                android:textSize="12sp"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout> 
