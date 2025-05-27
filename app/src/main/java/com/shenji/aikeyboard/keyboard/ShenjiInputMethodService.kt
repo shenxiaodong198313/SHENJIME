@@ -2037,25 +2037,54 @@ class ShenjiInputMethodService : InputMethodService() {
         
         Timber.d("🎯 超简单加载候选词: '$input'")
         
-        // 检查视图是否初始化
+        // 🔧 修复：增强视图初始化检查，添加重试机制
         if (!areViewComponentsInitialized()) {
-            Timber.e("🎯 视图未初始化，无法显示候选词")
+            Timber.e("🎯 视图未初始化，尝试延迟重试")
+            // 延迟50ms后重试一次
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                delay(50)
+                if (areViewComponentsInitialized() && composingText.toString() == input) {
+                    Timber.d("🎯 重试成功，视图已初始化")
+                    loadCandidatesUltraSimple(input)
+                } else {
+                    Timber.e("🎯 重试失败，视图仍未初始化或输入已变化")
+                }
+            }
             return
         }
         
         try {
-            // 强制显示候选词区域
+            // 🔧 修复：强制确保候选词区域可见，添加多重保护
+            Timber.d("🎯 设置候选词区域可见性")
             defaultCandidatesView.visibility = View.VISIBLE
             toolbarView.visibility = View.GONE
             defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#F8F8F8"))
             
+            // 🔧 修复：强制刷新布局，确保视图状态生效
+            defaultCandidatesView.invalidate()
+            defaultCandidatesView.requestLayout()
+            
             // 更新拼音显示
             updatePinyinDisplayWithSegmentation(input)
             
-            // 🎯 关键修复：使用简单的协程，不取消之前的查询
+            Timber.d("🎯 候选词区域设置完成，开始异步查询")
+            
+            // 🎯 关键修复：使用简单的协程，增强状态保护
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
                 try {
                     Timber.d("🎯 开始查询候选词: '$input'")
+                    
+                    // 🔧 修复：在查询前再次确认视图状态
+                    if (!areViewComponentsInitialized()) {
+                        Timber.e("🎯 协程执行时视图状态异常，中止查询")
+                        return@launch
+                    }
+                    
+                    // 🔧 修复：确认输入没有变化
+                    if (composingText.toString() != input) {
+                        Timber.d("🎯 输入已变化，中止查询: '$input' -> '${composingText}'")
+                        return@launch
+                    }
                     
                     val engineAdapter = InputMethodEngineAdapter.getInstance()
                     val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -2064,10 +2093,43 @@ class ShenjiInputMethodService : InputMethodService() {
                     
                     Timber.d("🎯 查询完成: '$input' -> ${result.size}个候选词")
                     
+                    // 🔧 修复：查询完成后再次确认状态
+                    if (!areViewComponentsInitialized()) {
+                        Timber.e("🎯 查询完成后视图状态异常，无法显示结果")
+                        return@launch
+                    }
+                    
+                    if (composingText.toString() != input) {
+                        Timber.d("🎯 查询完成后输入已变化，丢弃结果: '$input' -> '${composingText}'")
+                        return@launch
+                    }
+                    
+                    // 🔧 修复：确保候选词区域仍然可见
+                    if (defaultCandidatesView.visibility != View.VISIBLE) {
+                        Timber.w("🎯 候选词区域被隐藏，重新显示")
+                        defaultCandidatesView.visibility = View.VISIBLE
+                        toolbarView.visibility = View.GONE
+                        defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#F8F8F8"))
+                    }
+                    
                     if (result.isNotEmpty()) {
                         candidates = result
-                        displayCandidatesDirectly(result)
+                        
+                        // 🔧 修复：使用增强的显示方法，确保可靠显示
+                        displayCandidatesDirectlyEnhanced(result)
+                        
                         Timber.d("🎯 候选词显示成功: ${result.take(3).map { it.word }}")
+                        
+                        // 🔧 修复：显示后验证结果
+                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                            delay(100) // 等待100ms
+                            if (candidatesView.childCount == 0) {
+                                Timber.e("🎯 显示验证失败，候选词视图为空，尝试重新显示")
+                                displayCandidatesDirectlyEnhanced(result)
+                            } else {
+                                Timber.d("🎯 显示验证成功，候选词视图有${candidatesView.childCount}个子项")
+                            }
+                        }
                     } else {
                         displayNoResultsDirectly()
                         Timber.w("🎯 无候选词结果")
@@ -2075,12 +2137,29 @@ class ShenjiInputMethodService : InputMethodService() {
                     
                 } catch (e: Exception) {
                     Timber.e(e, "🎯 查询候选词失败: ${e.message}")
-                    displayErrorDirectly("查询失败")
+                    
+                    // 🔧 修复：异常时也要确保视图状态正确
+                    try {
+                        if (areViewComponentsInitialized()) {
+                            displayErrorDirectly("查询失败: ${e.message}")
+                        }
+                    } catch (ex: Exception) {
+                        Timber.e(ex, "显示错误信息也失败")
+                    }
                 }
             }
             
         } catch (e: Exception) {
             Timber.e(e, "🎯 超简单加载失败: ${e.message}")
+            
+            // 🔧 修复：主线程异常时的处理
+            try {
+                if (areViewComponentsInitialized()) {
+                    displayErrorDirectly("加载失败: ${e.message}")
+                }
+            } catch (ex: Exception) {
+                Timber.e(ex, "异常处理也失败")
+            }
         }
     }
     
@@ -2778,6 +2857,123 @@ class ShenjiInputMethodService : InputMethodService() {
             
         } catch (e: Exception) {
             Timber.e(e, "直接显示候选词失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 🔧 增强版直接显示候选词（带重试和验证机制）
+     */
+    private fun displayCandidatesDirectlyEnhanced(wordList: List<WordFrequency>) {
+        try {
+            Timber.d("🔧 开始增强显示候选词: ${wordList.size}个")
+            
+            // 🔧 第一步：确保视图状态正确
+            if (!areViewComponentsInitialized()) {
+                Timber.e("🔧 视图未初始化，无法显示候选词")
+                return
+            }
+            
+            // 🔧 第二步：强制确保候选词区域可见
+            defaultCandidatesView.visibility = View.VISIBLE
+            toolbarView.visibility = View.GONE
+            defaultCandidatesView.setBackgroundColor(android.graphics.Color.parseColor("#F8F8F8"))
+            
+            // 🔧 第三步：清空现有内容
+            candidatesView.removeAllViews()
+            
+            // 🔧 第四步：创建候选词行
+            val candidatesRow = LinearLayout(this)
+            candidatesRow.orientation = LinearLayout.HORIZONTAL
+            candidatesRow.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            candidatesRow.gravity = Gravity.CENTER_VERTICAL
+            
+            // 🔧 第五步：添加候选词，带异常保护
+            var successCount = 0
+            wordList.forEachIndexed { index, word ->
+                try {
+                    val candidateText = TextView(this)
+                    candidateText.text = word.word
+                    candidateText.gravity = Gravity.CENTER
+                    
+                    if (index == 0) {
+                        candidateText.setTextColor(Color.parseColor("#2196F3"))
+                    } else {
+                        candidateText.setTextColor(Color.parseColor("#333333"))
+                    }
+                    
+                    candidateText.setBackgroundColor(Color.TRANSPARENT)
+                    candidateText.setTextSize(16f)
+                    candidateText.setPadding(12, 8, 12, 8)
+                    
+                    val textParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT
+                    )
+                    textParams.gravity = Gravity.CENTER_VERTICAL
+                    textParams.setMargins(if (index == 0) 0 else 4, 4, 4, 4)
+                    candidateText.layoutParams = textParams
+                    
+                    candidateText.setOnClickListener {
+                        commitText(word.word)
+                    }
+                    
+                    candidatesRow.addView(candidateText)
+                    successCount++
+                    
+                } catch (e: Exception) {
+                    Timber.e(e, "创建候选词[$index]失败: ${word.word}")
+                }
+            }
+            
+            // 🔧 第六步：添加到容器
+            candidatesView.addView(candidatesRow)
+            
+            // 🔧 第七步：强制刷新UI
+            candidatesView.invalidate()
+            candidatesView.requestLayout()
+            defaultCandidatesView.invalidate()
+            defaultCandidatesView.requestLayout()
+            
+            // 🔧 第八步：重置滚动位置
+            if (::candidatesViewLayout.isInitialized) {
+                candidatesViewLayout.findViewById<HorizontalScrollView>(R.id.candidates_scroll_view)?.scrollTo(0, 0)
+            }
+            
+            Timber.d("🔧 增强显示完成: 成功显示${successCount}/${wordList.size}个候选词")
+            
+            // 🔧 第九步：验证显示结果
+            if (successCount == 0) {
+                Timber.e("🔧 所有候选词显示失败，显示错误提示")
+                displayErrorDirectly("显示失败")
+            } else if (successCount < wordList.size) {
+                Timber.w("🔧 部分候选词显示失败: ${successCount}/${wordList.size}")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "🔧 增强显示候选词失败: ${e.message}")
+            
+            // 🔧 回退到基础显示方法
+            try {
+                Timber.d("🔧 尝试回退到基础显示方法")
+                displayCandidatesDirectly(wordList)
+            } catch (ex: Exception) {
+                Timber.e(ex, "🔧 回退显示也失败")
+                // 最后的回退：显示错误信息
+                try {
+                    candidatesView.removeAllViews()
+                    val errorText = TextView(this)
+                    errorText.text = "显示异常"
+                    errorText.setTextColor(android.graphics.Color.RED)
+                    errorText.setTextSize(14f)
+                    errorText.setPadding(12, 8, 12, 8)
+                    candidatesView.addView(errorText)
+                } catch (exx: Exception) {
+                    Timber.e(exx, "连错误提示都无法显示")
+                }
+            }
         }
     }
     
