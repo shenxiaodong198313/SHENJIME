@@ -20,7 +20,8 @@ android {
         // 增加内存配置
         multiDexEnabled = true
         
-        // NDK配置
+        // NDK配置 - 暂时禁用
+        /*
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
@@ -32,6 +33,7 @@ android {
                 arguments += listOf("-DANDROID_STL=c++_shared")
             }
         }
+        */
     }
 
     buildTypes {
@@ -48,13 +50,15 @@ android {
         viewBinding = true
     }
     
-    // CMake外部构建配置
+    // CMake外部构建配置 - 暂时禁用
+    /*
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
             version = "3.22.1"
         }
     }
+    */
     
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -76,11 +80,9 @@ android {
         }
     }
     
-    // 打包配置，确保包含所有必要的库文件
+    // 打包配置
     packagingOptions {
         pickFirst("**/libc++_shared.so")
-        pickFirst("**/libMNN.so")
-        pickFirst("**/libMNN_Express.so")
     }
 }
 

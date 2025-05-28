@@ -25,6 +25,10 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
 
+    <!-- 网络权限（用于下载模型文件） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Android 10+ 需要特殊权限 -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
@@ -149,13 +153,6 @@
             android:name="com.shenji.aikeyboard.settings.FuzzyPinyinSettingsActivity"
             android:exported="false"
             android:label="模糊拼音设置" />
-
-        <!-- LLM大模型测试 -->
-        <activity
-            android:name="com.shenji.aikeyboard.llm.LLMTestActivity"
-            android:exported="true"
-            android:label="LLM大模型测试"
-            android:windowSoftInputMode="adjustResize" />
 
         <!-- FileProvider配置 -->
         <provider

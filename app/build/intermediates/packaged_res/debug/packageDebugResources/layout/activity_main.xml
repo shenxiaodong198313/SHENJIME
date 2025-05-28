@@ -66,13 +66,6 @@
             android:layout_marginBottom="16dp">
         </FrameLayout>
 
-        <!-- LLM大模型测试按钮 -->
-        <FrameLayout
-            android:id="@+id/btnLLMTestContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </FrameLayout>
-
     </LinearLayout>
 
 </RelativeLayout> 
