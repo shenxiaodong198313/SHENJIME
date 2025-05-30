@@ -1,108 +1,142 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/background_color">
+    android:background="@color/splash_background_color"
+    android:padding="32dp"
+    tools:context=".ui.LlmChatActivity">
 
-    <!-- 工具栏 -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <!-- 顶部栏 -->
+    <LinearLayout
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary_color"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <!-- 主要内容区域 -->
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        <!-- 返回按钮 -->
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="&lt;"
+            android:textSize="20sp"
+            android:textColor="@android:color/white"
+            android:background="@android:color/transparent" />
 
-        <!-- 加载状态 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:visibility="gone">
-
-            <ProgressBar
-                android:id="@+id/progress_bar"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
-                android:id="@+id/tv_loading_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="正在加载模型..."
-                android:textSize="16sp"
-                android:textColor="@color/text_secondary" />
-
-        </LinearLayout>
-
-        <!-- 聊天消息列表 -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_view_chat"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@+id/tv_typing_indicator"
-            android:padding="8dp"
-            android:clipToPadding="false"
-            tools:listitem="@layout/item_chat_message_ai" />
-
-        <!-- 正在输入指示器 -->
+        <!-- 页面标题 -->
         <TextView
-            android:id="@+id/tv_typing_indicator"
-            android:layout_width="wrap_content"
+            android:id="@+id/pageTitle"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_above="@+id/layout_input"
-            android:layout_marginStart="16dp"
-            android:layout_marginBottom="8dp"
-            android:text="AI正在思考..."
-            android:textSize="14sp"
-            android:textColor="@color/text_secondary"
-            android:textStyle="italic"
-            android:visibility="gone" />
+            android:layout_weight="1"
+            android:text="AI对话"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/splash_text_color"
+            android:layout_marginStart="10sp"
+            android:gravity="center_vertical" />
 
-    </RelativeLayout>
+        <!-- 清除对话按钮 -->
+        <Button
+            android:id="@+id/btnClearChat"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:text="🗑"
+            android:textSize="16sp"
+            android:textColor="@android:color/white"
+            android:background="@android:color/transparent"
+            android:layout_marginEnd="8dp" />
+
+        <!-- AI设置按钮 -->
+        <Button
+            android:id="@+id/btnAiSettings"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:text="⚙"
+            android:textSize="16sp"
+            android:textColor="@android:color/white"
+            android:background="@android:color/transparent" />
+
+    </LinearLayout>
+
+    <!-- 加载状态 -->
+    <TextView
+        android:id="@+id/tvLoadingStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="正在加载模型..."
+        android:textSize="16sp"
+        android:textColor="@color/splash_text_color"
+        android:gravity="center"
+        android:visibility="gone" />
+
+    <!-- 对话列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewChat"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/topBar"
+        android:layout_above="@+id/tvTypingIndicator"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:background="#20FFFFFF"
+        android:padding="16dp"
+        android:clipToPadding="false" />
+
+    <!-- 正在输入指示器 -->
+    <TextView
+        android:id="@+id/tvTypingIndicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/layoutInput"
+        android:layout_marginBottom="8dp"
+        android:text="AI正在思考..."
+        android:textSize="14sp"
+        android:textColor="@color/splash_text_color"
+        android:gravity="center"
+        android:visibility="gone" />
 
     <!-- 输入区域 -->
     <LinearLayout
-        android:id="@+id/layout_input"
+        android:id="@+id/layoutInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
         android:orientation="horizontal"
+        android:background="@drawable/input_background"
         android:padding="8dp"
-        android:background="@color/input_background"
         android:gravity="center_vertical">
 
         <EditText
-            android:id="@+id/et_message"
+            android:id="@+id/etMessage"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="输入消息..."
-            android:background="@drawable/bg_input_message"
+            android:textColor="@color/splash_text_color"
+            android:textColorHint="#80FFFFFF"
+            android:background="@android:color/transparent"
             android:padding="12dp"
             android:maxLines="4"
-            android:inputType="textMultiLine|textCapSentences"
-            android:imeOptions="actionSend"
-            android:layout_marginEnd="8dp" />
+            android:inputType="textMultiLine|textCapSentences" />
 
-        <ImageButton
-            android:id="@+id/btn_send"
+        <Button
+            android:id="@+id/btnSend"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_send"
-            android:background="@drawable/bg_send_button"
-            android:contentDescription="发送消息" />
+            android:text="➤"
+            android:textSize="18sp"
+            android:textColor="@color/splash_background_color"
+            android:background="@drawable/btn_send_background"
+            android:layout_marginStart="8dp" />
 
     </LinearLayout>
 
-</LinearLayout> 
+</RelativeLayout> 

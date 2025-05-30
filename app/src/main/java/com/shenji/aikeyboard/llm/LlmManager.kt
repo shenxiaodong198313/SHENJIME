@@ -203,6 +203,7 @@ class LlmManager private constructor(private val context: Context) {
             llmInference?.close()
             llmInference = null
             isInitialized = false
+            isInitializing = false
             scope.cancel()
             Log.d(TAG, "LLM资源已释放")
         } catch (e: Exception) {

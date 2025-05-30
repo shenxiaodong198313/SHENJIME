@@ -2,68 +2,117 @@ package com.shenji.aikeyboard.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
-import com.shenji.aikeyboard.databinding.ActivityLlmModelsBinding
-import com.shenji.aikeyboard.llm.LlmModel
-import com.shenji.aikeyboard.adapter.LlmModelsAdapter
+import com.shenji.aikeyboard.llm.LlmManager
+import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
- * LLM模型列表Activity
- * 显示可用的AI聊天模型列表
+ * Gemma大模型页面
+ * 使用与插件日志一致的样式设计
  */
 class LlmModelsActivity : AppCompatActivity() {
     
-    private lateinit var binding: ActivityLlmModelsBinding
-    private lateinit var modelsAdapter: LlmModelsAdapter
+    private lateinit var llmManager: LlmManager
+    private lateinit var tvModelStatus: TextView
+    private lateinit var btnStartChat: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityLlmModelsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        
+        // 设置全屏模式
+        setupFullScreenMode()
+        
+        setContentView(R.layout.activity_llm_models)
+        
+        // 隐藏ActionBar
+        supportActionBar?.hide()
         
         setupUI()
-        setupRecyclerView()
-        loadModels()
+        initializeLlm()
+    }
+    
+    /**
+     * 设置全屏模式
+     */
+    private fun setupFullScreenMode() {
+        try {
+            // 设置状态栏和导航栏颜色与背景一致
+            window.statusBarColor = getColor(R.color.splash_background_color)
+            window.navigationBarColor = getColor(R.color.splash_background_color)
+            
+            // 使用传统的全屏方法，更兼容
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            )
+        } catch (e: Exception) {
+            Timber.w("设置全屏模式失败: ${e.message}")
+        }
     }
     
     private fun setupUI() {
-        // 设置工具栏
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = "AI Chat models"
+        // 设置返回按钮
+        findViewById<Button>(R.id.btnBack)?.setOnClickListener {
+            finish()
         }
         
-        // 设置标题和描述
-        binding.tvTitle.text = "Chat with on-device large language models"
+        // 获取UI组件
+        tvModelStatus = findViewById(R.id.tvModelStatus)
+        btnStartChat = findViewById(R.id.btnStartChat)
+        
+        // 设置开始对话按钮点击事件
+        btnStartChat.setOnClickListener {
+            startChatActivity()
+        }
+        
+        // 初始状态
+        btnStartChat.isEnabled = false
+        tvModelStatus.text = "正在初始化模型..."
     }
     
-    private fun setupRecyclerView() {
-        modelsAdapter = LlmModelsAdapter { model ->
-            // 点击模型项，进入聊天界面
-            val intent = Intent(this, LlmChatActivity::class.java).apply {
-                putExtra("model_id", model.id)
-                putExtra("model_name", model.name)
+    private fun initializeLlm() {
+        llmManager = LlmManager.getInstance(this)
+        
+        lifecycleScope.launch {
+            try {
+                val success = llmManager.initialize()
+                
+                runOnUiThread {
+                    if (success) {
+                        tvModelStatus.text = "✅ Gemma-3-1B-IT-INT4 模型已就绪\n\n📱 本地运行，保护隐私\n🚀 快速响应，无需网络\n🧠 智能对话，理解上下文"
+                        btnStartChat.isEnabled = true
+                        btnStartChat.text = "开始对话"
+                    } else {
+                        tvModelStatus.text = "❌ 模型初始化失败\n\n请检查设备存储空间是否充足\n或重新启动应用重试"
+                        btnStartChat.text = "重试"
+                        btnStartChat.isEnabled = true
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    tvModelStatus.text = "❌ 模型加载出错：${e.message}"
+                    btnStartChat.text = "重试"
+                    btnStartChat.isEnabled = true
+                }
             }
+        }
+    }
+    
+    private fun startChatActivity() {
+        if (llmManager.isReady()) {
+            val intent = Intent(this, LlmChatActivity::class.java)
+            intent.putExtra("model_id", "gemma3-1b-it-int4")
+            intent.putExtra("model_name", "Gemma-3-1B-IT")
             startActivity(intent)
+        } else {
+            // 重新初始化
+            initializeLlm()
         }
-        
-        binding.recyclerViewModels.apply {
-            layoutManager = LinearLayoutManager(this@LlmModelsActivity)
-            adapter = modelsAdapter
-        }
-    }
-    
-    private fun loadModels() {
-        val models = LlmModel.getAvailableModels()
-        modelsAdapter.submitList(models)
-    }
-    
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
     }
 } 

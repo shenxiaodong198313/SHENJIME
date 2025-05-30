@@ -3,26 +3,38 @@ package com.shenji.aikeyboard.ui
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.shenji.aikeyboard.BuildConfig
-import com.shenji.aikeyboard.databinding.ActivityLlmChatBinding
+import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.llm.LlmManager
 import com.shenji.aikeyboard.adapter.ChatMessagesAdapter
 import com.shenji.aikeyboard.model.ChatMessage
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * LLM聊天Activity
- * 提供与AI模型的对话界面
+ * 使用与插件日志一致的样式设计
  */
 class LlmChatActivity : AppCompatActivity() {
     
-    private lateinit var binding: ActivityLlmChatBinding
     private lateinit var chatAdapter: ChatMessagesAdapter
     private lateinit var llmManager: LlmManager
+    
+    private lateinit var recyclerViewChat: RecyclerView
+    private lateinit var etMessage: EditText
+    private lateinit var btnSend: Button
+    private lateinit var tvLoadingStatus: TextView
+    private lateinit var tvTypingIndicator: TextView
+    private lateinit var btnClearChat: Button
+    private lateinit var btnAiSettings: Button
     
     private val chatMessages = mutableListOf<ChatMessage>()
     private var modelId: String = ""
@@ -30,8 +42,14 @@ class LlmChatActivity : AppCompatActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityLlmChatBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        
+        // 设置全屏模式
+        setupFullScreenMode()
+        
+        setContentView(R.layout.activity_llm_chat)
+        
+        // 隐藏ActionBar
+        supportActionBar?.hide()
         
         // 获取传递的参数
         modelId = intent.getStringExtra("model_id") ?: ""
@@ -43,14 +61,43 @@ class LlmChatActivity : AppCompatActivity() {
         setupClickListeners()
     }
     
-    private fun setupUI() {
-        // 设置工具栏
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = modelName
+    /**
+     * 设置全屏模式
+     */
+    private fun setupFullScreenMode() {
+        try {
+            // 设置状态栏和导航栏颜色与背景一致
+            window.statusBarColor = getColor(R.color.splash_background_color)
+            window.navigationBarColor = getColor(R.color.splash_background_color)
+            
+            // 使用传统的全屏方法，更兼容
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            )
+        } catch (e: Exception) {
+            Timber.w("设置全屏模式失败: ${e.message}")
         }
+    }
+    
+    private fun setupUI() {
+        // 设置返回按钮
+        findViewById<Button>(R.id.btnBack)?.setOnClickListener {
+            finish()
+        }
+        
+        // 设置页面标题
+        findViewById<TextView>(R.id.pageTitle)?.text = modelName
+        
+        // 获取UI组件
+        recyclerViewChat = findViewById(R.id.recyclerViewChat)
+        etMessage = findViewById(R.id.etMessage)
+        btnSend = findViewById(R.id.btnSend)
+        tvLoadingStatus = findViewById(R.id.tvLoadingStatus)
+        tvTypingIndicator = findViewById(R.id.tvTypingIndicator)
+        btnClearChat = findViewById(R.id.btnClearChat)
+        btnAiSettings = findViewById(R.id.btnAiSettings)
         
         // 显示初始化状态
         showLoadingState(true)
@@ -59,7 +106,7 @@ class LlmChatActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         chatAdapter = ChatMessagesAdapter()
         
-        binding.recyclerViewChat.apply {
+        recyclerViewChat.apply {
             layoutManager = LinearLayoutManager(this@LlmChatActivity)
             adapter = chatAdapter
         }
@@ -68,7 +115,7 @@ class LlmChatActivity : AppCompatActivity() {
     private fun setupLlmManager() {
         llmManager = LlmManager.getInstance(this)
         
-        // 初始化LLM
+        // 重新初始化LLM（确保资源可用）
         lifecycleScope.launch {
             val success = llmManager.initialize()
             
@@ -86,13 +133,22 @@ class LlmChatActivity : AppCompatActivity() {
     }
     
     private fun setupClickListeners() {
-        binding.btnSend.setOnClickListener {
+        btnSend.setOnClickListener {
             sendMessage()
         }
         
-        binding.etMessage.setOnEditorActionListener { _, _, _ ->
+        etMessage.setOnEditorActionListener { _, _, _ ->
             sendMessage()
             true
+        }
+        
+        btnClearChat.setOnClickListener {
+            clearChat()
+        }
+        
+        btnAiSettings.setOnClickListener {
+            // TODO: 实现AI设置页面
+            Toast.makeText(this, "AI设置功能即将推出", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -109,11 +165,11 @@ class LlmChatActivity : AppCompatActivity() {
     }
     
     private fun sendMessage() {
-        val messageText = binding.etMessage.text.toString().trim()
+        val messageText = etMessage.text.toString().trim()
         if (messageText.isEmpty()) return
         
         // 清空输入框
-        binding.etMessage.text.clear()
+        etMessage.text.clear()
         
         // 添加用户消息
         val userMessage = ChatMessage(
@@ -200,46 +256,49 @@ class LlmChatActivity : AppCompatActivity() {
         }
     }
     
+    private fun clearChat() {
+        chatMessages.clear()
+        chatAdapter.submitList(chatMessages.toList())
+        addWelcomeMessage()
+        Toast.makeText(this, "对话已清除", Toast.LENGTH_SHORT).show()
+    }
+    
     private fun showLoadingState(isLoading: Boolean) {
-        binding.apply {
-            if (isLoading) {
-                progressBar.visibility = View.VISIBLE
-                tvLoadingStatus.visibility = View.VISIBLE
-                tvLoadingStatus.text = "正在加载模型..."
-                layoutInput.visibility = View.GONE
-            } else {
-                progressBar.visibility = View.GONE
-                tvLoadingStatus.visibility = View.GONE
-                layoutInput.visibility = View.VISIBLE
-            }
+        if (isLoading) {
+            tvLoadingStatus.visibility = View.VISIBLE
+            tvLoadingStatus.text = "正在加载模型..."
+            recyclerViewChat.visibility = View.GONE
+            findViewById<View>(R.id.layoutInput).visibility = View.GONE
+        } else {
+            tvLoadingStatus.visibility = View.GONE
+            recyclerViewChat.visibility = View.VISIBLE
+            findViewById<View>(R.id.layoutInput).visibility = View.VISIBLE
         }
     }
     
     private fun showTypingIndicator(isTyping: Boolean) {
-        binding.apply {
-            if (isTyping) {
-                tvTypingIndicator.visibility = View.VISIBLE
-                tvTypingIndicator.text = "AI正在思考..."
-            } else {
-                tvTypingIndicator.visibility = View.GONE
-            }
+        if (isTyping) {
+            tvTypingIndicator.visibility = View.VISIBLE
+            tvTypingIndicator.text = "AI正在思考..."
+        } else {
+            tvTypingIndicator.visibility = View.GONE
         }
     }
     
     private fun scrollToBottom() {
         if (chatMessages.isNotEmpty()) {
-            binding.recyclerViewChat.smoothScrollToPosition(chatMessages.size - 1)
+            recyclerViewChat.smoothScrollToPosition(chatMessages.size - 1)
         }
-    }
-    
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        // 注意：不要在这里释放LlmManager，因为它是单例
-        // llmManager.release()
+        // 离开对话页面时释放LLM资源
+        try {
+            llmManager.release()
+            Timber.d("LLM资源已释放")
+        } catch (e: Exception) {
+            Timber.w("释放LLM资源失败: ${e.message}")
+        }
     }
 } 

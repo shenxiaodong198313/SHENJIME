@@ -1,78 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/background_color">
+    android:background="@color/splash_background_color"
+    android:padding="32dp"
+    tools:context=".ui.LlmModelsActivity">
 
-    <!-- 工具栏 -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary_color"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+    <!-- 左上角返回按钮 -->
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:text="&lt;"
+        android:textSize="20sp"
+        android:textColor="@android:color/white"
+        android:background="@android:color/transparent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="16dp" />
 
-    <!-- 内容区域 -->
+    <!-- 页面标题 -->
+    <TextView
+        android:id="@+id/pageTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Gemma大模型"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/splash_text_color"
+        android:layout_alignTop="@+id/btnBack"
+        android:layout_alignBottom="@+id/btnBack"
+        android:layout_toEndOf="@+id/btnBack"
+        android:layout_marginStart="10sp"
+        android:gravity="center_vertical" />
+
+    <!-- 模型状态内容区域 -->
     <ScrollView
+        android:id="@+id/modelStatusScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_below="@+id/pageTitle"
+        android:layout_above="@+id/btnStartChat"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="16dp"
+        android:background="#20FFFFFF"
+        android:padding="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:gravity="center">
 
-            <!-- 标题 -->
+            <!-- 模型图标 -->
+            <ImageView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/ic_ai_model"
+                android:layout_marginBottom="24dp"
+                android:tint="@color/splash_text_color" />
+
+            <!-- 模型状态文本 -->
             <TextView
-                android:id="@+id/tv_title"
+                android:id="@+id/tvModelStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Chat with on-device large language models"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="8dp" />
-
-            <!-- API文档链接 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="📄 API Documentation"
-                    android:textColor="@color/link_color"
-                    android:textSize="14sp"
-                    android:layout_marginEnd="16dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="💻 Example code"
-                    android:textColor="@color/link_color"
-                    android:textSize="14sp" />
-
-            </LinearLayout>
-
-            <!-- 模型列表 -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_view_models"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                tools:listitem="@layout/item_llm_model" />
+                android:text="正在初始化模型..."
+                android:textSize="16sp"
+                android:textColor="@color/splash_text_color"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp" />
 
         </LinearLayout>
-
     </ScrollView>
 
-</LinearLayout> 
+    <!-- 开始对话按钮 -->
+    <Button
+        android:id="@+id/btnStartChat"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+        android:text="开始对话"
+        android:textSize="16sp"
+        android:textColor="@color/splash_background_color"
+        android:background="@drawable/btn_white_background"
+        android:enabled="false" />
+
+</RelativeLayout> 
