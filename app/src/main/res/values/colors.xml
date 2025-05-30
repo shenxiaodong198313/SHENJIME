@@ -47,4 +47,17 @@
     <!-- 启动页颜色 -->
     <color name="splash_background_color">#4B4BFD</color>
     <color name="splash_text_color">#FFFFFF</color>
+    
+    <!-- LLM相关颜色 -->
+    <color name="primary_color">#FF2196F3</color>
+    <color name="primary_light">#FFE3F2FD</color>
+    <color name="background_color">#FFF5F5F5</color>
+    <color name="text_primary">#FF212121</color>
+    <color name="text_secondary">#FF757575</color>
+    <color name="link_color">#FF1976D2</color>
+    <color name="tag_background">#FFE0E0E0</color>
+    <color name="ai_message_background">#FFFFFFFF</color>
+    <color name="message_border">#FFE0E0E0</color>
+    <color name="input_background">#FFFFFFFF</color>
+    <color name="input_border">#FFCCCCCC</color>
 </resources> 

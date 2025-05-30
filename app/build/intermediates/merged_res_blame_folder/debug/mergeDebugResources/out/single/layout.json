@@ -28,6 +28,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/layout/item_dictionary_entry.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/item_chat_message_ai.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/item_chat_message_ai.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/activity_log_detail.xml",
         "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_log_detail.xml"
     },
@@ -84,6 +88,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/layout/view_dictionary_status.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/item_chat_message_user.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/item_chat_message_user.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/activity_fuzzy_pinyin_settings.xml",
         "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_fuzzy_pinyin_settings.xml"
     },
@@ -116,6 +124,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_vu_conversion_test.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/item_llm_model.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/item_llm_model.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/keyboard_layout.xml",
         "source": "com.shenji.aikeyboard.app-main-6:/layout/keyboard_layout.xml"
     },
@@ -144,6 +156,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/layout/dialog_build_trie_settings.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/activity_llm_chat.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_llm_chat.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/number_keyboard_layout.xml",
         "source": "com.shenji.aikeyboard.app-main-6:/layout/number_keyboard_layout.xml"
     },
@@ -166,5 +182,9 @@
     {
         "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/shimmer_dictionary_module.xml",
         "source": "com.shenji.aikeyboard.app-main-6:/layout/shimmer_dictionary_module.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/activity_llm_models.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_llm_models.xml"
     }
 ]

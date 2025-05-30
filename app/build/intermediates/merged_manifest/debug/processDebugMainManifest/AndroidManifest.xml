@@ -5,13 +5,13 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="28"
-        android:targetSdkVersion="34" />
+        android:minSdkVersion="24"
+        android:targetSdkVersion="35" />
 
     <!-- 写入外部存储权限（日志写入） -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
+        android:maxSdkVersion="28" />
     <!-- Android 10+需要此权限 -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -25,15 +25,20 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
 
-    <!-- 网络权限（用于下载模型文件） -->
+    <!-- 网络权限（用于下载模型文件和LLM推理） -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <!-- Android 10+ 需要特殊权限 -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <!-- 添加获取应用使用统计的权限 -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
+    <!-- LLM集成相关权限 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <permission
         android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -51,6 +56,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:largeHeap="true"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SHENJI"
@@ -105,6 +111,20 @@
             android:name="com.shenji.aikeyboard.ui.ContinuousPinyinTestActivity"
             android:exported="true"
             android:label="连续拼音测试"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- LLM模型列表活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.LlmModelsActivity"
+            android:exported="true"
+            android:label="AI Chat models"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- LLM聊天活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.LlmChatActivity"
+            android:exported="false"
+            android:label="AI Chat"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 输入法服务 -->
@@ -181,6 +201,19 @@
                 android:name="androidx.profileinstaller.ProfileInstallerInitializer"
                 android:value="androidx.startup" />
         </provider>
+        <!--
+             Applications that target Android S+ require explicit declaration of
+             any referenced vendor-provided libraries.
+        -->
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-car.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-pixel.so"
+            android:required="false" />
 
         <receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"

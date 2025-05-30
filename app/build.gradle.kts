@@ -6,18 +6,18 @@ plugins {
 
 android {
     namespace = "com.shenji.aikeyboard"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.shenji.aikeyboard"
-        minSdk = 28 // Android 9
-        targetSdk = 34 // Android 15
+        minSdk = 24 // 降低到24以支持更多设备
+        targetSdk = 35 // 升级到最新
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        // 增加内存配置
+        // 增加内存配置以支持LLM
         multiDexEnabled = true
         
         // NDK配置 - 暂时禁用
@@ -61,28 +61,32 @@ android {
     */
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
     
     kotlin {
-        jvmToolchain(17)
+        jvmToolchain(21)
     }
     
     // 增加编译时内存
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "17"
+            jvmTarget = "21"
         }
     }
     
     // 打包配置
-    packagingOptions {
-        pickFirst("**/libc++_shared.so")
+    packaging {
+        jniLibs {
+            pickFirsts.add("**/libc++_shared.so")
+            pickFirsts.add("**/libtensorflowlite_jni.so")
+            pickFirsts.add("**/libtensorflowlite_gpu_jni.so")
+        }
     }
 }
 
@@ -113,6 +117,9 @@ dependencies {
     
     // Timber for logging
     implementation("com.jakewharton.timber:timber:5.0.1")
+    
+    // MediaPipe LLM集成
+    implementation("com.google.mediapipe:tasks-genai:0.10.24")
     
     // Testing
     testImplementation("junit:junit:4.13.2")

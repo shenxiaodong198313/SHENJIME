@@ -1,6 +1,8 @@
 R_DEF: Internal format may change without notice
 local
 anim candidate_flash
+color ai_message_background
+color background_color
 color black
 color candidate_other
 color candidate_text
@@ -13,6 +15,8 @@ color colorPrimaryDark
 color divider
 color error_red
 color info_background
+color input_background
+color input_border
 color key_text
 color keyboard_background
 color keyboard_border
@@ -25,8 +29,12 @@ color keyboard_special_key_bg
 color keyboard_special_key_pressed
 color keyboard_text
 color light_gray
+color link_color
+color message_border
 color pinyin_text
 color primary_blue
+color primary_color
+color primary_light
 color purple_200
 color purple_500
 color purple_700
@@ -35,16 +43,26 @@ color shimmer_color
 color splash_background_color
 color splash_text_color
 color success_green
+color tag_background
 color teal_200
 color teal_50
 color teal_700
+color text_primary
+color text_secondary
 color warning_orange
 color white
 dimen candidate_divider_height
 dimen candidate_word_margin
 drawable appcon
 drawable appicon
+drawable bg_ai_avatar
+drawable bg_ai_message
+drawable bg_input_message
+drawable bg_model_icon
 drawable bg_permission_needed
+drawable bg_send_button
+drawable bg_size_tag
+drawable bg_user_message
 drawable button_outline
 drawable button_primary
 drawable button_refresh_background
@@ -57,8 +75,10 @@ drawable candidate_word_selected_bg
 drawable circle_background
 drawable edit_text_background
 drawable ic_ai_assistant
+drawable ic_ai_avatar
 drawable ic_app_icon
 drawable ic_arrow_down
+drawable ic_arrow_forward
 drawable ic_backspace
 drawable ic_collapse_arrow
 drawable ic_comment
@@ -69,8 +89,10 @@ drawable ic_keyboard_icon
 drawable ic_lang_switch
 drawable ic_mic
 drawable ic_microphone
+drawable ic_model
 drawable ic_order
 drawable ic_plan
+drawable ic_send
 drawable ic_shift_up
 drawable ic_smile_face
 drawable ic_space
@@ -148,6 +170,7 @@ id btnEnableImeContainer
 id btnExportRealm
 id btnFuzzySettings
 id btnImeSettingsContainer
+id btnLlmInferenceContainer
 id btnLogsContainer
 id btnOptimizedTestContainer
 id btnRebuildRealm
@@ -159,6 +182,7 @@ id btn_clear_results
 id btn_copy
 id btn_quick_test
 id btn_run_test
+id btn_send
 id btn_test
 id buildDictButton
 id build_progress
@@ -308,12 +332,14 @@ id etBatchSize
 id etMaxNodesPerBatch
 id etNumWorkers
 id et_input
+id et_message
 id expandIconImageView
 id expand_candidates_button
 id fragment_container
 id frequency_filter_spinner
 id generateTestButton
 id input_edit_text
+id iv_status
 id key_0
 id key_1
 id key_2
@@ -359,6 +385,7 @@ id key_w
 id key_x
 id key_y
 id key_z
+id layout_input
 id lengthTest1to2Button
 id lengthTest1to3Button
 id lengthTest1to4Button
@@ -449,9 +476,12 @@ id pinyin_display
 id plan_icon
 id progressBar
 id progressBarLoading
+id progress_bar
 id query_condition_text_view
 id query_process_text_view
 id realm_status_text
+id recycler_view_chat
+id recycler_view_models
 id refresh_button
 id refresh_logs_button
 id request_permission_button
@@ -625,6 +655,11 @@ id tvWord
 id tv_candidate_weight
 id tv_candidate_word
 id tv_frequency
+id tv_loading_status
+id tv_message
+id tv_model_description
+id tv_model_name
+id tv_model_size
 id tv_performance
 id tv_pinyin
 id tv_rank
@@ -633,6 +668,8 @@ id tv_results
 id tv_source
 id tv_stage_results
 id tv_stage_title
+id tv_title
+id tv_typing_indicator
 id tv_word
 layout activity_combination_test
 layout activity_continuous_pinyin_test
@@ -642,6 +679,8 @@ layout activity_fragment_container
 layout activity_fuzzy_pinyin_settings
 layout activity_input_debug
 layout activity_input_method_settings
+layout activity_llm_chat
+layout activity_llm_models
 layout activity_log_detail
 layout activity_main
 layout activity_pinyin_test
@@ -661,6 +700,8 @@ layout fragment_permission_check
 layout fragment_pinyin_test
 layout fragment_verification_code
 layout item_candidate
+layout item_chat_message_ai
+layout item_chat_message_user
 layout item_check_result
 layout item_debug_stage
 layout item_debug_weight
@@ -668,6 +709,7 @@ layout item_dictionary_entry
 layout item_dictionary_group_header
 layout item_dictionary_log
 layout item_dictionary_module
+layout item_llm_model
 layout keyboard_layout
 layout number_keyboard_layout
 layout shimmer_dictionary_module

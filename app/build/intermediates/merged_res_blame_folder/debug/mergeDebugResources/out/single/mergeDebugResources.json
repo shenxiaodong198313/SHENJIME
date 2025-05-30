@@ -20,6 +20,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/xml/file_paths.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_ai_avatar.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_ai_avatar.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_bg_permission_needed.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/bg_permission_needed.xml"
     },
@@ -44,8 +48,16 @@
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/candidate_word_bg.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_bg_input_message.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/bg_input_message.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-4:/xml_method.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/xml/method.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_bg_size_tag.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/bg_size_tag.xml"
     },
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_keyboard_special_key_bg.xml.flat",
@@ -80,6 +92,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/keyboard_function_key_bg.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_bg_model_icon.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/bg_model_icon.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-4:/mipmap-hdpi_ic_launcher_round.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/mipmap-hdpi/ic_launcher_round.xml"
     },
@@ -102,6 +118,10 @@
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_keyboard_icon.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_keyboard_icon.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_activity_llm_chat.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_llm_chat.xml"
     },
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/layout_item_dictionary_entry.xml.flat",
@@ -152,6 +172,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/mipmap-xxxhdpi/appicon.png"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_item_chat_message_user.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/item_chat_message_user.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-4:/mipmap-ldpi_ic_launcher.png.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/mipmap-ldpi/ic_launcher.png"
     },
@@ -170,6 +194,18 @@
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/mipmap-mdpi_ic_launcher.png.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_arrow_forward.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_arrow_forward.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_item_chat_message_ai.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/item_chat_message_ai.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_activity_llm_models.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_llm_models.xml"
     },
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_comment.png.flat",
@@ -220,6 +256,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/layout/candidates_view.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_bg_send_button.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/bg_send_button.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_shift_up.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_shift_up.xml"
     },
@@ -268,6 +308,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/candidate_background.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_send.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_send.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_du_icon.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_du_icon.xml"
     },
@@ -312,6 +356,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_plan.png"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_item_llm_model.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/item_llm_model.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_microphone.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_microphone.xml"
     },
@@ -352,6 +400,10 @@
         "source": "com.shenji.aikeyboard.app-main-6:/layout/fragment_verification_code.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_bg_ai_message.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/bg_ai_message.xml"
+    },
+    {
         "merged": "com.shenji.aikeyboard.app-debug-4:/layout_shimmer_dictionary_module.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/layout/shimmer_dictionary_module.xml"
     },
@@ -366,6 +418,10 @@
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/layout_activity_combination_test.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/layout/activity_combination_test.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_model.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/ic_model.xml"
     },
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ic_smile_face.xml.flat",
@@ -402,6 +458,14 @@
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/layout_dialog_dictionary_settings.xml.flat",
         "source": "com.shenji.aikeyboard.app-main-6:/layout/dialog_dictionary_settings.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_bg_user_message.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/bg_user_message.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_bg_ai_avatar.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/bg_ai_avatar.xml"
     },
     {
         "merged": "com.shenji.aikeyboard.app-debug-4:/mipmap-xhdpi_ic_launcher.png.flat",

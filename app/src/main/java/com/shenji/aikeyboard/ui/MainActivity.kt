@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnImeSettings: Button
     private lateinit var btnLogs: Button
     private lateinit var btnOptimizedTest: Button
+    private lateinit var btnLlmInference: Button
     private lateinit var appIconTop: ImageView
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,6 +140,12 @@ class MainActivity : AppCompatActivity() {
             "候选词引擎测试"
         ) { openOptimizedCandidateTest() }.also { btnOptimizedTest = it }
         
+        // 创建LLM推理按钮
+        createWhiteButton(
+            R.id.btnLlmInferenceContainer,
+            "AI智能推理"
+        ) { openLlmInference() }.also { btnLlmInference = it }
+        
         Log.d("MainActivity", "所有按钮创建完成")
     }
     
@@ -225,6 +232,20 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "打开候选词引擎测试失败: ${e.message}", e)
             Toast.makeText(this, "无法打开候选词引擎测试: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 打开LLM推理
+     */
+    private fun openLlmInference() {
+        try {
+            Timber.d("打开LLM推理")
+            val intent = Intent(this, LlmModelsActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开LLM推理失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开LLM推理: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
