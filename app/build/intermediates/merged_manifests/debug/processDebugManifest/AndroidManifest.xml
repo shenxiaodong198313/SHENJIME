@@ -127,6 +127,13 @@
             android:label="AI Chat"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- AI功能测试活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.AITestActivity"
+            android:exported="false"
+            android:label="AI功能测试"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- 输入法服务 -->
         <service
             android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"

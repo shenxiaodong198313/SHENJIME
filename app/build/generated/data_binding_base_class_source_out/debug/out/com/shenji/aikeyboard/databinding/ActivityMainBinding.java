@@ -29,6 +29,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView appNameTopLeft;
 
   @NonNull
+  public final FrameLayout btnAiTestContainer;
+
+  @NonNull
   public final FrameLayout btnImeSettingsContainer;
 
   @NonNull
@@ -47,13 +50,14 @@ public final class ActivityMainBinding implements ViewBinding {
   public final RelativeLayout mainContainer;
 
   private ActivityMainBinding(@NonNull RelativeLayout rootView, @NonNull ImageView appIconTop,
-      @NonNull TextView appNameTopLeft, @NonNull FrameLayout btnImeSettingsContainer,
-      @NonNull FrameLayout btnLlmInferenceContainer, @NonNull FrameLayout btnLogsContainer,
-      @NonNull FrameLayout btnOptimizedTestContainer, @NonNull LinearLayout mainButtonContainer,
-      @NonNull RelativeLayout mainContainer) {
+      @NonNull TextView appNameTopLeft, @NonNull FrameLayout btnAiTestContainer,
+      @NonNull FrameLayout btnImeSettingsContainer, @NonNull FrameLayout btnLlmInferenceContainer,
+      @NonNull FrameLayout btnLogsContainer, @NonNull FrameLayout btnOptimizedTestContainer,
+      @NonNull LinearLayout mainButtonContainer, @NonNull RelativeLayout mainContainer) {
     this.rootView = rootView;
     this.appIconTop = appIconTop;
     this.appNameTopLeft = appNameTopLeft;
+    this.btnAiTestContainer = btnAiTestContainer;
     this.btnImeSettingsContainer = btnImeSettingsContainer;
     this.btnLlmInferenceContainer = btnLlmInferenceContainer;
     this.btnLogsContainer = btnLogsContainer;
@@ -101,6 +105,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnAiTestContainer;
+      FrameLayout btnAiTestContainer = ViewBindings.findChildViewById(rootView, id);
+      if (btnAiTestContainer == null) {
+        break missingId;
+      }
+
       id = R.id.btnImeSettingsContainer;
       FrameLayout btnImeSettingsContainer = ViewBindings.findChildViewById(rootView, id);
       if (btnImeSettingsContainer == null) {
@@ -134,7 +144,7 @@ public final class ActivityMainBinding implements ViewBinding {
       RelativeLayout mainContainer = (RelativeLayout) rootView;
 
       return new ActivityMainBinding((RelativeLayout) rootView, appIconTop, appNameTopLeft,
-          btnImeSettingsContainer, btnLlmInferenceContainer, btnLogsContainer,
+          btnAiTestContainer, btnImeSettingsContainer, btnLlmInferenceContainer, btnLogsContainer,
           btnOptimizedTestContainer, mainButtonContainer, mainContainer);
     }
     String missingId = rootView.getResources().getResourceName(id);

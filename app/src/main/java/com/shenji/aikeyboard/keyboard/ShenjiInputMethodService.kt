@@ -18,6 +18,7 @@ import kotlinx.coroutines.*
 import timber.log.Timber
 import android.graphics.Color
 import kotlinx.coroutines.Dispatchers
+import com.shenji.aikeyboard.ai.CorrectionSuggestion
 
 class ShenjiInputMethodService : InputMethodService() {
     
@@ -47,11 +48,10 @@ class ShenjiInputMethodService : InputMethodService() {
     // 拼音显示TextView
     private lateinit var pinyinDisplay: TextView
     
-    // 应用名称显示TextView
-    private lateinit var appNameDisplay: TextView
-    
-    // 应用图标ImageView
-    private lateinit var appIcon: ImageView
+    // AI建议显示相关组件
+    private lateinit var aiSuggestionContainer: LinearLayout
+    private lateinit var aiSuggestionText: TextView
+    private lateinit var aiConfidenceIndicator: TextView
     
     // 当前输入的拼音
     private var composingText = StringBuilder()
@@ -841,8 +841,11 @@ class ShenjiInputMethodService : InputMethodService() {
             
             // 初始化拼音显示区域
             pinyinDisplay = candidatesViewLayout.findViewById(R.id.pinyin_display)
-            appNameDisplay = candidatesViewLayout.findViewById(R.id.app_name_display)
-            appIcon = candidatesViewLayout.findViewById(R.id.app_icon)
+            
+            // 初始化AI建议显示区域
+            aiSuggestionContainer = candidatesViewLayout.findViewById(R.id.ai_suggestion_container)
+            aiSuggestionText = candidatesViewLayout.findViewById(R.id.ai_suggestion_text)
+            aiConfidenceIndicator = candidatesViewLayout.findViewById(R.id.ai_confidence_indicator)
             // 初始化工具栏
             toolbarView = candidatesViewLayout.findViewById(R.id.toolbar_view)
             
@@ -1985,6 +1988,8 @@ class ShenjiInputMethodService : InputMethodService() {
             defaultCandidatesView.visibility = View.GONE
             // 隐藏候选词区域时显示工具栏
             toolbarView.visibility = View.VISIBLE
+            // 同时隐藏AI建议
+            hideAISuggestion()
             
             Timber.d("🎯 隐藏候选词区域，显示工具栏")
         }
@@ -2118,6 +2123,14 @@ class ShenjiInputMethodService : InputMethodService() {
                         // 🔧 修复：使用增强的显示方法，确保可靠显示
                         displayCandidatesDirectlyEnhanced(result)
                         
+                        // 🤖 显示AI建议 - 基于第一个候选词生成建议
+                        val firstCandidate = result.firstOrNull()
+                        if (firstCandidate != null && input.length >= 2) {
+                            val suggestion = generateAISuggestion(input, firstCandidate.word)
+                            val confidence = calculateConfidence(input, firstCandidate)
+                            showAISuggestion(suggestion, confidence)
+                        }
+                        
                         Timber.d("🎯 候选词显示成功: ${result.take(3).map { it.word }}")
                         
                         // 🔧 修复：显示后验证结果
@@ -2132,6 +2145,7 @@ class ShenjiInputMethodService : InputMethodService() {
                         }
                     } else {
                         displayNoResultsDirectly()
+                        hideAISuggestion() // 无结果时隐藏AI建议
                         Timber.w("🎯 无候选词结果")
                     }
                     
@@ -3355,11 +3369,10 @@ class ShenjiInputMethodService : InputMethodService() {
             }
         }
         
-        // 获取并显示当前应用名称
-        if (::appNameDisplay.isInitialized) {
-            val packageName = info?.packageName ?: ""
-            appNameDisplay.text = getAppNameFromPackage(packageName)
-            Timber.d("当前应用: ${appNameDisplay.text}")
+        // 初始化AI建议显示状态
+        if (::aiSuggestionContainer.isInitialized) {
+            aiSuggestionContainer.visibility = View.GONE
+            Timber.d("AI建议区域已初始化并隐藏")
         }
         
         // 清空初始化状态，确保没有硬编码的"w"等字符
@@ -3413,38 +3426,93 @@ class ShenjiInputMethodService : InputMethodService() {
         Timber.d("输入法接口初始化，清空所有状态")
     }
     
-    // 获取应用名称和图标
-    private fun getAppNameFromPackage(packageName: String): String {
-        if (packageName.isEmpty()) return ""
-        
-        val packageManager = packageManager
+    /**
+     * 显示AI建议
+     */
+    private fun showAISuggestion(suggestion: String, confidence: Float) {
         try {
-            val appInfo = packageManager.getApplicationInfo(packageName, 0)
-            val appName = packageManager.getApplicationLabel(appInfo).toString()
-            
-            // 设置应用图标
-            try {
-                val appIcon = packageManager.getApplicationIcon(packageName)
-                if (::appIcon.isInitialized) {
-                    this.appIcon.setImageDrawable(appIcon)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "获取应用图标失败")
-                // 如果获取失败，使用默认图标
-                if (::appIcon.isInitialized) {
-                    this.appIcon.setImageResource(android.R.drawable.ic_menu_info_details)
-                }
+            if (::aiSuggestionContainer.isInitialized && 
+                ::aiSuggestionText.isInitialized && 
+                ::aiConfidenceIndicator.isInitialized) {
+                
+                // 设置建议文本
+                aiSuggestionText.text = suggestion
+                
+                // 设置置信度星级显示
+                val stars = (confidence * 5).toInt()
+                val starDisplay = "★".repeat(stars) + "☆".repeat(5 - stars)
+                aiConfidenceIndicator.text = starDisplay
+                
+                // 显示AI建议容器
+                aiSuggestionContainer.visibility = View.VISIBLE
+                
+                // 添加淡入动画
+                aiSuggestionContainer.alpha = 0f
+                aiSuggestionContainer.animate()
+                    .alpha(1f)
+                    .setDuration(200)
+                    .start()
+                
+                Timber.d("🤖 显示AI建议: '$suggestion' (置信度: ${(confidence * 100).toInt()}%)")
             }
-            
-            return "${appName}插件已加持"
         } catch (e: Exception) {
-            Timber.e(e, "获取应用信息失败")
-            // 设置默认图标
-            if (::appIcon.isInitialized) {
-                this.appIcon.setImageResource(android.R.drawable.ic_menu_info_details)
-            }
-            return "插件已加持"
+            Timber.e(e, "显示AI建议失败: ${e.message}")
         }
+    }
+    
+    /**
+     * 隐藏AI建议
+     */
+    private fun hideAISuggestion() {
+        try {
+            if (::aiSuggestionContainer.isInitialized) {
+                aiSuggestionContainer.animate()
+                    .alpha(0f)
+                    .setDuration(150)
+                    .withEndAction {
+                        aiSuggestionContainer.visibility = View.GONE
+                    }
+                    .start()
+                
+                Timber.d("🤖 隐藏AI建议")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "隐藏AI建议失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 生成AI建议文本
+     */
+    private fun generateAISuggestion(input: String, topCandidate: String): String {
+        return when {
+            input.length >= 4 -> "推荐: $topCandidate"
+            input.length >= 3 -> "建议: $topCandidate"
+            else -> topCandidate
+        }
+    }
+    
+    /**
+     * 计算AI建议的置信度
+     */
+    private fun calculateConfidence(input: String, candidate: WordFrequency): Float {
+        // 基于频率和输入长度计算置信度
+        val baseConfidence = when {
+            candidate.frequency > 1000 -> 0.9f
+            candidate.frequency > 500 -> 0.8f
+            candidate.frequency > 100 -> 0.7f
+            candidate.frequency > 50 -> 0.6f
+            else -> 0.5f
+        }
+        
+        // 输入长度调整
+        val lengthBonus = when {
+            input.length >= 4 -> 0.1f
+            input.length >= 3 -> 0.05f
+            else -> 0f
+        }
+        
+        return (baseConfidence + lengthBonus).coerceIn(0.3f, 1.0f)
     }
     
     /**
@@ -3559,6 +3627,34 @@ class ShenjiInputMethodService : InputMethodService() {
             }
         } catch (e: Exception) {
             Timber.e(e, "检查Trie状态失败: ${e.message}")
+        }
+    }
+    
+    // ==================== AI智能提示功能 ====================
+    
+    /**
+     * 显示智能提示
+     */
+    fun showSmartTips(suggestion: CorrectionSuggestion) {
+        try {
+            // 这里可以实现智能提示的显示逻辑
+            // 暂时使用日志记录，后续可以扩展UI显示
+            Timber.d("🤖 显示智能提示: ${suggestion.correctedText} (置信度: ${(suggestion.confidence * 100).toInt()}%)")
+        } catch (e: Exception) {
+            Timber.e(e, "显示智能提示失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 隐藏智能提示
+     */
+    fun hideSmartTips() {
+        try {
+            // 这里可以实现隐藏智能提示的逻辑
+            // 暂时使用日志记录，后续可以扩展UI隐藏
+            Timber.d("🤖 隐藏智能提示")
+        } catch (e: Exception) {
+            Timber.e(e, "隐藏智能提示失败: ${e.message}")
         }
     }
     

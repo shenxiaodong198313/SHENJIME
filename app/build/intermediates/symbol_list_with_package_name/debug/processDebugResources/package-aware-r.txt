@@ -3056,6 +3056,7 @@ drawable abc_textfield_search_activated_mtrl_alpha
 drawable abc_textfield_search_default_mtrl_alpha
 drawable abc_textfield_search_material
 drawable abc_vector_test
+drawable ai_suggestion_background
 drawable appcon
 drawable appicon
 drawable avd_hide_password
@@ -3068,6 +3069,7 @@ drawable bg_permission_needed
 drawable bg_send_button
 drawable bg_size_tag
 drawable bg_user_message
+drawable btn_back_background
 drawable btn_checkbox_checked_mtrl
 drawable btn_checkbox_checked_to_unchecked_mtrl_animation
 drawable btn_checkbox_unchecked_mtrl
@@ -3097,6 +3099,7 @@ drawable edit_text_background
 drawable ic_ai_assistant
 drawable ic_ai_avatar
 drawable ic_ai_model
+drawable ic_ai_suggestion
 drawable ic_app_icon
 drawable ic_arrow_back_black_24
 drawable ic_arrow_down
@@ -3110,6 +3113,7 @@ drawable ic_call_decline
 drawable ic_call_decline_low
 drawable ic_clear_black_24
 drawable ic_clock_black_24dp
+drawable ic_close
 drawable ic_collapse_arrow
 drawable ic_comment
 drawable ic_du_icon
@@ -3221,6 +3225,7 @@ drawable notification_template_icon_bg
 drawable notification_template_icon_low_bg
 drawable notification_tile_bg
 drawable notify_panel_notification_icon_bg
+drawable smart_tips_background
 drawable splash_background
 drawable test_level_drawable
 drawable tooltip_frame_dark
@@ -3307,6 +3312,10 @@ id action_vu_conversion_test
 id actions
 id activity_chooser_view_content
 id add
+id ai_confidence_indicator
+id ai_suggestion_container
+id ai_suggestion_icon
+id ai_suggestion_text
 id alertTitle
 id aligned
 id all
@@ -3321,9 +3330,7 @@ id appIconTop
 id appNameTopLeft
 id appSubtitle
 id appTitle
-id app_icon
 id app_icon_toolbar
-id app_name_display
 id arc
 id asConfigured
 id async
@@ -3375,6 +3382,7 @@ id bracket_rsquare
 id bracket_rsquare2
 id bracket_single_quote
 id btnAiSettings
+id btnAiTestContainer
 id btnBack
 id btnBuildTrie
 id btnCancel
@@ -3395,6 +3403,9 @@ id btnSend
 id btnSetDefaultImeContainer
 id btnStart
 id btnStartChat
+id btnTestContinuation
+id btnTestCorrection
+id btnTestSemantic
 id btn_back
 id btn_clear
 id btn_clear_results
@@ -3406,6 +3417,7 @@ id buildDictButton
 id build_progress
 id build_status_text
 id buttonContainer
+id buttonLayout
 id buttonPanel
 id cache_measures
 id callMeasure
@@ -3629,6 +3641,7 @@ id enterAlways
 id enterAlwaysCollapsed
 id escape
 id etBatchSize
+id etInput
 id etMaxNodesPerBatch
 id etMessage
 id etNumWorkers
@@ -3683,11 +3696,14 @@ id immediateStop
 id included
 id indeterminate
 id info
+id inputLayout
 id input_edit_text
 id invisible
 id inward
 id italic
 id item_touch_helper_previous_elevation
+id iv_ai_icon
+id iv_close
 id iv_status
 id jumpToEnd
 id jumpToStart
@@ -4025,6 +4041,7 @@ id sin
 id skipCollapsed
 id skipped
 id slide
+id smart_tips_container
 id snackbar_action
 id snackbar_text
 id snap
@@ -4051,6 +4068,7 @@ id startToEnd
 id startVertical
 id staticLayout
 id staticPostLayout
+id statusLayout
 id statusText
 id status_text_view
 id stop
@@ -4209,6 +4227,7 @@ id thread_count_display
 id thread_count_seekbar
 id time
 id title
+id titleBar
 id titleDividerNoCustom
 id title_template
 id title_text
@@ -4256,6 +4275,8 @@ id tvModelStatus
 id tvNoLogs
 id tvPinyin
 id tvRebuildRealmDesc
+id tvResult
+id tvStatus
 id tvTypingIndicator
 id tvWord
 id tv_candidate_weight
@@ -4270,6 +4291,7 @@ id tv_pinyin
 id tv_rank
 id tv_result
 id tv_results
+id tv_smart_tips
 id tv_source
 id tv_stage_results
 id tv_stage_title
@@ -4411,6 +4433,7 @@ layout abc_search_dropdown_item_icons_2line
 layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
+layout activity_ai_test
 layout activity_combination_test
 layout activity_continuous_pinyin_test
 layout activity_dictionary_detail
@@ -4532,6 +4555,7 @@ layout select_dialog_multichoice_material
 layout select_dialog_singlechoice_material
 layout shimmer_dictionary_module
 layout shimmer_dictionary_stat_card
+layout smart_tips_layout
 layout support_simple_spinner_dropdown_item
 layout symbol_keyboard_layout
 layout symbol_keyboard_layout_fixed

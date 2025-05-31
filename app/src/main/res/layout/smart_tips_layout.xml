@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/smart_tips_container"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/smart_tips_background"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
+    android:visibility="gone">
+
+    <!-- AI图标 -->
+    <ImageView
+        android:id="@+id/iv_ai_icon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_ai_assistant"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="AI助手图标" />
+
+    <!-- 提示文本 -->
+    <TextView
+        android:id="@+id/tv_smart_tips"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="🔍 智能分析中..."
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:gravity="center_vertical"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <!-- 关闭按钮 -->
+    <ImageView
+        android:id="@+id/iv_close"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:src="@drawable/ic_close"
+        android:layout_marginStart="8dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="关闭"
+        android:visibility="gone" />
+
+</LinearLayout> 

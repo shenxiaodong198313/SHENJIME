@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnLogs: Button
     private lateinit var btnOptimizedTest: Button
     private lateinit var btnLlmInference: Button
+    private lateinit var btnAiTest: Button
     private lateinit var appIconTop: ImageView
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -146,6 +147,12 @@ class MainActivity : AppCompatActivity() {
             "AI智能推理"
         ) { openLlmInference() }.also { btnLlmInference = it }
         
+        // 创建AI功能测试按钮
+        createWhiteButton(
+            R.id.btnAiTestContainer,
+            "🤖 AI功能测试"
+        ) { openAiTest() }.also { btnAiTest = it }
+        
         Log.d("MainActivity", "所有按钮创建完成")
     }
     
@@ -246,6 +253,20 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "打开LLM推理失败: ${e.message}", e)
             Toast.makeText(this, "无法打开LLM推理: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 打开AI功能测试
+     */
+    private fun openAiTest() {
+        try {
+            Timber.d("打开AI功能测试")
+            val intent = Intent(this, AITestActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开AI功能测试失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开AI功能测试: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     

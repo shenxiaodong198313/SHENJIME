@@ -53,6 +53,7 @@ color warning_orange
 color white
 dimen candidate_divider_height
 dimen candidate_word_margin
+drawable ai_suggestion_background
 drawable appcon
 drawable appicon
 drawable bg_ai_avatar
@@ -63,6 +64,7 @@ drawable bg_permission_needed
 drawable bg_send_button
 drawable bg_size_tag
 drawable bg_user_message
+drawable btn_back_background
 drawable btn_send_background
 drawable btn_white_background
 drawable button_outline
@@ -79,10 +81,12 @@ drawable edit_text_background
 drawable ic_ai_assistant
 drawable ic_ai_avatar
 drawable ic_ai_model
+drawable ic_ai_suggestion
 drawable ic_app_icon
 drawable ic_arrow_down
 drawable ic_arrow_forward
 drawable ic_backspace
+drawable ic_close
 drawable ic_collapse_arrow
 drawable ic_comment
 drawable ic_du_icon
@@ -112,6 +116,7 @@ drawable keyboard_function_key_bg
 drawable keyboard_key_bg
 drawable keyboard_space_key_bg
 drawable keyboard_special_key_bg
+drawable smart_tips_background
 drawable splash_background
 id accessibility_settings_button
 id action_build_trie
@@ -124,14 +129,16 @@ id action_refresh_cache
 id action_settings
 id action_view_logs
 id action_vu_conversion_test
+id ai_confidence_indicator
+id ai_suggestion_container
+id ai_suggestion_icon
+id ai_suggestion_text
 id analysisTextView
 id appIconTop
 id appNameTopLeft
 id appSubtitle
 id appTitle
-id app_icon
 id app_icon_toolbar
-id app_name_display
 id batch_size_display
 id batch_size_seekbar
 id batch_test_button
@@ -164,6 +171,7 @@ id bracket_rsquare
 id bracket_rsquare2
 id bracket_single_quote
 id btnAiSettings
+id btnAiTestContainer
 id btnBack
 id btnBuildTrie
 id btnCancel
@@ -184,6 +192,9 @@ id btnSend
 id btnSetDefaultImeContainer
 id btnStart
 id btnStartChat
+id btnTestContinuation
+id btnTestCorrection
+id btnTestSemantic
 id btn_back
 id btn_clear
 id btn_clear_results
@@ -195,6 +206,7 @@ id buildDictButton
 id build_progress
 id build_status_text
 id buttonContainer
+id buttonLayout
 id candidate_stats_text_view
 id candidatesTextView
 id candidates_container
@@ -336,6 +348,7 @@ id eng_slash
 id eng_tilde
 id eng_vertical
 id etBatchSize
+id etInput
 id etMaxNodesPerBatch
 id etMessage
 id etNumWorkers
@@ -345,7 +358,10 @@ id expand_candidates_button
 id fragment_container
 id frequency_filter_spinner
 id generateTestButton
+id inputLayout
 id input_edit_text
+id iv_ai_icon
+id iv_close
 id iv_status
 id key_0
 id key_1
@@ -507,9 +523,11 @@ id shimmerEntryCount
 id shimmerMemoryStatus
 id shimmerMemoryUsage
 id simulate_button
+id smart_tips_container
 id splashIcon
 id split_result_text_view
 id stage_text_view
+id statusLayout
 id statusText
 id status_text_view
 id subscript_0
@@ -631,6 +649,7 @@ id test_button
 id test_edit_text
 id thread_count_display
 id thread_count_seekbar
+id titleBar
 id title_text
 id title_text_view
 id toolbar
@@ -660,6 +679,8 @@ id tvModelStatus
 id tvNoLogs
 id tvPinyin
 id tvRebuildRealmDesc
+id tvResult
+id tvStatus
 id tvTypingIndicator
 id tvWord
 id tv_candidate_weight
@@ -674,10 +695,12 @@ id tv_pinyin
 id tv_rank
 id tv_result
 id tv_results
+id tv_smart_tips
 id tv_source
 id tv_stage_results
 id tv_stage_title
 id tv_word
+layout activity_ai_test
 layout activity_combination_test
 layout activity_continuous_pinyin_test
 layout activity_dictionary_detail
@@ -721,6 +744,7 @@ layout keyboard_layout
 layout number_keyboard_layout
 layout shimmer_dictionary_module
 layout shimmer_dictionary_stat_card
+layout smart_tips_layout
 layout symbol_keyboard_layout
 layout symbol_keyboard_layout_fixed
 layout symbol_keyboard_layout_new

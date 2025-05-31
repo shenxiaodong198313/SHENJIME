@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/splash_background_color"
+    android:padding="16dp">
+
+    <!-- 顶部标题栏 -->
+    <LinearLayout
+        android:id="@+id/titleBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="←"
+            android:textSize="18sp"
+            android:textColor="@color/splash_text_color"
+            android:background="@drawable/btn_back_background"
+            android:layout_marginEnd="16dp" />
+
+        <TextView
+            android:id="@+id/pageTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="AI功能测试"
+            android:textSize="20sp"
+            android:textColor="@color/splash_text_color"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+    <!-- 状态显示 -->
+    <LinearLayout
+        android:id="@+id/statusLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/titleBar"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="正在初始化..."
+            android:textColor="@color/splash_text_color"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+    <!-- 输入区域 -->
+    <LinearLayout
+        android:id="@+id/inputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/statusLayout"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试输入:"
+            android:textColor="@color/splash_text_color"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="输入拼音或文本进行测试..."
+            android:textColor="@color/splash_text_color"
+            android:textColorHint="#80FFFFFF"
+            android:background="@drawable/input_background"
+            android:padding="12dp"
+            android:textSize="16sp"
+            android:inputType="text" />
+
+    </LinearLayout>
+
+    <!-- 测试按钮 -->
+    <LinearLayout
+        android:id="@+id/buttonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/inputLayout"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/btnTestCorrection"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="🔍 测试拼音纠错"
+            android:textColor="@color/splash_background_color"
+            android:background="@drawable/btn_send_background"
+            android:layout_marginBottom="8dp"
+            android:enabled="false" />
+
+        <Button
+            android:id="@+id/btnTestContinuation"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="💡 测试文本续写"
+            android:textColor="@color/splash_background_color"
+            android:background="@drawable/btn_send_background"
+            android:layout_marginBottom="8dp"
+            android:enabled="false" />
+
+        <Button
+            android:id="@+id/btnTestSemantic"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="🧠 测试语义分析"
+            android:textColor="@color/splash_background_color"
+            android:background="@drawable/btn_send_background"
+            android:enabled="false" />
+
+    </LinearLayout>
+
+    <!-- 结果显示 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/buttonLayout"
+        android:background="@drawable/input_background"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tvResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="等待测试..."
+            android:textColor="@color/splash_text_color"
+            android:textSize="14sp"
+            android:lineSpacingExtra="4dp"
+            android:fontFamily="monospace" />
+
+    </ScrollView>
+
+</RelativeLayout> 
