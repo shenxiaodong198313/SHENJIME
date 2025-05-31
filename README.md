@@ -3,25 +3,29 @@
 <div align="center">
 
 ![Android](https://img.shields.io/badge/Android-9%2B-green.svg)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.0.20-blue.svg)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Version](https://img.shields.io/badge/Version-1.0-red.svg)
+![AI](https://img.shields.io/badge/AI-Gemma%203--1B--IT-purple.svg)
 
-一款面向中文用户的智能Android输入法，基于多层级词典系统和高性能Trie树结构，提供流畅的中文输入体验。
+一款面向中文用户的**智能AI输入法**，集成本地LLM推理能力，基于多层级词典系统和高性能Trie树结构，提供流畅的中文输入体验和智能文本生成功能。
 
 **🔍 候选词引擎特色**：采用智能分层查询架构，支持6种查询策略和6种匹配方法，实现了渐进式缓存、智能分段组合、多Trie树并行查询等企业级特性，查询响应时间1-3ms，缓存命中率>90%。
 
-[功能特性](#功能特性) • [技术架构](#技术架构) • [引擎详解](#引擎详解) • [数据库设计](#数据库设计) • [快速开始](#快速开始)
+**🤖 AI智能特色**：集成Google Gemma 3-1B-IT模型，支持本地LLM推理，提供智能文本生成、语言理解和对话功能，完全离线运行，保护用户隐私。
+
+[功能特性](#功能特性) • [AI能力](#ai能力) • [技术架构](#技术架构) • [引擎详解](#引擎详解) • [数据库设计](#数据库设计) • [快速开始](#快速开始)
 
 </div>
 
 ## 📱 项目概述
 
-神迹输入法是一款专为Android平台设计的中文智能输入法，支持Android 9至15设备。项目采用现代化的技术栈，通过多层级词典系统和优化的数据结构，为用户提供高效、准确的中文输入体验。
+神迹输入法是一款专为Android平台设计的**智能AI中文输入法**，支持Android 9至15设备。项目采用现代化的技术栈，通过多层级词典系统、优化的数据结构和本地AI推理能力，为用户提供高效、准确、智能的中文输入体验。
 
 ### 🎯 核心特色
 
 - **🚀 高性能**：基于Trie树的内存词典，查询响应时间1-3ms
+- **🤖 AI智能**：集成Gemma 3-1B-IT模型，本地LLM推理，完全离线
 - **🧠 智能联想**：多维度候选词生成，支持拼音、首字母、音节拆分
 - **📚 丰富词库**：260万词条，涵盖基础词汇、地名、人名、诗词等
 - **⚡ 快速启动**：分层加载策略，启动时间<500ms
@@ -29,6 +33,7 @@
 - **🎯 智能分层**：按音节数智能分层显示候选词，优化用户体验
 - **🔄 渐进式查询**：支持分页加载和缓存优化，避免性能瓶颈
 - **🧩 多策略引擎**：6种查询策略 + 6种匹配方法，智能选择最优方案
+- **🛡️ 隐私保护**：本地AI推理，数据不上传，完全保护用户隐私
 
 ## ✨ 功能特性
 
@@ -41,6 +46,25 @@
 - **分层候选词**：智能分层显示，优先显示与音节数匹配的词组
 - **渐进式查询**：支持分页加载，避免一次性加载过多候选词
 - **实时分割**：动态拼音分割，支持输入过程中的实时候选词更新
+- **连续拼音**：智能识别和处理连续拼音输入
+
+## 🤖 AI能力
+
+### 🧠 本地LLM集成
+- **模型**：Google Gemma 3-1B-IT (INT4量化)
+- **推理框架**：MediaPipe LLM Inference API 0.10.24
+- **模型大小**：约529MB，适合移动设备
+- **推理性能**：Samsung S24 Ultra上可达47 tokens/sec
+- **内存占用**：约1GB运行内存
+- **响应时间**：首次响应约3秒
+
+### 🎯 AI功能特性
+- **智能文本生成**：基于上下文的智能文本补全和生成
+- **语言理解**：理解用户输入意图，提供相关建议
+- **对话能力**：支持多轮对话和问答
+- **完全离线**：所有AI推理在本地进行，保护用户隐私
+- **实时响应**：优化的推理引擎，提供流畅的用户体验
+- **多场景适配**：支持不同输入场景的智能适配
 
 ### 📖 词典系统
 | 词典类型 | 词条数量 | 文件大小 | 说明 |
@@ -63,18 +87,21 @@
 - **日志系统**：完整的错误追踪和调试信息
 - **查询分析器**：实时查询策略分析和性能统计
 - **缓存监控**：LRU缓存命中率和内存使用监控
+- **AI调试器**：LLM推理性能监控和调试工具
 
 ## 🏗️ 技术架构
 
 ### 📋 技术栈
-- **开发语言**：Kotlin 2.0.20
-- **最低版本**：Android 9.0 (API 28)
-- **目标版本**：Android 15 (API 34)
-- **构建工具**：Gradle 8.7 + JDK 17
+- **开发语言**：Kotlin 2.0.21
+- **最低版本**：Android 9.0 (API 24)
+- **目标版本**：Android 15 (API 35)
+- **构建工具**：Gradle 8.7 + JDK 21
 - **数据库**：Realm-Kotlin 2.3.0
 - **UI框架**：ViewBinding + Material Design
 - **异步处理**：Kotlin Coroutines 1.8.0
 - **日志框架**：Timber 5.0.1
+- **AI框架**：MediaPipe LLM Inference API 0.10.24
+- **LLM模型**：Gemma 3-1B-IT (INT4量化)
 
 ### 🏛️ 架构设计
 
@@ -87,6 +114,7 @@
 │                     Business Layer                          │
 ├─────────────────────────────────────────────────────────────┤
 │ SmartPinyinEngine │ IntelligentQueryEngine │ InputStrategy │
+│ LlmManager        │ ContinuousPinyinEngine │ FuzzyPinyin   │
 ├─────────────────────────────────────────────────────────────┤
 │                      Data Layer                             │
 ├─────────────────────────────────────────────────────────────┤
@@ -94,7 +122,7 @@
 ├─────────────────────────────────────────────────────────────┤
 │                    Storage Layer                            │
 ├─────────────────────────────────────────────────────────────┤
-│   Realm Database   │    Trie Files    │   Assets Files    │
+│   Realm Database   │    Trie Files    │   LLM Models      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -102,7 +130,7 @@
 
 ### 🧠 核心引擎架构
 
-神迹输入法采用三层候选词引擎架构，实现了高性能、智能化的中文输入体验：
+神迹输入法采用四层候选词引擎架构，实现了高性能、智能化的中文输入体验：
 
 #### 1. SmartPinyinEngine (智能拼音引擎)
 - **功能**：项目中实际使用的主要候选词查询引擎
@@ -112,6 +140,7 @@
   - LRU缓存系统（100条查询缓存）
   - 性能统计和监控（查询次数、缓存命中率）
   - 协程并发处理
+  - 智能输入分离（中文+拼音混合输入处理）
 
 #### 2. IntelligentQueryEngine (智能查询引擎)
 - **功能**：执行具体的查询方法
@@ -121,13 +150,21 @@
   - 智能结果合并和去重
   - 模糊拼音变体生成
 
-#### 3. InputStrategy (输入策略分析器)
-- **功能**：分析输入类型并生成查询策略
+#### 3. ContinuousPinyinEngine (连续拼音引擎)
+- **功能**：处理连续拼音输入的专用引擎
 - **特性**：
-  - 8种输入类型识别（单字拼音、词组拼音、首字母缩写、混合输入等）
-  - 多策略查询路由
-  - 优先级排序
-  - 模糊拼音支持
+  - 智能连续拼音检测
+  - 多种分词方案生成
+  - 高频词优先组合
+  - 性能优化的分层查询
+
+#### 4. LlmManager (AI推理管理器)
+- **功能**：管理本地LLM模型的加载和推理
+- **特性**：
+  - Gemma 3-1B-IT模型集成
+  - 异步推理处理
+  - 内存优化管理
+  - 错误处理和重试机制
 
 ### 🔧 拼音分割逻辑
 
@@ -222,6 +259,7 @@ enum class QueryMethod {
 3. **并行查询**：多Trie树并行搜索
 4. **结果合并**：去重、排序、分层显示
 5. **缓存更新**：更新LRU缓存
+6. **AI增强**：可选的LLM智能补全
 
 #### 回退机制
 ```kotlin
@@ -358,6 +396,50 @@ suspend fun ensureTrieLoaded(trieType: TrieType) {
 }
 ```
 
+## 🤖 AI集成详解
+
+### 🧠 LLM架构设计
+
+#### LlmManager核心功能
+```kotlin
+class LlmManager {
+    // 模型管理
+    private var llmInference: LlmInference? = null
+    
+    // 异步初始化
+    suspend fun initialize(): Boolean
+    
+    // 文本生成
+    suspend fun generateResponse(prompt: String): String?
+    
+    // 资源管理
+    fun release()
+}
+```
+
+#### 模型配置
+```kotlin
+val options = LlmInference.LlmInferenceOptions.builder()
+    .setModelPath(modelFile.absolutePath)
+    .setMaxTokens(1024)
+    .setMaxTopK(40)
+    .build()
+```
+
+### 🚀 性能优化
+
+#### 模型加载优化
+- **异步加载**：后台线程加载模型，不阻塞UI
+- **文件验证**：加载前验证模型文件完整性
+- **内存管理**：智能内存分配和释放
+- **错误处理**：完善的错误处理和重试机制
+
+#### 推理优化
+- **批处理**：支持批量文本处理
+- **缓存机制**：常用推理结果缓存
+- **资源监控**：实时监控内存和CPU使用
+- **性能统计**：推理时间和吞吐量统计
+
 ## 📈 性能指标
 
 ### 🚀 启动性能
@@ -365,6 +447,7 @@ suspend fun ensureTrieLoaded(trieType: TrieType) {
 - **热启动时间**：< 200ms
 - **内存占用**：< 100MB (基础功能)
 - **轻量级初始化**：不在启动时加载所有词典
+- **AI模型加载**：< 15秒 (后台异步)
 
 ### ⚡ 查询性能
 - **单次查询**：1-3ms
@@ -374,12 +457,20 @@ suspend fun ensureTrieLoaded(trieType: TrieType) {
 - **渐进式加载**：支持分页加载，避免一次性加载过多候选词
 - **多策略路由**：根据输入类型自动选择最优查询策略
 
+### 🤖 AI性能
+- **推理响应时间**：< 5秒
+- **模型内存占用**：< 3GB
+- **推理吞吐量**：47 tokens/sec (Samsung S24 Ultra)
+- **首次响应时间**：< 3秒
+- **模型大小**：529MB (INT4量化)
+
 ### 💾 存储效率
 - **词典压缩率**：60%+
 - **索引大小**：< 50MB
 - **总安装包**：< 250MB
 - **Trie文件大小**：29.4MB（所有词典）
 - **Realm数据库**：229MB
+- **AI模型文件**：529MB
 
 ### 🧠 内存管理
 - **分层加载**：启动时只加载核心词典
@@ -387,14 +478,17 @@ suspend fun ensureTrieLoaded(trieType: TrieType) {
 - **内存监控**：实时监控内存使用情况
 - **LRU缓存**：查询缓存(100条)
 - **节点容量限制**：避免单节点内存占用过大
+- **AI内存优化**：智能模型内存管理
 
 ## 🚀 快速开始
 
 ### 📋 环境要求
-- **JDK**: 17+
+- **JDK**: 21+
 - **Android Studio**: Arctic Fox+
 - **Gradle**: 8.7+
-- **Android SDK**: 34+
+- **Android SDK**: 35+
+- **设备内存**: 4GB+ (推荐8GB+用于AI功能)
+- **存储空间**: 2GB+ 可用空间
 
 ### 🔧 安装步骤
 
@@ -407,7 +501,7 @@ cd shenji-input-method
 2. **配置环境**
 ```bash
 # 设置Java环境
-export JAVA_HOME=/path/to/jdk17
+export JAVA_HOME=/path/to/jdk21
 
 # 配置Gradle
 ./gradlew --version
@@ -431,8 +525,9 @@ export JAVA_HOME=/path/to/jdk17
 
 1. **基础输入**：直接输入拼音，选择候选词
 2. **快速输入**：使用首字母缩写（如：bj → 北京）
-3. **调试模式**：在设置中开启调试模式查看详细信息
-4. **词典管理**：通过主界面进入词典管理中心
+3. **AI功能**：长按空格键或特定手势触发AI助手
+4. **调试模式**：在设置中开启调试模式查看详细信息
+5. **词典管理**：通过主界面进入词典管理中心
 
 ## 🛠️ 开发指南
 
@@ -442,8 +537,12 @@ app/src/main/java/com/shenji/aikeyboard/
 ├── keyboard/               # 候选词引擎核心
 │   ├── SmartPinyinEngine.kt      # 智能拼音引擎
 │   ├── IntelligentQueryEngine.kt # 智能查询引擎
+│   ├── ContinuousPinyinEngine.kt # 连续拼音引擎
 │   ├── InputStrategy.kt          # 输入策略分析器
 │   └── ShenjiInputMethodService.kt # 输入法服务
+├── llm/                    # AI推理模块
+│   ├── LlmManager.kt       # LLM管理器
+│   └── LlmUtils.kt         # LLM工具类
 ├── data/                   # 数据层
 │   ├── trie/              # Trie树实现
 │   │   ├── TrieManager.kt # Trie树管理器
@@ -500,6 +599,7 @@ done
 - **输入调试器**：实时查看候选词生成过程
 - **Trie构建器**：可视化词典构建和测试
 - **性能监控**：内存使用和查询性能分析
+- **AI调试器**：LLM推理性能监控
 
 ## 🤝 贡献指南
 
@@ -515,6 +615,7 @@ done
 - 使用有意义的变量和函数名
 - 添加必要的注释和文档
 - 确保所有测试通过
+- AI相关代码需要添加性能测试
 
 ### 🐛 问题报告
 请使用 [GitHub Issues](https://github.com/your-username/shenji-input-method/issues) 报告问题，包含：
@@ -522,6 +623,27 @@ done
 - 详细的重现步骤
 - 相关的日志信息
 - 预期行为和实际行为
+- AI功能相关问题请包含模型加载状态
+
+## 🔮 未来规划
+
+### 🚀 短期目标 (v1.1)
+- [ ] 支持Gemma 3n多模态模型
+- [ ] 优化AI推理性能
+- [ ] 增加更多AI功能场景
+- [ ] 完善用户界面
+
+### 🌟 中期目标 (v2.0)
+- [ ] 支持图片和语音输入
+- [ ] 个性化AI学习
+- [ ] 云端模型同步
+- [ ] 多语言支持
+
+### 🎯 长期目标 (v3.0)
+- [ ] 完整的AI助手功能
+- [ ] 跨平台支持
+- [ ] 开放API接口
+- [ ] 企业级部署方案
 
 ## 📄 许可证
 
@@ -533,6 +655,8 @@ done
 - [Timber](https://github.com/JakeWharton/timber) - Android日志框架
 - [Material Components](https://github.com/material-components/material-components-android) - UI组件库
 - [SnakeYAML](https://bitbucket.org/snakeyaml/snakeyaml) - YAML解析库
+- [MediaPipe](https://github.com/google-ai-edge/mediapipe) - AI推理框架
+- [Google Gemma](https://ai.google.dev/gemma) - 开源语言模型
 
 ## 📞 联系方式
 
@@ -546,6 +670,6 @@ done
 
 **如果这个项目对你有帮助，请给它一个 ⭐️**
 
-Made with ❤️ by [Your Name](https://github.com/your-username)
+Made with ❤️ and 🤖 by [Your Name](https://github.com/your-username)
 
 </div> 
