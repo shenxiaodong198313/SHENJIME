@@ -54,6 +54,11 @@ class ShenjiInputMethodService : InputMethodService() {
     // 拼音显示TextView
     private lateinit var pinyinDisplay: TextView
     
+    // 话术库相关组件
+    private lateinit var phrasesRecyclerView: androidx.recyclerview.widget.RecyclerView
+    private var phrasesAdapter: com.shenji.aikeyboard.ui.PhrasesAdapter? = null
+    private var isPhrasesVisible = false
+    
     // AI建议显示相关组件 - 已移除拼音栏AI建议功能
     // private lateinit var aiSuggestionContainer: LinearLayout
     // private lateinit var aiStatusIcon: TextView  
@@ -927,6 +932,9 @@ class ShenjiInputMethodService : InputMethodService() {
             // 设置工具栏图标点击事件
             setupToolbarIcons()
             
+            // 初始化话术库
+            setupPhrasesRecyclerView()
+            
             // 加载键盘布局（默认字母键盘）
             keyboardView = layoutInflater.inflate(R.layout.keyboard_layout, null)
             
@@ -1138,9 +1146,9 @@ class ShenjiInputMethodService : InputMethodService() {
      * 设置工具栏图标点击事件
      */
     private fun setupToolbarIcons() {
-        // 订单图标
+        // 订单图标 - 切换话术库显示
         candidatesViewLayout.findViewById<ImageView>(R.id.order_icon)?.setOnClickListener {
-            openOrderPage()
+            togglePhrasesView()
         }
         
         // 计划图标
@@ -1200,27 +1208,176 @@ class ShenjiInputMethodService : InputMethodService() {
     }
 
     /**
-     * 打开订单页面
+     * 初始化话术库RecyclerView
      */
-    private fun openOrderPage() {
+    private fun setupPhrasesRecyclerView() {
         try {
-            Timber.d("准备打开订单页面")
+            phrasesRecyclerView = candidatesViewLayout.findViewById(R.id.phrases_recycler_view)
             
-            // 不收起键盘，保持输入连接
-            // requestHideSelf(0)
+            // 设置布局管理器为水平滚动
+            val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(
+                this, 
+                androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, 
+                false
+            )
+            phrasesRecyclerView.layoutManager = layoutManager
             
-            // 启动OrderActivity
-            val intent = android.content.Intent(this, com.shenji.aikeyboard.ui.OrderActivity::class.java)
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            // 加载话术数据
+            loadPhrasesData()
             
-            startActivity(intent)
-            
-            Timber.d("订单页面已启动")
-            
+            Timber.d("话术库RecyclerView初始化完成")
         } catch (e: Exception) {
-            Timber.e(e, "打开订单页面失败: ${e.message}")
-            Toast.makeText(this, "打开订单页面失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            Timber.e(e, "初始化话术库失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 加载话术数据
+     */
+    private fun loadPhrasesData() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                val realm = com.shenji.aikeyboard.data.RealmManager.getInstance()
+                val scriptItems = realm.query(com.shenji.aikeyboard.data.ScriptItem::class, "category == 'script' AND isActive == true")
+                    .find()
+                    .take(10) // 只显示前10个话术
+                
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    if (scriptItems.isNotEmpty()) {
+                        phrasesAdapter = com.shenji.aikeyboard.ui.PhrasesAdapter(scriptItems) { phraseContent ->
+                            insertPhrase(phraseContent)
+                            hidePhrasesView()
+                        }
+                        phrasesRecyclerView.adapter = phrasesAdapter
+                        Timber.d("话术数据加载完成，共${scriptItems.size}条")
+                    } else {
+                        // 如果没有数据，创建一些示例数据
+                        createSamplePhrases()
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "加载话术数据失败: ${e.message}")
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    createSamplePhrases()
+                }
+            }
+        }
+    }
+
+    /**
+     * 创建示例话术数据
+     */
+    private fun createSamplePhrases() {
+        val samplePhrases = listOf(
+            com.shenji.aikeyboard.data.ScriptItem().apply {
+                title = "问候"
+                content = "您好！很高兴为您服务"
+                category = "script"
+            },
+            com.shenji.aikeyboard.data.ScriptItem().apply {
+                title = "感谢"
+                content = "谢谢您的支持和信任"
+                category = "script"
+            },
+            com.shenji.aikeyboard.data.ScriptItem().apply {
+                title = "道歉"
+                content = "非常抱歉给您带来不便"
+                category = "script"
+            },
+            com.shenji.aikeyboard.data.ScriptItem().apply {
+                title = "确认"
+                content = "好的，我马上为您处理"
+                category = "script"
+            },
+            com.shenji.aikeyboard.data.ScriptItem().apply {
+                title = "结束"
+                content = "祝您生活愉快，再见！"
+                category = "script"
+            }
+        )
+        
+        phrasesAdapter = com.shenji.aikeyboard.ui.PhrasesAdapter(samplePhrases) { phraseContent ->
+            insertPhrase(phraseContent)
+            hidePhrasesView()
+        }
+        phrasesRecyclerView.adapter = phrasesAdapter
+        Timber.d("示例话术数据创建完成")
+    }
+
+    /**
+     * 切换话术库显示状态
+     */
+    private fun togglePhrasesView() {
+        if (isPhrasesVisible) {
+            hidePhrasesView()
+        } else {
+            showPhrasesView()
+        }
+    }
+
+    /**
+     * 显示话术库
+     */
+    private fun showPhrasesView() {
+        try {
+            phrasesRecyclerView.visibility = View.VISIBLE
+            isPhrasesVisible = true
+            
+            // 隐藏候选词区域
+            defaultCandidatesView.visibility = View.GONE
+            
+            Timber.d("话术库已显示")
+        } catch (e: Exception) {
+            Timber.e(e, "显示话术库失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 隐藏话术库
+     */
+    private fun hidePhrasesView() {
+        try {
+            phrasesRecyclerView.visibility = View.GONE
+            isPhrasesVisible = false
+            
+            // 如果有候选词，显示候选词区域
+            if (candidates.isNotEmpty()) {
+                defaultCandidatesView.visibility = View.VISIBLE
+            }
+            
+            Timber.d("话术库已隐藏")
+        } catch (e: Exception) {
+            Timber.e(e, "隐藏话术库失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 插入话术到输入框
+     */
+    private fun insertPhrase(phrase: String) {
+        try {
+            val ic = currentInputConnection
+            if (ic != null) {
+                // 清空当前组合文本
+                if (composingText.isNotEmpty()) {
+                    composingText.clear()
+                    ic.finishComposingText()
+                    updatePinyinDisplay("")
+                    hideCandidates()
+                }
+                
+                // 直接提交话术内容
+                ic.commitText(phrase, 1)
+                
+                Timber.d("话术插入成功: $phrase")
+                Toast.makeText(this, "已插入话术", Toast.LENGTH_SHORT).show()
+            } else {
+                Timber.w("InputConnection为空，无法插入话术")
+                Toast.makeText(this, "插入失败", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "插入话术失败: ${e.message}")
+            Toast.makeText(this, "插入失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 

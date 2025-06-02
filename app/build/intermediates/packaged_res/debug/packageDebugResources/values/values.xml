@@ -80,6 +80,7 @@
     <color name="filter_button_text_selected">#329BEA</color>
     <color name="gray_100">#F5F5F5</color>
     <color name="gray_300">#E0E0E0</color>
+    <color name="gray_400">#BDBDBD</color>
     <color name="gray_600">#757575</color>
     <color name="info_background">#FFF0F8FF</color>
     <color name="input_background">#FFFFFFFF</color>
@@ -793,6 +794,9 @@
         <item name="colorOnSurface">@color/black</item>
         <item name="colorSurfaceVariant">@color/gray_100</item>
         <item name="colorOnSurfaceVariant">@color/gray_600</item>
+        
+        <item name="colorOutline">@color/gray_400</item>
+        <item name="colorOutlineVariant">@color/gray_300</item>
         
         <item name="android:colorBackground">@color/white</item>
         

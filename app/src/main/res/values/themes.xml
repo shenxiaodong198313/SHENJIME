@@ -15,6 +15,9 @@
         <item name="colorOnSurface">@color/black</item>
         <item name="colorSurfaceVariant">@color/gray_100</item>
         <item name="colorOnSurfaceVariant">@color/gray_600</item>
+        <!-- Outline colors -->
+        <item name="colorOutline">@color/gray_400</item>
+        <item name="colorOutlineVariant">@color/gray_300</item>
         <!-- Background colors -->
         <item name="android:colorBackground">@color/white</item>
         <!-- Status bar color. -->

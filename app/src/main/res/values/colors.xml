@@ -89,6 +89,7 @@
     <!-- 灰色系颜色 -->
     <color name="gray_100">#F5F5F5</color>
     <color name="gray_300">#E0E0E0</color>
+    <color name="gray_400">#BDBDBD</color>
     <color name="gray_600">#757575</color>
 
     <!-- OverlayToolActivity 颜色定义 -->

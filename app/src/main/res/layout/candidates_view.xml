@@ -183,6 +183,18 @@
 
     </FrameLayout>
 
+    <!-- 话术库区域 - 默认隐藏 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/phrases_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:background="#FFFFFF"
+        android:visibility="gone"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
