@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:scrollbars="none"
-    android:fillViewport="true">
+    android:fillViewport="false"
+    android:overScrollMode="never">
     <LinearLayout
     android:id="@+id/filter_buttons_layout"
     android:layout_width="wrap_content"
@@ -17,24 +18,30 @@
         android:id="@+id/filter_download_state"
         style="@style/FilterChipStyle"
         android:text="@string/local_available"
-        android:textColor="@color/filter_button_tint"
+        android:textColor="#FFFFFF"
+        android:layout_marginEnd="8dp"
         />
 
     <TextView
         android:id="@+id/filter_modality"
         style="@style/FilterChipStyle"
         app:drawableEndCompat="@drawable/ic_arrow_drop_down"
-        app:drawableTint="@color/filter_button_tint"
+        app:drawableTint="#FFFFFF"
         android:text="@string/modality_menu_title"
-        android:textColor="@color/filter_button_tint"/>
+        android:textColor="#FFFFFF"
+        android:layout_marginEnd="8dp"
+        android:minWidth="80dp"/>
 
     <TextView
         android:id="@+id/filter_vendor"
         style="@style/FilterChipStyle"
         android:text="@string/vendor_menu_title"
         app:drawableEndCompat="@drawable/ic_arrow_drop_down"
-        app:drawableTint="@color/filter_button_tint"
-        android:textColor="@color/filter_button_tint"/>
+        app:drawableTint="#FFFFFF"
+        android:textColor="#FFFFFF"
+        android:layout_marginEnd="8dp"
+        android:minWidth="80dp"
+        android:visibility="visible"/>
 
 </LinearLayout>
 </HorizontalScrollView>

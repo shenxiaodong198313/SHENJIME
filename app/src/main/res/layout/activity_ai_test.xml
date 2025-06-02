@@ -113,7 +113,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="🔍 测试拼音纠错"
-            android:textColor="@color/splash_background_color"
+            android:textColor="#FFFFFF"
             android:background="@drawable/btn_send_background"
             android:layout_marginBottom="8dp"
             android:enabled="false" />
@@ -123,7 +123,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="💡 测试文本续写"
-            android:textColor="@color/splash_background_color"
+            android:textColor="#FFFFFF"
             android:background="@drawable/btn_send_background"
             android:layout_marginBottom="8dp"
             android:enabled="false" />
@@ -133,7 +133,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="🧠 测试语义分析"
-            android:textColor="@color/splash_background_color"
+            android:textColor="#FFFFFF"
             android:background="@drawable/btn_send_background"
             android:enabled="false" />
 

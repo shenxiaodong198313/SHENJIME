@@ -1651,7 +1651,13 @@ color efab_label_background
 color error_color_material_dark
 color error_color_material_light
 color error_red
+color filter_button_background
+color filter_button_background_selected
+color filter_button_selected
+color filter_button_text_normal
+color filter_button_text_selected
 color filter_button_tint
+color filter_text_color
 color foreground_material_dark
 color foreground_material_light
 color gray_100

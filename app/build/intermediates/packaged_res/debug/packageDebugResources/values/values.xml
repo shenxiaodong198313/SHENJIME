@@ -73,6 +73,11 @@
     <color name="color_white">#FFFFFFFF</color>
     <color name="divider">#E0E0E0</color>
     <color name="error_red">#FFF44336</color>
+    <color name="filter_button_background">#FFFFFF</color>
+    <color name="filter_button_background_selected">#E3F2FD</color>
+    <color name="filter_button_selected">#329BEA</color>
+    <color name="filter_button_text_normal">#333333</color>
+    <color name="filter_button_text_selected">#329BEA</color>
     <color name="gray_100">#F5F5F5</color>
     <color name="gray_300">#E0E0E0</color>
     <color name="gray_600">#757575</color>
@@ -581,11 +586,13 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/bg_filter_chip</item>
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:textSize">13sp</item>
-        <item name="android:gravity">center_vertical</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:padding">12dp</item>
         <item name="android:layout_marginEnd">8dp</item>
-        <item name="android:drawablePadding">4dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
     </style>
     <style name="KeyboardButton">
         <item name="android:layout_width">0dp</item>

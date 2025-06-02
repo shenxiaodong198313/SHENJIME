@@ -59,7 +59,13 @@ color color_on_surface_variant
 color color_white
 color divider
 color error_red
+color filter_button_background
+color filter_button_background_selected
+color filter_button_selected
+color filter_button_text_normal
+color filter_button_text_selected
 color filter_button_tint
+color filter_text_color
 color gray_100
 color gray_300
 color gray_600

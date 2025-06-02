@@ -79,6 +79,13 @@
     <color name="color_on_surface_variant">#666666</color>
     <color name="color_disabled">#888888</color>
     
+    <!-- 过滤器相关颜色 -->
+    <color name="filter_button_selected">#329BEA</color>
+    <color name="filter_button_background">#FFFFFF</color>
+    <color name="filter_button_background_selected">#E3F2FD</color>
+    <color name="filter_button_text_normal">#333333</color>
+    <color name="filter_button_text_selected">#329BEA</color>
+    
     <!-- 灰色系颜色 -->
     <color name="gray_100">#F5F5F5</color>
     <color name="gray_300">#E0E0E0</color>

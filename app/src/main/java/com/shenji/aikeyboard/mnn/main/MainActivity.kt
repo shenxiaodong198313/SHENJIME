@@ -157,12 +157,18 @@ class MainActivity : AppCompatActivity() {
         filterComponent = FilterComponent(this).apply {
             addVendorFilterListener {
                 modelListFragment?.adapter?.filterVendor(it?: "")
+                // 确保过滤器在应用过滤后仍然可见
+                refreshFilterVisibility()
             }
             addModalityFilterListener {
                 modelListFragment?.adapter?.filterModality(it?: "")
+                // 确保过滤器在应用过滤后仍然可见
+                refreshFilterVisibility()
             }
             addDownloadFilterListener {
                 modelListFragment?.adapter?.filterDownloadState(it)
+                // 确保过滤器在应用过滤后仍然可见
+                refreshFilterVisibility()
             }
         }
         drawerLayout = findViewById(R.id.drawer_layout)

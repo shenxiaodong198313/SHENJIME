@@ -186,11 +186,13 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/bg_filter_chip</item>
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:textSize">13sp</item>
-        <item name="android:gravity">center_vertical</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:padding">12dp</item>
         <item name="android:layout_marginEnd">8dp</item>
-        <item name="android:drawablePadding">4dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
     </style>
     
     <!-- SpinKit样式 -->
