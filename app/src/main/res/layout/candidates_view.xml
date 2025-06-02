@@ -24,51 +24,7 @@
             android:textColor="#333333"
             android:textSize="14sp" />
             
-        <!-- AI建议显示区域 -->
-        <LinearLayout
-            android:id="@+id/ai_suggestion_container"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:background="@drawable/ai_suggestion_background"
-            android:visibility="gone">
-            
-            <!-- AI图标 -->
-            <ImageView
-                android:id="@+id/ai_suggestion_icon"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginEnd="4dp"
-                android:src="@drawable/ic_ai_suggestion"
-                android:tint="#2196F3" />
-                
-            <!-- AI建议文本 -->
-            <TextView
-                android:id="@+id/ai_suggestion_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:textColor="#2196F3"
-                android:textSize="12sp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="AI建议" />
-                
-            <!-- 置信度指示器 -->
-            <TextView
-                android:id="@+id/ai_confidence_indicator"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:gravity="center_vertical"
-                android:textColor="#FFA500"
-                android:textSize="10sp"
-                android:text="★★★" />
-        </LinearLayout>
+
     </RelativeLayout>
 
     <!-- 🔧 工具栏和候选词共享区域 - 使用FrameLayout重叠布局 -->

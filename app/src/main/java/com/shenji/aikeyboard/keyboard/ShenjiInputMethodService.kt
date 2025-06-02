@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.Gravity
 import android.view.inputmethod.EditorInfo
 import android.widget.*
@@ -53,11 +54,11 @@ class ShenjiInputMethodService : InputMethodService() {
     // 拼音显示TextView
     private lateinit var pinyinDisplay: TextView
     
-    // AI建议显示相关组件
-    private lateinit var aiSuggestionContainer: LinearLayout
-    private lateinit var aiStatusIcon: TextView
-    private lateinit var aiSuggestionText: TextView
-    private lateinit var aiConfidenceIndicator: TextView
+    // AI建议显示相关组件 - 已移除拼音栏AI建议功能
+    // private lateinit var aiSuggestionContainer: LinearLayout
+    // private lateinit var aiStatusIcon: TextView  
+    // private lateinit var aiSuggestionText: TextView
+    // private lateinit var aiConfidenceIndicator: TextView
     
     // 🤖 AI建议防抖机制
     private var aiSuggestionJob: kotlinx.coroutines.Job? = null
@@ -830,7 +831,10 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     override fun onCreateInputView(): View {
-        Timber.d("输入法服务生命周期: onCreateInputView - 开始创建键盘视图")
+        Timber.d("🔍 ========== 创建输入视图调试 ==========")
+        Timber.d("🔍 onCreateInputView被调用")
+        Timber.d("🔍 当前线程: ${Thread.currentThread().name}")
+        Timber.d("🔍 开始创建键盘视图...")
         
         try {
             // 创建主容器，包含候选词和键盘
@@ -843,27 +847,75 @@ class ShenjiInputMethodService : InputMethodService() {
             mainContainer.setBackgroundColor(android.graphics.Color.parseColor("#F0F0F0")) // 调试背景色
             
             // 加载候选词布局
+            Timber.d("🔍 步骤1: 加载候选词布局...")
             candidatesViewLayout = layoutInflater.inflate(R.layout.candidates_view, null)
+            Timber.d("🔍 候选词布局加载成功: ${candidatesViewLayout::class.java.simpleName}")
             
             // 初始化候选词区域
+            Timber.d("🔍 步骤2: 初始化候选词区域组件...")
             candidatesContainer = candidatesViewLayout.findViewById(R.id.candidates_container)
+            Timber.d("🔍 candidatesContainer: ${if (candidatesContainer != null) "✅ 成功" else "❌ 失败"}")
+            
             defaultCandidatesView = candidatesViewLayout.findViewById(R.id.default_candidates_view)
+            Timber.d("🔍 defaultCandidatesView: ${if (defaultCandidatesView != null) "✅ 成功" else "❌ 失败"}")
+            
             candidatesView = candidatesViewLayout.findViewById(R.id.candidates_view)
+            Timber.d("🔍 candidatesView: ${if (candidatesView != null) "✅ 成功" else "❌ 失败"}")
+            
             expandCandidatesButton = candidatesViewLayout.findViewById(R.id.expand_candidates_button)
+            Timber.d("🔍 expandCandidatesButton: ${if (expandCandidatesButton != null) "✅ 成功" else "❌ 失败"}")
             
             // 初始化拼音显示区域
+            Timber.d("🔍 步骤3: 初始化拼音显示区域...")
             pinyinDisplay = candidatesViewLayout.findViewById(R.id.pinyin_display)
+            Timber.d("🔍 pinyinDisplay: ${if (pinyinDisplay != null) "✅ 成功" else "❌ 失败"}")
             
-            // 初始化AI建议显示区域
-            aiSuggestionContainer = candidatesViewLayout.findViewById(R.id.ai_suggestion_container)
-            aiStatusIcon = candidatesViewLayout.findViewById(R.id.ai_status_icon)
-            aiSuggestionText = candidatesViewLayout.findViewById(R.id.ai_suggestion_text)
-            aiConfidenceIndicator = candidatesViewLayout.findViewById(R.id.ai_confidence_indicator)
+            // 🔧 已移除拼音栏AI建议功能，保留独立的AI功能测试
+            // aiSuggestionContainer = candidatesViewLayout.findViewById(R.id.ai_suggestion_container)
+            // aiStatusIcon = candidatesViewLayout.findViewById(R.id.ai_status_icon)
+            // aiSuggestionText = candidatesViewLayout.findViewById(R.id.ai_suggestion_text)
+            // aiConfidenceIndicator = candidatesViewLayout.findViewById(R.id.ai_confidence_indicator)
             
             // 初始化AI状态图标（默认灰色，表示不可用）
-            updateAIStatusIcon(false)
-            // 初始化工具栏
-            toolbarView = candidatesViewLayout.findViewById(R.id.toolbar_view)
+            // updateAIStatusIcon(false)
+            
+            // 初始化工具栏 - 添加详细调试
+            Timber.d("🔍 步骤4: 开始初始化toolbarView...")
+            Timber.d("🔍 尝试查找R.id.toolbar_view (${R.id.toolbar_view})")
+            val toolbarViewTemp = candidatesViewLayout.findViewById<LinearLayout>(R.id.toolbar_view)
+            if (toolbarViewTemp != null) {
+                toolbarView = toolbarViewTemp
+                Timber.d("🔍 ✅ toolbarView初始化成功")
+                Timber.d("🔍 toolbarView类型: ${toolbarView::class.java.simpleName}")
+                Timber.d("🔍 toolbarView可见性: ${toolbarView.visibility}")
+            } else {
+                Timber.e("🔍 ❌ toolbarView初始化失败：findViewById返回null")
+                Timber.e("🔍 candidatesViewLayout类型: ${candidatesViewLayout::class.java.simpleName}")
+                Timber.e("🔍 candidatesViewLayout ID: ${candidatesViewLayout.id}")
+                
+                if (candidatesViewLayout is ViewGroup) {
+                    val viewGroup = candidatesViewLayout as ViewGroup
+                    Timber.e("🔍 candidatesViewLayout子视图数量: ${viewGroup.childCount}")
+                    // 遍历所有子视图
+                    for (i in 0 until viewGroup.childCount) {
+                        val child = viewGroup.getChildAt(i)
+                        Timber.e("🔍 子视图$i: ${child::class.java.simpleName}, id=${child.id}, 资源名=${try { resources.getResourceEntryName(child.id) } catch (e: Exception) { "unknown" }}")
+                    }
+                } else {
+                    Timber.e("🔍 candidatesViewLayout不是ViewGroup类型")
+                }
+                
+                // 尝试通过其他方式查找
+                Timber.e("🔍 尝试通过rootView查找toolbar_view...")
+                val rootView = candidatesViewLayout.rootView
+                val toolbarFromRoot = rootView.findViewById<LinearLayout>(R.id.toolbar_view)
+                if (toolbarFromRoot != null) {
+                    Timber.e("🔍 ✅ 通过rootView找到了toolbar_view!")
+                    toolbarView = toolbarFromRoot
+                } else {
+                    Timber.e("🔍 ❌ 通过rootView也找不到toolbar_view")
+                }
+            }
             
             // 设置展开按钮点击事件
             expandCandidatesButton.setOnClickListener {
@@ -913,9 +965,27 @@ class ShenjiInputMethodService : InputMethodService() {
             mainContainer.addView(separator, 1)            // 分隔线
             mainContainer.addView(keyboardView, 2)         // 键盘在底部
             
-            Timber.d("🎯 布局层级: 候选词(index=0) -> 分隔线(index=1) -> 键盘(index=2)")
+            Timber.d("🔍 布局层级: 候选词(index=0) -> 分隔线(index=1) -> 键盘(index=2)")
             
-            Timber.d("🎯 整合视图创建成功：候选词+键盘")
+            // 🔍 最终验证所有关键组件
+            Timber.d("🔍 ========== 最终组件验证 ==========")
+            Timber.d("🔍 candidatesViewLayout: ${::candidatesViewLayout.isInitialized}")
+            Timber.d("🔍 candidatesContainer: ${::candidatesContainer.isInitialized}")
+            Timber.d("🔍 defaultCandidatesView: ${::defaultCandidatesView.isInitialized}")
+            Timber.d("🔍 candidatesView: ${::candidatesView.isInitialized}")
+            Timber.d("🔍 toolbarView: ${::toolbarView.isInitialized}")
+            Timber.d("🔍 pinyinDisplay: ${::pinyinDisplay.isInitialized}")
+            Timber.d("🔍 keyboardView: ${::keyboardView.isInitialized}")
+            
+            if (::toolbarView.isInitialized) {
+                Timber.d("🔍 toolbarView详细信息:")
+                Timber.d("🔍   - 类型: ${toolbarView::class.java.simpleName}")
+                Timber.d("🔍   - ID: ${toolbarView.id}")
+                Timber.d("🔍   - 可见性: ${toolbarView.visibility}")
+                Timber.d("🔍   - 父视图: ${toolbarView.parent?.let { it::class.java.simpleName } ?: "null"}")
+            }
+            
+            Timber.d("🔍 ✅ 整合视图创建成功：候选词+键盘")
             return mainContainer
         } catch (e: Exception) {
             Timber.e(e, "键盘视图创建失败: ${e.message}")
@@ -1927,6 +1997,23 @@ class ShenjiInputMethodService : InputMethodService() {
             Timber.e("  - defaultCandidatesView: $defaultViewInit")
             Timber.e("  - candidatesView: $candidatesViewInit")
             Timber.e("  - toolbarView: $toolbarInit")
+            
+            // 如果toolbarView未初始化，尝试重新查找
+            if (!toolbarInit && ::candidatesViewLayout.isInitialized) {
+                Timber.e("🔍 尝试重新查找toolbarView...")
+                val toolbarViewTemp = candidatesViewLayout.findViewById<LinearLayout>(R.id.toolbar_view)
+                if (toolbarViewTemp != null) {
+                    Timber.e("🔧 重新查找成功，正在重新初始化toolbarView")
+                    try {
+                        toolbarView = toolbarViewTemp
+                        Timber.e("✅ toolbarView重新初始化成功")
+                    } catch (e: Exception) {
+                        Timber.e(e, "❌ toolbarView重新初始化失败")
+                    }
+                } else {
+                    Timber.e("❌ 重新查找toolbarView仍然失败")
+                }
+            }
         }
         
         return allInitialized
@@ -3364,6 +3451,13 @@ class ShenjiInputMethodService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         
+        // 🔍 详细调试：记录输入法启动信息
+        Timber.d("🚀 ========== 输入法启动调试 ==========")
+        Timber.d("🚀 onStartInputView被调用")
+        Timber.d("🚀 restarting: $restarting")
+        Timber.d("🚀 EditorInfo: ${info?.let { "inputType=${it.inputType}, imeOptions=${it.imeOptions}" } ?: "null"}")
+        Timber.d("🚀 当前线程: ${Thread.currentThread().name}")
+        
         // 🔧 关键修复：自愈式Trie检查，永不阻塞用户
         val dictFile = getDictionaryFile()
         val databaseExists = dictFile.exists()
@@ -3385,11 +3479,11 @@ class ShenjiInputMethodService : InputMethodService() {
             }
         }
         
-        // 初始化AI建议显示状态
-        if (::aiSuggestionContainer.isInitialized) {
-            aiSuggestionContainer.visibility = View.GONE
-            Timber.d("AI建议区域已初始化并隐藏")
-        }
+        // 初始化AI建议显示状态 - 已移除拼音栏AI建议功能
+        // if (::aiSuggestionContainer.isInitialized) {
+        //     aiSuggestionContainer.visibility = View.GONE
+        //     Timber.d("AI建议区域已初始化并隐藏")
+        // }
         
         // 🤖 确保AI引擎已初始化
         ensureAIEngineInitialized()
@@ -3469,90 +3563,27 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     /**
-     * 🤖 更新AI状态图标
+     * 🤖 更新AI状态图标 - 已移除拼音栏AI建议功能
      */
     private fun updateAIStatusIcon(isAvailable: Boolean) {
-        try {
-            if (::aiStatusIcon.isInitialized) {
-                if (isAvailable) {
-                    // AI可用：彩色显示
-                    aiStatusIcon.setTextColor(android.graphics.Color.parseColor("#2196F3"))
-                    aiStatusIcon.alpha = 1.0f
-                } else {
-                    // AI不可用：灰色显示
-                    aiStatusIcon.setTextColor(android.graphics.Color.parseColor("#CCCCCC"))
-                    aiStatusIcon.alpha = 0.6f
-                }
-                Timber.d("🤖 AI状态图标更新: ${if (isAvailable) "可用(彩色)" else "不可用(灰色)"}")
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "更新AI状态图标失败: ${e.message}")
-        }
+        // 已移除拼音栏AI建议功能，保留方法定义避免编译错误
+        Timber.d("🤖 updateAIStatusIcon调用已禁用 (拼音栏AI建议功能已移除)")
     }
     
     /**
-     * 显示AI建议
+     * 显示AI建议 - 已移除拼音栏AI建议功能
      */
     private fun showAISuggestion(suggestion: String, confidence: Float) {
-        try {
-            if (::aiSuggestionContainer.isInitialized && 
-                ::aiSuggestionText.isInitialized && 
-                ::aiConfidenceIndicator.isInitialized) {
-                
-                // 设置建议文本
-                aiSuggestionText.text = suggestion
-                aiSuggestionText.visibility = View.VISIBLE
-                
-                // 设置置信度星级显示
-                val stars = (confidence * 5).toInt()
-                val starDisplay = "★".repeat(stars) + "☆".repeat(5 - stars)
-                aiConfidenceIndicator.text = starDisplay
-                aiConfidenceIndicator.visibility = View.VISIBLE
-                
-                // 容器始终可见，只是内容变化
-                aiSuggestionContainer.visibility = View.VISIBLE
-                
-                // 添加淡入动画
-                aiSuggestionText.alpha = 0f
-                aiSuggestionText.animate()
-                    .alpha(1f)
-                    .setDuration(200)
-                    .start()
-                
-                Timber.d("🤖 显示AI建议: '$suggestion' (置信度: ${(confidence * 100).toInt()}%)")
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "显示AI建议失败: ${e.message}")
-        }
+        // 已移除拼音栏AI建议功能，保留方法定义避免编译错误
+        Timber.d("🤖 showAISuggestion调用已禁用 (拼音栏AI建议功能已移除): '$suggestion'")
     }
     
     /**
-     * 隐藏AI建议
+     * 隐藏AI建议 - 已移除拼音栏AI建议功能
      */
     private fun hideAISuggestion() {
-        try {
-            // 取消待执行的AI建议任务
-            aiSuggestionJob?.cancel()
-            
-            if (::aiSuggestionText.isInitialized && ::aiConfidenceIndicator.isInitialized) {
-                // 只隐藏建议内容，保留状态图标
-                aiSuggestionText.animate()
-                    .alpha(0f)
-                    .setDuration(150)
-                    .withEndAction {
-                        aiSuggestionText.visibility = View.GONE
-                        aiSuggestionText.text = ""
-                    }
-                    .start()
-                
-                aiConfidenceIndicator.visibility = View.GONE
-                aiConfidenceIndicator.text = ""
-                
-                Timber.d("🤖 隐藏AI建议内容，保留状态图标")
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "隐藏AI建议失败: ${e.message}")
-        }
+        // 已移除拼音栏AI建议功能，保留方法定义避免编译错误
+        Timber.d("🤖 hideAISuggestion调用已禁用 (拼音栏AI建议功能已移除)")
     }
     
     // 🗑️ 已移除错误的拼音分析AI建议逻辑
@@ -4209,16 +4240,16 @@ class ShenjiInputMethodService : InputMethodService() {
             
             if (success) {
                 Timber.i("🤖 ✅ AI引擎同步初始化成功")
-                // 更新状态图标为可用状态
-                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                    updateAIStatusIcon(true)
-                }
+                // 更新状态图标为可用状态 - 已移除拼音栏AI建议功能
+                // kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                //     updateAIStatusIcon(true)
+                // }
             } else {
                 Timber.w("🤖 ⚠️ AI引擎同步初始化失败")
-                // 更新状态图标为不可用状态
-                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                    updateAIStatusIcon(false)
-                }
+                // 更新状态图标为不可用状态 - 已移除拼音栏AI建议功能
+                // kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                //     updateAIStatusIcon(false)
+                // }
             }
             
         } catch (e: Exception) {

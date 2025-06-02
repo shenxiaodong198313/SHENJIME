@@ -3798,11 +3798,7 @@ id actions
 id activity_chooser_view_content
 id add
 id aiTestButtonContainer
-id ai_confidence_indicator
 id ai_status_icon
-id ai_suggestion_container
-id ai_suggestion_icon
-id ai_suggestion_text
 id alertTitle
 id aligned
 id all
