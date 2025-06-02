@@ -3777,7 +3777,6 @@ id action_diagnose_db
 id action_divider
 id action_done
 id action_export
-id action_github_issue
 id action_image
 id action_menu_divider
 id action_menu_presenter
@@ -3786,11 +3785,9 @@ id action_mode_bar_stub
 id action_mode_close_button
 id action_network_help
 id action_refresh_cache
-id action_report_crash
 id action_resume_all_downloads
 id action_search
 id action_settings
-id action_star_project
 id action_text
 id action_view_logs
 id action_vu_conversion_test

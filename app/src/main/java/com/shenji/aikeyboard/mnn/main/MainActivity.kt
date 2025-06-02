@@ -210,23 +210,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-        
-        // Setup search functionality
-        val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem.actionView as SearchView
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                modelListFragment?.adapter?.setFilter(query ?: "", false)
-                return true
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                modelListFragment?.adapter?.setFilter(newText ?: "", false)
-                return true
-            }
-        })
-        
+        // 不在MainActivity中创建菜单，让Fragment处理
         return true
     }
 
@@ -241,22 +225,9 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
                 return true
             }
-            R.id.action_github_issue -> {
-                GithubUtils.reportIssue(this)
-                return true
-            }
-            R.id.action_star_project -> {
-                GithubUtils.starProject(this)
-                return true
-            }
             R.id.action_resume_all_downloads -> {
                 ModelDownloadManager.getInstance(this).resumeAllDownloads()
                 Toast.makeText(this, R.string.resume_all_downloads, Toast.LENGTH_SHORT).show()
-                return true
-            }
-            R.id.action_report_crash -> {
-                // TODO: Implement crash reporting
-                Toast.makeText(this, "Crash reporting not implemented yet", Toast.LENGTH_SHORT).show()
                 return true
             }
             R.id.action_network_help -> {

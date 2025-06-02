@@ -1971,8 +1971,8 @@ class ShenjiInputMethodService : InputMethodService() {
             // 标记刚刚提交了候选词，下次输入时需要重置状态
             justCommittedText = true
             
-            // 🔥 关键新增：触发文本续写分析
-            triggerTextContinuationAnalysis()
+            // 🔥 关键新增：触发文本续写分析 - 已移除拼音栏AI建议功能
+            // triggerTextContinuationAnalysis()
             
             Timber.d("🎯 提交文本: '$text', 之前有输入: $hadComposingText，已清空所有状态，触发续写分析")
         } catch (e: Exception) {
@@ -2096,8 +2096,8 @@ class ShenjiInputMethodService : InputMethodService() {
             defaultCandidatesView.visibility = View.GONE
             // 隐藏候选词区域时显示工具栏
             toolbarView.visibility = View.VISIBLE
-            // 同时隐藏AI建议
-            hideAISuggestion()
+            // 同时隐藏AI建议 - 已移除拼音栏AI建议功能
+            // hideAISuggestion()
             
             Timber.d("🎯 隐藏候选词区域，显示工具栏")
         }
@@ -3485,8 +3485,8 @@ class ShenjiInputMethodService : InputMethodService() {
         //     Timber.d("AI建议区域已初始化并隐藏")
         // }
         
-        // 🤖 确保AI引擎已初始化
-        ensureAIEngineInitialized()
+        // 🤖 确保AI引擎已初始化 - 已移除拼音栏AI建议功能
+        // ensureAIEngineInitialized()
         
         // 清空初始化状态，确保没有硬编码的"w"等字符
         composingText.clear()
@@ -3644,10 +3644,11 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     /**
-     * 🔄 生成备用建议（保持向后兼容）
+     * 🔄 生成备用建议（保持向后兼容） - 已移除拼音栏AI建议功能
      */
     private fun generateFallbackSuggestion(input: String, candidates: List<WordFrequency>) {
-        generateContextualSuggestion(input, candidates)
+        // generateContextualSuggestion(input, candidates)
+        Timber.d("🤖 generateFallbackSuggestion调用已禁用 (拼音栏AI建议功能已移除)")
     }
     
     /**
@@ -4050,11 +4051,12 @@ class ShenjiInputMethodService : InputMethodService() {
                 Timber.d("🔥 触发文本续写分析，完整文本: '$fullText'")
                 
                 if (fullText.isNotEmpty() && fullText.trim().length >= 2) {
-                    // 有足够的文本内容，进行续写分析
-                    analyzeAndGenerateTextContinuation(fullText)
+                    // 有足够的文本内容，进行续写分析 - 已移除拼音栏AI建议功能
+                    // analyzeAndGenerateTextContinuation(fullText)
+                    Timber.d("🔥 续写分析已禁用 (拼音栏AI建议功能已移除)")
                 } else {
-                    // 文本太短，隐藏AI建议
-                    hideAISuggestion()
+                    // 文本太短，隐藏AI建议 - 已移除拼音栏AI建议功能
+                    // hideAISuggestion()
                     Timber.d("🔥 文本太短，不进行续写分析")
                 }
                 

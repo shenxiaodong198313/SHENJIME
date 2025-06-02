@@ -83,13 +83,7 @@ class ModelListFragment : Fragment(), ModelListContract.View {
             // Inflate your menu resource here
             menuInflater.inflate(R.menu.menu_main, menu)
             setupSearchView(menu)
-            val issueMenu = menu.findItem(R.id.action_github_issue)
-            issueMenu.setOnMenuItemClickListener { item: MenuItem? ->
-                if (activity != null) {
-                    (activity as MainActivity).onReportIssue(null)
-                }
-                true
-            }
+            // GitHub issue menu item removed to avoid duplication with floating action button
 
 //            val filterDownloadedMenu = menu.findItem(R.id.action_filter_downloaded)
 //            filterDownloadedMenu.setChecked(isFilterDownloaded(context))
@@ -111,20 +105,8 @@ class ModelListFragment : Fragment(), ModelListContract.View {
                 true
             }
 
-            val starGithub = menu.findItem(R.id.action_star_project)
-            starGithub.setOnMenuItemClickListener { item: MenuItem? ->
-                if (activity != null) {
-                    (activity as MainActivity).onStarProject(null)
-                }
-                true
-            }
-            val reportCrashMenu = menu.findItem(R.id.action_report_crash)
-            reportCrashMenu.setOnMenuItemClickListener {
-                if (CrashUtil.hasCrash()) {
-                    CrashUtil.shareLatestCrash(context!!)
-                }
-                true
-            }
+            // Star project menu item removed to avoid duplication with floating action button
+            // Report crash menu item removed to simplify menu
         }
 
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -139,8 +121,7 @@ class ModelListFragment : Fragment(), ModelListContract.View {
                 modelListPresenter!!.resumeAllDownloads()
                 true
             }
-            val reportCrashMenu = menu.findItem(R.id.action_report_crash)
-            reportCrashMenu.isVisible = CrashUtil.hasCrash()
+            // Report crash menu item removed
         }
     }
 

@@ -404,14 +404,11 @@ id action_db_info
 id action_diagnose_db
 id action_done
 id action_export
-id action_github_issue
 id action_network_help
 id action_refresh_cache
-id action_report_crash
 id action_resume_all_downloads
 id action_search
 id action_settings
-id action_star_project
 id action_view_logs
 id action_vu_conversion_test
 id aiTestButtonContainer
