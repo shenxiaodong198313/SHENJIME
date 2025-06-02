@@ -221,4 +221,32 @@
 
     <style name="ExtraLight" parent="android:TextAppearance">
     </style>
+
+    <!-- OverlayToolActivity 主题 -->
+    <style name="Theme.OverlayTool" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- 透明背景 -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@style/OverlayToolAnimation</item>
+        
+        <!-- 全屏显示 -->
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowNoTitle">true</item>
+        
+        <!-- 状态栏透明 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        
+        <!-- 允许在锁屏上显示 -->
+        <item name="android:showWhenLocked">true</item>
+        <item name="android:turnScreenOn">false</item>
+    </style>
+    
+    <!-- OverlayToolActivity 动画样式 -->
+    <style name="OverlayToolAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/slide_in_up</item>
+        <item name="android:activityOpenExitAnimation">@anim/fade_in</item>
+        <item name="android:activityCloseEnterAnimation">@anim/fade_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/slide_out_down</item>
+    </style>
 </resources> 

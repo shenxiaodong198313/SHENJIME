@@ -90,4 +90,12 @@
     <color name="gray_100">#F5F5F5</color>
     <color name="gray_300">#E0E0E0</color>
     <color name="gray_600">#757575</color>
+
+    <!-- OverlayToolActivity 颜色定义 -->
+    <color name="overlay_tool_header_bg">#F5F5F5</color>
+    <color name="overlay_tool_text_color">#333333</color>
+    <color name="overlay_tool_icon_color">#666666</color>
+    <color name="overlay_tool_divider">#E0E0E0</color>
+    <color name="overlay_tool_item_bg">#FFFFFF</color>
+    <color name="overlay_tool_item_pressed">#F0F0F0</color>
 </resources> 

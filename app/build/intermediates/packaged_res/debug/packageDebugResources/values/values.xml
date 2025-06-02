@@ -242,6 +242,12 @@
     <color name="message_border">#FFE0E0E0</color>
     <color name="my_color_surface">#FFFFFF</color>
     <color name="my_color_surface_variant">#EEEEEE</color>
+    <color name="overlay_tool_divider">#E0E0E0</color>
+    <color name="overlay_tool_header_bg">#F5F5F5</color>
+    <color name="overlay_tool_icon_color">#666666</color>
+    <color name="overlay_tool_item_bg">#FFFFFF</color>
+    <color name="overlay_tool_item_pressed">#F0F0F0</color>
+    <color name="overlay_tool_text_color">#333333</color>
     <color name="pinyin_text">#757575</color>
     <color name="primary_blue">#FF2196F3</color>
     <color name="primary_color">#FF2196F3</color>
@@ -639,6 +645,12 @@
     </style>
     <style name="Light" parent="android:TextAppearance">
     </style>
+    <style name="OverlayToolAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/slide_in_up</item>
+        <item name="android:activityOpenExitAnimation">@anim/fade_in</item>
+        <item name="android:activityCloseEnterAnimation">@anim/fade_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/slide_out_down</item>
+    </style>
     <style name="SettingsDivider">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">1dp</item>
@@ -748,6 +760,24 @@
     <style name="Theme.AIKeyboard.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light">
         
         <item name="android:textColorPrimary">@color/black</item>
+    </style>
+    <style name="Theme.OverlayTool" parent="Theme.AppCompat.Light.NoActionBar">
+        
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@style/OverlayToolAnimation</item>
+        
+        
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowNoTitle">true</item>
+        
+        
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        
+        
+        <item name="android:showWhenLocked">true</item>
+        <item name="android:turnScreenOn">false</item>
     </style>
     <style name="Theme.SHENJI" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         

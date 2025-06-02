@@ -28,6 +28,7 @@ anim design_bottom_sheet_slide_in
 anim design_bottom_sheet_slide_out
 anim design_snackbar_in
 anim design_snackbar_out
+anim fade_in
 anim fragment_fast_out_extra_slow_in
 anim linear_indeterminate_line1_head_interpolator
 anim linear_indeterminate_line1_tail_interpolator
@@ -44,6 +45,9 @@ anim m3_side_sheet_exit_to_right
 anim mtrl_bottom_sheet_slide_in
 anim mtrl_bottom_sheet_slide_out
 anim mtrl_card_lowers_interpolator
+anim slide_in_up
+anim slide_out_down
+anim slide_out_right
 animator design_appbar_state_list_animator
 animator design_fab_hide_motion_spec
 animator design_fab_show_motion_spec
@@ -2485,6 +2489,12 @@ color nav_item_color_state
 color nav_item_icon_tint
 color notification_action_color_filter
 color notification_icon_bg_color
+color overlay_tool_divider
+color overlay_tool_header_bg
+color overlay_tool_icon_color
+color overlay_tool_item_bg
+color overlay_tool_item_pressed
+color overlay_tool_text_color
 color pinyin_text
 color preference_fallback_accent_color
 color primary_blue
@@ -3525,6 +3535,7 @@ drawable ic_ai_avatar
 drawable ic_ai_model
 drawable ic_ai_suggestion
 drawable ic_app_icon
+drawable ic_arrow_back
 drawable ic_arrow_back_black_24
 drawable ic_arrow_down
 drawable ic_arrow_down_24dp
@@ -3537,6 +3548,7 @@ drawable ic_audio_file
 drawable ic_audio_output
 drawable ic_audio_pause
 drawable ic_audio_play
+drawable ic_back_arrow
 drawable ic_backspace
 drawable ic_bottom
 drawable ic_call_answer
@@ -3548,6 +3560,7 @@ drawable ic_call_decline_low
 drawable ic_camera
 drawable ic_chat
 drawable ic_clear_black_24
+drawable ic_clipboard
 drawable ic_clock_black_24dp
 drawable ic_close
 drawable ic_collapse_arrow
@@ -3557,6 +3570,7 @@ drawable ic_delete
 drawable ic_delete_6
 drawable ic_du_icon
 drawable ic_edit
+drawable ic_emoji
 drawable ic_export
 drawable ic_github
 drawable ic_github_tint
@@ -3574,6 +3588,7 @@ drawable ic_mic
 drawable ic_microphone
 drawable ic_model
 drawable ic_more
+drawable ic_more_vert
 drawable ic_mtrl_checked_circle
 drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
@@ -3587,6 +3602,7 @@ drawable ic_search_black_24
 drawable ic_send
 drawable ic_send_disabled
 drawable ic_send_tint
+drawable ic_settings
 drawable ic_shift_up
 drawable ic_smile_face
 drawable ic_space
@@ -3599,6 +3615,8 @@ drawable ic_stage_unknown
 drawable ic_stop
 drawable ic_think
 drawable ic_thinking
+drawable ic_toolbar_page
+drawable ic_translate
 drawable indeterminate_static
 drawable input_background
 drawable internlm_icon
@@ -3684,6 +3702,7 @@ drawable notification_template_icon_bg
 drawable notification_template_icon_low_bg
 drawable notification_tile_bg
 drawable notify_panel_notification_icon_bg
+drawable overlay_tool_background
 drawable phi_icon
 drawable preference_list_divider_material
 drawable progress_m2_style
@@ -3693,8 +3712,10 @@ drawable shape_tag_view
 drawable smart_tips_background
 drawable smolm_icon
 drawable splash_background
+drawable tag_background
 drawable test_level_drawable
 drawable testtest
+drawable tool_item_background
 drawable tooltip_frame_dark
 drawable tooltip_frame_light
 drawable yi_icon
@@ -3831,7 +3852,9 @@ id autoComplete
 id autoCompleteToEnd
 id autoCompleteToStart
 id axisRelative
+id back_button
 id background
+id backgroundOverlay
 id barrier
 id baseline
 id batch_size_display
@@ -4029,7 +4052,9 @@ id container_mixed_settings
 id container_penalty_settings
 id container_top_p_settings
 id content
+id contentContainer
 id contentPanel
+id content_text
 id contiguous
 id continuousVelocity
 id coordinator
@@ -4733,6 +4758,7 @@ id superscript_equal
 id superscript_minus
 id superscript_plus
 id supportScrollUp
+id swipe_refresh_layout
 id switchControl
 id switchWidget
 id switch_an_ai
@@ -4822,6 +4848,7 @@ id symbol_row_2
 id symbol_row_3
 id symbol_view_flipper
 id tabMode
+id tab_layout
 id tableModules
 id tag_accessibility_actions
 id tag_accessibility_clickable_spans
@@ -4837,6 +4864,7 @@ id tag_unhandled_key_event_manager
 id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
 id tagsLayout
+id tags_text
 id test_button
 id test_edit_text
 id text
@@ -4970,6 +4998,7 @@ id vertical
 id vertical_only
 id view_assistant_loading
 id view_offset_helper
+id view_pager
 id view_transition
 id view_tree_disjoint_parent
 id view_tree_lifecycle_owner
@@ -5135,6 +5164,8 @@ layout activity_log_detail
 layout activity_main
 layout activity_main_settings
 layout activity_mnn_main
+layout activity_order
+layout activity_overlay_tool
 layout activity_pinyin_test
 layout activity_select_text
 layout activity_smart_pinyin_mvp_test
@@ -5174,6 +5205,7 @@ layout fragment_log_viewer
 layout fragment_modellist
 layout fragment_permission_check
 layout fragment_pinyin_test
+layout fragment_script_library
 layout fragment_settings_sheet
 layout fragment_verification_code
 layout image_frame
@@ -5195,6 +5227,7 @@ layout item_holder_user
 layout item_llm_model
 layout item_option
 layout item_sampler_spinner
+layout item_script
 layout keyboard_layout
 layout layout_mllm_test_activity
 layout layout_progressdialog
@@ -6116,6 +6149,7 @@ style MaterialAlertDialog_MaterialComponents_Title_Panel
 style MaterialAlertDialog_MaterialComponents_Title_Panel_CenterStacked
 style MaterialAlertDialog_MaterialComponents_Title_Text
 style MaterialAlertDialog_MaterialComponents_Title_Text_CenterStacked
+style OverlayToolAnimation
 style Platform_AppCompat
 style Platform_AppCompat_Light
 style Platform_MaterialComponents
@@ -6527,6 +6561,7 @@ style Theme_MaterialComponents_Light_NoActionBar
 style Theme_MaterialComponents_Light_NoActionBar_Bridge
 style Theme_MaterialComponents_NoActionBar
 style Theme_MaterialComponents_NoActionBar_Bridge
+style Theme_OverlayTool
 style Theme_SHENJI
 style Theme_SHENJI_Splash
 style Theme_TransparentFullScreenDialog

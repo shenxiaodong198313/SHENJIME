@@ -136,6 +136,7 @@ class ShenjiInputMethodService : InputMethodService() {
     
     override fun onCreate() {
         super.onCreate()
+        instance = this
         Timber.d("神迹输入法服务已创建")
         Timber.d("输入法服务生命周期: onCreate")
         
@@ -1139,8 +1140,7 @@ class ShenjiInputMethodService : InputMethodService() {
     private fun setupToolbarIcons() {
         // 订单图标
         candidatesViewLayout.findViewById<ImageView>(R.id.order_icon)?.setOnClickListener {
-            Toast.makeText(this, "订单功能即将上线", Toast.LENGTH_SHORT).show()
-            Timber.d("点击了订单图标")
+            openOrderPage()
         }
         
         // 计划图标
@@ -1161,10 +1161,9 @@ class ShenjiInputMethodService : InputMethodService() {
             Timber.d("点击了评论图标")
         }
         
-        // App图标
+        // App图标 - 改为触发工具栏页面
         candidatesViewLayout.findViewById<ImageView>(R.id.app_icon_toolbar)?.setOnClickListener {
-            Toast.makeText(this, "应用功能即将上线", Toast.LENGTH_SHORT).show()
-            Timber.d("点击了App图标")
+            openToolbarPage()
         }
         
         // 收起键盘箭头
@@ -1172,6 +1171,92 @@ class ShenjiInputMethodService : InputMethodService() {
             // 收起键盘
             requestHideSelf(0)
             Timber.d("点击了收起键盘箭头，键盘已收起")
+        }
+    }
+    
+    /**
+     * 打开工具栏页面
+     */
+    private fun openToolbarPage() {
+        try {
+            Timber.d("准备打开工具栏页面")
+            
+            // 先收起键盘
+            requestHideSelf(0)
+            
+            // 启动OverlayToolActivity
+            val intent = android.content.Intent(this, com.shenji.aikeyboard.ui.OverlayToolActivity::class.java)
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            
+            startActivity(intent)
+            
+            Timber.d("工具栏页面已启动")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "打开工具栏页面失败: ${e.message}")
+            Toast.makeText(this, "打开工具栏页面失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 打开订单页面
+     */
+    private fun openOrderPage() {
+        try {
+            Timber.d("准备打开订单页面")
+            
+            // 不收起键盘，保持输入连接
+            // requestHideSelf(0)
+            
+            // 启动OrderActivity
+            val intent = android.content.Intent(this, com.shenji.aikeyboard.ui.OrderActivity::class.java)
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            
+            startActivity(intent)
+            
+            Timber.d("订单页面已启动")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "打开订单页面失败: ${e.message}")
+            Toast.makeText(this, "打开订单页面失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 自动填充文本到当前输入框
+     */
+    fun autoFillText(text: String) {
+        try {
+            val ic = currentInputConnection
+            if (ic != null) {
+                // 清空当前组合文本
+                if (composingText.isNotEmpty()) {
+                    composingText.clear()
+                    ic.finishComposingText()
+                    updatePinyinDisplay("")
+                    hideCandidates()
+                }
+                
+                // 直接提交文本
+                ic.commitText(text, 1)
+                
+                Timber.d("自动填充文本成功: $text")
+            } else {
+                Timber.w("InputConnection为空，无法自动填充文本")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "自动填充文本失败: ${e.message}")
+        }
+    }
+
+    companion object {
+        @Volatile
+        private var instance: ShenjiInputMethodService? = null
+        
+        fun getInstance(): ShenjiInputMethodService? {
+            return instance
         }
     }
     
@@ -4383,6 +4468,11 @@ class ShenjiInputMethodService : InputMethodService() {
         } catch (e: Exception) {
             Timber.e(e, "隐藏智能提示失败: ${e.message}")
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        instance = null
     }
     
 }

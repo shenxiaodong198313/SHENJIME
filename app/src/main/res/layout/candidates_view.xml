@@ -97,7 +97,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
 
-            <!-- App图标 -->
+            <!-- App图标 - 改为触发工具栏页面 -->
             <ImageView
                 android:id="@+id/app_icon_toolbar"
                 android:layout_width="29dp"
@@ -107,7 +107,7 @@
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"
-                android:contentDescription="应用" />
+                android:contentDescription="工具栏页面" />
 
             <!-- AI状态图标 -->
             <ImageView

@@ -1,6 +1,10 @@
 R_DEF: Internal format may change without notice
 local
 anim candidate_flash
+anim fade_in
+anim slide_in_up
+anim slide_out_down
+anim slide_out_right
 array diffusion_memory_mode_entries
 array diffusion_memory_mode_values
 array download_provider_entries
@@ -233,6 +237,12 @@ color my_color_surface
 color my_color_surface_variant
 color nav_item_color_state
 color nav_item_icon_tint
+color overlay_tool_divider
+color overlay_tool_header_bg
+color overlay_tool_icon_color
+color overlay_tool_item_bg
+color overlay_tool_item_pressed
+color overlay_tool_text_color
 color pinyin_text
 color primary_blue
 color primary_color
@@ -326,6 +336,7 @@ drawable ic_ai_avatar
 drawable ic_ai_model
 drawable ic_ai_suggestion
 drawable ic_app_icon
+drawable ic_arrow_back
 drawable ic_arrow_down
 drawable ic_arrow_drop_down
 drawable ic_arrow_forward
@@ -336,10 +347,12 @@ drawable ic_audio_file
 drawable ic_audio_output
 drawable ic_audio_pause
 drawable ic_audio_play
+drawable ic_back_arrow
 drawable ic_backspace
 drawable ic_bottom
 drawable ic_camera
 drawable ic_chat
+drawable ic_clipboard
 drawable ic_close
 drawable ic_collapse_arrow
 drawable ic_comment
@@ -348,6 +361,7 @@ drawable ic_delete
 drawable ic_delete_6
 drawable ic_du_icon
 drawable ic_edit
+drawable ic_emoji
 drawable ic_export
 drawable ic_github
 drawable ic_github_tint
@@ -361,6 +375,7 @@ drawable ic_mic
 drawable ic_microphone
 drawable ic_model
 drawable ic_more
+drawable ic_more_vert
 drawable ic_order
 drawable ic_plan
 drawable ic_plus
@@ -368,6 +383,7 @@ drawable ic_reset
 drawable ic_send
 drawable ic_send_disabled
 drawable ic_send_tint
+drawable ic_settings
 drawable ic_shift_up
 drawable ic_smile_face
 drawable ic_space
@@ -380,6 +396,8 @@ drawable ic_stage_unknown
 drawable ic_stop
 drawable ic_think
 drawable ic_thinking
+drawable ic_toolbar_page
+drawable ic_translate
 drawable input_background
 drawable internlm_icon
 drawable jina_icon
@@ -392,6 +410,7 @@ drawable keyboard_special_key_bg
 drawable llama_icon
 drawable logo
 drawable logo_small
+drawable overlay_tool_background
 drawable phi_icon
 drawable progress_m2_style
 drawable qwen_icon
@@ -400,7 +419,9 @@ drawable shape_tag_view
 drawable smart_tips_background
 drawable smolm_icon
 drawable splash_background
+drawable tag_background
 drawable testtest
+drawable tool_item_background
 drawable yi_icon
 id accessibility_settings_button
 id action_build_trie
@@ -429,7 +450,9 @@ id assistant_text_copy
 id assistant_text_report
 id assistant_text_select
 id audio_seek_bar
+id back_button
 id background
+id backgroundOverlay
 id batch_size_display
 id batch_size_seekbar
 id batch_test_button
@@ -584,6 +607,8 @@ id comment_icon
 id container_mixed_settings
 id container_penalty_settings
 id container_top_p_settings
+id contentContainer
+id content_text
 id copy_logs_button
 id copy_result_button
 id currency_123_btn
@@ -880,6 +905,7 @@ id query_process_text_view
 id realm_status_text
 id recyclerView
 id recyclerViewChat
+id recycler_view
 id recycler_view_options
 id recycler_view_test
 id refresh_button
@@ -955,6 +981,7 @@ id superscript_9
 id superscript_equal
 id superscript_minus
 id superscript_plus
+id swipe_refresh_layout
 id switchControl
 id switch_an_ai
 id switch_an_ang
@@ -1042,8 +1069,10 @@ id symbol_row_1
 id symbol_row_2
 id symbol_row_3
 id symbol_view_flipper
+id tab_layout
 id tableModules
 id tagsLayout
+id tags_text
 id test_button
 id test_edit_text
 id text
@@ -1129,6 +1158,7 @@ id tv_thread_num_label
 id tv_word
 id value_slider
 id view_assistant_loading
+id view_pager
 id visible
 id voice_recording_wav
 layout activity_ai_test
@@ -1147,6 +1177,8 @@ layout activity_log_detail
 layout activity_main
 layout activity_main_settings
 layout activity_mnn_main
+layout activity_order
+layout activity_overlay_tool
 layout activity_pinyin_test
 layout activity_select_text
 layout activity_smart_pinyin_mvp_test
@@ -1169,6 +1201,7 @@ layout fragment_log_viewer
 layout fragment_modellist
 layout fragment_permission_check
 layout fragment_pinyin_test
+layout fragment_script_library
 layout fragment_settings_sheet
 layout fragment_verification_code
 layout item_candidate
@@ -1187,6 +1220,7 @@ layout item_holder_user
 layout item_llm_model
 layout item_option
 layout item_sampler_spinner
+layout item_script
 layout keyboard_layout
 layout layout_mllm_test_activity
 layout layout_toolbar_filters_content
@@ -1434,6 +1468,7 @@ style KeyboardFunctionButton
 style KeyboardSpaceButton
 style KeyboardSpecialButton
 style Light
+style OverlayToolAnimation
 style SettingsDivider
 style SettingsRowChevron
 style SettingsRowClickable
@@ -1454,6 +1489,7 @@ style ThemeOverlay.AppTheme.HighContrast
 style ThemeOverlay.AppTheme.MediumContrast
 style Theme.AIKeyboard
 style Theme.AIKeyboard.PopupOverlay
+style Theme.OverlayTool
 style Theme.SHENJI
 style Theme.SHENJI.Splash
 style Theme.TransparentFullScreenDialog

@@ -118,6 +118,26 @@
             android:label="AI功能测试"
             android:windowSoftInputMode="adjustResize" />
             
+        <!-- 工具栏页面Activity -->
+        <activity
+            android:name=".ui.OverlayToolActivity"
+            android:exported="false"
+            android:label="工具栏"
+            android:theme="@style/Theme.OverlayTool"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:launchMode="singleTop" />
+            
+        <!-- 订单页面Activity -->
+        <activity
+            android:name=".ui.OrderActivity"
+            android:exported="false"
+            android:label="话术库"
+            android:theme="@style/Theme.OverlayTool"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:excludeFromRecents="true" />
+            
         <!-- MNN移动推理框架相关Activity -->
         <activity
             android:name=".mnn.main.MainActivity"

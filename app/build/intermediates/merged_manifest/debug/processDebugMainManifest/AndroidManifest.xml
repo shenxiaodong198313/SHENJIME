@@ -154,6 +154,26 @@
             android:label="AI功能测试"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- 工具栏页面Activity -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.OverlayToolActivity"
+            android:exported="false"
+            android:label="工具栏"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.OverlayTool"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
+        <!-- 订单页面Activity -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.OrderActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:label="话术库"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.OverlayTool"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
         <!-- MNN移动推理框架相关Activity -->
         <activity
             android:name="com.shenji.aikeyboard.mnn.main.MainActivity"
