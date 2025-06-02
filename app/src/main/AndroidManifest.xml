@@ -118,6 +118,32 @@
             android:label="AI功能测试"
             android:windowSoftInputMode="adjustResize" />
             
+        <!-- MNN移动推理框架相关Activity -->
+        <activity
+            android:name=".mnn.main.MainActivity"
+            android:exported="true"
+            android:label="MNN AI助手"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.SHENJI" />
+            
+        <activity
+            android:name=".mnn.modelist.ModelListActivity"
+            android:exported="false"
+            android:label="模型列表"
+            android:windowSoftInputMode="adjustResize" />
+            
+        <activity
+            android:name=".mnn.chat.ChatActivity"
+            android:exported="false"
+            android:label="AI对话"
+            android:windowSoftInputMode="adjustResize" />
+            
+        <activity
+            android:name=".mnn.mainsettings.MainSettingsActivity"
+            android:exported="false"
+            android:label="MNN设置"
+            android:windowSoftInputMode="adjustResize" />
+            
         <!-- 输入法服务 -->
         <service
             android:name=".keyboard.ShenjiInputMethodService"

@@ -26,8 +26,8 @@
         android:textStyle="bold"
         android:textColor="@color/splash_text_color"
         android:layout_centerHorizontal="true"
-        android:layout_above="@+id/buildDictButton"
-        android:layout_marginBottom="16dp" />
+        android:layout_above="@+id/buttonContainer"
+        android:layout_marginBottom="32dp" />
 
     <!-- 版本信息 - 绝对定位，不影响图标 -->
     <TextView
@@ -42,14 +42,15 @@
         android:layout_above="@+id/appTitle"
         android:layout_marginBottom="8dp" />
 
-    <!-- 构建词典按钮容器 - 用于动态创建按钮 -->
+    <!-- 构建词典按钮容器 - 修复：使用固定位置，距离底部合适距离 -->
     <FrameLayout
         android:id="@+id/buttonContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_above="@+id/progressBar"
-        android:layout_marginBottom="80dp" />
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="200dp"
+        android:minHeight="120dp" />
 
     <!-- 加载进度 - 绝对定位，不影响图标 -->
     <ProgressBar

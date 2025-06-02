@@ -153,6 +153,19 @@
                 android:focusable="true"
                 android:contentDescription="应用" />
 
+            <!-- AI状态图标 -->
+            <ImageView
+                android:id="@+id/ai_status_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_ai_suggestion"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="AI状态"
+                android:visibility="gone" />
+
             <!-- 收起键盘箭头 -->
             <ImageView
                 android:id="@+id/collapse_keyboard_icon"

@@ -10,6 +10,13 @@
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
+        <!-- Surface colors -->
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnSurface">@color/black</item>
+        <item name="colorSurfaceVariant">@color/gray_100</item>
+        <item name="colorOnSurfaceVariant">@color/gray_600</item>
+        <!-- Background colors -->
+        <item name="android:colorBackground">@color/white</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
@@ -41,5 +48,21 @@
     <style name="Theme.AIKeyboard.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light">
         <!-- 弹出层样式属性 -->
         <item name="android:textColorPrimary">@color/black</item>
+    </style>
+    
+    <!-- MNN相关主题 - 从kaifa项目复制 -->
+    <style name="App.NavigationView" parent="Widget.Material3.NavigationView">
+        <!-- Option 1: Use the custom drawable -->
+        <item name="android:background">?android:colorBackground</item>
+    </style>
+
+    <style name="CustomPopupMenu" parent="Widget.Material3.PopupMenu">
+        <item name="android:popupBackground">?android:colorBackground</item>
+    </style>
+
+    <style name="Theme.TransparentFullScreenDialog" parent="@style/Theme.AppCompat.Dialog">
+        <!-- Make sure it's fullscreen -->
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 </resources> 

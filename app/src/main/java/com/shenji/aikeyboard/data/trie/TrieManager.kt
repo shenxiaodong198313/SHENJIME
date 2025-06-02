@@ -73,6 +73,7 @@ class TrieManager private constructor() {
         if (isInitialized) return
         
         val startTime = System.currentTimeMillis()
+        android.util.Log.d("TrieManager", "TrieManager开始轻量级初始化")
         Timber.d("TrieManager开始轻量级初始化")
         
         // 预分配内存，减少GC压力
@@ -86,6 +87,10 @@ class TrieManager private constructor() {
         
         val endTime = System.currentTimeMillis()
         val loadTime = endTime - startTime
+        
+        android.util.Log.d("TrieManager", "TrieManager轻量级初始化完成，耗时${loadTime}ms")
+        android.util.Log.d("TrieManager", "可用的Trie文件: ${availableTypes.map { getDisplayName(it) }}")
+        android.util.Log.d("TrieManager", "词典将按需加载，减少启动时内存压力")
         
         Timber.d("TrieManager轻量级初始化完成，耗时${loadTime}ms")
         Timber.d("可用的Trie文件: ${availableTypes.map { getDisplayName(it) }}")
@@ -104,7 +109,10 @@ class TrieManager private constructor() {
             
             if (isAssetFileExists(context, assetPath)) {
                 availableTypes.add(trieType)
+                android.util.Log.d("TrieManager", "发现可用Trie文件: ${getDisplayName(trieType)}")
                 Timber.d("发现可用Trie文件: ${getDisplayName(trieType)}")
+            } else {
+                android.util.Log.w("TrieManager", "未找到Trie文件: ${getDisplayName(trieType)} ($assetPath)")
             }
         }
         
@@ -188,14 +196,64 @@ class TrieManager private constructor() {
     }
     
     /**
-     * 检查assets中是否存在指定文件
+     * 检查是否存在某类型的Trie树文件
+     * @param type Trie树类型
+     * @return 是否存在文件（包括assets中的预构建文件）
+     */
+    fun isTrieFileExists(type: TrieType): Boolean {
+        val context = ShenjiApplication.appContext
+        val fileName = "trie/${getTypeString(type)}_trie.dat"
+        
+        try {
+            // 🔧 修复：更详细的文件检查逻辑
+            Timber.d("🔍 检查Trie文件: ${getDisplayName(type)} ($fileName)")
+            
+            // 首先检查用户构建的文件
+            val userFile = File(context.filesDir, fileName)
+            val hasUserFile = userFile.exists() && userFile.length() > 0
+            
+            if (hasUserFile) {
+                Timber.d("✅ 找到用户构建文件: ${userFile.absolutePath}, 大小: ${userFile.length()}字节")
+                return true
+            } else {
+                Timber.d("❌ 用户构建文件不存在或为空: ${userFile.absolutePath}")
+            }
+            
+            // 然后检查assets中的预构建文件
+            val hasAssetsFile = isAssetFileExists(context, fileName)
+            if (hasAssetsFile) {
+                Timber.d("✅ 找到assets预构建文件: $fileName")
+                return true
+            } else {
+                Timber.d("❌ assets预构建文件不存在: $fileName")
+            }
+            
+            Timber.w("⚠️ ${getDisplayName(type)}Trie文件完全不存在")
+            return false
+            
+        } catch (e: Exception) {
+            Timber.e(e, "❌ 检查${getDisplayName(type)}Trie文件时出错: ${e.message}")
+            return false
+        }
+    }
+    
+    /**
+     * 检查assets中是否存在指定文件 - 增强版本
      */
     private fun isAssetFileExists(context: Context, fileName: String): Boolean {
         return try {
-            val inputStream = context.assets.open(fileName)
-            inputStream.close()
-            true
+            Timber.d("🔍 检查assets文件: $fileName")
+            
+            context.assets.open(fileName).use { inputStream ->
+                val available = inputStream.available()
+                Timber.d("✅ assets文件存在: $fileName, 可读字节: $available")
+                available > 0
+            }
+        } catch (e: java.io.FileNotFoundException) {
+            Timber.d("❌ assets文件不存在: $fileName")
+            false
         } catch (e: Exception) {
+            Timber.w(e, "⚠️ 检查assets文件时出错: $fileName - ${e.message}")
             false
         }
     }
@@ -652,25 +710,6 @@ class TrieManager private constructor() {
     }
     
     /**
-     * 检查是否存在某类型的Trie树文件
-     * @param type Trie树类型
-     * @return 是否存在文件（包括assets中的预构建文件）
-     */
-    fun isTrieFileExists(type: TrieType): Boolean {
-        val context = ShenjiApplication.appContext
-        val fileName = "trie/${getTypeString(type)}_trie.dat"
-        
-        // 首先检查用户构建的文件
-        val file = File(context.filesDir, fileName)
-        if (file.exists() && file.length() > 0) {
-            return true
-        }
-        
-        // 然后检查assets中的预构建文件
-        return isAssetFileExists(context, fileName)
-    }
-    
-    /**
      * 检查是否存在预编译的Trie文件（assets中）
      * @param type Trie树类型
      * @return 是否存在预编译文件
@@ -770,7 +809,7 @@ class TrieManager private constructor() {
     /**
      * 获取Trie类型的显示名称
      */
-    private fun getDisplayName(trieType: TrieType): String {
+    fun getDisplayName(trieType: TrieType): String {
         return when (trieType) {
             TrieType.CHARS -> "单字"
             TrieType.BASE -> "基础词典"

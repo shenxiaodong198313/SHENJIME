@@ -1,18 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="diffusion_memory_mode_entries">
+        <item>@string/diffusion_mode_memory_saving</item>
+        <item>@string/diffusion_mode_memory_engough</item>
+        <item>@string/diffusion_mode_memory_balance</item>
+    </string-array>
+    <string-array name="diffusion_memory_mode_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="download_provider_entries">
+        <item>HuggingFace</item>
+        <item>@string/modelscope</item>
+        <item>@string/modelers</item>
+    </string-array>
+    <string-array name="download_provider_values">
+        <item>HuggingFace</item>
+        <item>ModelScope</item>
+        <item>Modelers</item>
+    </string-array>
+    <attr format="color" name="colorCustomColor1"/>
+    <attr format="color" name="colorCustomColor1Container"/>
+    <attr format="color" name="colorOnCustomColor1"/>
+    <attr format="color" name="colorOnCustomColor1Container"/>
+    <attr format="reference" name="icon"/>
+    <attr format="string" name="labelText"/>
+    <attr format="integer" name="seekbarValue"/>
+    <attr format="boolean" name="switchEnabled"/>
+    <attr format="enum" name="switchVisibility">
+        <enum name="visible" value="0"/>
+        <enum name="invisible" value="1"/>
+        <enum name="gone" value="2"/>
+    </attr>
+    <attr format="string" name="text"/>
+    <attr format="string" name="valueText"/>
     <color name="ai_message_background">#FFFFFFFF</color>
+    <color name="app_theme_color">#329BEA</color>
     <color name="background_color">#FFF5F5F5</color>
     <color name="black">#FF000000</color>
     <color name="candidate_other">#9E9E9E</color>
     <color name="candidate_text">#000000</color>
     <color name="candidate_text_selected">#4285F4</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="colorCustomColor1">#166683</color>
+    <color name="colorCustomColor1Container">#C0E8FF</color>
+    <color name="colorCustomColor1Container_highContrast">#004F69</color>
+    <color name="colorCustomColor1Container_mediumContrast">#2C7593</color>
+    <color name="colorCustomColor1_highContrast">#003041</color>
+    <color name="colorCustomColor1_mediumContrast">#003B4F</color>
+    <color name="colorGreen">#A5DE40</color>
+    <color name="colorOnCustomColor1">#FFFFFF</color>
+    <color name="colorOnCustomColor1Container">#004D66</color>
+    <color name="colorOnCustomColor1Container_highContrast">#FFFFFF</color>
+    <color name="colorOnCustomColor1Container_mediumContrast">#FFFFFF</color>
+    <color name="colorOnCustomColor1_highContrast">#FFFFFF</color>
+    <color name="colorOnCustomColor1_mediumContrast">#FFFFFF</color>
     <color name="colorPrecompiledBackground">#E8F5E9</color>
     <color name="colorPrecompiledLoading">#F5F5F5</color>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPurpleDark">#3F4A68</color>
+    <color name="colorPurpleLight">#4B5980</color>
+    <color name="colorRed">#FF0000</color>
+    <color name="colorTextBlack">#333333</color>
+    <color name="colorTextInfo">#9b9b9b</color>
+    <color name="color_background">#FFFFFF</color>
+    <color name="color_darker_blue">#1168aa</color>
+    <color name="color_disabled">#888888</color>
+    <color name="color_foreground">@android:color/black</color>
+    <color name="color_on_surface_variant">#666666</color>
+    <color name="color_white">#FFFFFFFF</color>
     <color name="divider">#E0E0E0</color>
     <color name="error_red">#FFF44336</color>
+    <color name="gray_100">#F5F5F5</color>
+    <color name="gray_300">#E0E0E0</color>
+    <color name="gray_600">#757575</color>
     <color name="info_background">#FFF0F8FF</color>
     <color name="input_background">#FFFFFFFF</color>
     <color name="input_border">#FFCCCCCC</color>
@@ -29,7 +92,151 @@
     <color name="keyboard_text">#333333</color>
     <color name="light_gray">#FFF5F5F5</color>
     <color name="link_color">#FF1976D2</color>
+    <color name="mainBlue">#3bb5ee</color>
+    <color name="md_theme_background">#F6FAFE</color>
+    <color name="md_theme_background_highContrast">#F6FAFE</color>
+    <color name="md_theme_background_mediumContrast">#F6FAFE</color>
+    <color name="md_theme_error">#BA1A1A</color>
+    <color name="md_theme_errorContainer">#FFDAD6</color>
+    <color name="md_theme_errorContainer_highContrast">#98000A</color>
+    <color name="md_theme_errorContainer_mediumContrast">#CF2C27</color>
+    <color name="md_theme_error_highContrast">#600004</color>
+    <color name="md_theme_error_mediumContrast">#740006</color>
+    <color name="md_theme_inverseOnSurface">#EDF1F5</color>
+    <color name="md_theme_inverseOnSurface_highContrast">#FFFFFF</color>
+    <color name="md_theme_inverseOnSurface_mediumContrast">#EDF1F5</color>
+    <color name="md_theme_inversePrimary">#8ECFF2</color>
+    <color name="md_theme_inversePrimary_highContrast">#8ECFF2</color>
+    <color name="md_theme_inversePrimary_mediumContrast">#8ECFF2</color>
+    <color name="md_theme_inverseSurface">#2C3134</color>
+    <color name="md_theme_inverseSurface_highContrast">#2C3134</color>
+    <color name="md_theme_inverseSurface_mediumContrast">#2C3134</color>
+    <color name="md_theme_onBackground">#171C1F</color>
+    <color name="md_theme_onBackground_highContrast">#171C1F</color>
+    <color name="md_theme_onBackground_mediumContrast">#171C1F</color>
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_onErrorContainer">#93000A</color>
+    <color name="md_theme_onErrorContainer_highContrast">#FFFFFF</color>
+    <color name="md_theme_onErrorContainer_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onError_highContrast">#FFFFFF</color>
+    <color name="md_theme_onError_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_onPrimaryContainer">#004D67</color>
+    <color name="md_theme_onPrimaryContainer_highContrast">#FFFFFF</color>
+    <color name="md_theme_onPrimaryContainer_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onPrimaryFixed">#001E2B</color>
+    <color name="md_theme_onPrimaryFixedVariant">#004D67</color>
+    <color name="md_theme_onPrimaryFixedVariant_highContrast">#FFFFFF</color>
+    <color name="md_theme_onPrimaryFixedVariant_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onPrimaryFixed_highContrast">#FFFFFF</color>
+    <color name="md_theme_onPrimaryFixed_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onPrimary_highContrast">#FFFFFF</color>
+    <color name="md_theme_onPrimary_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_onSecondaryContainer">#364954</color>
+    <color name="md_theme_onSecondaryContainer_highContrast">#FFFFFF</color>
+    <color name="md_theme_onSecondaryContainer_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onSecondaryFixed">#091E28</color>
+    <color name="md_theme_onSecondaryFixedVariant">#364954</color>
+    <color name="md_theme_onSecondaryFixedVariant_highContrast">#FFFFFF</color>
+    <color name="md_theme_onSecondaryFixedVariant_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onSecondaryFixed_highContrast">#FFFFFF</color>
+    <color name="md_theme_onSecondaryFixed_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onSecondary_highContrast">#FFFFFF</color>
+    <color name="md_theme_onSecondary_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onSurface">#171C1F</color>
+    <color name="md_theme_onSurfaceVariant">#40484C</color>
+    <color name="md_theme_onSurfaceVariant_highContrast">#000000</color>
+    <color name="md_theme_onSurfaceVariant_mediumContrast">#30373C</color>
+    <color name="md_theme_onSurface_highContrast">#000000</color>
+    <color name="md_theme_onSurface_mediumContrast">#0D1215</color>
+    <color name="md_theme_onTertiary">#FFFFFF</color>
+    <color name="md_theme_onTertiaryContainer">#474364</color>
+    <color name="md_theme_onTertiaryContainer_highContrast">#FFFFFF</color>
+    <color name="md_theme_onTertiaryContainer_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onTertiaryFixed">#1B1736</color>
+    <color name="md_theme_onTertiaryFixedVariant">#474364</color>
+    <color name="md_theme_onTertiaryFixedVariant_highContrast">#FFFFFF</color>
+    <color name="md_theme_onTertiaryFixedVariant_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onTertiaryFixed_highContrast">#FFFFFF</color>
+    <color name="md_theme_onTertiaryFixed_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_onTertiary_highContrast">#FFFFFF</color>
+    <color name="md_theme_onTertiary_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_outline">#71787D</color>
+    <color name="md_theme_outlineVariant">#C0C7CD</color>
+    <color name="md_theme_outlineVariant_highContrast">#434A4F</color>
+    <color name="md_theme_outlineVariant_mediumContrast">#676E73</color>
+    <color name="md_theme_outline_highContrast">#262D32</color>
+    <color name="md_theme_outline_mediumContrast">#4C5358</color>
+    <color name="md_theme_primary">#186584</color>
+    <color name="md_theme_primaryContainer">#C1E8FF</color>
+    <color name="md_theme_primaryContainer_highContrast">#004F6A</color>
+    <color name="md_theme_primaryContainer_mediumContrast">#2D7494</color>
+    <color name="md_theme_primaryFixed">#C1E8FF</color>
+    <color name="md_theme_primaryFixedDim">#8ECFF2</color>
+    <color name="md_theme_primaryFixedDim_highContrast">#00374B</color>
+    <color name="md_theme_primaryFixedDim_mediumContrast">#025C7A</color>
+    <color name="md_theme_primaryFixed_highContrast">#004F6A</color>
+    <color name="md_theme_primaryFixed_mediumContrast">#2D7494</color>
+    <color name="md_theme_primary_highContrast">#003042</color>
+    <color name="md_theme_primary_mediumContrast">#003B50</color>
+    <color name="md_theme_scrim">#000000</color>
+    <color name="md_theme_scrim_highContrast">#000000</color>
+    <color name="md_theme_scrim_mediumContrast">#000000</color>
+    <color name="md_theme_secondary">#4D616C</color>
+    <color name="md_theme_secondaryContainer">#D1E6F3</color>
+    <color name="md_theme_secondaryContainer_highContrast">#384C57</color>
+    <color name="md_theme_secondaryContainer_mediumContrast">#5C707B</color>
+    <color name="md_theme_secondaryFixed">#D1E6F3</color>
+    <color name="md_theme_secondaryFixedDim">#B5C9D7</color>
+    <color name="md_theme_secondaryFixedDim_highContrast">#22353F</color>
+    <color name="md_theme_secondaryFixedDim_mediumContrast">#445763</color>
+    <color name="md_theme_secondaryFixed_highContrast">#384C57</color>
+    <color name="md_theme_secondaryFixed_mediumContrast">#5C707B</color>
+    <color name="md_theme_secondary_highContrast">#1B2F39</color>
+    <color name="md_theme_secondary_mediumContrast">#253943</color>
+    <color name="md_theme_surface">#F6FAFE</color>
+    <color name="md_theme_surfaceBright">#F6FAFE</color>
+    <color name="md_theme_surfaceBright_highContrast">#F6FAFE</color>
+    <color name="md_theme_surfaceBright_mediumContrast">#F6FAFE</color>
+    <color name="md_theme_surfaceContainer">#EAEEF2</color>
+    <color name="md_theme_surfaceContainerHigh">#E5E9ED</color>
+    <color name="md_theme_surfaceContainerHigh_highContrast">#D1D5D9</color>
+    <color name="md_theme_surfaceContainerHigh_mediumContrast">#D9DDE1</color>
+    <color name="md_theme_surfaceContainerHighest">#DFE3E7</color>
+    <color name="md_theme_surfaceContainerHighest_highContrast">#C3C7CB</color>
+    <color name="md_theme_surfaceContainerHighest_mediumContrast">#CED2D6</color>
+    <color name="md_theme_surfaceContainerLow">#F0F4F8</color>
+    <color name="md_theme_surfaceContainerLow_highContrast">#EDF1F5</color>
+    <color name="md_theme_surfaceContainerLow_mediumContrast">#F0F4F8</color>
+    <color name="md_theme_surfaceContainerLowest">#FFFFFF</color>
+    <color name="md_theme_surfaceContainerLowest_highContrast">#FFFFFF</color>
+    <color name="md_theme_surfaceContainerLowest_mediumContrast">#FFFFFF</color>
+    <color name="md_theme_surfaceContainer_highContrast">#DFE3E7</color>
+    <color name="md_theme_surfaceContainer_mediumContrast">#E5E9ED</color>
+    <color name="md_theme_surfaceDim">#D6DADE</color>
+    <color name="md_theme_surfaceDim_highContrast">#B5B9BD</color>
+    <color name="md_theme_surfaceDim_mediumContrast">#C3C7CB</color>
+    <color name="md_theme_surfaceVariant">#DCE3E9</color>
+    <color name="md_theme_surfaceVariant_highContrast">#DCE3E9</color>
+    <color name="md_theme_surfaceVariant_mediumContrast">#DCE3E9</color>
+    <color name="md_theme_surface_highContrast">#F6FAFE</color>
+    <color name="md_theme_surface_mediumContrast">#F6FAFE</color>
+    <color name="md_theme_tertiary">#5F5A7D</color>
+    <color name="md_theme_tertiaryContainer">#E5DEFF</color>
+    <color name="md_theme_tertiaryContainer_highContrast">#4A4567</color>
+    <color name="md_theme_tertiaryContainer_mediumContrast">#6E698C</color>
+    <color name="md_theme_tertiaryFixed">#E5DEFF</color>
+    <color name="md_theme_tertiaryFixedDim">#C8C2EA</color>
+    <color name="md_theme_tertiaryFixedDim_highContrast">#332F4F</color>
+    <color name="md_theme_tertiaryFixedDim_mediumContrast">#555173</color>
+    <color name="md_theme_tertiaryFixed_highContrast">#4A4567</color>
+    <color name="md_theme_tertiaryFixed_mediumContrast">#6E698C</color>
+    <color name="md_theme_tertiary_highContrast">#2C2848</color>
+    <color name="md_theme_tertiary_mediumContrast">#363252</color>
     <color name="message_border">#FFE0E0E0</color>
+    <color name="my_color_surface">#FFFFFF</color>
+    <color name="my_color_surface_variant">#EEEEEE</color>
     <color name="pinyin_text">#757575</color>
     <color name="primary_blue">#FF2196F3</color>
     <color name="primary_color">#FF2196F3</color>
@@ -52,20 +259,63 @@
     <color name="white">#FFFFFFFF</color>
     <dimen name="candidate_divider_height">24dp</dimen>
     <dimen name="candidate_word_margin">8dp</dimen>
+    <dimen name="h1">18sp</dimen>
+    <dimen name="h2">16sp</dimen>
+    <dimen name="h3">14sp</dimen>
+    <dimen name="h4">12sp</dimen>
+    <dimen name="h5">10sp</dimen>
+    <dimen name="maxwidth">170dp</dimen>
+    <dimen name="mtrl_switch_thumb_size">24dp</dimen>
+    <dimen name="mtrl_switch_track_height">24dp</dimen>
+    <dimen name="mtrl_switch_track_width">40dp</dimen>
+    <dimen name="search_view_inset">20dp</dimen>
+    <dimen name="sp20">20sp</dimen>
+    <dimen name="space10">10dp</dimen>
+    <dimen name="space15">15dp</dimen>
+    <dimen name="space20">20dp</dimen>
+    <dimen name="space5">5dp</dimen>
+    <dimen name="spaceLR">40dp</dimen>
+    <dimen name="tag_corner_radius">16dp</dimen>
+    <dimen name="tag_margin">2dp</dimen>
+    <dimen name="tag_padding_horizontal">4dp</dimen>
+    <dimen name="tag_padding_vertical">0dp</dimen>
+    <dimen name="ui_margin_medium">16dp</dimen>
+    <string name="about">About</string>
     <string name="accessibility_disabled">无障碍服务未启用</string>
     <string name="accessibility_enabled">无障碍服务已启用</string>
     <string name="accessibility_service_description">用于自动检测和填写短信验证码到输入框中，提高用户验证体验。无需手动复制粘贴，收到短信验证码后会自动填入当前焦点的输入框。</string>
+    <string name="action_settings">Settings</string>
+    <string name="add_local_models">Add Local Model</string>
+    <string name="add_local_models_message">To add local models, first download them to your desktop, then run \'%1$s\'. After that, the models will appear in the model list.</string>
+    <string name="add_local_models_title">Add Local Models</string>
+    <string name="all">All</string>
     <string name="all_permissions_granted">所有权限已授予</string>
     <string name="app_name">神迹</string>
+    <string name="audio_output_confirm">Audio Output is very slow for now, Would you like to continue anyway?</string>
     <string name="back">返回</string>
+    <string name="backend">use opencl</string>
     <string name="check_all_permissions">重新检查权限状态</string>
+    <string name="check_for_update">Check for update</string>
     <string name="check_index">检查索引</string>
+    <string name="choose_image">Image</string>
     <string name="clear_input">清除输入框</string>
     <string name="clear_log">清除日志</string>
     <string name="clear_logs">清除日志</string>
+    <string name="clear_mmap_cache">Clear mmap cache</string>
     <string name="close">关闭</string>
+    <string name="config_file_not_found">Model config file not found: %1$s</string>
+    <string name="confirm_delete_model_message">Are you sure you want to delete this model? This action cannot be undone.</string>
+    <string name="confirm_delete_model_title">Confirm Deletion</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="copy_audio_info">Copy Audio Info</string>
+    <string name="copy_command">Copy Command</string>
     <string name="copy_log">复制日志内容</string>
     <string name="copy_logs">复制日志</string>
+    <string name="copy_success">Copy success</string>
+    <string name="copy_text">Copy</string>
+    <string name="current_version">Current Version:%1$s</string>
+    <string name="debug_message_copied">debug message copied, please report issue in github</string>
+    <string name="delete_model">Delete Model</string>
     <string name="dict_completed">转换完成！</string>
     <string name="dict_convert">词典转换</string>
     <string name="dict_converting">正在转换词典...</string>
@@ -80,8 +330,36 @@
     <string name="dict_module_count">词典模块: %1$d</string>
     <string name="dict_no_data">暂无数据</string>
     <string name="dict_total_entries">词条总数: %1$d</string>
+    <string name="diffusion_generate_progress">Image Generate progress: %1$s%%</string>
+    <string name="diffusion_generated_message">Here\'s the generated image</string>
+    <string name="diffusion_memory_mode">Diffusion Memory Mode</string>
+    <string name="diffusion_mode_memory_balance">Memory Balance Mode</string>
+    <string name="diffusion_mode_memory_engough">Memory Engough Mode</string>
+    <string name="diffusion_mode_memory_saving">Memory Saving Mode</string>
+    <string name="diffusion_model_not_alloed">Sorry, diffusion model settings are not supported config here yet.</string>
+    <string name="download">Download</string>
+    <string name="download_failed_click_retry">Download failed: %1$s, click to retry</string>
+    <string name="download_not_started">%1$s Click to download</string>
+    <string name="download_preparing">Download preparing</string>
+    <string name="download_state">Download Status</string>
+    <string name="download_state_completed">Downloaded</string>
+    <string name="download_state_downloading">Downloading</string>
+    <string name="download_state_failed">Download Failed</string>
+    <string name="download_state_not_start">Download Unstarted</string>
+    <string name="download_state_paused">Download Paused</string>
+    <string name="download_update_available">Update Available: (%1$s)</string>
+    <string name="downloaded">Downloaded</string>
+    <string name="downloaded_click_to_chat"> %1$s Downloaded</string>
+    <string name="downloading_paused">%1$s Paused: %2$.2f%%</string>
+    <string name="downloading_please_wait">Downloading please wait</string>
+    <string name="downloading_progress">%1$s Downloading: %2$.2f%% %3$s</string>
     <string name="expand_candidates">展开候选词</string>
     <string name="export_log">导出日志</string>
+    <string name="get_update_info_failed">get update info failed</string>
+    <string name="history">History</string>
+    <string name="history_cleard">history cleared</string>
+    <string name="history_delete_success">History Delete Success</string>
+    <string name="history_title">Chat History</string>
     <string name="ime_log">输入法日志</string>
     <string name="ime_name">神迹输入法</string>
     <string name="ime_settings">神迹输入法设置</string>
@@ -89,47 +367,184 @@
     <string name="index_check_hint">请输入至少2个字母的首字母缩写</string>
     <string name="input_empty">请输入拼音</string>
     <string name="input_hint">点击此处输入文字</string>
+    <string name="input_messages">Input messages here</string>
     <string name="input_test">输入测试</string>
     <string name="input_test_title">输入测试</string>
     <string name="keyboard_delete">删除</string>
     <string name="keyboard_enter">确认</string>
     <string name="keyboard_space">空格</string>
+    <string name="loading_failed_click_tor_retry">Loading failed: %1$s, click tor retry</string>
+    <string name="local_available">Local Available</string>
+    <string name="local_click_to_chat"> %1$s %2$s</string>
     <string name="log_copied">日志内容已复制到剪贴板</string>
     <string name="log_details">日志详情</string>
     <string name="log_exported">日志已导出</string>
+    <string name="main_describe">mnn-llm</string>
+    <string name="max_new_tokens">Max New Tokens</string>
+    <string name="max_new_tokens_hint">max tokens to generate</string>
+    <string name="menu_item_benchmark_test">Benchmark</string>
+    <string name="mmap_cacche_cleared">mmap cache cleared</string>
+    <string name="mmap_not_used">mmap not used</string>
+    <string name="mnn_title">MNN移动推理框架</string>
     <string name="mobile_debug">移动调试工具</string>
     <string name="mobile_debug_title">拼音输入法调试工具</string>
+    <string name="modality_menu_title">Modality</string>
+    <string name="model_hello_prompt">Hello, I am %1$s, is there anything I can help you with?</string>
+    <string name="model_hello_prompt_diffusion">Hello, I am %1$s, Please input prompt to generate an image</string>
+    <string name="model_loading">Model loading…</string>
+    <string name="model_not_found">Model not foud %1$s</string>
+    <string name="model_settings">Settings</string>
+    <string name="model_settings_title">Model Settings</string>
+    <string name="modelers">Modelers</string>
+    <string name="models">Models</string>
+    <string name="modelscope">Modelscope</string>
+    <string name="nav_close">Close navigation drawer</string>
+    <string name="nav_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="new_conversation_started">New converstaion started</string>
     <string name="no_candidates">无候选词</string>
+    <string name="no_history">No history, please select model in the model list and chat</string>
     <string name="no_logs">没有发现日志文件</string>
+    <string name="no_models_found">No models found, Try to change filter please</string>
+    <string name="no_update">No update available</string>
     <string name="open_accessibility_settings">打开无障碍服务设置</string>
+    <string name="others">Others</string>
+    <string name="out_audio">Output Audio</string>
+    <string name="pause_download">Pause Download</string>
     <string name="permission_check">权限检查</string>
     <string name="pinyin_input_hint">输入拼音或首字母缩写</string>
     <string name="pinyin_test">拼音分词测试</string>
     <string name="pinyin_test_complete">拼音分词测试完成</string>
     <string name="pinyin_test_running">正在测试拼音分词效果...</string>
     <string name="pinyin_test_title">拼音分词测试结果</string>
+    <string name="press_to_chat">Press To Talk</string>
     <string name="query">查询</string>
+    <string name="r1_think_complete_template">Has thought for %1$s seconds</string>
+    <string name="r1_thinking_message">Thinking…</string>
+    <string name="raise_issue">Report an issue</string>
     <string name="realm_status">Realm词典连接状态: %1$s</string>
+    <string name="recording_permission_denied">Please allow permission to record audio</string>
+    <string name="regenerate">Regenerate</string>
+    <string name="release_to_cancel">Release to cancel</string>
+    <string name="release_to_send">Release to Send, Slide up to cancel</string>
+    <string name="reloading_session">Reloading chat session</string>
+    <string name="report_crash">Report Crash</string>
     <string name="request_sms_permission">请求短信权限</string>
     <string name="request_storage_permission">请求存储权限</string>
+    <string name="reset">Reset</string>
+    <string name="resume_all_downloads">Resume all unfnished downloads</string>
+    <string name="sampler">select sampler</string>
+    <string name="select_audio">Audio(wav)</string>
+    <string name="select_dataset">Select dataset</string>
+    <string name="select_download_provider">Select Download Provider</string>
     <string name="select_test_case">选择测试用例</string>
+    <string name="select_text">Select text</string>
+    <string name="send">send</string>
+    <string name="settings">Settings</string>
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_complete">it\'s recommended to remove unfinished tasks and redownload to prevent errors.</string>
+    <string name="settings_done">Done</string>
+    <string name="settings_section_advanced">ADVANCED</string>
+    <string name="settings_section_general">GENERAL</string>
+    <string name="show_only_downloaded">Show downloaded only</string>
+    <string name="show_performance_metrics">Show Performance Metrics</string>
     <string name="simulate_code">模拟验证码</string>
     <string name="sms_permission_denied">短信权限未授予</string>
     <string name="sms_permission_granted">短信权限已授予</string>
     <string name="some_permissions_missing">部分权限未授予</string>
+    <string name="spinner_prompt">Select Model</string>
+    <string name="star_project">Star in Github </string>
+    <string name="start_download">Start Download</string>
+    <string name="start_new_chat">Start New Conversation</string>
+    <string name="start_voice_chat">Start Voice Chat</string>
+    <string name="stop_download_reason">Stop downloads during chat ensures smoother chat experience</string>
+    <string name="stop_download_tasks_when_chat">Stop downloads when chat</string>
     <string name="storage_permission_denied">存储权限未授予</string>
     <string name="storage_permission_granted">存储权限已授予</string>
     <string name="storage_permission_required">需要存储权限以保存数据库文件</string>
     <string name="subtype_chinese">中文(拼音)</string>
+    <string name="system_prompt">System Prompt</string>
+    <string name="take_photo">Photo</string>
     <string name="test_suite">套件测试</string>
     <string name="test_suite_candidates">对应候选词: %1$s</string>
     <string name="test_suite_logic">候选词生成逻辑: %1$s</string>
     <string name="test_suite_pinyin">拼音模拟查询: %1$s</string>
+    <string name="thread_num">Thread Number</string>
+    <string name="thread_num_hint">Thread Number when Inference</string>
+    <string name="title_activity_main">MainActivity</string>
     <string name="toggle_mode">全/单</string>
     <string name="usage_stats_permission_required">需要应用使用情况权限</string>
+    <string name="use_mmap">Use mmap</string>
+    <string name="use_model_scope_download">Use modelscope to download</string>
+    <string name="vendor_menu_title">Vendor</string>
     <string name="verification_code_received">收到验证码: %1$s</string>
     <string name="verification_code_test">验证码测试</string>
     <string name="view_logs">查看日志</string>
+    <string name="wait_install_apk">please wait for download complete and install</string>
+    <style name="App.NavigationView" parent="Widget.Material3.NavigationView">
+        
+        <item name="android:background">?android:colorBackground</item>
+    </style>
+    <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
+        
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+        <item name="android:windowLightStatusBar">@bool/is_day_mode</item>
+
+
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/md_theme_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer</item>
+        <item name="colorError">@color/md_theme_error</item>
+        <item name="colorOnError">@color/md_theme_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md_theme_onErrorContainer</item>
+        <item name="android:colorBackground">@color/md_theme_background</item>
+        <item name="colorOnBackground">@color/md_theme_onBackground</item>
+        <item name="colorSurface">@color/md_theme_surface</item>
+        <item name="colorOnSurface">@color/md_theme_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_onSurfaceVariant</item>
+        <item name="colorOutline">@color/md_theme_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_outlineVariant</item>
+        <item name="colorSurfaceInverse">@color/md_theme_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_inverseOnSurface</item>
+        <item name="colorPrimaryInverse">@color/md_theme_inversePrimary</item>
+        <item name="colorPrimaryFixed">@color/md_theme_primaryFixed</item>
+        <item name="colorOnPrimaryFixed">@color/md_theme_onPrimaryFixed</item>
+        <item name="colorPrimaryFixedDim">@color/md_theme_primaryFixedDim</item>
+        <item name="colorOnPrimaryFixedVariant">@color/md_theme_onPrimaryFixedVariant</item>
+        <item name="colorSecondaryFixed">@color/md_theme_secondaryFixed</item>
+        <item name="colorOnSecondaryFixed">@color/md_theme_onSecondaryFixed</item>
+        <item name="colorSecondaryFixedDim">@color/md_theme_secondaryFixedDim</item>
+        <item name="colorOnSecondaryFixedVariant">@color/md_theme_onSecondaryFixedVariant</item>
+        <item name="colorTertiaryFixed">@color/md_theme_tertiaryFixed</item>
+        <item name="colorOnTertiaryFixed">@color/md_theme_onTertiaryFixed</item>
+        <item name="colorTertiaryFixedDim">@color/md_theme_tertiaryFixedDim</item>
+        <item name="colorOnTertiaryFixedVariant">@color/md_theme_onTertiaryFixedVariant</item>
+        <item name="colorSurfaceDim">@color/md_theme_surfaceDim</item>
+        <item name="colorSurfaceBright">@color/md_theme_surfaceBright</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_surfaceContainerLowest</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_surfaceContainerLow</item>
+        <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
+        <item name="colorCustomColor1">@color/colorCustomColor1</item>
+        <item name="colorOnCustomColor1">@color/colorOnCustomColor1</item>
+        <item name="colorCustomColor1Container">@color/colorCustomColor1Container</item>
+        <item name="colorOnCustomColor1Container">@color/colorOnCustomColor1Container</item>
+    </style>
     <style name="CandidateButtonStyle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">match_parent</item>
@@ -156,6 +571,21 @@
         <item name="android:background">@null</item>
         <item name="android:layout_marginEnd">10dp</item>
         <item name="android:layout_marginStart">10dp</item>
+    </style>
+    <style name="CustomPopupMenu" parent="Widget.Material3.PopupMenu">
+        <item name="android:popupBackground">?android:colorBackground</item>
+    </style>
+    <style name="ExtraLight" parent="android:TextAppearance">
+    </style>
+    <style name="FilterChipStyle" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_filter_chip</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:drawablePadding">4dp</item>
     </style>
     <style name="KeyboardButton">
         <item name="android:layout_width">0dp</item>
@@ -200,6 +630,111 @@
         <item name="android:elevation">1dp</item>
         <item name="android:stateListAnimator">@null</item>
     </style>
+    <style name="Light" parent="android:TextAppearance">
+    </style>
+    <style name="SettingsDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:background">?attr/dividerHorizontal</item>
+    </style>
+    <style name="SettingsRowChevron">
+        <item name="android:layout_width">16dp</item>
+        <item name="android:layout_height">16dp</item>
+        <item name="android:src">@drawable/arrow_right</item>
+        <item name="android:alpha">0.6</item>
+        <item name="android:tint">?attr/colorOnSurfaceVariant</item>
+    </style>
+    <style name="SettingsRowClickable" parent="Widget.MaterialComponents.TextView">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textAppearance">?attr/textAppearanceBodyMedium</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+    </style>
+    <style name="SettingsRowContainer">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+    </style>
+    <style name="SettingsRowContainerClickable" parent="SettingsRowContainer">
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+    <style name="SettingsRowLabel" parent="Widget.MaterialComponents.TextView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textAppearance">?attr/textAppearanceBodyMedium</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:layout_marginEnd">8dp</item>
+    </style>
+    <style name="SettingsRowValue" parent="Widget.MaterialComponents.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textAppearance">?attr/textAppearanceBodyMedium</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:layout_marginEnd">8dp</item>
+    </style>
+    <style name="SettingsRowValueSmall" parent="SettingsRowValue">
+        <item name="android:textAppearance">?attr/textAppearanceBodySmall</item>
+    </style>
+    <style name="SettingsSectionGroup" parent="Widget.Material3.CardView.Outlined">
+        <item name="cardBackgroundColor">@android:color/transparent</item>
+    </style>
+    <style name="SettingsSectionHeader" parent="Widget.MaterialComponents.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">24dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:layout_marginStart">24dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textAppearance">?attr/textAppearanceLabelSmall</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="SettingsSubLabel" parent="Widget.MaterialComponents.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textAppearance">?attr/textAppearanceBodyMedium</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+    <style name="ShapeAppearance.ChatInput" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">12dp</item>
+        <item name="cornerSizeTopRight">12dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+    <style name="SpinKitView.FadingCircle" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+    <style name="SpinKitView.Large.FadingCircle" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+    <style name="SpinKitView.Small.FadingCircle" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+    <style name="SpinKitView.Small.Wave" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
     <style name="Theme.AIKeyboard" parent="Theme.SHENJI">
         
     </style>
@@ -216,6 +751,13 @@
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
+        
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnSurface">@color/black</item>
+        <item name="colorSurfaceVariant">@color/gray_100</item>
+        <item name="colorOnSurfaceVariant">@color/gray_600</item>
+        
+        <item name="android:colorBackground">@color/white</item>
         
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         
@@ -235,4 +777,132 @@
         <item name="android:enforceStatusBarContrast">false</item>
         <item name="android:enforceNavigationBarContrast">false</item>
     </style>
+    <style name="Theme.TransparentFullScreenDialog" parent="@style/Theme.AppCompat.Dialog">
+        
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+    <style name="ThemeOverlay.AppTheme.HighContrast" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_primary_highContrast</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary_highContrast</item>
+        <item name="colorPrimaryContainer">@color/md_theme_primaryContainer_highContrast</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer_highContrast</item>
+        <item name="colorSecondary">@color/md_theme_secondary_highContrast</item>
+        <item name="colorOnSecondary">@color/md_theme_onSecondary_highContrast</item>
+        <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer_highContrast</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer_highContrast</item>
+        <item name="colorTertiary">@color/md_theme_tertiary_highContrast</item>
+        <item name="colorOnTertiary">@color/md_theme_onTertiary_highContrast</item>
+        <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer_highContrast</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer_highContrast</item>
+        <item name="colorError">@color/md_theme_error_highContrast</item>
+        <item name="colorOnError">@color/md_theme_onError_highContrast</item>
+        <item name="colorErrorContainer">@color/md_theme_errorContainer_highContrast</item>
+        <item name="colorOnErrorContainer">@color/md_theme_onErrorContainer_highContrast</item>
+        <item name="android:colorBackground">@color/md_theme_background_highContrast</item>
+        <item name="colorOnBackground">@color/md_theme_onBackground_highContrast</item>
+        <item name="colorSurface">@color/md_theme_surface_highContrast</item>
+        <item name="colorOnSurface">@color/md_theme_onSurface_highContrast</item>
+        <item name="colorSurfaceVariant">@color/md_theme_surfaceVariant_highContrast</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_onSurfaceVariant_highContrast</item>
+        <item name="colorOutline">@color/md_theme_outline_highContrast</item>
+        <item name="colorOutlineVariant">@color/md_theme_outlineVariant_highContrast</item>
+        <item name="colorSurfaceInverse">@color/md_theme_inverseSurface_highContrast</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_inverseOnSurface_highContrast</item>
+        <item name="colorPrimaryInverse">@color/md_theme_inversePrimary_highContrast</item>
+        <item name="colorPrimaryFixed">@color/md_theme_primaryFixed_highContrast</item>
+        <item name="colorOnPrimaryFixed">@color/md_theme_onPrimaryFixed_highContrast</item>
+        <item name="colorPrimaryFixedDim">@color/md_theme_primaryFixedDim_highContrast</item>
+        <item name="colorOnPrimaryFixedVariant">@color/md_theme_onPrimaryFixedVariant_highContrast</item>
+        <item name="colorSecondaryFixed">@color/md_theme_secondaryFixed_highContrast</item>
+        <item name="colorOnSecondaryFixed">@color/md_theme_onSecondaryFixed_highContrast</item>
+        <item name="colorSecondaryFixedDim">@color/md_theme_secondaryFixedDim_highContrast</item>
+        <item name="colorOnSecondaryFixedVariant">@color/md_theme_onSecondaryFixedVariant_highContrast</item>
+        <item name="colorTertiaryFixed">@color/md_theme_tertiaryFixed_highContrast</item>
+        <item name="colorOnTertiaryFixed">@color/md_theme_onTertiaryFixed_highContrast</item>
+        <item name="colorTertiaryFixedDim">@color/md_theme_tertiaryFixedDim_highContrast</item>
+        <item name="colorOnTertiaryFixedVariant">@color/md_theme_onTertiaryFixedVariant_highContrast</item>
+        <item name="colorSurfaceDim">@color/md_theme_surfaceDim_highContrast</item>
+        <item name="colorSurfaceBright">@color/md_theme_surfaceBright_highContrast</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_surfaceContainerLowest_highContrast</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_surfaceContainerLow_highContrast</item>
+        <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer_highContrast</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh_highContrast</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest_highContrast</item>
+        <item name="colorCustomColor1">@color/colorCustomColor1_highContrast</item>
+        <item name="colorOnCustomColor1">@color/colorOnCustomColor1_highContrast</item>
+        <item name="colorCustomColor1Container">@color/colorCustomColor1Container_highContrast</item>
+        <item name="colorOnCustomColor1Container">@color/colorOnCustomColor1Container_highContrast</item>
+    </style>
+    <style name="ThemeOverlay.AppTheme.MediumContrast" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_primary_mediumContrast</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary_mediumContrast</item>
+        <item name="colorPrimaryContainer">@color/md_theme_primaryContainer_mediumContrast</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer_mediumContrast</item>
+        <item name="colorSecondary">@color/md_theme_secondary_mediumContrast</item>
+        <item name="colorOnSecondary">@color/md_theme_onSecondary_mediumContrast</item>
+        <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer_mediumContrast</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer_mediumContrast</item>
+        <item name="colorTertiary">@color/md_theme_tertiary_mediumContrast</item>
+        <item name="colorOnTertiary">@color/md_theme_onTertiary_mediumContrast</item>
+        <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer_mediumContrast</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer_mediumContrast</item>
+        <item name="colorError">@color/md_theme_error_mediumContrast</item>
+        <item name="colorOnError">@color/md_theme_onError_mediumContrast</item>
+        <item name="colorErrorContainer">@color/md_theme_errorContainer_mediumContrast</item>
+        <item name="colorOnErrorContainer">@color/md_theme_onErrorContainer_mediumContrast</item>
+        <item name="android:colorBackground">@color/md_theme_background_mediumContrast</item>
+        <item name="colorOnBackground">@color/md_theme_onBackground_mediumContrast</item>
+        <item name="colorSurface">@color/md_theme_surface_mediumContrast</item>
+        <item name="colorOnSurface">@color/md_theme_onSurface_mediumContrast</item>
+        <item name="colorSurfaceVariant">@color/md_theme_surfaceVariant_mediumContrast</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_onSurfaceVariant_mediumContrast</item>
+        <item name="colorOutline">@color/md_theme_outline_mediumContrast</item>
+        <item name="colorOutlineVariant">@color/md_theme_outlineVariant_mediumContrast</item>
+        <item name="colorSurfaceInverse">@color/md_theme_inverseSurface_mediumContrast</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_inverseOnSurface_mediumContrast</item>
+        <item name="colorPrimaryInverse">@color/md_theme_inversePrimary_mediumContrast</item>
+        <item name="colorPrimaryFixed">@color/md_theme_primaryFixed_mediumContrast</item>
+        <item name="colorOnPrimaryFixed">@color/md_theme_onPrimaryFixed_mediumContrast</item>
+        <item name="colorPrimaryFixedDim">@color/md_theme_primaryFixedDim_mediumContrast</item>
+        <item name="colorOnPrimaryFixedVariant">@color/md_theme_onPrimaryFixedVariant_mediumContrast</item>
+        <item name="colorSecondaryFixed">@color/md_theme_secondaryFixed_mediumContrast</item>
+        <item name="colorOnSecondaryFixed">@color/md_theme_onSecondaryFixed_mediumContrast</item>
+        <item name="colorSecondaryFixedDim">@color/md_theme_secondaryFixedDim_mediumContrast</item>
+        <item name="colorOnSecondaryFixedVariant">@color/md_theme_onSecondaryFixedVariant_mediumContrast</item>
+        <item name="colorTertiaryFixed">@color/md_theme_tertiaryFixed_mediumContrast</item>
+        <item name="colorOnTertiaryFixed">@color/md_theme_onTertiaryFixed_mediumContrast</item>
+        <item name="colorTertiaryFixedDim">@color/md_theme_tertiaryFixedDim_mediumContrast</item>
+        <item name="colorOnTertiaryFixedVariant">@color/md_theme_onTertiaryFixedVariant_mediumContrast</item>
+        <item name="colorSurfaceDim">@color/md_theme_surfaceDim_mediumContrast</item>
+        <item name="colorSurfaceBright">@color/md_theme_surfaceBright_mediumContrast</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_surfaceContainerLowest_mediumContrast</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_surfaceContainerLow_mediumContrast</item>
+        <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer_mediumContrast</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh_mediumContrast</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest_mediumContrast</item>
+        <item name="colorCustomColor1">@color/colorCustomColor1_mediumContrast</item>
+        <item name="colorOnCustomColor1">@color/colorOnCustomColor1_mediumContrast</item>
+        <item name="colorCustomColor1Container">@color/colorCustomColor1Container_mediumContrast</item>
+        <item name="colorOnCustomColor1Container">@color/colorOnCustomColor1Container_mediumContrast</item>
+    </style>
+    <declare-styleable name="DropDownLineView">
+        <attr name="labelText"/>
+        <attr name="valueText"/>
+        <attr name="icon"/>
+    </declare-styleable>
+    <declare-styleable name="MoreMenuItemView">
+        <attr name="text"/>
+        <attr name="icon"/>
+    </declare-styleable>
+    <declare-styleable name="SettingsItemView">
+        <attr format="string" name="itemText"/>
+        <attr format="boolean" name="checked"/>
+    </declare-styleable>
+    <declare-styleable name="SettingsRowSlideSwitch">
+        <attr name="labelText"/>
+        <attr name="seekbarValue"/>
+        <attr name="switchVisibility"/>
+        <attr name="switchEnabled"/>
+    </declare-styleable>
 </resources>

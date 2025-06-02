@@ -19,6 +19,11 @@ import timber.log.Timber
 import android.graphics.Color
 import kotlinx.coroutines.Dispatchers
 import com.shenji.aikeyboard.ai.CorrectionSuggestion
+import com.shenji.aikeyboard.ai.AIEngineManager
+import com.shenji.aikeyboard.ai.InputContext
+import com.shenji.aikeyboard.ai.UserPreferences
+import com.shenji.aikeyboard.ai.ContinuationSuggestion
+import com.shenji.aikeyboard.ai.ErrorType
 
 class ShenjiInputMethodService : InputMethodService() {
     
@@ -50,8 +55,15 @@ class ShenjiInputMethodService : InputMethodService() {
     
     // AI建议显示相关组件
     private lateinit var aiSuggestionContainer: LinearLayout
+    private lateinit var aiStatusIcon: TextView
     private lateinit var aiSuggestionText: TextView
     private lateinit var aiConfidenceIndicator: TextView
+    
+    // 🤖 AI建议防抖机制
+    private var aiSuggestionJob: kotlinx.coroutines.Job? = null
+    private var lastAITriggerTime = 0L
+    private val AI_DEBOUNCE_DELAY = 2000L // 2秒防抖延迟
+    private val AI_MIN_INPUT_LENGTH = 3 // 最小触发长度
     
     // 当前输入的拼音
     private var composingText = StringBuilder()
@@ -844,8 +856,12 @@ class ShenjiInputMethodService : InputMethodService() {
             
             // 初始化AI建议显示区域
             aiSuggestionContainer = candidatesViewLayout.findViewById(R.id.ai_suggestion_container)
+            aiStatusIcon = candidatesViewLayout.findViewById(R.id.ai_status_icon)
             aiSuggestionText = candidatesViewLayout.findViewById(R.id.ai_suggestion_text)
             aiConfidenceIndicator = candidatesViewLayout.findViewById(R.id.ai_confidence_indicator)
+            
+            // 初始化AI状态图标（默认灰色，表示不可用）
+            updateAIStatusIcon(false)
             // 初始化工具栏
             toolbarView = candidatesViewLayout.findViewById(R.id.toolbar_view)
             
@@ -1885,7 +1901,10 @@ class ShenjiInputMethodService : InputMethodService() {
             // 标记刚刚提交了候选词，下次输入时需要重置状态
             justCommittedText = true
             
-            Timber.d("🎯 提交文本: '$text', 之前有输入: $hadComposingText，已清空所有状态")
+            // 🔥 关键新增：触发文本续写分析
+            triggerTextContinuationAnalysis()
+            
+            Timber.d("🎯 提交文本: '$text', 之前有输入: $hadComposingText，已清空所有状态，触发续写分析")
         } catch (e: Exception) {
             Timber.e(e, "提交文本失败: ${e.message}")
         }
@@ -1897,8 +1916,9 @@ class ShenjiInputMethodService : InputMethodService() {
         val containerInit = ::candidatesContainer.isInitialized
         val defaultViewInit = ::defaultCandidatesView.isInitialized
         val candidatesViewInit = ::candidatesView.isInitialized
+        val toolbarInit = ::toolbarView.isInitialized
         
-        val allInitialized = layoutInit && containerInit && defaultViewInit && candidatesViewInit
+        val allInitialized = layoutInit && containerInit && defaultViewInit && candidatesViewInit && toolbarInit
         
         if (!allInitialized) {
             Timber.e("🎯 视图组件初始化状态检查:")
@@ -1906,6 +1926,7 @@ class ShenjiInputMethodService : InputMethodService() {
             Timber.e("  - candidatesContainer: $containerInit") 
             Timber.e("  - defaultCandidatesView: $defaultViewInit")
             Timber.e("  - candidatesView: $candidatesViewInit")
+            Timber.e("  - toolbarView: $toolbarInit")
         }
         
         return allInitialized
@@ -2123,13 +2144,8 @@ class ShenjiInputMethodService : InputMethodService() {
                         // 🔧 修复：使用增强的显示方法，确保可靠显示
                         displayCandidatesDirectlyEnhanced(result)
                         
-                        // 🤖 显示AI建议 - 基于第一个候选词生成建议
-                        val firstCandidate = result.firstOrNull()
-                        if (firstCandidate != null && input.length >= 2) {
-                            val suggestion = generateAISuggestion(input, firstCandidate.word)
-                            val confidence = calculateConfidence(input, firstCandidate)
-                            showAISuggestion(suggestion, confidence)
-                        }
+                        // 🤖 拼音输入时不显示续写建议，只在文本提交后触发
+                        hideAISuggestion()
                         
                         Timber.d("🎯 候选词显示成功: ${result.take(3).map { it.word }}")
                         
@@ -3375,6 +3391,9 @@ class ShenjiInputMethodService : InputMethodService() {
             Timber.d("AI建议区域已初始化并隐藏")
         }
         
+        // 🤖 确保AI引擎已初始化
+        ensureAIEngineInitialized()
+        
         // 清空初始化状态，确保没有硬编码的"w"等字符
         composingText.clear()
         updatePinyinDisplay("")
@@ -3400,18 +3419,41 @@ class ShenjiInputMethodService : InputMethodService() {
         
         // 确保候选词视图正确初始化
         if (areViewComponentsInitialized()) {
-            // 🔧 设置候选词视图布局参数，使用MATCH_PARENT确保有足够空间
-            val params = defaultCandidatesView.layoutParams
-            params.height = LinearLayout.LayoutParams.MATCH_PARENT // 使用MATCH_PARENT确保有足够空间
-            params.width = LinearLayout.LayoutParams.MATCH_PARENT // 固定宽度
-            defaultCandidatesView.layoutParams = params
-            
-            // 初始状态：显示工具栏，隐藏候选词
-            toolbarView.visibility = View.VISIBLE
-            defaultCandidatesView.visibility = View.GONE
-            
-            // 记录候选词视图状态
-            logCandidateViewState()
+            try {
+                // 🔧 设置候选词视图布局参数，使用MATCH_PARENT确保有足够空间
+                val params = defaultCandidatesView.layoutParams
+                params.height = LinearLayout.LayoutParams.MATCH_PARENT // 使用MATCH_PARENT确保有足够空间
+                params.width = LinearLayout.LayoutParams.MATCH_PARENT // 固定宽度
+                defaultCandidatesView.layoutParams = params
+                
+                // 初始状态：显示工具栏，隐藏候选词
+                toolbarView.visibility = View.VISIBLE
+                defaultCandidatesView.visibility = View.GONE
+                
+                // 记录候选词视图状态
+                logCandidateViewState()
+                
+                Timber.d("🎯 视图组件初始化完成，工具栏已显示")
+            } catch (e: Exception) {
+                Timber.e(e, "设置视图组件状态失败: ${e.message}")
+            }
+        } else {
+            Timber.e("🎯 视图组件未完全初始化，跳过状态设置")
+            // 延迟重试
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                delay(100)
+                if (areViewComponentsInitialized()) {
+                    try {
+                        toolbarView.visibility = View.VISIBLE
+                        defaultCandidatesView.visibility = View.GONE
+                        Timber.d("🎯 延迟重试成功，视图组件已初始化")
+                    } catch (e: Exception) {
+                        Timber.e(e, "延迟重试设置视图状态失败: ${e.message}")
+                    }
+                } else {
+                    Timber.e("🎯 延迟重试失败，视图组件仍未初始化")
+                }
+            }
         }
         
         Timber.d("🎯 初始化输入视图完成（整合模式），已清空所有状态")
@@ -3427,6 +3469,28 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     /**
+     * 🤖 更新AI状态图标
+     */
+    private fun updateAIStatusIcon(isAvailable: Boolean) {
+        try {
+            if (::aiStatusIcon.isInitialized) {
+                if (isAvailable) {
+                    // AI可用：彩色显示
+                    aiStatusIcon.setTextColor(android.graphics.Color.parseColor("#2196F3"))
+                    aiStatusIcon.alpha = 1.0f
+                } else {
+                    // AI不可用：灰色显示
+                    aiStatusIcon.setTextColor(android.graphics.Color.parseColor("#CCCCCC"))
+                    aiStatusIcon.alpha = 0.6f
+                }
+                Timber.d("🤖 AI状态图标更新: ${if (isAvailable) "可用(彩色)" else "不可用(灰色)"}")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "更新AI状态图标失败: ${e.message}")
+        }
+    }
+    
+    /**
      * 显示AI建议
      */
     private fun showAISuggestion(suggestion: String, confidence: Float) {
@@ -3437,18 +3501,20 @@ class ShenjiInputMethodService : InputMethodService() {
                 
                 // 设置建议文本
                 aiSuggestionText.text = suggestion
+                aiSuggestionText.visibility = View.VISIBLE
                 
                 // 设置置信度星级显示
                 val stars = (confidence * 5).toInt()
                 val starDisplay = "★".repeat(stars) + "☆".repeat(5 - stars)
                 aiConfidenceIndicator.text = starDisplay
+                aiConfidenceIndicator.visibility = View.VISIBLE
                 
-                // 显示AI建议容器
+                // 容器始终可见，只是内容变化
                 aiSuggestionContainer.visibility = View.VISIBLE
                 
                 // 添加淡入动画
-                aiSuggestionContainer.alpha = 0f
-                aiSuggestionContainer.animate()
+                aiSuggestionText.alpha = 0f
+                aiSuggestionText.animate()
                     .alpha(1f)
                     .setDuration(200)
                     .start()
@@ -3465,37 +3531,304 @@ class ShenjiInputMethodService : InputMethodService() {
      */
     private fun hideAISuggestion() {
         try {
-            if (::aiSuggestionContainer.isInitialized) {
-                aiSuggestionContainer.animate()
+            // 取消待执行的AI建议任务
+            aiSuggestionJob?.cancel()
+            
+            if (::aiSuggestionText.isInitialized && ::aiConfidenceIndicator.isInitialized) {
+                // 只隐藏建议内容，保留状态图标
+                aiSuggestionText.animate()
                     .alpha(0f)
                     .setDuration(150)
                     .withEndAction {
-                        aiSuggestionContainer.visibility = View.GONE
+                        aiSuggestionText.visibility = View.GONE
+                        aiSuggestionText.text = ""
                     }
                     .start()
                 
-                Timber.d("🤖 隐藏AI建议")
+                aiConfidenceIndicator.visibility = View.GONE
+                aiConfidenceIndicator.text = ""
+                
+                Timber.d("🤖 隐藏AI建议内容，保留状态图标")
             }
         } catch (e: Exception) {
             Timber.e(e, "隐藏AI建议失败: ${e.message}")
         }
     }
     
+    // 🗑️ 已移除错误的拼音分析AI建议逻辑
+    
+    // 🗑️ 已移除错误的拼音分析AI建议逻辑
+    
     /**
-     * 生成AI建议文本
+     * 🔄 生成上下文感知的建议（当AI引擎不可用时）
      */
-    private fun generateAISuggestion(input: String, topCandidate: String): String {
-        return when {
-            input.length >= 4 -> "推荐: $topCandidate"
-            input.length >= 3 -> "建议: $topCandidate"
-            else -> topCandidate
+    private fun generateContextualSuggestion(input: String, candidates: List<WordFrequency>) {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            try {
+                // 获取上下文文本
+                val contextText = getContextualText()
+                
+                Timber.d("🤖 生成上下文感知建议，上下文: '$contextText'，输入: '$input'")
+                
+                if (contextText.isNotEmpty() && contextText.trim().length >= 2) {
+                    // 🔧 有上下文时，使用真正的上下文分析
+                    val contextSuggestions = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        generateContextBasedSuggestion(contextText, input, candidates)
+                    }
+                    
+                    if (contextSuggestions.isNotEmpty()) {
+                        val topSuggestion = contextSuggestions.first()
+                        val suggestionText = "✨ ${topSuggestion.correctedText}"
+                        showAISuggestion(suggestionText, topSuggestion.confidence)
+                        Timber.d("🤖 显示上下文续写建议: '${topSuggestion.correctedText}' (${topSuggestion.explanation})")
+                        return@launch
+                    }
+                }
+                
+                // 回退到普通建议
+                val firstCandidate = candidates.firstOrNull()
+                if (firstCandidate != null) {
+                    val suggestion = when {
+                        input.length >= 4 -> "推荐: ${firstCandidate.word}"
+                        input.length >= 3 -> "建议: ${firstCandidate.word}"
+                        else -> firstCandidate.word
+                    }
+                    
+                    val confidence = calculateBasicConfidence(input, firstCandidate)
+                    showAISuggestion(suggestion, confidence)
+                    
+                    Timber.d("🤖 显示普通建议: '$suggestion' (无有效上下文)")
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "生成上下文感知建议失败: ${e.message}")
+                
+                // 最后的回退
+                val firstCandidate = candidates.firstOrNull()
+                if (firstCandidate != null) {
+                    showAISuggestion("推荐: ${firstCandidate.word}", 0.5f)
+                }
+            }
         }
     }
     
     /**
-     * 计算AI建议的置信度
+     * 🔄 生成备用建议（保持向后兼容）
      */
-    private fun calculateConfidence(input: String, candidate: WordFrequency): Float {
+    private fun generateFallbackSuggestion(input: String, candidates: List<WordFrequency>) {
+        generateContextualSuggestion(input, candidates)
+    }
+    
+    /**
+     * 🧠 生成基于上下文的智能建议（真正的续写逻辑）
+     */
+    private suspend fun generateContextBasedSuggestion(
+        contextText: String, 
+        currentInput: String, 
+        candidates: List<WordFrequency>
+    ): List<CorrectionSuggestion> {
+        return try {
+            Timber.d("🧠 生成基于上下文的智能建议，上下文: '$contextText'，输入: '$currentInput'")
+            
+            // 分析上下文，生成真正的续写建议
+            val suggestions = mutableListOf<CorrectionSuggestion>()
+            
+            // 🔧 基于上下文的智能分析
+            val contextWords = contextText.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+            val lastWord = contextWords.lastOrNull() ?: ""
+            
+            Timber.d("🧠 上下文分析: 最后一个词='$lastWord'，总词数=${contextWords.size}")
+            
+            // 🔧 根据上下文生成续写建议
+            when {
+                contextText.endsWith("我想去") -> {
+                    // 地点续写
+                    val locationSuggestions = listOf("公园", "商场", "图书馆", "电影院", "餐厅")
+                    locationSuggestions.forEach { location ->
+                        if (location.startsWith(candidates.firstOrNull()?.word?.take(1) ?: "")) {
+                            suggestions.add(CorrectionSuggestion(
+                                originalInput = currentInput,
+                                correctedText = location,
+                                correctedPinyin = currentInput,
+                                confidence = 0.8f,
+                                errorType = ErrorType.UNKNOWN,
+                                explanation = "基于上下文的地点续写"
+                            ))
+                        }
+                    }
+                }
+                contextText.endsWith("今天天气") -> {
+                    // 天气续写
+                    val weatherSuggestions = listOf("很好", "不错", "很热", "很冷", "多云")
+                    weatherSuggestions.forEach { weather ->
+                        if (weather.startsWith(candidates.firstOrNull()?.word?.take(1) ?: "")) {
+                            suggestions.add(CorrectionSuggestion(
+                                originalInput = currentInput,
+                                correctedText = weather,
+                                correctedPinyin = currentInput,
+                                confidence = 0.8f,
+                                errorType = ErrorType.UNKNOWN,
+                                explanation = "基于上下文的天气续写"
+                            ))
+                        }
+                    }
+                }
+                contextText.contains("工作") -> {
+                    // 工作相关续写
+                    val workSuggestions = listOf("很忙", "顺利", "完成", "进展", "会议")
+                    workSuggestions.forEach { work ->
+                        if (work.startsWith(candidates.firstOrNull()?.word?.take(1) ?: "")) {
+                            suggestions.add(CorrectionSuggestion(
+                                originalInput = currentInput,
+                                correctedText = work,
+                                correctedPinyin = currentInput,
+                                confidence = 0.7f,
+                                errorType = ErrorType.UNKNOWN,
+                                explanation = "基于上下文的工作续写"
+                            ))
+                        }
+                    }
+                }
+                else -> {
+                    // 通用续写：基于最后一个词的语义关联
+                    val genericSuggestions = generateGenericContinuation(lastWord, currentInput, candidates)
+                    suggestions.addAll(genericSuggestions)
+                }
+            }
+            
+            // 如果没有生成任何建议，使用候选词但标记为续写
+            if (suggestions.isEmpty() && candidates.isNotEmpty()) {
+                val firstCandidate = candidates.first()
+                suggestions.add(CorrectionSuggestion(
+                    originalInput = currentInput,
+                    correctedText = firstCandidate.word,
+                    correctedPinyin = currentInput,
+                    confidence = 0.6f,
+                    errorType = ErrorType.UNKNOWN,
+                    explanation = "基于候选词的续写建议"
+                ))
+            }
+            
+            Timber.d("🧠 生成了${suggestions.size}个基于上下文的建议")
+            suggestions
+            
+        } catch (e: Exception) {
+            Timber.e(e, "生成基于上下文的建议失败: ${e.message}")
+            emptyList()
+        }
+    }
+    
+    /**
+     * 🔧 生成通用续写建议
+     */
+    private fun generateGenericContinuation(
+        lastWord: String, 
+        currentInput: String, 
+        candidates: List<WordFrequency>
+    ): List<CorrectionSuggestion> {
+        val suggestions = mutableListOf<CorrectionSuggestion>()
+        
+        // 基于最后一个词的常见搭配
+        val commonPairs = mapOf(
+            "很" to listOf("好", "棒", "不错", "满意", "开心"),
+            "非常" to listOf("好", "棒", "满意", "开心", "感谢"),
+            "今天" to listOf("很好", "不错", "很忙", "休息", "工作"),
+            "明天" to listOf("见面", "开会", "休息", "工作", "出发"),
+            "我" to listOf("觉得", "认为", "希望", "想要", "需要"),
+            "你" to listOf("好吗", "怎么样", "在哪", "忙吗", "有空吗")
+        )
+        
+        val continuations = commonPairs[lastWord] ?: emptyList()
+        
+        continuations.forEach { continuation ->
+            // 检查续写词是否与当前输入匹配
+            if (continuation.startsWith(candidates.firstOrNull()?.word?.take(1) ?: "")) {
+                suggestions.add(CorrectionSuggestion(
+                    originalInput = currentInput,
+                    correctedText = continuation,
+                    correctedPinyin = currentInput,
+                    confidence = 0.7f,
+                    errorType = ErrorType.UNKNOWN,
+                    explanation = "基于词汇搭配的续写"
+                ))
+            }
+        }
+        
+        return suggestions
+    }
+    
+    /**
+     * 📝 创建输入上下文（增强版：获取完整文本内容用于续写）
+     */
+    private fun createInputContext(input: String): InputContext {
+        return InputContext(
+            appPackage = currentInputConnection?.let { 
+                // 尝试获取当前应用包名，如果失败则使用默认值
+                try {
+                    "unknown.app"
+                } catch (e: Exception) {
+                    "unknown.app"
+                }
+            } ?: "unknown.app",
+            inputType = currentInputEditorInfo?.inputType ?: 0,
+            previousText = getContextualText(),
+            cursorPosition = getCurrentCursorPosition(),
+            userPreferences = UserPreferences(),
+            timestamp = System.currentTimeMillis()
+        )
+    }
+    
+    /**
+     * 📝 获取上下文文本（用于AI续写）
+     * 获取输入框中已确定的文本内容，排除当前正在输入的拼音
+     */
+    private fun getContextualText(): String {
+        return try {
+            val ic = currentInputConnection ?: return ""
+            
+            // 获取光标前的文本（更多内容用于更好的续写效果）
+            val beforeText = ic.getTextBeforeCursor(100, 0)?.toString() ?: ""
+            
+            // 🔧 关键修复：正确排除当前正在输入的拼音
+            val contextText = if (composingText.isNotEmpty()) {
+                // 当前有拼音输入时，需要从beforeText中排除这部分拼音
+                // 因为composing text还没有被提交到输入框
+                // 所以beforeText就是真正已确定的文本内容
+                beforeText
+            } else {
+                // 没有拼音输入时，beforeText就是完整的上下文
+                beforeText
+            }
+            
+            Timber.d("🤖 获取上下文文本: 输入='${composingText}', 上下文='$contextText'")
+            
+            return contextText
+            
+        } catch (e: Exception) {
+            Timber.e(e, "获取上下文文本失败: ${e.message}")
+            ""
+        }
+    }
+    
+    /**
+     * 📍 获取当前光标位置
+     */
+    private fun getCurrentCursorPosition(): Int {
+        return try {
+            val ic = currentInputConnection ?: return 0
+            // 获取选择范围的开始位置作为光标位置
+            val extractedText = ic.getExtractedText(android.view.inputmethod.ExtractedTextRequest(), 0)
+            extractedText?.selectionStart ?: 0
+        } catch (e: Exception) {
+            Timber.e(e, "获取光标位置失败: ${e.message}")
+            0
+        }
+    }
+    
+    /**
+     * 📊 计算基础置信度（备用方案）
+     */
+    private fun calculateBasicConfidence(input: String, candidate: WordFrequency): Float {
         // 基于频率和输入长度计算置信度
         val baseConfidence = when {
             candidate.frequency > 1000 -> 0.9f
@@ -3513,6 +3846,45 @@ class ShenjiInputMethodService : InputMethodService() {
         }
         
         return (baseConfidence + lengthBonus).coerceIn(0.3f, 1.0f)
+    }
+    
+    /**
+     * 🤖 确保AI引擎已初始化
+     */
+    private fun ensureAIEngineInitialized() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                val aiEngineManager = AIEngineManager.getInstance()
+                
+                // 检查是否已有可用引擎
+                if (aiEngineManager.getCurrentEngine() != null) {
+                    Timber.d("🤖 AI引擎已可用")
+                    return@launch
+                }
+                
+                // 尝试注册并切换到Gemma3引擎
+                Timber.d("🤖 开始初始化AI引擎...")
+                
+                // 检查是否已注册Gemma3引擎
+                if (!aiEngineManager.isEngineRegistered("gemma3")) {
+                    // 创建并注册Gemma3引擎
+                    val gemma3Engine = com.shenji.aikeyboard.ai.engines.Gemma3Engine(this@ShenjiInputMethodService)
+                    aiEngineManager.registerEngine("gemma3", gemma3Engine)
+                }
+                
+                // 切换到Gemma3引擎
+                val success = aiEngineManager.switchEngine("gemma3")
+                
+                if (success) {
+                    Timber.i("🤖 AI引擎初始化成功")
+                } else {
+                    Timber.w("🤖 AI引擎初始化失败，将使用备用建议")
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "🤖 AI引擎初始化异常: ${e.message}")
+            }
+        }
     }
     
     /**
@@ -3627,6 +3999,328 @@ class ShenjiInputMethodService : InputMethodService() {
             }
         } catch (e: Exception) {
             Timber.e(e, "检查Trie状态失败: ${e.message}")
+        }
+    }
+    
+    // ==================== 文本续写功能 ====================
+    
+    /**
+     * 🔥 触发文本续写分析（在文本提交后调用）
+     */
+    private fun triggerTextContinuationAnalysis() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            try {
+                // 延迟一小段时间，确保文本已完全提交到输入框
+                delay(100)
+                
+                // 获取输入框中的完整文本
+                val fullText = getFullInputText()
+                
+                Timber.d("🔥 触发文本续写分析，完整文本: '$fullText'")
+                
+                if (fullText.isNotEmpty() && fullText.trim().length >= 2) {
+                    // 有足够的文本内容，进行续写分析
+                    analyzeAndGenerateTextContinuation(fullText)
+                } else {
+                    // 文本太短，隐藏AI建议
+                    hideAISuggestion()
+                    Timber.d("🔥 文本太短，不进行续写分析")
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "🔥 触发文本续写分析失败: ${e.message}")
+                hideAISuggestion()
+            }
+        }
+    }
+    
+    /**
+     * 📝 获取输入框中的完整文本（不包括当前正在输入的拼音）
+     */
+    private fun getFullInputText(): String {
+        return try {
+            val ic = currentInputConnection ?: return ""
+            
+            // 获取光标前的所有文本（已确定的内容）
+            val beforeText = ic.getTextBeforeCursor(200, 0)?.toString() ?: ""
+            
+            Timber.d("📝 获取完整输入文本: '$beforeText'")
+            
+            return beforeText.trim()
+            
+        } catch (e: Exception) {
+            Timber.e(e, "获取完整输入文本失败: ${e.message}")
+            ""
+        }
+    }
+    
+    /**
+     * 🧠 分析并生成文本续写建议
+     */
+    private fun analyzeAndGenerateTextContinuation(fullText: String) {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            try {
+                Timber.d("🧠 开始分析文本续写，输入文本: '$fullText'")
+                
+                // 显示分析状态
+                showAISuggestion("🔍 分析续写中...", 1.0f)
+                
+                // 尝试使用AI引擎进行续写
+                val aiSuggestions = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    generateAITextContinuation(fullText)
+                }
+                
+                if (aiSuggestions.isNotEmpty()) {
+                    // 使用AI生成的续写建议
+                    val topSuggestion = aiSuggestions.first()
+                    val displayText = "🤖 ${topSuggestion}"
+                    showAISuggestion(displayText, 0.9f)
+                    Timber.d("🧠 ✅ 显示AI续写建议: '$topSuggestion' (来源: AI引擎)")
+                } else {
+                    // AI无建议，显示错误信息而不是硬编码规则
+                    Timber.e("🧠 ❌ AI引擎无建议，拒绝使用硬编码规则")
+                    showAISuggestion("❌ AI引擎无响应", 0.1f)
+                    
+                    // 延迟隐藏错误信息
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                        delay(2000)
+                        hideAISuggestion()
+                    }
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "🧠 分析文本续写失败: ${e.message}")
+                hideAISuggestion()
+            }
+        }
+    }
+    
+    /**
+     * 🤖 使用AI引擎生成文本续写
+     */
+    private suspend fun generateAITextContinuation(fullText: String): List<String> {
+        return withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                Timber.d("🤖 ========== 开始AI文本续写 ==========")
+                Timber.d("🤖 输入文本: '$fullText'")
+                
+                // 强制确保AI引擎已初始化
+                Timber.d("🤖 步骤1: 确保AI引擎初始化...")
+                ensureAIEngineInitializedSync()
+                
+                val aiEngineManager = AIEngineManager.getInstance()
+                Timber.d("🤖 步骤2: 获取AI引擎管理器: $aiEngineManager")
+                
+                val currentEngine = aiEngineManager.getCurrentEngine()
+                Timber.d("🤖 步骤3: 获取当前引擎: $currentEngine")
+                
+                if (currentEngine == null) {
+                    Timber.e("🤖 ❌ 没有可用的AI引擎，尝试强制初始化...")
+                    
+                    // 强制创建和注册Gemma3引擎
+                    try {
+                        val gemma3Engine = com.shenji.aikeyboard.ai.engines.Gemma3Engine(this@ShenjiInputMethodService)
+                        Timber.d("🤖 创建Gemma3引擎: $gemma3Engine")
+                        
+                        aiEngineManager.registerEngine("gemma3", gemma3Engine)
+                        Timber.d("🤖 注册Gemma3引擎完成")
+                        
+                        val switchSuccess = aiEngineManager.switchEngine("gemma3")
+                        Timber.d("🤖 切换到Gemma3引擎: $switchSuccess")
+                        
+                        val retryEngine = aiEngineManager.getCurrentEngine()
+                        if (retryEngine == null) {
+                            Timber.e("🤖 ❌ 强制初始化后仍无可用引擎")
+                            return@withContext emptyList()
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "🤖 ❌ 强制初始化AI引擎失败")
+                        return@withContext emptyList()
+                    }
+                }
+                
+                val engine = aiEngineManager.getCurrentEngine()!!
+                Timber.d("🤖 步骤4: 使用AI引擎: ${engine.engineInfo.name}")
+                
+                // 创建输入上下文
+                val context = InputContext(
+                    appPackage = "text.continuation",
+                    inputType = 0,
+                    previousText = fullText,
+                    cursorPosition = fullText.length,
+                    userPreferences = UserPreferences(),
+                    timestamp = System.currentTimeMillis()
+                )
+                Timber.d("🤖 步骤5: 创建输入上下文: $context")
+                
+                Timber.d("🤖 步骤6: 调用AI引擎进行文本续写...")
+                
+                // 调用AI引擎进行文本续写
+                val continuationResults = engine.generateContinuation(fullText, context)
+                Timber.d("🤖 步骤7: AI引擎返回结果: $continuationResults")
+                
+                val suggestions = continuationResults.map { it.text }.filter { it.isNotEmpty() }
+                
+                Timber.d("🤖 ========== AI续写完成 ==========")
+                Timber.d("🤖 最终建议: $suggestions")
+                
+                if (suggestions.isEmpty()) {
+                    Timber.w("🤖 ⚠️ AI引擎没有生成任何续写建议")
+                } else {
+                    Timber.i("🤖 ✅ AI引擎成功生成${suggestions.size}个续写建议")
+                }
+                
+                return@withContext suggestions
+                
+            } catch (e: Exception) {
+                Timber.e(e, "🤖 ❌ AI引擎续写失败: ${e.message}")
+                Timber.e(e, "🤖 ❌ 异常堆栈: ${e.stackTraceToString()}")
+                return@withContext emptyList()
+            }
+        }
+    }
+    
+    /**
+     * 🤖 同步确保AI引擎已初始化
+     */
+    private suspend fun ensureAIEngineInitializedSync() = withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val aiEngineManager = AIEngineManager.getInstance()
+            
+            // 检查是否已有可用引擎
+            if (aiEngineManager.getCurrentEngine() != null) {
+                Timber.d("🤖 AI引擎已可用")
+                return@withContext
+            }
+            
+            // 尝试注册并切换到Gemma3引擎
+            Timber.d("🤖 开始同步初始化AI引擎...")
+            
+            // 检查是否已注册Gemma3引擎
+            if (!aiEngineManager.isEngineRegistered("gemma3")) {
+                // 创建并注册Gemma3引擎
+                val gemma3Engine = com.shenji.aikeyboard.ai.engines.Gemma3Engine(this@ShenjiInputMethodService)
+                aiEngineManager.registerEngine("gemma3", gemma3Engine)
+                Timber.d("🤖 Gemma3引擎注册完成")
+            }
+            
+            // 切换到Gemma3引擎
+            val success = aiEngineManager.switchEngine("gemma3")
+            
+            if (success) {
+                Timber.i("🤖 ✅ AI引擎同步初始化成功")
+                // 更新状态图标为可用状态
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                    updateAIStatusIcon(true)
+                }
+            } else {
+                Timber.w("🤖 ⚠️ AI引擎同步初始化失败")
+                // 更新状态图标为不可用状态
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                    updateAIStatusIcon(false)
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "🤖 ❌ AI引擎同步初始化异常: ${e.message}")
+        }
+    }
+    
+    /**
+     * 📚 基于规则生成文本续写建议
+     */
+    private fun generateRuleBasedContinuation(fullText: String): List<String> {
+        return try {
+            Timber.d("📚 开始基于规则的续写分析，文本: '$fullText'")
+            
+            val suggestions = mutableListOf<String>()
+            
+            // 分析文本结构
+            val words = fullText.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+            val lastWord = words.lastOrNull() ?: ""
+            val lastChar = fullText.lastOrNull()?.toString() ?: ""
+            
+            Timber.d("📚 文本分析: 最后一个词='$lastWord', 最后字符='$lastChar', 总词数=${words.size}")
+            
+            // 基于文本内容和结构生成续写建议
+            when {
+                // 问候语续写
+                fullText.contains("早上好") -> {
+                    suggestions.addAll(listOf("今天", "我", "昨天", "你"))
+                }
+                fullText.contains("晚上好") -> {
+                    suggestions.addAll(listOf("今天", "我", "明天", "你"))
+                }
+                fullText.contains("你好") -> {
+                    suggestions.addAll(listOf("我", "今天", "请问", "能"))
+                }
+                
+                // 地点相关续写
+                fullText.endsWith("我想去") || fullText.endsWith("去") -> {
+                    suggestions.addAll(listOf("公园", "商场", "图书馆", "电影院", "餐厅", "学校"))
+                }
+                
+                // 天气相关续写 - 基于上下文智能分析
+                fullText.contains("天气") -> {
+                    when {
+                        fullText.contains("今天天气") -> suggestions.addAll(listOf("很好", "不错", "晴朗", "多云"))
+                        fullText.contains("明天天气") -> suggestions.addAll(listOf("怎么样", "如何", "会好吗"))
+                        fullText.contains("天气很") -> suggestions.addAll(listOf("好", "热", "冷", "舒服"))
+                        else -> suggestions.addAll(listOf("预报", "情况", "变化", "怎么样"))
+                    }
+                }
+                
+                // 时间相关续写
+                fullText.contains("今天") -> {
+                    suggestions.addAll(listOf("很好", "很忙", "休息", "工作", "天气"))
+                }
+                fullText.contains("明天") -> {
+                    suggestions.addAll(listOf("见面", "开会", "休息", "工作", "出发"))
+                }
+                
+                // 工作相关续写
+                fullText.contains("工作") -> {
+                    suggestions.addAll(listOf("很忙", "顺利", "完成", "进展", "会议", "项目"))
+                }
+                
+                // 基于最后一个词的常见搭配
+                lastWord == "很" -> {
+                    suggestions.addAll(listOf("好", "棒", "不错", "满意", "开心", "忙"))
+                }
+                lastWord == "非常" -> {
+                    suggestions.addAll(listOf("好", "棒", "满意", "开心", "感谢", "高兴"))
+                }
+                lastWord == "我" -> {
+                    suggestions.addAll(listOf("觉得", "认为", "希望", "想要", "需要", "喜欢"))
+                }
+                lastWord == "你" -> {
+                    suggestions.addAll(listOf("好吗", "怎么样", "在哪", "忙吗", "有空吗", "觉得"))
+                }
+                
+                // 基于标点符号的续写
+                lastChar == "，" || lastChar == "," -> {
+                    suggestions.addAll(listOf("我", "你", "他", "今天", "明天", "这"))
+                }
+                lastChar == "。" || lastChar == "." -> {
+                    suggestions.addAll(listOf("我", "你", "今天", "明天", "另外", "还有"))
+                }
+                
+                // 默认通用续写
+                else -> {
+                    suggestions.addAll(listOf("我", "你", "他", "今天", "很", "非常"))
+                }
+            }
+            
+            // 去重并限制数量
+            val uniqueSuggestions = suggestions.distinct().take(3)
+            
+            Timber.d("📚 生成${uniqueSuggestions.size}个规则续写建议: $uniqueSuggestions")
+            
+            return uniqueSuggestions
+            
+        } catch (e: Exception) {
+            Timber.e(e, "📚 基于规则的续写生成失败: ${e.message}")
+            emptyList()
         }
     }
     

@@ -7,8 +7,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
@@ -20,55 +18,44 @@ import java.lang.String;
 
 public final class ActivityMainBinding implements ViewBinding {
   @NonNull
-  private final RelativeLayout rootView;
+  private final LinearLayout rootView;
+
+  @NonNull
+  public final FrameLayout aiTestButtonContainer;
 
   @NonNull
   public final ImageView appIconTop;
 
   @NonNull
-  public final TextView appNameTopLeft;
+  public final FrameLayout inputMethodSettingsButtonContainer;
 
   @NonNull
-  public final FrameLayout btnAiTestContainer;
+  public final FrameLayout logDetailButtonContainer;
 
   @NonNull
-  public final FrameLayout btnImeSettingsContainer;
+  public final FrameLayout mnnInferenceButtonContainer;
 
   @NonNull
-  public final FrameLayout btnLlmInferenceContainer;
+  public final FrameLayout optimizedCandidateTestButtonContainer;
 
-  @NonNull
-  public final FrameLayout btnLogsContainer;
-
-  @NonNull
-  public final FrameLayout btnOptimizedTestContainer;
-
-  @NonNull
-  public final LinearLayout mainButtonContainer;
-
-  @NonNull
-  public final RelativeLayout mainContainer;
-
-  private ActivityMainBinding(@NonNull RelativeLayout rootView, @NonNull ImageView appIconTop,
-      @NonNull TextView appNameTopLeft, @NonNull FrameLayout btnAiTestContainer,
-      @NonNull FrameLayout btnImeSettingsContainer, @NonNull FrameLayout btnLlmInferenceContainer,
-      @NonNull FrameLayout btnLogsContainer, @NonNull FrameLayout btnOptimizedTestContainer,
-      @NonNull LinearLayout mainButtonContainer, @NonNull RelativeLayout mainContainer) {
+  private ActivityMainBinding(@NonNull LinearLayout rootView,
+      @NonNull FrameLayout aiTestButtonContainer, @NonNull ImageView appIconTop,
+      @NonNull FrameLayout inputMethodSettingsButtonContainer,
+      @NonNull FrameLayout logDetailButtonContainer,
+      @NonNull FrameLayout mnnInferenceButtonContainer,
+      @NonNull FrameLayout optimizedCandidateTestButtonContainer) {
     this.rootView = rootView;
+    this.aiTestButtonContainer = aiTestButtonContainer;
     this.appIconTop = appIconTop;
-    this.appNameTopLeft = appNameTopLeft;
-    this.btnAiTestContainer = btnAiTestContainer;
-    this.btnImeSettingsContainer = btnImeSettingsContainer;
-    this.btnLlmInferenceContainer = btnLlmInferenceContainer;
-    this.btnLogsContainer = btnLogsContainer;
-    this.btnOptimizedTestContainer = btnOptimizedTestContainer;
-    this.mainButtonContainer = mainButtonContainer;
-    this.mainContainer = mainContainer;
+    this.inputMethodSettingsButtonContainer = inputMethodSettingsButtonContainer;
+    this.logDetailButtonContainer = logDetailButtonContainer;
+    this.mnnInferenceButtonContainer = mnnInferenceButtonContainer;
+    this.optimizedCandidateTestButtonContainer = optimizedCandidateTestButtonContainer;
   }
 
   @Override
   @NonNull
-  public RelativeLayout getRoot() {
+  public LinearLayout getRoot() {
     return rootView;
   }
 
@@ -93,59 +80,45 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.aiTestButtonContainer;
+      FrameLayout aiTestButtonContainer = ViewBindings.findChildViewById(rootView, id);
+      if (aiTestButtonContainer == null) {
+        break missingId;
+      }
+
       id = R.id.appIconTop;
       ImageView appIconTop = ViewBindings.findChildViewById(rootView, id);
       if (appIconTop == null) {
         break missingId;
       }
 
-      id = R.id.appNameTopLeft;
-      TextView appNameTopLeft = ViewBindings.findChildViewById(rootView, id);
-      if (appNameTopLeft == null) {
+      id = R.id.inputMethodSettingsButtonContainer;
+      FrameLayout inputMethodSettingsButtonContainer = ViewBindings.findChildViewById(rootView, id);
+      if (inputMethodSettingsButtonContainer == null) {
         break missingId;
       }
 
-      id = R.id.btnAiTestContainer;
-      FrameLayout btnAiTestContainer = ViewBindings.findChildViewById(rootView, id);
-      if (btnAiTestContainer == null) {
+      id = R.id.logDetailButtonContainer;
+      FrameLayout logDetailButtonContainer = ViewBindings.findChildViewById(rootView, id);
+      if (logDetailButtonContainer == null) {
         break missingId;
       }
 
-      id = R.id.btnImeSettingsContainer;
-      FrameLayout btnImeSettingsContainer = ViewBindings.findChildViewById(rootView, id);
-      if (btnImeSettingsContainer == null) {
+      id = R.id.mnnInferenceButtonContainer;
+      FrameLayout mnnInferenceButtonContainer = ViewBindings.findChildViewById(rootView, id);
+      if (mnnInferenceButtonContainer == null) {
         break missingId;
       }
 
-      id = R.id.btnLlmInferenceContainer;
-      FrameLayout btnLlmInferenceContainer = ViewBindings.findChildViewById(rootView, id);
-      if (btnLlmInferenceContainer == null) {
+      id = R.id.optimizedCandidateTestButtonContainer;
+      FrameLayout optimizedCandidateTestButtonContainer = ViewBindings.findChildViewById(rootView, id);
+      if (optimizedCandidateTestButtonContainer == null) {
         break missingId;
       }
 
-      id = R.id.btnLogsContainer;
-      FrameLayout btnLogsContainer = ViewBindings.findChildViewById(rootView, id);
-      if (btnLogsContainer == null) {
-        break missingId;
-      }
-
-      id = R.id.btnOptimizedTestContainer;
-      FrameLayout btnOptimizedTestContainer = ViewBindings.findChildViewById(rootView, id);
-      if (btnOptimizedTestContainer == null) {
-        break missingId;
-      }
-
-      id = R.id.mainButtonContainer;
-      LinearLayout mainButtonContainer = ViewBindings.findChildViewById(rootView, id);
-      if (mainButtonContainer == null) {
-        break missingId;
-      }
-
-      RelativeLayout mainContainer = (RelativeLayout) rootView;
-
-      return new ActivityMainBinding((RelativeLayout) rootView, appIconTop, appNameTopLeft,
-          btnAiTestContainer, btnImeSettingsContainer, btnLlmInferenceContainer, btnLogsContainer,
-          btnOptimizedTestContainer, mainButtonContainer, mainContainer);
+      return new ActivityMainBinding((LinearLayout) rootView, aiTestButtonContainer, appIconTop,
+          inputMethodSettingsButtonContainer, logDetailButtonContainer, mnnInferenceButtonContainer,
+          optimizedCandidateTestButtonContainer);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

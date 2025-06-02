@@ -14,6 +14,7 @@ import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.data.trie.TrieType
 import kotlinx.coroutines.*
 import timber.log.Timber
+import java.io.File
 
 /**
  * 词库状态显示组件
@@ -107,23 +108,52 @@ class DictionaryStatusView @JvmOverloads constructor(
      */
     private suspend fun getRealmStatus(): RealmStatusInfo {
         return try {
+            Timber.d("🔍 开始获取Realm数据库状态...")
+            
             val realm = ShenjiApplication.realm
             val entryCount = realm.query(Entry::class).count().find()
-            val isHealthy = entryCount >= 0 // 能查询就认为是健康的
+            
+            // 🔧 增强：检查数据库文件状态
+            val context = ShenjiApplication.appContext
+            val dictFile = File(context.filesDir, "dictionaries/shenji_dict.realm")
+            val fileSize = if (dictFile.exists()) dictFile.length() else 0L
+            val fileSizeMB = fileSize / (1024 * 1024)
+            
+            // 🔧 更详细的健康状态判断
+            val isHealthy = when {
+                entryCount > 1000 && fileSize > 10 * 1024 * 1024 -> {
+                    Timber.d("✅ 数据库状态优秀：词条数=$entryCount, 文件大小=${fileSizeMB}MB")
+                    true
+                }
+                entryCount > 100 && fileSize > 512 * 1024 -> {
+                    Timber.d("⚠️ 数据库状态基本：词条数=$entryCount, 文件大小=${fileSizeMB}MB")
+                    true
+                }
+                entryCount > 0 -> {
+                    Timber.w("⚠️ 数据库状态较差：词条数=$entryCount, 文件大小=${fileSizeMB}MB")
+                    true // 仍然认为是健康的，只是数据较少
+                }
+                else -> {
+                    Timber.e("❌ 数据库状态异常：词条数=$entryCount, 文件大小=${fileSizeMB}MB")
+                    false
+                }
+            }
             
             RealmStatusInfo(
                 isInitialized = true,
                 isHealthy = isHealthy,
                 entryCount = entryCount,
-                errorMessage = null
+                errorMessage = null,
+                fileSize = fileSize
             )
         } catch (e: Exception) {
-            Timber.e(e, "获取Realm状态失败")
+            Timber.e(e, "❌ 获取Realm状态失败: ${e.message}")
             RealmStatusInfo(
                 isInitialized = false,
                 isHealthy = false,
                 entryCount = 0,
-                errorMessage = e.message
+                errorMessage = e.message,
+                fileSize = 0L
             )
         }
     }
@@ -131,101 +161,77 @@ class DictionaryStatusView @JvmOverloads constructor(
     /**
      * 获取Trie词典状态 - 只显示已加载的词典，chars和base永久显示
      */
-    private suspend fun getTrieStatus(): List<TrieStatusInfo> {
-        val trieManager = TrieManager.instance
-        val statusList = mutableListOf<TrieStatusInfo>()
-        
-        for (trieType in TrieType.values()) {
-            try {
-                // chars和base词典永久显示，其他词典只在已加载时显示
-                val shouldShow = when (trieType) {
-                    TrieType.CHARS, TrieType.BASE -> true
-                    else -> trieManager.isTrieLoaded(trieType)
+    private suspend fun getTrieStatus(): TrieStatusInfo {
+        return try {
+            Timber.d("🔍 开始获取Trie词典状态...")
+            
+            val trieManager = TrieManager.instance
+            val statusMap = mutableMapOf<TrieType, String>()
+            
+            // 🔧 增强：检查所有重要的Trie类型
+            val importantTypes = listOf(TrieType.CHARS, TrieType.BASE)
+            val allTypes = TrieType.values().toList()
+            
+            // 检查重要类型（总是显示）
+            for (type in importantTypes) {
+                val fileExists = trieManager.isTrieFileExists(type)
+                val isLoaded = trieManager.isTrieLoaded(type)
+                val isLoading = trieManager.isLoading(type)
+                
+                val status = when {
+                    isLoading -> "加载中..."
+                    isLoaded -> "已加载✅"
+                    fileExists -> "文件存在，未加载"
+                    else -> "文件不存在❌"
                 }
                 
-                if (!shouldShow) continue
+                statusMap[type] = status
+                Timber.d("📚 ${trieManager.getDisplayName(type)}: $status")
+            }
+            
+            // 检查其他类型（只显示已加载或有文件的）
+            for (type in allTypes) {
+                if (type in importantTypes) continue
                 
-                val trie = trieManager.getTrie(trieType)
-                if (trie != null) {
-                    // 已加载到内存
-                    val memoryStats = trie.getMemoryStats()
-                    // 计算内存使用量（估算：每个节点约100字节，每个词条约50字节）
-                    val memoryUsageMB = ((memoryStats.nodeCount * 100L) + (memoryStats.wordCount * 50L)) / (1024.0 * 1024.0)
-                    statusList.add(
-                        TrieStatusInfo(
-                            type = trieType,
-                            isLoaded = true,
-                            isLoading = false,
-                            memoryUsageMB = memoryUsageMB,
-                            nodeCount = memoryStats.nodeCount,
-                            wordCount = memoryStats.wordCount,
-                            status = "已加载"
-                        )
-                    )
-                } else {
-                    // 未加载（只有chars和base会显示这个状态）
-                    val isLoading = trieManager.isLoading(trieType)
-                    statusList.add(
-                        TrieStatusInfo(
-                            type = trieType,
-                            isLoaded = false,
-                            isLoading = isLoading,
-                            memoryUsageMB = 0.0,
-                            nodeCount = 0,
-                            wordCount = 0,
-                            status = if (isLoading) "加载中..." else "未加载"
-                        )
-                    )
-                    
-                    // 如果检测到chars词典未加载，自动加载
-                    if (trieType == TrieType.CHARS && !isLoading) {
-                        Timber.d("检测到chars词典未加载，开始自动加载...")
-                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                            try {
-                                val loaded = trieManager.loadTrieToMemory(TrieType.CHARS)
-                                if (loaded) {
-                                    Timber.i("chars词典自动加载成功")
-                                    // 在主线程中刷新状态
-                                    withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                        refreshStatus()
-                                    }
-                                } else {
-                                    Timber.w("chars词典自动加载失败")
-                                }
-                            } catch (e: Exception) {
-                                Timber.e(e, "chars词典自动加载异常")
-                            }
-                        }
+                val fileExists = trieManager.isTrieFileExists(type)
+                val isLoaded = trieManager.isTrieLoaded(type)
+                val isLoading = trieManager.isLoading(type)
+                
+                // 只有在有文件或已加载时才显示
+                if (fileExists || isLoaded || isLoading) {
+                    val status = when {
+                        isLoading -> "加载中..."
+                        isLoaded -> "已加载✅"
+                        fileExists -> "文件存在"
+                        else -> "未知状态"
                     }
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "获取${getDisplayName(trieType)}状态失败")
-                // 对于chars和base，即使出错也要显示错误状态
-                if (trieType == TrieType.CHARS || trieType == TrieType.BASE) {
-                    statusList.add(
-                        TrieStatusInfo(
-                            type = trieType,
-                            isLoaded = false,
-                            isLoading = false,
-                            memoryUsageMB = 0.0,
-                            nodeCount = 0,
-                            wordCount = 0,
-                            status = "错误"
-                        )
-                    )
+                    
+                    statusMap[type] = status
+                    Timber.d("📚 ${trieManager.getDisplayName(type)}: $status")
                 }
             }
-        }
-        
-        // 按优先级排序：chars > base > 其他（按类型顺序）
-        return statusList.sortedWith { a, b ->
-            when {
-                a.type == TrieType.CHARS -> -1
-                b.type == TrieType.CHARS -> 1
-                a.type == TrieType.BASE -> -1
-                b.type == TrieType.BASE -> 1
-                else -> a.type.ordinal.compareTo(b.type.ordinal)
-            }
+            
+            val loadedCount = statusMap.values.count { it.contains("已加载") }
+            val totalAvailable = statusMap.size
+            
+            Timber.d("📊 Trie状态汇总：已加载$loadedCount/$totalAvailable")
+            
+            TrieStatusInfo(
+                isInitialized = trieManager.isInitialized(),
+                statusMap = statusMap,
+                loadedCount = loadedCount,
+                totalCount = totalAvailable,
+                errorMessage = null
+            )
+        } catch (e: Exception) {
+            Timber.e(e, "❌ 获取Trie状态失败: ${e.message}")
+            TrieStatusInfo(
+                isInitialized = false,
+                statusMap = emptyMap(),
+                loadedCount = 0,
+                totalCount = 0,
+                errorMessage = e.message
+            )
         }
     }
     
@@ -233,21 +239,40 @@ class DictionaryStatusView @JvmOverloads constructor(
      * 更新Realm状态显示
      */
     private fun updateRealmStatus(status: RealmStatusInfo) {
-        val statusText = if (status.isInitialized && status.isHealthy) {
-            "Realm数据库状态：初始化完成，数据库正常（词条数：${status.entryCount}）"
-        } else if (status.isInitialized && !status.isHealthy) {
-            "Realm数据库状态：初始化完成，数据库异常（${status.errorMessage ?: "未知错误"}）"
-        } else {
-            "Realm数据库状态：初始化未完成，数据库异常（${status.errorMessage ?: "未知错误"}）"
+        val fileSizeMB = status.fileSize / (1024 * 1024)
+        val fileSizeText = if (status.fileSize > 0) "，文件大小：${fileSizeMB}MB" else ""
+        
+        val statusText = when {
+            status.isInitialized && status.isHealthy && status.entryCount > 1000 -> {
+                "Realm数据库状态：✅ 优秀（词条数：${status.entryCount}$fileSizeText）"
+            }
+            status.isInitialized && status.isHealthy && status.entryCount > 100 -> {
+                "Realm数据库状态：⚠️ 基本可用（词条数：${status.entryCount}$fileSizeText）"
+            }
+            status.isInitialized && status.isHealthy -> {
+                "Realm数据库状态：⚠️ 数据较少（词条数：${status.entryCount}$fileSizeText）"
+            }
+            status.isInitialized && !status.isHealthy -> {
+                "Realm数据库状态：❌ 初始化完成但异常（${status.errorMessage ?: "未知错误"}）"
+            }
+            else -> {
+                "Realm数据库状态：❌ 初始化失败（${status.errorMessage ?: "未知错误"}）"
+            }
         }
         
         realmStatusText.text = statusText
         
         // 设置状态颜色
-        val textColor = if (status.isInitialized && status.isHealthy) {
-            ContextCompat.getColor(context, android.R.color.holo_green_dark)
-        } else {
-            ContextCompat.getColor(context, android.R.color.holo_red_dark)
+        val textColor = when {
+            status.isInitialized && status.isHealthy && status.entryCount > 1000 -> {
+                ContextCompat.getColor(context, android.R.color.holo_green_dark)
+            }
+            status.isInitialized && status.isHealthy -> {
+                ContextCompat.getColor(context, android.R.color.holo_orange_light)
+            }
+            else -> {
+                ContextCompat.getColor(context, android.R.color.holo_red_dark)
+            }
         }
         realmStatusText.setTextColor(textColor)
     }
@@ -255,51 +280,53 @@ class DictionaryStatusView @JvmOverloads constructor(
     /**
      * 更新Trie状态显示
      */
-    private fun updateTrieStatus(statusList: List<TrieStatusInfo>) {
-        val statusBuilder = StringBuilder()
-        
-        if (statusList.isEmpty()) {
-            statusBuilder.append("📚 词典状态：无可用词典")
+    private fun updateTrieStatus(status: TrieStatusInfo) {
+        val statusText = if (status.isInitialized) {
+            if (status.statusMap.isNotEmpty()) {
+                val statusLines = mutableListOf<String>()
+                statusLines.add("Trie词典状态：已初始化（${status.loadedCount}/${status.totalCount}已加载）")
+                
+                // 按重要性排序显示
+                val importantTypes = listOf(TrieType.CHARS, TrieType.BASE)
+                val otherTypes = status.statusMap.keys.filter { it !in importantTypes }
+                
+                for (type in importantTypes) {
+                    status.statusMap[type]?.let { typeStatus ->
+                        val displayName = getTrieDisplayName(type)
+                        statusLines.add("  • $displayName: $typeStatus")
+                    }
+                }
+                
+                for (type in otherTypes) {
+                    status.statusMap[type]?.let { typeStatus ->
+                        val displayName = getTrieDisplayName(type)
+                        statusLines.add("  • $displayName: $typeStatus")
+                    }
+                }
+                
+                statusLines.joinToString("\n")
+            } else {
+                "Trie词典状态：已初始化，但无可用词典文件"
+            }
         } else {
-            statusBuilder.append("📚 词典状态：\n")
-            
-            for (status in statusList) {
-                val typeName = getTrieDisplayName(status.type)
-                val statusIcon = when {
-                    status.isLoading -> "🔄"
-                    status.isLoaded -> "✅"
-                    status.status == "错误" -> "❌"
-                    else -> "⭕"
-                }
-                
-                statusBuilder.append("${statusIcon} ${typeName}：")
-                
-                if (status.isLoaded) {
-                    statusBuilder.append("${status.status}，")
-                    statusBuilder.append("内存${String.format("%.1f", status.memoryUsageMB)}MB，")
-                    statusBuilder.append("节点${status.nodeCount}，")
-                    statusBuilder.append("词语${status.wordCount}")
-                } else {
-                    statusBuilder.append(status.status)
-                }
-                
-                statusBuilder.append("\n")
+            "Trie词典状态：未初始化（${status.errorMessage ?: "未知错误"}）"
+        }
+        
+        trieStatusText.text = statusText
+        
+        // 设置状态颜色
+        val textColor = when {
+            status.isInitialized && status.loadedCount >= 2 -> {
+                ContextCompat.getColor(context, android.R.color.holo_green_dark)
+            }
+            status.isInitialized && status.loadedCount > 0 -> {
+                ContextCompat.getColor(context, android.R.color.holo_orange_light)
+            }
+            else -> {
+                ContextCompat.getColor(context, android.R.color.holo_red_dark)
             }
         }
-        
-        trieStatusText.text = statusBuilder.toString().trimEnd()
-        
-        // 根据整体状态设置颜色
-        val textColor = when {
-            statusList.any { it.status == "错误" } -> ContextCompat.getColor(context, android.R.color.holo_red_light)
-            statusList.any { it.isLoading } -> ContextCompat.getColor(context, android.R.color.holo_orange_light)
-            statusList.all { it.isLoaded } -> ContextCompat.getColor(context, android.R.color.holo_green_light)
-            else -> ContextCompat.getColor(context, android.R.color.darker_gray)
-        }
-        
         trieStatusText.setTextColor(textColor)
-        
-        Timber.d("Trie状态显示已更新，共${statusList.size}个词典")
     }
     
     /**
@@ -307,15 +334,15 @@ class DictionaryStatusView @JvmOverloads constructor(
      */
     private fun getTrieDisplayName(type: TrieType): String {
         return when (type) {
-            TrieType.CHARS -> "chars"
-            TrieType.BASE -> "base"
-            TrieType.CORRELATION -> "correlation"
-            TrieType.ASSOCIATIONAL -> "associational"
-            TrieType.PLACE -> "place"
-            TrieType.PEOPLE -> "people"
-            TrieType.POETRY -> "poetry"
-            TrieType.CORRECTIONS -> "corrections"
-            TrieType.COMPATIBLE -> "compatible"
+            TrieType.CHARS -> "单字"
+            TrieType.BASE -> "基础词典"
+            TrieType.CORRELATION -> "关联词典"
+            TrieType.ASSOCIATIONAL -> "联想词典"
+            TrieType.PLACE -> "地名词典"
+            TrieType.PEOPLE -> "人名词典"
+            TrieType.POETRY -> "诗词词典"
+            TrieType.CORRECTIONS -> "纠错词典"
+            TrieType.COMPATIBLE -> "兼容词典"
         }
     }
     
@@ -344,23 +371,22 @@ class DictionaryStatusView @JvmOverloads constructor(
     /**
      * Realm状态信息数据类
      */
-    data class RealmStatusInfo(
+    private data class RealmStatusInfo(
         val isInitialized: Boolean,
         val isHealthy: Boolean,
         val entryCount: Long,
-        val errorMessage: String?
+        val errorMessage: String?,
+        val fileSize: Long = 0L
     )
     
     /**
      * Trie状态信息数据类
      */
-    data class TrieStatusInfo(
-        val type: TrieType,
-        val isLoaded: Boolean,
-        val isLoading: Boolean,
-        val memoryUsageMB: Double,
-        val nodeCount: Int,
-        val wordCount: Int,
-        val status: String
+    private data class TrieStatusInfo(
+        val isInitialized: Boolean,
+        val statusMap: Map<TrieType, String>,
+        val loadedCount: Int,
+        val totalCount: Int,
+        val errorMessage: String?
     )
 } 

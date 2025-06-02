@@ -5,8 +5,8 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="24"
-        android:targetSdkVersion="35" />
+        android:minSdkVersion="26"
+        android:targetSdkVersion="34" />
 
     <!-- 写入外部存储权限（日志写入） -->
     <uses-permission
@@ -45,6 +45,26 @@
         android:protectionLevel="signature" />
 
     <uses-permission android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front"
+        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
+    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.screen.landscape"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="false" />
 
     <application
         android:name="com.shenji.aikeyboard.ShenjiApplication"
@@ -134,6 +154,29 @@
             android:label="AI功能测试"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- MNN移动推理框架相关Activity -->
+        <activity
+            android:name="com.shenji.aikeyboard.mnn.main.MainActivity"
+            android:exported="true"
+            android:label="MNN AI助手"
+            android:theme="@style/Theme.SHENJI"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.shenji.aikeyboard.mnn.modelist.ModelListActivity"
+            android:exported="false"
+            android:label="模型列表"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.shenji.aikeyboard.mnn.chat.ChatActivity"
+            android:exported="false"
+            android:label="AI对话"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.shenji.aikeyboard.mnn.mainsettings.MainSettingsActivity"
+            android:exported="false"
+            android:label="MNN设置"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- 输入法服务 -->
         <service
             android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"
@@ -191,6 +234,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <activity
+            android:name="androidx.compose.ui.tooling.PreviewActivity"
+            android:exported="true" />
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.shenji.aikeyboard.androidx-startup"
@@ -208,6 +256,13 @@
                 android:name="androidx.profileinstaller.ProfileInstallerInitializer"
                 android:value="androidx.startup" />
         </provider>
+
+        <uses-library
+            android:name="androidx.window.extensions"
+            android:required="false" />
+        <uses-library
+            android:name="androidx.window.sidecar"
+            android:required="false" />
         <!--
              Applications that target Android S+ require explicit declaration of
              any referenced vendor-provided libraries.
@@ -221,6 +276,11 @@
         <uses-native-library
             android:name="libOpenCL-pixel.so"
             android:required="false" />
+
+        <provider
+            android:name="ru.noties.jlatexmath.JLatexMathInitProvider"
+            android:authorities="com.shenji.aikeyboard.jlatexmathinitprovider"
+            android:exported="false" />
 
         <receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"
@@ -241,6 +301,14 @@
                 <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:clearTaskOnLaunch="true"
+            android:screenOrientation="sensorLandscape"
+            android:stateNotNeeded="true"
+            android:theme="@style/zxing_CaptureTheme"
+            android:windowSoftInputMode="stateAlwaysHidden" />
     </application>
 
 </manifest>

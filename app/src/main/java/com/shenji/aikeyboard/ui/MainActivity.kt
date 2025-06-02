@@ -14,11 +14,16 @@ import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.settings.InputMethodSettingsActivity
+import com.shenji.aikeyboard.mnn.main.MainActivity as MnnMainActivity
 import timber.log.Timber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
+/**
+ * 主界面Activity
+ * 神迹AI键盘的主入口界面
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var btnImeSettings: Button
@@ -104,56 +109,54 @@ class MainActivity : AppCompatActivity() {
      * 设置顶部图标
      */
     private fun setupTopIcon() {
-        appIconTop = findViewById(R.id.appIconTop)
-        
-        // 从assets加载卡通设计图片
         try {
-            val inputStream = assets.open("images/appicon.png")
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            val drawable = BitmapDrawable(resources, bitmap)
-            appIconTop.setImageDrawable(drawable)
-            inputStream.close()
-            Log.d("MainActivity", "顶部图标加载成功")
+            val appIconTop = findViewById<ImageView>(R.id.appIconTop)
+            appIconTop?.setImageResource(R.mipmap.ic_launcher)
+            Log.d("MainActivity", "顶部图标设置完成")
         } catch (e: Exception) {
-            Log.e("MainActivity", "加载顶部图标失败: ${e.message}", e)
+            Log.e("MainActivity", "设置图标失败: ${e.message}", e)
         }
     }
     
     /**
-     * 创建白色背景按钮
+     * 创建所有按钮
      */
     private fun createButtons() {
-        // 创建输入法设置按钮
-        createWhiteButton(
-            R.id.btnImeSettingsContainer,
-            "输入法设置"
-        ) { openInputMethodSettings() }.also { btnImeSettings = it }
-        
-        // 创建查看日志按钮
-        createWhiteButton(
-            R.id.btnLogsContainer,
-            "查看日志"
-        ) { openLogDetail() }.also { btnLogs = it }
-        
-        // 创建候选词引擎测试按钮
-        createWhiteButton(
-            R.id.btnOptimizedTestContainer,
-            "候选词引擎测试"
-        ) { openOptimizedCandidateTest() }.also { btnOptimizedTest = it }
-        
-        // 创建LLM推理按钮
-        createWhiteButton(
-            R.id.btnLlmInferenceContainer,
-            "AI智能推理"
-        ) { openLlmInference() }.also { btnLlmInference = it }
-        
-        // 创建AI功能测试按钮
-        createWhiteButton(
-            R.id.btnAiTestContainer,
-            "🤖 AI功能测试"
-        ) { openAiTest() }.also { btnAiTest = it }
-        
-        Log.d("MainActivity", "所有按钮创建完成")
+        try {
+            // 输入法设置按钮
+            createWhiteButton(
+                R.id.inputMethodSettingsButtonContainer,
+                "输入法设置"
+            ) { openInputMethodSettings() }
+            
+            // 日志详情按钮
+            createWhiteButton(
+                R.id.logDetailButtonContainer,
+                "日志详情"
+            ) { openLogDetail() }
+            
+            // 候选词引擎测试按钮
+            createWhiteButton(
+                R.id.optimizedCandidateTestButtonContainer,
+                "候选词引擎测试"
+            ) { openOptimizedCandidateTest() }
+            
+            // AI功能测试按钮
+            createWhiteButton(
+                R.id.aiTestButtonContainer,
+                "AI功能测试"
+            ) { openAiTest() }
+            
+            // MNN推理按钮 - 新增
+            createWhiteButton(
+                R.id.mnnInferenceButtonContainer,
+                "MNN AI助手"
+            ) { openMnnInference() }
+            
+            Log.d("MainActivity", "所有按钮创建完成")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "按钮创建失败: ${e.message}", e)
+        }
     }
     
     /**
@@ -243,16 +246,16 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * 打开LLM推理
+     * 打开MNN推理 - 跳转到MNN专用界面
      */
-    private fun openLlmInference() {
+    private fun openMnnInference() {
         try {
-            Timber.d("打开LLM推理")
-            val intent = Intent(this, LlmModelsActivity::class.java)
+            Timber.d("打开MNN AI助手")
+            val intent = Intent(this, MnnMainActivity::class.java)
             startActivity(intent)
         } catch (e: Exception) {
-            Log.e("MainActivity", "打开LLM推理失败: ${e.message}", e)
-            Toast.makeText(this, "无法打开LLM推理: ${e.message}", Toast.LENGTH_SHORT).show()
+            Log.e("MainActivity", "打开MNN AI助手失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开MNN AI助手: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -271,7 +274,7 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * 在主界面启动后台词典加载
+     * 启动后台词典加载
      */
     private fun startBackgroundDictionaryLoading() {
         lifecycleScope.launch(Dispatchers.IO) {

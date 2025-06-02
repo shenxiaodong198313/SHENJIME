@@ -1,87 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mainContainer"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@color/splash_background_color"
-    android:padding="32dp"
-    tools:context=".ui.MainActivity">
+    android:gravity="center"
+    android:padding="32dp">
 
-    <!-- 左上角应用名称 -->
-    <TextView
-        android:id="@+id/appNameTopLeft"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="神迹"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/splash_text_color"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="16dp" />
-
-    <!-- 顶部应用图标 - 启动主题卡通图的三分之一大小 -->
+    <!-- 顶部图标 -->
     <ImageView
         android:id="@+id/appIconTop"
-        android:layout_width="93dp"
-        android:layout_height="93dp"
-        android:src="@android:color/transparent"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="80dp" />
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginBottom="48dp"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="应用图标" />
 
-    <!-- 主要按钮容器 -->
+    <!-- 应用标题 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="神迹AI键盘"
+        android:textSize="28sp"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:layout_marginBottom="48dp" />
+
+    <!-- 按钮容器 -->
     <LinearLayout
-        android:id="@+id/mainButtonContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/appIconTop"
-        android:layout_marginTop="60dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center">
 
-        <!-- 输入法设置按钮 -->
+        <!-- 输入法设置按钮容器 -->
         <FrameLayout
-            android:id="@+id/btnImeSettingsContainer"
+            android:id="@+id/inputMethodSettingsButtonContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-        </FrameLayout>
+            android:layout_marginBottom="16dp" />
 
-        <!-- 查看日志按钮 -->
+        <!-- 日志详情按钮容器 -->
         <FrameLayout
-            android:id="@+id/btnLogsContainer"
+            android:id="@+id/logDetailButtonContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-        </FrameLayout>
+            android:layout_marginBottom="16dp" />
 
-        <!-- 候选词引擎测试按钮 -->
+        <!-- 候选词引擎测试按钮容器 -->
         <FrameLayout
-            android:id="@+id/btnOptimizedTestContainer"
+            android:id="@+id/optimizedCandidateTestButtonContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-        </FrameLayout>
+            android:layout_marginBottom="16dp" />
 
-        <!-- LLM推理按钮 -->
+        <!-- AI功能测试按钮容器 -->
         <FrameLayout
-            android:id="@+id/btnLlmInferenceContainer"
+            android:id="@+id/aiTestButtonContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-        </FrameLayout>
+            android:layout_marginBottom="16dp" />
 
-        <!-- AI功能测试按钮 -->
+        <!-- MNN推理按钮容器 -->
         <FrameLayout
-            android:id="@+id/btnAiTestContainer"
+            android:id="@+id/mnnInferenceButtonContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-        </FrameLayout>
+            android:layout_marginBottom="16dp" />
 
     </LinearLayout>
 
-</RelativeLayout> 
+</LinearLayout>

@@ -10,8 +10,8 @@ android {
 
     defaultConfig {
         applicationId = "com.shenji.aikeyboard"
-        minSdk = 24 // 降低到24以支持更多设备
-        targetSdk = 35 // 升级到最新
+        minSdk = 26 // 改为与kaifa一致
+        targetSdk = 34 // 改为与kaifa一致
         versionCode = 1
         versionName = "1.0"
 
@@ -20,20 +20,17 @@ android {
         // 增加内存配置以支持LLM
         multiDexEnabled = true
         
-        // NDK配置 - 暂时禁用
-        /*
+        // NDK配置 - 支持MNN
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            abiFilters += listOf("arm64-v8a")
         }
         
-        // CMake配置
+        // CMake配置 - 支持MNN
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
-                arguments += listOf("-DANDROID_STL=c++_shared")
             }
         }
-        */
     }
 
     buildTypes {
@@ -48,36 +45,28 @@ android {
     
     buildFeatures {
         viewBinding = true
+        dataBinding = true
     }
     
-    // CMake外部构建配置 - 暂时禁用
-    /*
+    // CMake外部构建配置 - 支持MNN
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
             version = "3.22.1"
         }
     }
-    */
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_21 // 恢复为21
+        targetCompatibility = JavaVersion.VERSION_21 // 恢复为21
     }
     
     kotlinOptions {
-        jvmTarget = "21"
+        jvmTarget = "21" // 恢复为21
     }
     
     kotlin {
         jvmToolchain(21)
-    }
-    
-    // 增加编译时内存
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "21"
-        }
     }
     
     // 打包配置
@@ -95,7 +84,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     
@@ -121,8 +110,53 @@ dependencies {
     // MediaPipe LLM集成
     implementation("com.google.mediapipe:tasks-genai:0.10.24")
     
+    // MNN相关依赖 - 严格按照kaifa项目配置
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    
+    // 网络请求 - 按照kaifa版本
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+    
+    // JSON解析
+    implementation("com.google.code.gson:gson:2.10.1")
+    
+    // 权限请求
+    implementation("com.github.permissions-dispatcher:permissionsdispatcher:4.9.2")
+    
+    // MNN特有依赖 - 按照kaifa项目
+    implementation("com.github.techinessoverloaded:progress-dialog:1.5.1")
+    implementation("com.github.ybq:Android-SpinKit:1.4.0")
+    implementation("com.nambimobile.widgets:expandable-fab:1.2.1")
+    implementation("com.github.squti:Android-Wave-Recorder:2.0.1")
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:ext-latex:4.6.2")
+    implementation("ru.noties:jlatexmath-android:0.2.0")
+    implementation("ru.noties:jlatexmath-android-font-cyrillic:0.2.0")
+    implementation("ru.noties:jlatexmath-android-font-greek:0.2.0")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    
+    // Jetpack Compose - 按照kaifa版本
+    val jetpackComposeVersion = "1.7.8"
+    implementation("androidx.compose.foundation:foundation:$jetpackComposeVersion")
+    implementation("androidx.compose.material:material-icons-extended:$jetpackComposeVersion")
+    implementation("androidx.compose.ui:ui:$jetpackComposeVersion")
+    implementation("androidx.activity:activity-compose:1.10.1")
+    implementation("androidx.compose.ui:ui-tooling-preview:$jetpackComposeVersion")
+    debugImplementation("androidx.compose.ui:ui-tooling:$jetpackComposeVersion")
+    implementation("androidx.compose.material3:material3:1.3.1")
+    
+    // 数据绑定
+    implementation("androidx.databinding:databinding-runtime:8.7.0")
+    
     // Testing
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 } 

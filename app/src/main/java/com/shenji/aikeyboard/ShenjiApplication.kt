@@ -29,6 +29,8 @@ import java.io.StringWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.alibaba.mls.api.ApplicationProvider
+import com.shenji.aikeyboard.mnn.utils.CrashUtil
 
 class ShenjiApplication : MultiDexApplication() {
     
@@ -69,6 +71,11 @@ class ShenjiApplication : MultiDexApplication() {
             instance = this
             appContext = applicationContext
             
+            // 🔧 新增：初始化MNN相关组件
+            ApplicationProvider.set(this)
+            // 初始化CrashUtil（已修复JNI库加载问题）
+            CrashUtil.init(this)
+            
             // 写入基本日志
             logStartupMessage("开始初始化应用")
             
@@ -79,10 +86,12 @@ class ShenjiApplication : MultiDexApplication() {
             if (BuildConfig.DEBUG) {
                 Timber.plant(Timber.DebugTree())
                 logStartupMessage("DEBUG模式：使用DebugTree")
+                Log.d("ShenjiApp", "Timber DebugTree planted")
             } else {
                 // 生产环境使用自定义日志树，记录崩溃信息
                 Timber.plant(CrashReportingTree())
                 logStartupMessage("RELEASE模式：使用CrashReportingTree")
+                Log.d("ShenjiApp", "Timber CrashReportingTree planted")
             }
             
             // 🔧 修复：在Application启动时就初始化Realm
@@ -95,7 +104,9 @@ class ShenjiApplication : MultiDexApplication() {
             logStartupMessage("基础初始化完成，详细初始化将在启动页中进行")
             
             // 初始化Trie管理器（轻量级初始化）
+            Log.d("ShenjiApp", "开始初始化TrieManager")
             trieManager.init()
+            Log.d("ShenjiApp", "TrieManager初始化完成")
             
             // 🔧 新增：确保chars和base词典在启动时同步加载
             logStartupMessage("开始加载基础词典...")
@@ -269,21 +280,92 @@ class ShenjiApplication : MultiDexApplication() {
             
             val dictFile = File(internalDir, "shenji_dict.realm")
             
-            // 🔧 关键修复：精确区分覆盖安装和清理数据场景
+            // 🔧 关键修复：更智能的覆盖安装检测
             val databaseExists = dictFile.exists()
             val databaseSize = if (databaseExists) dictFile.length() else 0L
-            val needsInitialization = !databaseExists || databaseSize < 1024 * 1024 // 小于1MB认为需要初始化
+            
+            // 🔧 新增：检查应用版本信息，区分覆盖安装和首次安装
+            val versionFile = File(internalDir, "db_version.txt")
+            val currentVersion = try {
+                packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"
+            } catch (e: Exception) {
+                "unknown"
+            }
+            
+            val lastVersion = if (versionFile.exists()) {
+                try {
+                    versionFile.readText().trim()
+                } catch (e: Exception) {
+                    "unknown"
+                }
+            } else {
+                "none"
+            }
+            
+            logStartupMessage("版本检查: 当前=$currentVersion, 上次=$lastVersion")
+            
+            // 🔧 更智能的初始化判断逻辑
+            val needsInitialization = when {
+                // 情况1：数据库文件不存在 - 首次安装
+                !databaseExists -> {
+                    logStartupMessage("🆕 首次安装：数据库文件不存在")
+                    true
+                }
+                // 情况2：数据库文件太小 - 损坏或不完整
+                databaseSize < 512 * 1024 -> { // 降低到512KB
+                    logStartupMessage("⚠️ 数据库文件异常：大小仅${databaseSize/1024}KB")
+                    true
+                }
+                // 情况3：版本文件不存在但数据库存在 - 可能是从旧版本升级
+                !versionFile.exists() && databaseSize > 10 * 1024 * 1024 -> {
+                    logStartupMessage("🔄 检测到旧版本数据库，尝试兼容使用")
+                    // 写入当前版本信息
+                    try {
+                        versionFile.writeText(currentVersion)
+                        logStartupMessage("已更新版本信息文件")
+                    } catch (e: Exception) {
+                        logStartupMessage("写入版本信息失败: ${e.message}")
+                    }
+                    false // 不需要重新初始化
+                }
+                // 情况4：版本相同 - 覆盖安装，保留数据库
+                currentVersion == lastVersion -> {
+                    logStartupMessage("✅ 覆盖安装：版本相同，保留现有数据库")
+                    false
+                }
+                // 情况5：版本不同但数据库较大 - 版本升级，尝试保留
+                databaseSize > 10 * 1024 * 1024 -> {
+                    logStartupMessage("🔄 版本升级：从${lastVersion}到${currentVersion}，尝试保留数据库")
+                    // 更新版本信息
+                    try {
+                        versionFile.writeText(currentVersion)
+                        logStartupMessage("已更新版本信息文件")
+                    } catch (e: Exception) {
+                        logStartupMessage("写入版本信息失败: ${e.message}")
+                    }
+                    false // 尝试保留现有数据库
+                }
+                // 情况6：其他情况 - 需要重新初始化
+                else -> {
+                    logStartupMessage("❓ 未知情况：需要重新初始化")
+                    true
+                }
+            }
             
             if (needsInitialization) {
-                if (!databaseExists) {
-                    logStartupMessage("🆕 检测到首次安装或数据清理，采用渐进式初始化策略")
-                } else {
-                    logStartupMessage("⚠️ 数据库文件异常 (${databaseSize} bytes)，重新初始化")
-                }
+                logStartupMessage("🚀 开始数据库初始化流程...")
                 
                 // 🚀 第一步：立即创建空数据库，确保输入法可用
                 logStartupMessage("第一步：创建空数据库，确保输入法立即可用...")
                 createEmptyDatabase(dictFile)
+                
+                // 写入版本信息
+                try {
+                    versionFile.writeText(currentVersion)
+                    logStartupMessage("已写入版本信息: $currentVersion")
+                } catch (e: Exception) {
+                    logStartupMessage("写入版本信息失败: ${e.message}")
+                }
                 
                 // 🚀 第二步：异步复制完整数据库
                 GlobalScope.launch(Dispatchers.IO) {
@@ -338,6 +420,16 @@ class ShenjiApplication : MultiDexApplication() {
             } else {
                 logStartupMessage("✅ 使用现有数据库文件")
                 logStartupMessage("数据库文件大小: ${dictFile.length() / (1024 * 1024)} MB")
+                
+                // 确保版本信息文件存在
+                if (!versionFile.exists()) {
+                    try {
+                        versionFile.writeText(currentVersion)
+                        logStartupMessage("补充写入版本信息: $currentVersion")
+                    } catch (e: Exception) {
+                        logStartupMessage("补充写入版本信息失败: ${e.message}")
+                    }
+                }
             }
             
             // 配置Realm

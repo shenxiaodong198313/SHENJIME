@@ -23,11 +23,13 @@ import com.shenji.aikeyboard.data.Entry
 import com.shenji.aikeyboard.data.trie.TrieManager
 import com.shenji.aikeyboard.data.trie.TrieType
 import com.shenji.aikeyboard.ui.MainActivity
+import com.shenji.aikeyboard.mnn.main.MainActivity as MnnMainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import timber.log.Timber
+import java.io.File
 
 /**
  * 重构的启动页 - 分阶段内存优化启动流程
@@ -123,7 +125,7 @@ class SplashActivity : AppCompatActivity() {
      * 动态创建新的按钮
      */
     private fun createNewButton() {
-        // 创建新按钮
+        // 创建词典构建按钮
         buildDictButton = Button(this)
         
         // 设置按钮文本和样式
@@ -147,13 +149,14 @@ class SplashActivity : AppCompatActivity() {
             buildDictButton.outlineProvider = null
         }
         
-        // 设置按钮尺寸和位置
-        val layoutParams = android.widget.FrameLayout.LayoutParams(
+        // 设置按钮尺寸和位置 - 上方按钮
+        val layoutParams1 = android.widget.FrameLayout.LayoutParams(
             (200 * resources.displayMetrics.density).toInt(), // 200dp宽度
             (48 * resources.displayMetrics.density).toInt()   // 48dp高度
         )
-        layoutParams.gravity = android.view.Gravity.CENTER
-        buildDictButton.layoutParams = layoutParams
+        layoutParams1.gravity = android.view.Gravity.CENTER_HORIZONTAL or android.view.Gravity.TOP
+        layoutParams1.topMargin = (10 * resources.displayMetrics.density).toInt() // 距离容器顶部10dp
+        buildDictButton.layoutParams = layoutParams1
         
         // 初始时隐藏按钮
         buildDictButton.alpha = 0f
@@ -166,7 +169,50 @@ class SplashActivity : AppCompatActivity() {
         // 添加到容器
         buttonContainer.addView(buildDictButton)
         
-        Timber.d("新按钮创建完成：纯白色背景，无Material Design效果")
+        // 创建MNN推理框架按钮
+        val mnnButton = Button(this)
+        mnnButton.text = "MNN移动推理框架"
+        mnnButton.textSize = 16f
+        mnnButton.setTextColor(getColor(R.color.splash_background_color))
+        
+        // 创建蓝色背景
+        val blueBackground = android.graphics.drawable.GradientDrawable()
+        blueBackground.setColor(android.graphics.Color.parseColor("#2196F3")) // Material Blue
+        blueBackground.cornerRadius = 24 * resources.displayMetrics.density
+        blueBackground.setStroke((2 * resources.displayMetrics.density).toInt(), android.graphics.Color.parseColor("#2196F3"))
+        
+        // 应用背景和样式
+        mnnButton.background = blueBackground
+        mnnButton.elevation = 0f
+        mnnButton.stateListAnimator = null
+        mnnButton.setTextColor(android.graphics.Color.WHITE)
+        
+        // 移除Material Design效果
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            mnnButton.outlineProvider = null
+        }
+        
+        // 设置按钮尺寸和位置 - 下方按钮
+        val layoutParams2 = android.widget.FrameLayout.LayoutParams(
+            (200 * resources.displayMetrics.density).toInt(), // 200dp宽度
+            (48 * resources.displayMetrics.density).toInt()   // 48dp高度
+        )
+        layoutParams2.gravity = android.view.Gravity.CENTER_HORIZONTAL or android.view.Gravity.TOP
+        layoutParams2.topMargin = (70 * resources.displayMetrics.density).toInt() // 距离容器顶部70dp（第一个按钮下方）
+        mnnButton.layoutParams = layoutParams2
+        
+        // 初始时隐藏按钮
+        mnnButton.alpha = 0f
+        
+        // 设置点击事件 - 启动MNN主Activity
+        mnnButton.setOnClickListener {
+            startMnnActivity()
+        }
+        
+        // 添加到容器
+        buttonContainer.addView(mnnButton)
+        
+        Timber.d("按钮创建完成：词典构建按钮（白色）和MNN推理框架按钮（蓝色）")
     }
     
     /**
@@ -548,32 +594,75 @@ class SplashActivity : AppCompatActivity() {
      */
     private suspend fun checkDatabaseInitialized(): Boolean = withContext(Dispatchers.IO) {
         try {
+            Timber.d("🔍 开始检测数据库初始化状态...")
+            
             // 检查Realm数据库状态
             val realm = ShenjiApplication.realm
             val entryCount = realm.query(Entry::class).count().find()
             
-            Timber.d("数据库词条数量: $entryCount")
+            Timber.d("📊 数据库词条数量: $entryCount")
             
-            // 如果词条数量大于1000，认为数据库已经正常初始化
-            val hasEnoughEntries = entryCount > 1000
+            // 🔧 修复：降低初始化门槛，优先检查数据库状态
+            // 如果词条数量大于100，认为数据库基本可用（之前是1000）
+            val hasBasicEntries = entryCount > 100
             
-            // 检查Trie文件是否存在（可选检查，不影响主要判断）
+            // 检查数据库文件大小
+            val dictFile = File(filesDir, "dictionaries/shenji_dict.realm")
+            val dbFileSize = if (dictFile.exists()) dictFile.length() else 0L
+            val hasValidDbFile = dbFileSize > 512 * 1024 // 大于512KB认为有效
+            
+            Timber.d("📁 数据库文件大小: ${dbFileSize / 1024}KB")
+            
+            // 检查Trie文件是否存在（降级为可选检查）
             val trieManager = TrieManager.instance
             val hasCharsFile = trieManager.isTrieFileExists(TrieType.CHARS)
             val hasBaseFile = trieManager.isTrieFileExists(TrieType.BASE)
             
-            Timber.d("数据库检测结果: 词条数=$entryCount, chars文件=$hasCharsFile, base文件=$hasBaseFile")
+            Timber.d("📚 Trie文件状态: chars=$hasCharsFile, base=$hasBaseFile")
             
-            // 主要依据：词条数量是否足够
-            // 次要参考：至少有一个Trie文件存在
-            val isInitialized = hasEnoughEntries && (hasCharsFile || hasBaseFile)
+            // 🔧 新的判断逻辑：更宽松的条件
+            val isInitialized = when {
+                // 情况1：数据库有足够词条且文件大小正常
+                hasBasicEntries && hasValidDbFile -> {
+                    Timber.i("✅ 数据库状态良好：词条数=$entryCount, 文件大小=${dbFileSize/1024}KB")
+                    true
+                }
+                // 情况2：数据库有基本词条，即使Trie文件缺失也认为可用
+                hasBasicEntries -> {
+                    Timber.i("⚠️ 数据库基本可用：词条数=$entryCount，但文件可能较小")
+                    true
+                }
+                // 情况3：数据库为空但文件存在且较大，可能是加载问题
+                entryCount == 0L && hasValidDbFile -> {
+                    Timber.w("🔄 数据库文件存在但未加载，可能需要重新连接")
+                    false
+                }
+                // 情况4：完全未初始化
+                else -> {
+                    Timber.w("❌ 数据库未初始化：词条数=$entryCount, 文件大小=${dbFileSize/1024}KB")
+                    false
+                }
+            }
             
-            Timber.i("数据库初始化状态: $isInitialized (词条数: $entryCount)")
+            // 记录详细状态用于调试
+            val statusSummary = """
+                数据库初始化检测结果: $isInitialized
+                - 词条数量: $entryCount (阈值: >100)
+                - 文件大小: ${dbFileSize/1024}KB (阈值: >512KB)
+                - Chars文件: $hasCharsFile
+                - Base文件: $hasBaseFile
+                - 判断依据: ${if (hasBasicEntries && hasValidDbFile) "数据库完整" 
+                           else if (hasBasicEntries) "数据库基本可用" 
+                           else if (hasValidDbFile) "文件存在但未加载"
+                           else "需要初始化"}
+            """.trimIndent()
+            
+            Timber.i(statusSummary)
             
             return@withContext isInitialized
             
         } catch (e: Exception) {
-            Timber.e(e, "检测数据库状态时出错")
+            Timber.e(e, "❌ 检测数据库状态时出错: ${e.message}")
             return@withContext false
         }
     }
@@ -1102,6 +1191,24 @@ class SplashActivity : AppCompatActivity() {
         }
     }
     
+    /**
+     * 启动MNN移动推理框架
+     */
+    private fun startMnnActivity() {
+        try {
+            val intent = Intent(this, MnnMainActivity::class.java)
+            startActivity(intent)
+            
+            // 添加淡入淡出动画
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+            
+            Timber.d("启动MNN移动推理框架")
+        } catch (e: Exception) {
+            Timber.e(e, "启动MNN Activity失败")
+            // 显示错误提示
+            detailText.text = "启动MNN框架失败: ${e.message}"
+        }
+    }
 
     
     override fun onBackPressed() {
