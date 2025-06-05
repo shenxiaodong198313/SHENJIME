@@ -17,7 +17,8 @@ class PhrasesListAdapter(
     private val onPhraseClick: (String) -> Unit,
     private val onAutoSendClick: (String) -> Unit,
     private val onImageClick: (String) -> Unit = { },
-    private val onImageAutoSend: (String) -> Unit = { }
+    private val onImageAutoSend: (String) -> Unit = { },
+    private val onMixedAutoSend: (List<String>, List<String>) -> Unit = { _, _ -> }
 ) : RecyclerView.Adapter<PhrasesListAdapter.PhraseViewHolder>() {
 
     class PhraseViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -47,7 +48,51 @@ class PhrasesListAdapter(
         holder.multiImageContainer.visibility = View.GONE
         
         // 根据类型显示不同内容
-        if (phrase.type == "image") {
+        if (phrase.type == "mixed") {
+            // 图文混合类型
+            val textList = if (phrase.textList.isNotEmpty()) {
+                phrase.textList.split("|").map { it.trim() }.filter { it.isNotEmpty() }
+            } else {
+                emptyList()
+            }
+            
+            val imagePaths = if (phrase.mixedImagePaths.isNotEmpty()) {
+                phrase.mixedImagePaths.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            } else {
+                emptyList()
+            }
+            
+            // 显示内容描述
+            holder.contentText.text = "${textList.size}条文本 + ${imagePaths.size}张图片"
+            
+            if (imagePaths.isNotEmpty()) {
+                holder.multiImageContainer.visibility = View.VISIBLE
+                
+                // 加载图片预览
+                val imageViews = listOf(holder.imageView1, holder.imageView2, holder.imageView3)
+                imagePaths.take(3).forEachIndexed { index, imagePath ->
+                    loadImageFromAssets(imageViews[index], imagePath)
+                    imageViews[index].visibility = View.VISIBLE
+                }
+                
+                // 隐藏未使用的ImageView
+                for (i in imagePaths.size until 3) {
+                    imageViews[i].visibility = View.GONE
+                }
+            }
+            
+            // 点击话术条目（发送第一条文本）
+            holder.itemView.setOnClickListener {
+                if (textList.isNotEmpty()) {
+                    onPhraseClick(textList[0])
+                }
+            }
+            
+            // 点击自动发送按钮（图文混合自动发送）
+            holder.autoSendButton.setOnClickListener {
+                onMixedAutoSend(textList, imagePaths)
+            }
+        } else if (phrase.type == "image") {
             // 检查是否有多张图片
             val imagePaths = if (phrase.imagePaths.isNotEmpty()) {
                 phrase.imagePaths.split(",").map { it.trim() }.filter { it.isNotEmpty() }

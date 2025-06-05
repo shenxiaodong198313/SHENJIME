@@ -14,7 +14,9 @@ class ScriptItem : RealmObject {
     var createTime: Long = System.currentTimeMillis()
     var updateTime: Long = System.currentTimeMillis()
     var isActive: Boolean = true
-    var type: String = "text" // "text" 或 "image"
+    var type: String = "text" // "text", "image", "mixed"
     var imagePath: String = "" // 图片路径（仅当type为"image"时使用）
     var imagePaths: String = "" // 多张图片路径，用逗号分隔
+    var textList: String = "" // 多条文本列表，用|分隔（图文混合模式）
+    var mixedImagePaths: String = "" // 图文混合模式下的图片路径，用逗号分隔
 } 

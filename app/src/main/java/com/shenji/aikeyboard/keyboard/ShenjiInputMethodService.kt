@@ -1280,6 +1280,10 @@ class ShenjiInputMethodService : InputMethodService() {
                             { imagePath ->
                                 shareImageToTarget(imagePath, true)
                                 hidePhrasesView()
+                            },
+                            // 图文混合自动发送
+                            { textList, imagePaths ->
+                                handleMixedAutoSend(textList, imagePaths)
                             }
                         )
                         phrasesRecyclerView.adapter = phrasesListAdapter
@@ -1359,6 +1363,14 @@ class ShenjiInputMethodService : InputMethodService() {
                 category = "script"
                 type = "image"
                 imagePaths = "images/appicon.png,images/appicon.png,images/appicon.png"
+            },
+            com.shenji.aikeyboard.data.ScriptItem().apply {
+                title = "图文混合示例"
+                content = ""
+                category = "script"
+                type = "mixed"
+                textList = "您好，这是第一条消息|这是第二条消息，包含更多信息"
+                mixedImagePaths = "images/appicon.png,images/appicon.png"
             }
         )
         
@@ -1384,6 +1396,10 @@ class ShenjiInputMethodService : InputMethodService() {
             { imagePath ->
                 shareImageToTarget(imagePath, true)
                 hidePhrasesView()
+            },
+            // 图文混合自动发送
+            { textList, imagePaths ->
+                handleMixedAutoSend(textList, imagePaths)
             }
         )
         phrasesRecyclerView.adapter = phrasesListAdapter
@@ -1554,6 +1570,14 @@ class ShenjiInputMethodService : InputMethodService() {
                         category = "script"
                         type = "image"
                         imagePaths = "images/appicon.png,images/appicon.png,images/appicon.png"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "图文混合示例"
+                        content = ""
+                        category = "script"
+                        type = "mixed"
+                        textList = "您好，这是第一条消息|这是第二条消息，包含更多信息"
+                        mixedImagePaths = "images/appicon.png,images/appicon.png"
                     }
                 )
                 
@@ -1578,6 +1602,10 @@ class ShenjiInputMethodService : InputMethodService() {
                     { imagePath ->
                         shareImageToTarget(imagePath, true)
                         hidePhrasesView()
+                    },
+                    // 图文混合自动发送
+                    { textList, imagePaths ->
+                        handleMixedAutoSend(textList, imagePaths)
                     }
                 )
                 
@@ -1933,6 +1961,79 @@ class ShenjiInputMethodService : InputMethodService() {
             }
         } catch (e: Exception) {
             Timber.e(e, "自动填充文本失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 处理图文混合自动发送
+     * 先依次发送所有文本，然后分享所有图片
+     */
+    private fun handleMixedAutoSend(textList: List<String>, imagePaths: List<String>) {
+        try {
+            Timber.d("开始图文混合自动发送: ${textList.size}条文本, ${imagePaths.size}张图片")
+            
+            // 先隐藏话术库
+            hidePhrasesView()
+            
+            // 使用协程依次发送文本
+            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                try {
+                    // 依次发送每条文本
+                    textList.forEachIndexed { index, text ->
+                        if (text.isNotEmpty()) {
+                            Timber.d("发送第${index + 1}条文本: $text")
+                            
+                            // 自动填充文本
+                            autoFillText(text)
+                            
+                            // 等待一小段时间确保文本输入完成
+                            kotlinx.coroutines.delay(100)
+                            
+                            // 自动发送Enter键
+                            sendEnterKey()
+                            
+                            // 等待发送完成再发送下一条
+                            kotlinx.coroutines.delay(500)
+                        }
+                    }
+                    
+                    // 所有文本发送完成后，分享图片
+                    if (imagePaths.isNotEmpty()) {
+                        Timber.d("开始分享${imagePaths.size}张图片")
+                        
+                        // 等待一小段时间确保最后一条文本发送完成
+                        kotlinx.coroutines.delay(300)
+                        
+                        // 分享所有图片
+                        val allImagePaths = imagePaths.joinToString("|")
+                        shareImageToTarget(allImagePaths, true)
+                    }
+                    
+                    Timber.d("图文混合自动发送完成")
+                } catch (e: Exception) {
+                    Timber.e(e, "图文混合自动发送过程中出错: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "图文混合自动发送失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 发送Enter键
+     */
+    private fun sendEnterKey() {
+        try {
+            val ic = currentInputConnection
+            if (ic != null) {
+                ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
+                ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+                Timber.d("Enter键发送成功")
+            } else {
+                Timber.w("InputConnection为空，无法发送Enter键")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "发送Enter键失败: ${e.message}")
         }
     }
 
