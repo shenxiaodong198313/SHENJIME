@@ -3925,6 +3925,7 @@ id btnStartChat
 id btnTestContinuation
 id btnTestCorrection
 id btnTestSemantic
+id btn_auto_send
 id btn_back
 id btn_clear
 id btn_clear_results

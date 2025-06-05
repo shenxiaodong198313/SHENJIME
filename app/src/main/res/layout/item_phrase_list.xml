@@ -45,12 +45,21 @@
 
     </LinearLayout>
 
-    <!-- 右侧箭头图标 -->
-    <ImageView
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="12dp"
-        android:src="@drawable/arrow_right"
-        android:contentDescription="选择话术" />
+    <!-- 自动发送按钮 -->
+    <Button
+        android:id="@+id/btn_auto_send"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:text="自动发送"
+        android:textSize="12sp"
+        android:textColor="#FFFFFF"
+        android:background="#4CAF50"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:layout_marginStart="8dp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:clickable="true"
+        android:focusable="true" />
 
 </LinearLayout> 

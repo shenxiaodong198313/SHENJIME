@@ -1258,10 +1258,19 @@ class ShenjiInputMethodService : InputMethodService() {
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                     if (scriptItems.isNotEmpty()) {
                         // 使用新的纵向列表适配器
-                        phrasesListAdapter = com.shenji.aikeyboard.ui.PhrasesListAdapter(scriptItems) { phraseContent ->
-                            insertPhrase(phraseContent)
-                            hidePhrasesView()
-                        }
+                        phrasesListAdapter = com.shenji.aikeyboard.ui.PhrasesListAdapter(
+                            scriptItems,
+                            // 普通点击 - 只发送到输入框
+                            { phraseContent ->
+                                insertPhrase(phraseContent)
+                                hidePhrasesView()
+                            },
+                            // 自动发送点击 - 发送到输入框并自动确认
+                            { phraseContent ->
+                                insertPhraseAndSend(phraseContent)
+                                hidePhrasesView()
+                            }
+                        )
                         phrasesRecyclerView.adapter = phrasesListAdapter
                         
 
@@ -1329,10 +1338,19 @@ class ShenjiInputMethodService : InputMethodService() {
         )
         
         // 使用新的纵向列表适配器
-        phrasesListAdapter = com.shenji.aikeyboard.ui.PhrasesListAdapter(samplePhrases) { phraseContent ->
-            insertPhrase(phraseContent)
-            hidePhrasesView()
-        }
+        phrasesListAdapter = com.shenji.aikeyboard.ui.PhrasesListAdapter(
+            samplePhrases,
+            // 普通点击 - 只发送到输入框
+            { phraseContent ->
+                insertPhrase(phraseContent)
+                hidePhrasesView()
+            },
+            // 自动发送点击 - 发送到输入框并自动确认
+            { phraseContent ->
+                insertPhraseAndSend(phraseContent)
+                hidePhrasesView()
+            }
+        )
         phrasesRecyclerView.adapter = phrasesListAdapter
         
 
@@ -1490,10 +1508,19 @@ class ShenjiInputMethodService : InputMethodService() {
                     }
                 )
                 
-                phrasesListAdapter = com.shenji.aikeyboard.ui.PhrasesListAdapter(samplePhrases) { phrase ->
-                    insertPhrase(phrase)
-                    hidePhrasesView()
-                }
+                phrasesListAdapter = com.shenji.aikeyboard.ui.PhrasesListAdapter(
+                    samplePhrases,
+                    // 普通点击 - 只发送到输入框
+                    { phrase ->
+                        insertPhrase(phrase)
+                        hidePhrasesView()
+                    },
+                    // 自动发送点击 - 发送到输入框并自动确认
+                    { phrase ->
+                        insertPhraseAndSend(phrase)
+                        hidePhrasesView()
+                    }
+                )
                 
                 phrasesRecyclerView.adapter = phrasesListAdapter
                 phrasesRecyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
@@ -1569,6 +1596,40 @@ class ShenjiInputMethodService : InputMethodService() {
         } catch (e: Exception) {
             Timber.e(e, "插入话术失败: ${e.message}")
             Toast.makeText(this, "插入失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 插入话术到输入框并自动发送
+     */
+    private fun insertPhraseAndSend(phrase: String) {
+        try {
+            val ic = currentInputConnection
+            if (ic != null) {
+                // 清空当前组合文本
+                if (composingText.isNotEmpty()) {
+                    composingText.clear()
+                    ic.finishComposingText()
+                    updatePinyinDisplay("")
+                    hideCandidates()
+                }
+                
+                // 直接提交话术内容
+                ic.commitText(phrase, 1)
+                
+                // 模拟按下确认键（Enter键）
+                ic.sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_ENTER))
+                ic.sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_ENTER))
+                
+                Timber.d("话术自动发送成功: $phrase")
+                Toast.makeText(this, "话术已自动发送", Toast.LENGTH_SHORT).show()
+            } else {
+                Timber.w("InputConnection为空，无法插入和发送话术")
+                Toast.makeText(this, "发送失败", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "插入和发送话术失败: ${e.message}")
+            Toast.makeText(this, "发送失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
