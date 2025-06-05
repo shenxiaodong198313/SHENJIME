@@ -332,6 +332,7 @@ drawable deepseek_icon
 drawable download
 drawable edit_text_background
 drawable gemma_icon
+drawable ic_add
 drawable ic_ai_assistant
 drawable ic_ai_avatar
 drawable ic_ai_model
@@ -897,6 +898,10 @@ id performance_stats_text_view
 id permission_status_text_view
 id phrase_content
 id phrase_title
+id phrases_add_button
+id phrases_close_button
+id phrases_container
+id phrases_header
 id phrases_recycler_view
 id pinyin_container
 id pinyin_display
@@ -1224,7 +1229,9 @@ layout item_holder_chatheader
 layout item_holder_user
 layout item_llm_model
 layout item_option
+layout item_phrase_list
 layout item_phrase_simple
+layout item_phrase_vertical
 layout item_sampler_spinner
 layout item_script
 layout keyboard_layout

@@ -183,17 +183,86 @@
 
     </FrameLayout>
 
-    <!-- 话术库区域 - 默认隐藏 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/phrases_recycler_view"
+
+
+    <!-- 话术库区域 - 默认隐藏，包含顶部工具栏 -->
+    <LinearLayout
+        android:id="@+id/phrases_container"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
         android:background="#FFFFFF"
         android:visibility="gone"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp" />
+        android:elevation="4dp"
+        android:layout_marginTop="0dp">
+        
+        <!-- 话术库顶部工具栏 -->
+        <LinearLayout
+            android:id="@+id/phrases_header"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:background="#F8F8F8"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+            
+            <!-- 关闭按钮 -->
+            <ImageView
+                android:id="@+id/phrases_close_button"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_close"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="关闭话术库" />
+            
+            <!-- 标题 -->
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:text="常用话术"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:gravity="center" />
+            
+            <!-- 添加按钮 -->
+            <ImageView
+                android:id="@+id/phrases_add_button"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_add"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="添加话术" />
+        </LinearLayout>
+        
+        <!-- 分隔线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0" />
+        
+        <!-- 话术列表 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/phrases_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#FAFAFA"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:scrollbars="vertical"
+            android:fadeScrollbars="true"
+            android:scrollbarStyle="outsideOverlay" />
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
