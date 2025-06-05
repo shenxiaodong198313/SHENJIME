@@ -853,6 +853,7 @@ id model_list_recycler_view
 id more_item_audio
 id more_item_camera
 id more_item_photo
+id multi_image_container
 id nav_brackets
 id nav_chinese
 id nav_chinese_num
@@ -899,6 +900,9 @@ id performance_stats_text_view
 id permission_status_text_view
 id phrase_content
 id phrase_image
+id phrase_image1
+id phrase_image2
+id phrase_image3
 id phrase_title
 id phrases_add_btn
 id phrases_add_button

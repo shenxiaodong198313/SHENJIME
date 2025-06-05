@@ -16,4 +16,5 @@ class ScriptItem : RealmObject {
     var isActive: Boolean = true
     var type: String = "text" // "text" 或 "image"
     var imagePath: String = "" // 图片路径（仅当type为"image"时使用）
+    var imagePaths: String = "" // 多张图片路径，用逗号分隔
 } 

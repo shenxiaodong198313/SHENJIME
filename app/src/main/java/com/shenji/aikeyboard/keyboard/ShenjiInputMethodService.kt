@@ -1270,6 +1270,16 @@ class ShenjiInputMethodService : InputMethodService() {
                             { phraseContent ->
                                 insertPhraseAndSend(phraseContent)
                                 hidePhrasesView()
+                            },
+                            // 图片点击 - 分享图片
+                            { imagePath ->
+                                shareImageToTarget(imagePath, false)
+                                hidePhrasesView()
+                            },
+                            // 图片自动发送 - 分享图片
+                            { imagePath ->
+                                shareImageToTarget(imagePath, true)
+                                hidePhrasesView()
                             }
                         )
                         phrasesRecyclerView.adapter = phrasesListAdapter
@@ -1342,6 +1352,13 @@ class ShenjiInputMethodService : InputMethodService() {
                 category = "script"
                 type = "image"
                 imagePath = "images/appicon.png"
+            },
+            com.shenji.aikeyboard.data.ScriptItem().apply {
+                title = "多张图片示例"
+                content = ""
+                category = "script"
+                type = "image"
+                imagePaths = "images/appicon.png,images/appicon.png,images/appicon.png"
             }
         )
         
@@ -1356,6 +1373,16 @@ class ShenjiInputMethodService : InputMethodService() {
             // 自动发送点击 - 发送到输入框并自动确认
             { phraseContent ->
                 insertPhraseAndSend(phraseContent)
+                hidePhrasesView()
+            },
+            // 图片点击 - 分享图片
+            { imagePath ->
+                shareImageToTarget(imagePath, false)
+                hidePhrasesView()
+            },
+            // 图片自动发送 - 分享图片
+            { imagePath ->
+                shareImageToTarget(imagePath, true)
                 hidePhrasesView()
             }
         )
@@ -1520,6 +1547,13 @@ class ShenjiInputMethodService : InputMethodService() {
                         category = "script"
                         type = "image"
                         imagePath = "images/appicon.png"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "多张图片示例"
+                        content = ""
+                        category = "script"
+                        type = "image"
+                        imagePaths = "images/appicon.png,images/appicon.png,images/appicon.png"
                     }
                 )
                 
@@ -1533,6 +1567,16 @@ class ShenjiInputMethodService : InputMethodService() {
                     // 自动发送点击 - 发送到输入框并自动确认
                     { phrase ->
                         insertPhraseAndSend(phrase)
+                        hidePhrasesView()
+                    },
+                    // 图片点击 - 分享图片
+                    { imagePath ->
+                        shareImageToTarget(imagePath, false)
+                        hidePhrasesView()
+                    },
+                    // 图片自动发送 - 分享图片
+                    { imagePath ->
+                        shareImageToTarget(imagePath, true)
                         hidePhrasesView()
                     }
                 )
@@ -1691,6 +1735,25 @@ class ShenjiInputMethodService : InputMethodService() {
      */
     private fun shareImageToTarget(imagePath: String, isAutoSend: Boolean) {
         try {
+            // 检查是否是多张图片（用|分隔）
+            if (imagePath.contains("|")) {
+                // 多张图片分享
+                shareMultipleImages(imagePath.split("|"), isAutoSend)
+            } else {
+                // 单张图片分享
+                shareSingleImage(imagePath, isAutoSend)
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "分享图片失败: ${e.message}")
+            Toast.makeText(this, "分享图片失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 分享单张图片
+     */
+    private fun shareSingleImage(imagePath: String, isAutoSend: Boolean) {
+        try {
             // 从assets加载图片
             val inputStream = assets.open(imagePath)
             val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
@@ -1708,15 +1771,49 @@ class ShenjiInputMethodService : InputMethodService() {
             }
             
         } catch (e: Exception) {
-            Timber.e(e, "分享图片失败: ${e.message}")
+            Timber.e(e, "分享单张图片失败: ${e.message}")
             Toast.makeText(this, "分享图片失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 分享多张图片
+     */
+    private fun shareMultipleImages(imagePaths: List<String>, isAutoSend: Boolean) {
+        try {
+            val imageUris = mutableListOf<android.net.Uri>()
+            
+            // 加载并保存所有图片
+            imagePaths.forEachIndexed { index, imagePath ->
+                val inputStream = assets.open(imagePath.trim())
+                val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                inputStream.close()
+                
+                // 为每张图片使用唯一的后缀
+                val imageUri = saveImageToInternalStorage(bitmap, index.toString())
+                if (imageUri != null) {
+                    imageUris.add(imageUri)
+                }
+            }
+            
+            if (imageUris.isNotEmpty()) {
+                // 分享多张图片
+                shareMultipleImageUris(imageUris, isAutoSend)
+            } else {
+                Toast.makeText(this, "保存图片失败", Toast.LENGTH_SHORT).show()
+                Timber.e("保存多张图片到内部存储失败")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "分享多张图片失败: ${e.message}")
+            Toast.makeText(this, "分享多张图片失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
     /**
      * 保存图片到应用内部存储
      */
-    private fun saveImageToInternalStorage(bitmap: android.graphics.Bitmap): android.net.Uri? {
+    private fun saveImageToInternalStorage(bitmap: android.graphics.Bitmap, suffix: String = ""): android.net.Uri? {
         return try {
             // 创建内部存储的images目录
             val imagesDir = File(filesDir, "images")
@@ -1724,8 +1821,13 @@ class ShenjiInputMethodService : InputMethodService() {
                 imagesDir.mkdirs()
             }
             
-            // 创建图片文件
-            val imageFile = File(imagesDir, "share_image_${System.currentTimeMillis()}.png")
+            // 创建图片文件，添加后缀以确保唯一性
+            val fileName = if (suffix.isNotEmpty()) {
+                "share_image_${System.currentTimeMillis()}_$suffix.png"
+            } else {
+                "share_image_${System.currentTimeMillis()}.png"
+            }
+            val imageFile = File(imagesDir, fileName)
             val fos = java.io.FileOutputStream(imageFile)
             bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fos)
             fos.close()
@@ -1746,7 +1848,7 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     /**
-     * 分享图片
+     * 分享单张图片
      */
     private fun shareImage(imageUri: android.net.Uri, isAutoSend: Boolean) {
         try {
@@ -1772,6 +1874,36 @@ class ShenjiInputMethodService : InputMethodService() {
         } catch (e: Exception) {
             Timber.e(e, "启动分享Intent失败: ${e.message}")
             Toast.makeText(this, "分享失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 分享多张图片
+     */
+    private fun shareMultipleImageUris(imageUris: List<android.net.Uri>, isAutoSend: Boolean) {
+        try {
+            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND_MULTIPLE).apply {
+                type = "image/*"
+                putParcelableArrayListExtra(android.content.Intent.EXTRA_STREAM, ArrayList(imageUris))
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            
+            val chooserIntent = android.content.Intent.createChooser(shareIntent, "分享${imageUris.size}张图片")
+            chooserIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            
+            startActivity(chooserIntent)
+            
+            if (isAutoSend) {
+                Toast.makeText(this, "${imageUris.size}张图片分享界面已打开", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "请选择应用发送${imageUris.size}张图片", Toast.LENGTH_SHORT).show()
+            }
+            
+            Timber.d("${imageUris.size}张图片分享Intent已启动")
+        } catch (e: Exception) {
+            Timber.e(e, "启动多图片分享Intent失败: ${e.message}")
+            Toast.makeText(this, "分享多张图片失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     

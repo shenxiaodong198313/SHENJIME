@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.shenji.aikeyboard.R
@@ -14,7 +15,9 @@ import java.io.IOException
 class PhrasesListAdapter(
     private val phrases: List<ScriptItem>,
     private val onPhraseClick: (String) -> Unit,
-    private val onAutoSendClick: (String) -> Unit
+    private val onAutoSendClick: (String) -> Unit,
+    private val onImageClick: (String) -> Unit = { },
+    private val onImageAutoSend: (String) -> Unit = { }
 ) : RecyclerView.Adapter<PhrasesListAdapter.PhraseViewHolder>() {
 
     class PhraseViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -22,6 +25,10 @@ class PhrasesListAdapter(
         val contentText: TextView = view.findViewById(R.id.phrase_content)
         val autoSendButton: Button = view.findViewById(R.id.btn_auto_send)
         val imageView: ImageView = view.findViewById(R.id.phrase_image)
+        val multiImageContainer: LinearLayout = view.findViewById(R.id.multi_image_container)
+        val imageView1: ImageView = view.findViewById(R.id.phrase_image1)
+        val imageView2: ImageView = view.findViewById(R.id.phrase_image2)
+        val imageView3: ImageView = view.findViewById(R.id.phrase_image3)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhraseViewHolder {
@@ -35,28 +42,77 @@ class PhrasesListAdapter(
         
         holder.titleText.text = phrase.title
         
+        // 隐藏所有图片容器
+        holder.imageView.visibility = View.GONE
+        holder.multiImageContainer.visibility = View.GONE
+        
         // 根据类型显示不同内容
         if (phrase.type == "image") {
-            // 图片类型
-            holder.contentText.text = "[图片]"
-            holder.imageView.visibility = View.VISIBLE
-            
-            // 加载图片
-            loadImageFromAssets(holder.imageView, phrase.imagePath)
-            
-            // 点击话术条目（普通发送图片）
-            holder.itemView.setOnClickListener {
-                onPhraseClick(phrase.imagePath) // 传递图片路径
+            // 检查是否有多张图片
+            val imagePaths = if (phrase.imagePaths.isNotEmpty()) {
+                phrase.imagePaths.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            } else if (phrase.imagePath.isNotEmpty()) {
+                listOf(phrase.imagePath)
+            } else {
+                emptyList()
             }
             
-            // 点击自动发送按钮（发送图片并自动确认）
-            holder.autoSendButton.setOnClickListener {
-                onAutoSendClick(phrase.imagePath) // 传递图片路径
+            if (imagePaths.size > 1) {
+                // 多图片显示
+                holder.contentText.text = "[${imagePaths.size}张图片]"
+                holder.multiImageContainer.visibility = View.VISIBLE
+                
+                // 加载多张图片
+                val imageViews = listOf(holder.imageView1, holder.imageView2, holder.imageView3)
+                imagePaths.take(3).forEachIndexed { index, imagePath ->
+                    loadImageFromAssets(imageViews[index], imagePath)
+                    imageViews[index].visibility = View.VISIBLE
+                    
+                    // 为每张图片设置点击事件
+                    imageViews[index].setOnClickListener {
+                        onImageClick(imagePath)
+                    }
+                }
+                
+                // 隐藏未使用的ImageView
+                for (i in imagePaths.size until 3) {
+                    imageViews[i].visibility = View.GONE
+                }
+                
+                // 点击话术条目（发送第一张图片）
+                holder.itemView.setOnClickListener {
+                    if (imagePaths.isNotEmpty()) {
+                        onImageClick(imagePaths[0])
+                    }
+                }
+                
+                // 点击自动发送按钮（发送所有图片）
+                holder.autoSendButton.setOnClickListener {
+                    // 传递所有图片路径，用特殊分隔符连接
+                    val allImagePaths = imagePaths.joinToString("|")
+                    onImageAutoSend(allImagePaths)
+                }
+            } else if (imagePaths.size == 1) {
+                // 单图片显示
+                holder.contentText.text = "[图片]"
+                holder.imageView.visibility = View.VISIBLE
+                
+                // 加载图片
+                loadImageFromAssets(holder.imageView, imagePaths[0])
+                
+                // 点击话术条目（普通发送图片）
+                holder.itemView.setOnClickListener {
+                    onImageClick(imagePaths[0])
+                }
+                
+                // 点击自动发送按钮（发送图片并自动确认）
+                holder.autoSendButton.setOnClickListener {
+                    onImageAutoSend(imagePaths[0])
+                }
             }
         } else {
             // 文本类型
             holder.contentText.text = phrase.content
-            holder.imageView.visibility = View.GONE
             
             // 点击话术条目（普通发送文本）
             holder.itemView.setOnClickListener {

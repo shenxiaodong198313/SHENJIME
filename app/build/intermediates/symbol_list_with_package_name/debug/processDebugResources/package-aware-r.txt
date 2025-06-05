@@ -4484,6 +4484,7 @@ id mtrl_picker_text_input_range_end
 id mtrl_picker_text_input_range_start
 id mtrl_picker_title_text
 id mtrl_view_tag_bottom_padding
+id multi_image_container
 id multiply
 id nav_brackets
 id nav_chinese
@@ -4583,6 +4584,9 @@ id performance_stats_text_view
 id permission_status_text_view
 id phrase_content
 id phrase_image
+id phrase_image1
+id phrase_image2
+id phrase_image3
 id phrase_title
 id phrases_add_btn
 id phrases_add_button
