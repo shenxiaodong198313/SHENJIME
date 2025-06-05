@@ -4582,6 +4582,7 @@ id percent
 id performance_stats_text_view
 id permission_status_text_view
 id phrase_content
+id phrase_image
 id phrase_title
 id phrases_add_btn
 id phrases_add_button

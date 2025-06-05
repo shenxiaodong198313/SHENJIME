@@ -18,6 +18,7 @@ import com.shenji.aikeyboard.model.WordFrequency
 import kotlinx.coroutines.*
 import timber.log.Timber
 import android.graphics.Color
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import com.shenji.aikeyboard.ai.CorrectionSuggestion
 import com.shenji.aikeyboard.ai.AIEngineManager
@@ -1334,6 +1335,13 @@ class ShenjiInputMethodService : InputMethodService() {
                 title = "贴心提醒"
                 content = "温馨提示：请妥善保管您的个人信息，注意账户安全。"
                 category = "script"
+            },
+            com.shenji.aikeyboard.data.ScriptItem().apply {
+                title = "应用图标"
+                content = ""
+                category = "script"
+                type = "image"
+                imagePath = "images/appicon.png"
             }
         )
         
@@ -1505,6 +1513,13 @@ class ShenjiInputMethodService : InputMethodService() {
                         title = "贴心提醒"
                         content = "温馨提示：请妥善保管您的个人信息，注意账户安全。"
                         category = "script"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "应用图标"
+                        content = ""
+                        category = "script"
+                        type = "image"
+                        imagePath = "images/appicon.png"
                     }
                 )
                 
@@ -1572,26 +1587,32 @@ class ShenjiInputMethodService : InputMethodService() {
     /**
      * 插入话术到输入框
      */
-    private fun insertPhrase(phrase: String) {
+    private fun insertPhrase(content: String) {
         try {
-            val ic = currentInputConnection
-            if (ic != null) {
-                // 清空当前组合文本
-                if (composingText.isNotEmpty()) {
-                    composingText.clear()
-                    ic.finishComposingText()
-                    updatePinyinDisplay("")
-                    hideCandidates()
-                }
-                
-                // 直接提交话术内容
-                ic.commitText(phrase, 1)
-                
-                Timber.d("话术插入成功: $phrase")
-                Toast.makeText(this, "已插入话术", Toast.LENGTH_SHORT).show()
+            if (content.startsWith("images/") && content.endsWith(".png")) {
+                // 这是图片路径，发送图片
+                sendImageFromAssets(content)
             } else {
-                Timber.w("InputConnection为空，无法插入话术")
-                Toast.makeText(this, "插入失败", Toast.LENGTH_SHORT).show()
+                // 这是文本内容，发送文本
+                val ic = currentInputConnection
+                if (ic != null) {
+                    // 清空当前组合文本
+                    if (composingText.isNotEmpty()) {
+                        composingText.clear()
+                        ic.finishComposingText()
+                        updatePinyinDisplay("")
+                        hideCandidates()
+                    }
+                    
+                    // 直接提交话术内容
+                    ic.commitText(content, 1)
+                    
+                    Timber.d("文本话术插入成功: $content")
+                    Toast.makeText(this, "已插入话术", Toast.LENGTH_SHORT).show()
+                } else {
+                    Timber.w("InputConnection为空，无法插入话术")
+                    Toast.makeText(this, "插入失败", Toast.LENGTH_SHORT).show()
+                }
             }
         } catch (e: Exception) {
             Timber.e(e, "插入话术失败: ${e.message}")
@@ -1602,36 +1623,159 @@ class ShenjiInputMethodService : InputMethodService() {
     /**
      * 插入话术到输入框并自动发送
      */
-    private fun insertPhraseAndSend(phrase: String) {
+    private fun insertPhraseAndSend(content: String) {
         try {
-            val ic = currentInputConnection
-            if (ic != null) {
-                // 清空当前组合文本
-                if (composingText.isNotEmpty()) {
-                    composingText.clear()
-                    ic.finishComposingText()
-                    updatePinyinDisplay("")
-                    hideCandidates()
-                }
-                
-                // 直接提交话术内容
-                ic.commitText(phrase, 1)
-                
-                // 模拟按下确认键（Enter键）
-                ic.sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_ENTER))
-                ic.sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_ENTER))
-                
-                Timber.d("话术自动发送成功: $phrase")
-                Toast.makeText(this, "话术已自动发送", Toast.LENGTH_SHORT).show()
+            if (content.startsWith("images/") && content.endsWith(".png")) {
+                // 这是图片路径，发送图片（自动发送）
+                sendImageFromAssetsAndAutoSend(content)
             } else {
-                Timber.w("InputConnection为空，无法插入和发送话术")
-                Toast.makeText(this, "发送失败", Toast.LENGTH_SHORT).show()
+                // 这是文本内容，发送文本并自动确认
+                val ic = currentInputConnection
+                if (ic != null) {
+                    // 清空当前组合文本
+                    if (composingText.isNotEmpty()) {
+                        composingText.clear()
+                        ic.finishComposingText()
+                        updatePinyinDisplay("")
+                        hideCandidates()
+                    }
+                    
+                    // 直接提交话术内容
+                    ic.commitText(content, 1)
+                    
+                    // 模拟按下确认键（Enter键）
+                    ic.sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_ENTER))
+                    ic.sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_ENTER))
+                    
+                    Timber.d("文本话术自动发送成功: $content")
+                    Toast.makeText(this, "话术已自动发送", Toast.LENGTH_SHORT).show()
+                } else {
+                    Timber.w("InputConnection为空，无法插入和发送话术")
+                    Toast.makeText(this, "发送失败", Toast.LENGTH_SHORT).show()
+                }
             }
         } catch (e: Exception) {
             Timber.e(e, "插入和发送话术失败: ${e.message}")
             Toast.makeText(this, "发送失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+
+    /**
+     * 从Assets发送图片（普通发送）
+     */
+    private fun sendImageFromAssets(imagePath: String) {
+        try {
+            // 使用分享图片的方式发送
+            shareImageToTarget(imagePath, false)
+        } catch (e: Exception) {
+            Timber.e(e, "发送图片失败: ${e.message}")
+            Toast.makeText(this, "发送图片失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 从Assets发送图片并自动发送
+     */
+    private fun sendImageFromAssetsAndAutoSend(imagePath: String) {
+        try {
+            // 使用分享图片的方式发送（尝试直接发送到当前应用）
+            shareImageToTarget(imagePath, true)
+        } catch (e: Exception) {
+            Timber.e(e, "自动发送图片失败: ${e.message}")
+            Toast.makeText(this, "自动发送图片失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 分享图片到目标应用
+     */
+    private fun shareImageToTarget(imagePath: String, isAutoSend: Boolean) {
+        try {
+            // 从assets加载图片
+            val inputStream = assets.open(imagePath)
+            val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+            inputStream.close()
+            
+            // 保存图片到应用内部存储并获取Uri
+            val imageUri = saveImageToInternalStorage(bitmap)
+            
+            if (imageUri != null) {
+                // 分享图片
+                shareImage(imageUri, isAutoSend)
+            } else {
+                Toast.makeText(this, "保存图片失败", Toast.LENGTH_SHORT).show()
+                Timber.e("保存图片到内部存储失败")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "分享图片失败: ${e.message}")
+            Toast.makeText(this, "分享图片失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 保存图片到应用内部存储
+     */
+    private fun saveImageToInternalStorage(bitmap: android.graphics.Bitmap): android.net.Uri? {
+        return try {
+            // 创建内部存储的images目录
+            val imagesDir = File(filesDir, "images")
+            if (!imagesDir.exists()) {
+                imagesDir.mkdirs()
+            }
+            
+            // 创建图片文件
+            val imageFile = File(imagesDir, "share_image_${System.currentTimeMillis()}.png")
+            val fos = java.io.FileOutputStream(imageFile)
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fos)
+            fos.close()
+            
+            // 使用FileProvider创建URI
+            val imageUri = androidx.core.content.FileProvider.getUriForFile(
+                this,
+                "com.shenji.aikeyboard.fileprovider",
+                imageFile
+            )
+            
+            Timber.d("图片已保存到内部存储: $imageUri")
+            imageUri
+        } catch (e: Exception) {
+            Timber.e(e, "保存图片到内部存储失败: ${e.message}")
+            null
+        }
+    }
+    
+    /**
+     * 分享图片
+     */
+    private fun shareImage(imageUri: android.net.Uri, isAutoSend: Boolean) {
+        try {
+            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "image/*"
+                putExtra(android.content.Intent.EXTRA_STREAM, imageUri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            
+            val chooserIntent = android.content.Intent.createChooser(shareIntent, "分享图片")
+            chooserIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            
+            startActivity(chooserIntent)
+            
+            if (isAutoSend) {
+                Toast.makeText(this, "图片分享界面已打开", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "请选择应用发送图片", Toast.LENGTH_SHORT).show()
+            }
+            
+            Timber.d("图片分享Intent已启动: $imageUri")
+        } catch (e: Exception) {
+            Timber.e(e, "启动分享Intent失败: ${e.message}")
+            Toast.makeText(this, "分享失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+
 
     /**
      * 自动填充文本到当前输入框
