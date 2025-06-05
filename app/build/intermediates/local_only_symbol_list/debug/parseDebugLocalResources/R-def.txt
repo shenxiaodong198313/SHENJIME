@@ -898,10 +898,14 @@ id performance_stats_text_view
 id permission_status_text_view
 id phrase_content
 id phrase_title
+id phrases_add_btn
 id phrases_add_button
+id phrases_close_btn
 id phrases_close_button
 id phrases_container
 id phrases_header
+id phrases_list
+id phrases_overlay_container
 id phrases_recycler_view
 id pinyin_container
 id pinyin_display
@@ -1239,6 +1243,7 @@ layout layout_mllm_test_activity
 layout layout_toolbar_filters_content
 layout list_item_dataset
 layout number_keyboard_layout
+layout phrases_overlay
 layout popup_image_dialog
 layout recycle_item_history
 layout recycle_item_model

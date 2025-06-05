@@ -4582,10 +4582,14 @@ id performance_stats_text_view
 id permission_status_text_view
 id phrase_content
 id phrase_title
+id phrases_add_btn
 id phrases_add_button
+id phrases_close_btn
 id phrases_close_button
 id phrases_container
 id phrases_header
+id phrases_list
+id phrases_overlay_container
 id phrases_recycler_view
 id pin
 id pinyin_container
@@ -5304,6 +5308,7 @@ layout notification_template_icon_group
 layout notification_template_part_chronometer
 layout notification_template_part_time
 layout number_keyboard_layout
+layout phrases_overlay
 layout popup_image_dialog
 layout preference
 layout preference_category

@@ -59,6 +59,7 @@ class ShenjiInputMethodService : InputMethodService() {
     private var phrasesAdapter: com.shenji.aikeyboard.ui.PhrasesAdapter? = null
     private var phrasesListAdapter: com.shenji.aikeyboard.ui.PhrasesListAdapter? = null
     private var isPhrasesVisible = false
+    private var phrasesOverlayView: View? = null
     
     // AI建议显示相关组件 - 已移除拼音栏AI建议功能
     // private lateinit var aiSuggestionContainer: LinearLayout
@@ -1227,8 +1228,7 @@ class ShenjiInputMethodService : InputMethodService() {
             )
             phrasesRecyclerView.layoutManager = layoutManager
             
-            // 设置话术库工具栏按钮点击事件
-            setupPhrasesToolbar()
+            // 话术库工具栏按钮将在覆盖层中设置
             
             // 暂时禁用全屏话术库组件初始化
             // setupFullScreenPhrasesView()
@@ -1352,96 +1352,156 @@ class ShenjiInputMethodService : InputMethodService() {
     }
 
     /**
-     * 显示话术库
+     * 显示话术库 - 使用动态覆盖层
      */
     private fun showPhrasesView() {
         try {
-            // 显示话术库容器（包含头部工具栏）
-            val phrasesContainer = candidatesViewLayout.findViewById<LinearLayout>(R.id.phrases_container)
-            phrasesContainer.visibility = View.VISIBLE
-            isPhrasesVisible = true
+            // 如果覆盖层已存在，先移除
+            hidePhrasesView()
             
-            // 隐藏候选词区域
-            defaultCandidatesView.visibility = View.GONE
+            // 创建话术库覆盖层
+            val layoutInflater = android.view.LayoutInflater.from(this)
+            phrasesOverlayView = layoutInflater.inflate(R.layout.phrases_overlay, null)
             
-            // 隐藏拼音显示区域
-            val pinyinContainer = candidatesViewLayout.findViewById<RelativeLayout>(R.id.pinyin_container)
-            pinyinContainer?.visibility = View.GONE
-            
-            // 隐藏工具栏，让话术库获得更多空间
-            toolbarView.visibility = View.GONE
-            
-            // 隐藏软键盘，让话术库占据全部空间
-            hideKeyboard()
-            
-            // 大幅增加话术库容器的高度（占据80%屏幕空间）
-            val layoutParams = phrasesContainer.layoutParams
-            val screenHeight = resources.displayMetrics.heightPixels
-            layoutParams.height = (screenHeight * 0.8).toInt() // 占据80%屏幕高度
-            phrasesContainer.layoutParams = layoutParams
-            
-            Timber.d("话术库已显示，工具栏已隐藏")
+            // 获取主视图容器
+            val rootView = candidatesViewLayout.parent as? ViewGroup
+            if (rootView != null) {
+                // 计算合适的高度
+                val screenHeight = resources.displayMetrics.heightPixels
+                val overlayHeight = (screenHeight * 0.5).toInt() // 50%屏幕高度
+                
+                // 设置布局参数
+                val layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    overlayHeight
+                )
+                
+                // 添加覆盖层到根视图
+                rootView.addView(phrasesOverlayView, layoutParams)
+                
+                // 隐藏原始候选词视图和工具栏
+                candidatesViewLayout.visibility = View.GONE
+                
+                // 设置话术库列表
+                setupPhrasesOverlay()
+                
+                isPhrasesVisible = true
+                
+                // 隐藏软键盘
+                hideKeyboard()
+                
+                Timber.d("话术库覆盖层已显示")
+            } else {
+                Timber.e("无法获取根视图容器")
+            }
         } catch (e: Exception) {
             Timber.e(e, "显示话术库失败: ${e.message}")
         }
     }
 
     /**
-     * 隐藏话术库
+     * 隐藏话术库 - 移除动态覆盖层
      */
     private fun hidePhrasesView() {
         try {
-            // 隐藏话术库容器（包含头部工具栏）
-            val phrasesContainer = candidatesViewLayout.findViewById<LinearLayout>(R.id.phrases_container)
-            phrasesContainer.visibility = View.GONE
+            // 移除话术库覆盖层
+            phrasesOverlayView?.let { overlayView ->
+                val parent = overlayView.parent as? ViewGroup
+                parent?.removeView(overlayView)
+                phrasesOverlayView = null
+            }
+            
+            // 恢复原始候选词视图和工具栏显示
+            candidatesViewLayout.visibility = View.VISIBLE
+            
             isPhrasesVisible = false
-            
-            // 恢复拼音显示区域
-            val pinyinContainer = candidatesViewLayout.findViewById<RelativeLayout>(R.id.pinyin_container)
-            pinyinContainer?.visibility = View.VISIBLE
-            
-            // 恢复工具栏显示
-            toolbarView.visibility = View.VISIBLE
             
             // 显示软键盘
             showKeyboard()
             
-            // 恢复话术库容器的原始高度
-            val layoutParams = phrasesContainer.layoutParams
-            layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT // 恢复到原始高度
-            phrasesContainer.layoutParams = layoutParams
-            
-            // 如果有候选词，显示候选词区域
-            if (candidates.isNotEmpty()) {
-                defaultCandidatesView.visibility = View.VISIBLE
-            }
-            
-            Timber.d("话术库已隐藏，工具栏已恢复")
+            Timber.d("话术库覆盖层已移除")
         } catch (e: Exception) {
             Timber.e(e, "隐藏话术库失败: ${e.message}")
         }
     }
 
     /**
-     * 设置话术库工具栏按钮点击事件
+     * 设置话术库覆盖层
      */
-    private fun setupPhrasesToolbar() {
+    private fun setupPhrasesOverlay() {
         try {
-            // 关闭按钮
-            val closeButton = candidatesViewLayout.findViewById<ImageView>(R.id.phrases_close_button)
-            closeButton.setOnClickListener {
-                hidePhrasesView()
+            phrasesOverlayView?.let { overlayView ->
+                // 设置关闭按钮
+                val closeButton = overlayView.findViewById<ImageView>(R.id.phrases_close_btn)
+                closeButton.setOnClickListener {
+                    hidePhrasesView()
+                }
+                
+                // 设置添加按钮
+                val addButton = overlayView.findViewById<ImageView>(R.id.phrases_add_btn)
+                addButton.setOnClickListener {
+                    Toast.makeText(this, "添加话术功能即将上线", Toast.LENGTH_SHORT).show()
+                }
+                
+                // 设置话术列表
+                val phrasesRecyclerView = overlayView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.phrases_list)
+                
+                // 创建示例话术数据
+                val samplePhrases = listOf(
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "热情问候"
+                        content = "您好！很高兴为您服务，有什么可以帮助您的吗？"
+                        category = "script"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "真诚感谢"
+                        content = "非常感谢您的支持和信任，我们会继续努力！"
+                        category = "script"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "诚恳道歉"
+                        content = "非常抱歉给您带来不便，我们会立即处理这个问题。"
+                        category = "script"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "快速确认"
+                        content = "好的，我马上为您处理，请稍等片刻。"
+                        category = "script"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "友好结束"
+                        content = "感谢您的咨询，祝您生活愉快，再见！"
+                        category = "script"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "专业介绍"
+                        content = "我是您的专属客服，随时为您提供优质服务。"
+                        category = "script"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "耐心解答"
+                        content = "没关系，请您详细描述一下遇到的问题，我来帮您解决。"
+                        category = "script"
+                    },
+                    com.shenji.aikeyboard.data.ScriptItem().apply {
+                        title = "贴心提醒"
+                        content = "温馨提示：请妥善保管您的个人信息，注意账户安全。"
+                        category = "script"
+                    }
+                )
+                
+                phrasesListAdapter = com.shenji.aikeyboard.ui.PhrasesListAdapter(samplePhrases) { phrase ->
+                    insertPhrase(phrase)
+                    hidePhrasesView()
+                }
+                
+                phrasesRecyclerView.adapter = phrasesListAdapter
+                phrasesRecyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+                
+                Timber.d("话术库覆盖层设置完成")
             }
-            
-            // 添加按钮
-            val addButton = candidatesViewLayout.findViewById<ImageView>(R.id.phrases_add_button)
-            addButton.setOnClickListener {
-                Toast.makeText(this, "添加话术功能即将上线", Toast.LENGTH_SHORT).show()
-            }
-            
-            Timber.d("话术库工具栏按钮设置完成")
         } catch (e: Exception) {
-            Timber.e(e, "设置话术库工具栏失败: ${e.message}")
+            Timber.e(e, "设置话术库覆盖层失败: ${e.message}")
         }
     }
 
