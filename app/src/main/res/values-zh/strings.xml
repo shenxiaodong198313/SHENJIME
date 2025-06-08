@@ -55,7 +55,7 @@
     <string name="select_text">选择文本</string>
     <string name="copy_success">复制成功</string>
     <string name="debug_message_copied">已经复制调试信息到粘贴板，请在github 上提交Issue</string>
-    <string name="use_model_scope_download">使用 ModelScope 下载</string>
+
     <string name="clear_mmap_cache">清理 mmap 缓存</string>
     <string name="use_mmap">使用 mmap</string>
     <string name="sampler">Sampler</string>
@@ -77,7 +77,7 @@
     <string name="settings_complete">强烈建议删除未完成任务重新下载，否则可能有数据不一致问题。</string>
     <string name="stop_download_tasks_when_chat">聊天时停止下载任务</string>
     <string name="stop_download_reason">开启后，聊天时下载任务会被暂停，减少聊天卡顿。</string>
-    <string name="modelscope">Modelscope(魔搭)</string>
+
     <string name="modelers">Modelers(魔乐)</string>
     <string name="diffusion_mode_memory_saving">内存节省模式</string>
     <string name="diffusion_mode_memory_engough">内存足够模式</string>

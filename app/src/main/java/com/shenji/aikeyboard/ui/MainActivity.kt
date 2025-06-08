@@ -153,11 +153,7 @@ class MainActivity : AppCompatActivity() {
                 "MNN AI助手"
             ) { openMnnInference() }
             
-            // AI模型库按钮 - 新增
-            createPurpleButton(
-                R.id.modelLibraryButtonContainer,
-                "AI模型库"
-            ) { openModelLibrary() }
+
             
             Log.d("MainActivity", "所有按钮创建完成")
         } catch (e: Exception) {
@@ -322,19 +318,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    /**
-     * 打开AI模型库
-     */
-    private fun openModelLibrary() {
-        try {
-            Timber.d("打开AI模型库")
-            val intent = Intent(this, com.shenji.aikeyboard.modelscope.ModelLibraryActivity::class.java)
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "打开AI模型库失败: ${e.message}", e)
-            Toast.makeText(this, "无法打开AI模型库: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
+
     
     /**
      * 启动后台词典加载

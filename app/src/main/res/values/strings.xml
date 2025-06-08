@@ -151,7 +151,7 @@
     <string name="select_text">Select text</string>
     <string name="copy_success">Copy success</string>
     <string name="debug_message_copied">debug message copied, please report issue in github</string>
-    <string name="use_model_scope_download">Use modelscope to download</string>
+
     <string name="clear_mmap_cache">Clear mmap cache</string>
     <string name="use_mmap">Use mmap</string>
     <string name="sampler">select sampler</string>
@@ -174,7 +174,7 @@
     <string name="settings_complete">it\'s recommended to remove unfinished tasks and redownload to prevent errors.</string>
     <string name="stop_download_tasks_when_chat">Stop downloads when chat</string>
     <string name="stop_download_reason">Stop downloads during chat ensures smoother chat experience</string>
-    <string name="modelscope">Modelscope</string>
+
     <string name="modelers">Modelers</string>
     <string name="diffusion_mode_memory_saving">Memory Saving Mode</string>
     <string name="diffusion_mode_memory_engough">Memory Engough Mode</string>

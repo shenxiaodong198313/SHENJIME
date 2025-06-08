@@ -110,8 +110,7 @@ dependencies {
     // MediaPipe LLM集成
     implementation("com.google.mediapipe:tasks-genai:0.10.24")
     
-    // ModelScope HTTP API集成 (使用现有的网络库)
-    // implementation("com.alibaba:modelscope-android:1.0.0") // 官方暂无Android SDK
+
     // OkHttp和Retrofit已在MNN依赖中包含，无需重复添加
     
     // MNN相关依赖 - 严格按照kaifa项目配置

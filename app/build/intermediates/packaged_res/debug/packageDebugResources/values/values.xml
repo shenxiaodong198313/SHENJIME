@@ -12,12 +12,10 @@
     </string-array>
     <string-array name="download_provider_entries">
         <item>HuggingFace</item>
-        <item>@string/modelscope</item>
         <item>@string/modelers</item>
     </string-array>
     <string-array name="download_provider_values">
         <item>HuggingFace</item>
-        <item>ModelScope</item>
         <item>Modelers</item>
     </string-array>
     <attr format="color" name="colorCustomColor1"/>
@@ -413,7 +411,6 @@
     <string name="model_settings_title">Model Settings</string>
     <string name="modelers">Modelers</string>
     <string name="models">Models</string>
-    <string name="modelscope">Modelscope</string>
     <string name="nav_close">Close navigation drawer</string>
     <string name="nav_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -492,7 +489,6 @@
     <string name="toggle_mode">全/单</string>
     <string name="usage_stats_permission_required">需要应用使用情况权限</string>
     <string name="use_mmap">Use mmap</string>
-    <string name="use_model_scope_download">Use modelscope to download</string>
     <string name="vendor_menu_title">Vendor</string>
     <string name="verification_code_received">收到验证码: %1$s</string>
     <string name="verification_code_test">验证码测试</string>

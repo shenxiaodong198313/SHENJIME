@@ -100,7 +100,7 @@
     <color name="overlay_tool_item_bg">#FFFFFF</color>
     <color name="overlay_tool_item_pressed">#F0F0F0</color>
     
-    <!-- ModelScope AI模型库颜色定义 -->
+
     <color name="text_color">#FF212121</color>
     <color name="text_color_secondary">#FF757575</color>
     <color name="surface_color">#FFFFFFFF</color>

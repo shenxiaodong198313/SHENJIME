@@ -3834,7 +3834,6 @@ id action_text
 id action_view_logs
 id action_vu_conversion_test
 id actions
-id activateButton
 id activity_chooser_view_content
 id add
 id aiTestButtonContainer
@@ -3864,7 +3863,6 @@ id assistant_text_report
 id assistant_text_select
 id async
 id audio_seek_bar
-id authorText
 id auto
 id autoComplete
 id autoCompleteToEnd
@@ -3925,6 +3923,7 @@ id btnBack
 id btnBuildTrie
 id btnCancel
 id btnClearChat
+id btnClearImage
 id btnClearLogs
 id btnCopyInfo
 id btnCopyLogContainer
@@ -3933,12 +3932,15 @@ id btnEnableImeContainer
 id btnExportRealm
 id btnFuzzySettings
 id btnRebuildRealm
+id btnSelectImage
 id btnSend
 id btnSetDefaultImeContainer
 id btnStart
 id btnStartChat
+id btnSwitchModel
 id btnTestContinuation
 id btnTestCorrection
+id btnTestMultimodal
 id btnTestSemantic
 id btn_auto_send
 id btn_back
@@ -3972,7 +3974,6 @@ id candidates_recycler_view
 id candidates_scroll_view
 id candidates_view
 id carryVelocity
-id categoryChipGroup
 id center
 id centerCrop
 id centerInside
@@ -4125,17 +4126,14 @@ id decelerateAndComplete
 id decor_content_parent
 id default_activity_button
 id default_candidates_view
-id deleteButton
 id deltaRelative
 id dependency_ordering
-id descriptionText
 id design_bottom_sheet
 id design_menu_item_action_area
 id design_menu_item_action_area_stub
 id design_menu_item_text
 id design_navigation_view
 id detailText
-id detailsButton
 id dialog_button
 id dialog_layout
 id dictionary_status_view
@@ -4149,12 +4147,8 @@ id disjoint
 id divider1
 id divider2
 id divider_bottom
-id downloadButton
-id downloadProgressBar
 id download_progress_bar
 id download_progress_view
-id downloadedText
-id downloadsText
 id dragAnticlockwise
 id dragClockwise
 id dragDown
@@ -4182,7 +4176,6 @@ id edit_query
 id edit_text_id
 id elastic
 id embed
-id emptyView
 id enable_breakpoint_checkbox
 id end
 id endToStart
@@ -4251,7 +4244,6 @@ id floating_button
 id forever
 id fragment_container
 id fragment_container_view_tag
-id frameworkText
 id frequency_filter_spinner
 id frost
 id fullscreen_header
@@ -4307,6 +4299,7 @@ id inward
 id is_pooling_container_tag
 id italic
 id item_touch_helper_previous_elevation
+id ivImagePreview
 id iv_ai_icon
 id iv_audio_play_pause
 id iv_close
@@ -4315,7 +4308,6 @@ id iv_download
 id iv_header
 id iv_item_icon
 id iv_sampler_type_icon
-id iv_status
 id iv_thinking_header
 id jumpToEnd
 id jumpToStart
@@ -4473,8 +4465,6 @@ id middle
 id mini
 id mmapSettingsItem
 id mnnInferenceButtonContainer
-id modelLibraryButtonContainer
-id modelNameText
 id modelStatusScrollView
 id model_list_empty_view
 id model_list_failed_view
@@ -4514,6 +4504,7 @@ id mtrl_picker_text_input_range_start
 id mtrl_picker_title_text
 id mtrl_view_tag_bottom_padding
 id multi_image_container
+id multimodalLayout
 id multiply
 id nav_brackets
 id nav_chinese
@@ -4607,7 +4598,6 @@ id parent_matrix
 id password_toggle
 id path
 id pathRelative
-id pathText
 id peekHeight
 id percent
 id performance_stats_text_view
@@ -4643,7 +4633,6 @@ id preferences_sliding_pane_layout
 id pressed
 id progressBar
 id progressBarLoading
-id progressText
 id progressTextView
 id progress_circular
 id progress_horizontal
@@ -4661,7 +4650,6 @@ id recyclerViewChat
 id recycler_view
 id recycler_view_options
 id recycler_view_test
-id refreshFab
 id refresh_button
 id refresh_logs_button
 id report_drawn
@@ -4709,8 +4697,6 @@ id scrollIndicatorUp
 id scrollView
 id scroll_view
 id scrollable
-id searchButton
-id searchEditText
 id search_badge
 id search_bar
 id search_button
@@ -4744,7 +4730,6 @@ id showTitle
 id show_performance_metrics
 id simulate_button
 id sin
-id sizeText
 id skipCollapsed
 id skipped
 id slide
@@ -4904,7 +4889,6 @@ id symbol_row_1
 id symbol_row_2
 id symbol_row_3
 id symbol_view_flipper
-id tabLayout
 id tabMode
 id tab_layout
 id tableModules
@@ -4923,7 +4907,6 @@ id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
 id tagsLayout
 id tags_text
-id taskText
 id test_button
 id test_edit_text
 id text
@@ -5029,9 +5012,6 @@ id tv_item_subtitle
 id tv_item_title
 id tv_label_sampler_type
 id tv_message
-id tv_model_description
-id tv_model_name
-id tv_model_size
 id tv_performance
 id tv_pinyin
 id tv_prompt
@@ -5223,7 +5203,6 @@ layout activity_log_detail
 layout activity_main
 layout activity_main_settings
 layout activity_mnn_main
-layout activity_model_library
 layout activity_order
 layout activity_overlay_tool
 layout activity_pinyin_test
@@ -5285,9 +5264,6 @@ layout item_dictionary_module
 layout item_holder_assistant
 layout item_holder_chatheader
 layout item_holder_user
-layout item_llm_model
-layout item_local_model
-layout item_online_model
 layout item_option
 layout item_phrase_list
 layout item_phrase_simple
@@ -5705,7 +5681,6 @@ string model_settings
 string model_settings_title
 string modelers
 string models
-string modelscope
 string mtrl_badge_numberless_content_description
 string mtrl_checkbox_button_icon_path_checked
 string mtrl_checkbox_button_icon_path_group_name
@@ -5876,7 +5851,6 @@ string tooltip_description
 string tooltip_label
 string usage_stats_permission_required
 string use_mmap
-string use_model_scope_download
 string v7_preference_off
 string v7_preference_on
 string vendor_menu_title

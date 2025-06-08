@@ -11,15 +11,22 @@ import java.io.InputStream
 /**
  * LLM管理器
  * 负责MediaPipe LLM的初始化、推理和资源管理
+ * 支持多模型管理和切换
  */
 class LlmManager private constructor(private val context: Context) {
     
     companion object {
         private const val TAG = "LlmManager"
-        private const val MODEL_ASSET_PATH = "llm_models/gemma3-1b-it-int4.task"
-        private const val TOKENIZER_ASSET_PATH = "llm_models/tokenizer.model"
-        private const val MODEL_FILE_NAME = "gemma3-1b-it-int4.task"
-        private const val TOKENIZER_FILE_NAME = "tokenizer.model"
+        
+        // Gemma3-1B-IT模型配置 (保持现有路径不变)
+        private const val GEMMA3_MODEL_ASSET_PATH = "llm_models/gemma3-1b-it-int4.task"
+        private const val GEMMA3_TOKENIZER_ASSET_PATH = "llm_models/tokenizer.model"
+        private const val GEMMA3_MODEL_FILE_NAME = "gemma3-1b-it-int4.task"
+        private const val GEMMA3_TOKENIZER_FILE_NAME = "tokenizer.model"
+        
+        // Gemma3n-E4B-IT模型配置 (使用独立目录)
+        private const val GEMMA3N_MODEL_ASSET_PATH = "llm_models/gemma3n-e4b-it/gemma-3n-E4B-it-int4.task"
+        private const val GEMMA3N_MODEL_FILE_NAME = "gemma3n-e4b-it-gemma-3n-E4B-it-int4.task"
         
         @Volatile
         private var INSTANCE: LlmManager? = null
@@ -31,11 +38,35 @@ class LlmManager private constructor(private val context: Context) {
         }
     }
     
+    // 模型类型枚举
+    enum class ModelType {
+        GEMMA3_1B_IT,
+        GEMMA3N_E4B_IT
+    }
+    
     private var llmInference: LlmInference? = null
+    private var currentModelType: ModelType? = null
     private var isInitialized = false
     private var isInitializing = false
     
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    
+    /**
+     * 获取模型文件路径（优先从外部存储读取，如果不存在则从assets复制）
+     */
+    private suspend fun getModelFile(assetPath: String, fileName: String, externalPath: String? = null): File = withContext(Dispatchers.IO) {
+        // 首先检查外部存储是否有模型文件
+        if (externalPath != null) {
+            val externalFile = File(externalPath)
+            if (externalFile.exists() && externalFile.length() > 0) {
+                Log.d(TAG, "使用外部存储的模型文件: ${externalFile.absolutePath}")
+                return@withContext externalFile
+            }
+        }
+        
+        // 如果外部存储没有，则从assets复制到内部存储
+        return@withContext copyAssetToInternalStorage(assetPath, fileName)
+    }
     
     /**
      * 从assets复制文件到内部存储
@@ -90,11 +121,22 @@ class LlmManager private constructor(private val context: Context) {
     }
     
     /**
-     * 初始化LLM模型
+     * 初始化默认LLM模型 (Gemma3-1B-IT)
      */
-    suspend fun initialize(): Boolean = withContext(Dispatchers.IO) {
-        if (isInitialized) {
-            Log.d(TAG, "LLM已经初始化")
+    suspend fun initialize(): Boolean = initializeModel(ModelType.GEMMA3_1B_IT)
+    
+    /**
+     * 初始化Gemma3n模型
+     */
+    suspend fun initializeGemma3n(): Boolean = initializeModel(ModelType.GEMMA3N_E4B_IT)
+    
+    /**
+     * 初始化指定的LLM模型
+     */
+    private suspend fun initializeModel(modelType: ModelType): Boolean = withContext(Dispatchers.IO) {
+        // 如果当前模型已经是目标模型且已初始化，直接返回
+        if (isInitialized && currentModelType == modelType) {
+            Log.d(TAG, "目标模型已经初始化: $modelType")
             return@withContext true
         }
         
@@ -106,51 +148,115 @@ class LlmManager private constructor(private val context: Context) {
         isInitializing = true
         
         try {
-            Log.d(TAG, "开始初始化LLM模型...")
+            Log.d(TAG, "开始初始化LLM模型: $modelType")
             
-            // 从assets复制模型文件到内部存储
-            Log.d(TAG, "复制模型文件...")
-            val modelFile = copyAssetToInternalStorage(MODEL_ASSET_PATH, MODEL_FILE_NAME)
-            
-            Log.d(TAG, "复制分词器文件...")
-            val tokenizerFile = copyAssetToInternalStorage(TOKENIZER_ASSET_PATH, TOKENIZER_FILE_NAME)
-            
-            // 验证文件是否存在
-            if (!modelFile.exists()) {
-                Log.e(TAG, "模型文件不存在: ${modelFile.absolutePath}")
-                return@withContext false
+            // 释放当前模型资源
+            if (isInitialized) {
+                Log.d(TAG, "释放当前模型资源: $currentModelType")
+                llmInference?.close()
+                llmInference = null
+                isInitialized = false
+                currentModelType = null
             }
             
-            if (!tokenizerFile.exists()) {
-                Log.e(TAG, "分词器文件不存在: ${tokenizerFile.absolutePath}")
-                return@withContext false
+            when (modelType) {
+                ModelType.GEMMA3_1B_IT -> {
+                    // 初始化Gemma3-1B-IT模型
+                    Log.d(TAG, "获取Gemma3模型文件...")
+                    val modelFile = getModelFile(
+                        GEMMA3_MODEL_ASSET_PATH, 
+                        GEMMA3_MODEL_FILE_NAME,
+                        "/sdcard/shenji_models/gemma3-1b-it-int4.task"
+                    )
+                    
+                    Log.d(TAG, "获取Gemma3分词器文件...")
+                    val tokenizerFile = getModelFile(
+                        GEMMA3_TOKENIZER_ASSET_PATH, 
+                        GEMMA3_TOKENIZER_FILE_NAME,
+                        "/sdcard/shenji_models/tokenizer.model"
+                    )
+                    
+                    // 验证文件是否存在
+                    if (!modelFile.exists()) {
+                        Log.e(TAG, "Gemma3模型文件不存在: ${modelFile.absolutePath}")
+                        return@withContext false
+                    }
+                    
+                    if (!tokenizerFile.exists()) {
+                        Log.e(TAG, "Gemma3分词器文件不存在: ${tokenizerFile.absolutePath}")
+                        return@withContext false
+                    }
+                    
+                    Log.d(TAG, "Gemma3模型文件路径: ${modelFile.absolutePath}")
+                    Log.d(TAG, "Gemma3分词器文件路径: ${tokenizerFile.absolutePath}")
+                    
+                    // 创建LLM推理选项
+                    val options = LlmInference.LlmInferenceOptions.builder()
+                        .setModelPath(modelFile.absolutePath)
+                        .setMaxTokens(1024)
+                        .setMaxTopK(40)
+                        .build()
+                    
+                    // 初始化LLM推理引擎
+                    Log.d(TAG, "创建Gemma3 LLM推理引擎...")
+                    llmInference = LlmInference.createFromOptions(context, options)
+                }
+                
+                ModelType.GEMMA3N_E4B_IT -> {
+                    // 初始化Gemma3n-E4B-IT模型
+                    Log.d(TAG, "获取Gemma3n模型文件...")
+                    val modelFile = getModelFile(
+                        GEMMA3N_MODEL_ASSET_PATH, 
+                        GEMMA3N_MODEL_FILE_NAME,
+                        "/sdcard/shenji_models/gemma3n-e4b-it/gemma-3n-E4B-it-int4.task"
+                    )
+                    
+                    // 验证文件是否存在
+                    if (!modelFile.exists()) {
+                        Log.e(TAG, "Gemma3n模型文件不存在: ${modelFile.absolutePath}")
+                        return@withContext false
+                    }
+                    
+                    Log.d(TAG, "Gemma3n模型文件路径: ${modelFile.absolutePath}")
+                    
+                    // 创建MediaPipe LLM推理选项（Gemma3n也使用.task格式）
+                    val options = LlmInference.LlmInferenceOptions.builder()
+                        .setModelPath(modelFile.absolutePath)
+                        .setMaxTokens(2048)
+                        .setMaxTopK(50)
+                        .build()
+                    
+                    // 初始化LLM推理引擎
+                    Log.d(TAG, "创建Gemma3n LLM推理引擎...")
+                    llmInference = LlmInference.createFromOptions(context, options)
+                }
             }
             
-            Log.d(TAG, "模型文件路径: ${modelFile.absolutePath}")
-            Log.d(TAG, "分词器文件路径: ${tokenizerFile.absolutePath}")
-            
-            // 创建LLM推理选项
-            val options = LlmInference.LlmInferenceOptions.builder()
-                .setModelPath(modelFile.absolutePath)
-                .setMaxTokens(1024)
-                .setMaxTopK(40)
-                .build()
-            
-            // 初始化LLM推理引擎
-            Log.d(TAG, "创建LLM推理引擎...")
-            llmInference = LlmInference.createFromOptions(context, options)
-            
+            currentModelType = modelType
             isInitialized = true
-            Log.d(TAG, "LLM模型初始化成功")
+            Log.d(TAG, "LLM模型初始化成功: $modelType")
             
             true
         } catch (e: Exception) {
-            Log.e(TAG, "LLM初始化失败", e)
+            Log.e(TAG, "LLM初始化失败: $modelType", e)
             false
         } finally {
             isInitializing = false
         }
     }
+    
+    /**
+     * 切换模型
+     */
+    suspend fun switchModel(modelType: ModelType): Boolean {
+        Log.d(TAG, "请求切换模型: $currentModelType -> $modelType")
+        return initializeModel(modelType)
+    }
+    
+    /**
+     * 获取当前模型类型
+     */
+    fun getCurrentModelType(): ModelType? = currentModelType
     
     /**
      * 生成文本回复

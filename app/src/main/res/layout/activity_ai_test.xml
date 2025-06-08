@@ -36,6 +36,17 @@
             android:textStyle="bold"
             android:gravity="center" />
 
+        <Button
+            android:id="@+id/btnSwitchModel"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="🔄 切换模型"
+            android:textSize="12sp"
+            android:textColor="@color/splash_text_color"
+            android:background="@drawable/btn_back_background"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+
     </LinearLayout>
 
     <!-- 状态显示 -->
@@ -76,6 +87,69 @@
         android:layout_below="@id/statusLayout"
         android:orientation="vertical"
         android:layout_marginBottom="16dp">
+
+        <!-- 多模态输入区域 (仅Gemma-3n-E4B模型显示) -->
+        <LinearLayout
+            android:id="@+id/multimodalLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="图像输入:"
+                android:textColor="@color/splash_text_color"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- 图像预览区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:id="@+id/ivImagePreview"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:background="@drawable/input_background"
+                    android:scaleType="centerCrop"
+                    android:layout_marginEnd="12dp"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/btnSelectImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="📷 选择图像"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/btn_send_background"
+                        android:layout_marginBottom="8dp" />
+
+                    <Button
+                        android:id="@+id/btnClearImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="🗑️ 清除图像"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/btn_back_background"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
@@ -135,7 +209,19 @@
             android:text="🧠 测试语义分析"
             android:textColor="#FFFFFF"
             android:background="@drawable/btn_send_background"
+            android:layout_marginBottom="8dp"
             android:enabled="false" />
+
+        <!-- 多模态测试按钮 (仅Gemma-3n-E4B模型显示) -->
+        <Button
+            android:id="@+id/btnTestMultimodal"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="🖼️ 测试多模态分析"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/btn_send_background"
+            android:enabled="false"
+            android:visibility="gone" />
 
     </LinearLayout>
 

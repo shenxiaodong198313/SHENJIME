@@ -453,7 +453,6 @@ id action_search
 id action_settings
 id action_view_logs
 id action_vu_conversion_test
-id activateButton
 id aiTestButtonContainer
 id ai_analysis_button
 id ai_status_icon
@@ -467,7 +466,6 @@ id assistant_text_copy
 id assistant_text_report
 id assistant_text_select
 id audio_seek_bar
-id authorText
 id back_button
 id background
 id backgroundOverlay
@@ -510,6 +508,7 @@ id btnBack
 id btnBuildTrie
 id btnCancel
 id btnClearChat
+id btnClearImage
 id btnClearLogs
 id btnCopyInfo
 id btnCopyLogContainer
@@ -518,12 +517,15 @@ id btnEnableImeContainer
 id btnExportRealm
 id btnFuzzySettings
 id btnRebuildRealm
+id btnSelectImage
 id btnSend
 id btnSetDefaultImeContainer
 id btnStart
 id btnStartChat
+id btnSwitchModel
 id btnTestContinuation
 id btnTestCorrection
+id btnTestMultimodal
 id btnTestSemantic
 id btn_auto_send
 id btn_back
@@ -552,7 +554,6 @@ id candidates_container
 id candidates_recycler_view
 id candidates_scroll_view
 id candidates_view
-id categoryChipGroup
 id chat_app_bar
 id chat_history_recycler_view
 id chat_user_copy
@@ -663,20 +664,13 @@ id current_input_text_view
 id customInputEditText
 id customTestButton
 id default_candidates_view
-id deleteButton
-id descriptionText
 id detailText
-id detailsButton
 id dictionary_status_view
 id divider1
 id divider2
 id divider_bottom
-id downloadButton
-id downloadProgressBar
 id download_progress_bar
 id download_progress_view
-id downloadedText
-id downloadsText
 id drag_handle
 id drawer_layout
 id dropdownBackend
@@ -686,7 +680,6 @@ id dropdown_sampler_type
 id editMaxNewTokens
 id editTextSystemPrompt
 id edit_icon
-id emptyView
 id enable_breakpoint_checkbox
 id eng_123_btn
 id eng_ampersand
@@ -732,7 +725,6 @@ id filter_modality
 id filter_vendor
 id floating_button
 id fragment_container
-id frameworkText
 id frequency_filter_spinner
 id generateTestButton
 id gone
@@ -754,6 +746,7 @@ id input_card_container
 id input_edit_text
 id input_layout_other_info
 id invisible
+id ivImagePreview
 id iv_ai_icon
 id iv_audio_play_pause
 id iv_close
@@ -762,7 +755,6 @@ id iv_download
 id iv_header
 id iv_item_icon
 id iv_sampler_type_icon
-id iv_status
 id iv_thinking_header
 id key_0
 id key_1
@@ -872,8 +864,6 @@ id menu_settings
 id menu_start_download
 id mmapSettingsItem
 id mnnInferenceButtonContainer
-id modelLibraryButtonContainer
-id modelNameText
 id modelStatusScrollView
 id model_list_empty_view
 id model_list_failed_view
@@ -883,6 +873,7 @@ id more_item_audio
 id more_item_camera
 id more_item_photo
 id multi_image_container
+id multimodalLayout
 id nav_brackets
 id nav_chinese
 id nav_chinese_num
@@ -925,7 +916,6 @@ id num_key_symbol
 id optimizedCandidateTestButtonContainer
 id order_icon
 id pageTitle
-id pathText
 id performance_stats_text_view
 id permission_status_text_view
 id phrase_content
@@ -950,7 +940,6 @@ id popupImageView
 id popup_menu_root
 id progressBar
 id progressBarLoading
-id progressText
 id query_condition_text_view
 id query_process_text_view
 id realm_status_text
@@ -959,7 +948,6 @@ id recyclerViewChat
 id recycler_view
 id recycler_view_options
 id recycler_view_test
-id refreshFab
 id refresh_button
 id refresh_logs_button
 id request_permission_button
@@ -985,8 +973,6 @@ id rvLogs
 id rv_candidates
 id sampler_spinner
 id scroll_view
-id searchButton
-id searchEditText
 id seekbar
 id settings_button
 id settings_container
@@ -999,7 +985,6 @@ id shimmerMemoryStatus
 id shimmerMemoryUsage
 id show_performance_metrics
 id simulate_button
-id sizeText
 id smart_tips_container
 id splashIcon
 id split_result_text_view
@@ -1126,12 +1111,10 @@ id symbol_row_1
 id symbol_row_2
 id symbol_row_3
 id symbol_view_flipper
-id tabLayout
 id tab_layout
 id tableModules
 id tagsLayout
 id tags_text
-id taskText
 id test_button
 id test_edit_text
 id text
@@ -1197,9 +1180,6 @@ id tv_item_subtitle
 id tv_item_title
 id tv_label_sampler_type
 id tv_message
-id tv_model_description
-id tv_model_name
-id tv_model_size
 id tv_performance
 id tv_pinyin
 id tv_prompt
@@ -1236,7 +1216,6 @@ layout activity_log_detail
 layout activity_main
 layout activity_main_settings
 layout activity_mnn_main
-layout activity_model_library
 layout activity_order
 layout activity_overlay_tool
 layout activity_pinyin_test
@@ -1278,9 +1257,6 @@ layout item_dictionary_module
 layout item_holder_assistant
 layout item_holder_chatheader
 layout item_holder_user
-layout item_llm_model
-layout item_local_model
-layout item_online_model
 layout item_option
 layout item_phrase_list
 layout item_phrase_simple
@@ -1438,7 +1414,6 @@ string model_settings
 string model_settings_title
 string modelers
 string models
-string modelscope
 string nav_close
 string nav_open
 string navigation_drawer_close
@@ -1517,7 +1492,6 @@ string title_activity_main
 string toggle_mode
 string usage_stats_permission_required
 string use_mmap
-string use_model_scope_download
 string vendor_menu_title
 string verification_code_received
 string verification_code_test

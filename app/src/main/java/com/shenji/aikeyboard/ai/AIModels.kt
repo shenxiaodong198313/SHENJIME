@@ -23,7 +23,8 @@ enum class AICapability {
     SEMANTIC_ANALYSIS,    // 语义分析
     GRAMMAR_CHECK,        // 语法检查
     STYLE_CONVERSION,     // 风格转换
-    TRANSLATION          // 翻译
+    TRANSLATION,          // 翻译
+    MULTIMODAL_ANALYSIS   // 多模态分析（图像+文本）
 }
 
 /**

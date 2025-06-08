@@ -48,7 +48,6 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             fun updateSummary(vale:String) {
                 summary = when (vale) {
                     "HuggingFace" -> vale
-                    "ModelScope" -> getString(R.string.modelscope)
                     else -> getString(R.string.modelers)
                 }
             }
