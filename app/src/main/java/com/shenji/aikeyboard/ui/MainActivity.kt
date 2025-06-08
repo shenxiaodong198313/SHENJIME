@@ -153,6 +153,12 @@ class MainActivity : AppCompatActivity() {
                 "MNN AI助手"
             ) { openMnnInference() }
             
+            // AI模型库按钮 - 新增
+            createPurpleButton(
+                R.id.modelLibraryButtonContainer,
+                "AI模型库"
+            ) { openModelLibrary() }
+            
             Log.d("MainActivity", "所有按钮创建完成")
         } catch (e: Exception) {
             Log.e("MainActivity", "按钮创建失败: ${e.message}", e)
@@ -178,6 +184,49 @@ class MainActivity : AppCompatActivity() {
         
         // 应用背景和样式
         button.background = whiteBackground
+        button.elevation = 0f
+        button.stateListAnimator = null
+        
+        // 移除Material Design效果
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            button.outlineProvider = null
+        }
+        
+        // 设置按钮尺寸
+        val layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            (56 * resources.displayMetrics.density).toInt() // 56dp高度
+        )
+        button.layoutParams = layoutParams
+        
+        // 设置点击事件
+        button.setOnClickListener { onClick() }
+        
+        // 添加到容器
+        container.addView(button)
+        
+        return button
+    }
+    
+    /**
+     * 创建紫色背景按钮
+     */
+    private fun createPurpleButton(containerId: Int, text: String, onClick: () -> Unit): Button {
+        val container = findViewById<FrameLayout>(containerId)
+        val button = Button(this)
+        
+        // 设置按钮文本和样式
+        button.text = text
+        button.textSize = 16f
+        button.setTextColor(android.graphics.Color.WHITE)
+        
+        // 创建紫色背景
+        val purpleBackground = android.graphics.drawable.GradientDrawable()
+        purpleBackground.setColor(android.graphics.Color.parseColor("#9C27B0")) // Material Purple
+        purpleBackground.cornerRadius = 12 * resources.displayMetrics.density
+        
+        // 应用背景和样式
+        button.background = purpleBackground
         button.elevation = 0f
         button.stateListAnimator = null
         
@@ -270,6 +319,20 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "打开AI功能测试失败: ${e.message}", e)
             Toast.makeText(this, "无法打开AI功能测试: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 打开AI模型库
+     */
+    private fun openModelLibrary() {
+        try {
+            Timber.d("打开AI模型库")
+            val intent = Intent(this, com.shenji.aikeyboard.modelscope.ModelLibraryActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开AI模型库失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开AI模型库: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     

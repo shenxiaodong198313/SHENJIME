@@ -170,6 +170,14 @@
             android:label="MNN设置"
             android:windowSoftInputMode="adjustResize" />
             
+        <!-- ModelScope AI模型库 -->
+        <activity
+            android:name=".modelscope.ModelLibraryActivity"
+            android:exported="false"
+            android:label="AI模型库"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.SHENJI" />
+            
         <!-- 输入法服务 -->
         <service
             android:name=".keyboard.ShenjiInputMethodService"

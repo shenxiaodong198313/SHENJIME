@@ -212,7 +212,59 @@ class SplashActivity : AppCompatActivity() {
         // 添加到容器
         buttonContainer.addView(mnnButton)
         
-        Timber.d("按钮创建完成：词典构建按钮（白色）和MNN推理框架按钮（蓝色）")
+        // 创建AI模型库按钮
+        val modelLibraryButton = Button(this)
+        modelLibraryButton.text = "AI模型库"
+        modelLibraryButton.textSize = 16f
+        modelLibraryButton.setTextColor(getColor(R.color.splash_background_color))
+        
+        // 创建紫色背景
+        val purpleBackground = android.graphics.drawable.GradientDrawable()
+        purpleBackground.setColor(android.graphics.Color.parseColor("#9C27B0")) // Material Purple
+        purpleBackground.cornerRadius = 24 * resources.displayMetrics.density
+        purpleBackground.setStroke((2 * resources.displayMetrics.density).toInt(), android.graphics.Color.parseColor("#9C27B0"))
+        
+        // 应用背景和样式
+        modelLibraryButton.background = purpleBackground
+        modelLibraryButton.elevation = 0f
+        modelLibraryButton.stateListAnimator = null
+        modelLibraryButton.setTextColor(android.graphics.Color.WHITE)
+        
+        // 移除Material Design效果
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            modelLibraryButton.outlineProvider = null
+        }
+        
+        // 设置按钮尺寸和位置 - 第三个按钮
+        val layoutParams3 = android.widget.FrameLayout.LayoutParams(
+            (200 * resources.displayMetrics.density).toInt(), // 200dp宽度
+            (48 * resources.displayMetrics.density).toInt()   // 48dp高度
+        )
+        layoutParams3.gravity = android.view.Gravity.CENTER_HORIZONTAL or android.view.Gravity.TOP
+        layoutParams3.topMargin = (130 * resources.displayMetrics.density).toInt() // 距离容器顶部130dp（第二个按钮下方）
+        modelLibraryButton.layoutParams = layoutParams3
+        
+        // 初始时隐藏按钮
+        modelLibraryButton.alpha = 0f
+        
+        // 设置点击事件 - 启动AI模型库Activity
+        modelLibraryButton.setOnClickListener {
+            startModelLibraryActivity()
+        }
+        
+        // 添加到容器
+        buttonContainer.addView(modelLibraryButton)
+        
+        Timber.d("按钮创建完成：词典构建按钮（白色）、MNN推理框架按钮（蓝色）和AI模型库按钮（紫色）")
+        Timber.d("buttonContainer子视图数量: ${buttonContainer.childCount}")
+        
+        // 验证按钮是否正确添加
+        for (i in 0 until buttonContainer.childCount) {
+            val child = buttonContainer.getChildAt(i)
+            if (child is Button) {
+                Timber.d("按钮 $i: ${child.text}")
+            }
+        }
     }
     
     /**
@@ -683,6 +735,17 @@ class SplashActivity : AppCompatActivity() {
         // 2. 按钮从底部向上移动出现动画
         // 首先设置按钮初始位置在屏幕底部外
         buildDictButton.alpha = 1f // 确保按钮可见
+        
+        // 显示所有按钮
+        val mnnButton = buttonContainer.getChildAt(1)
+        val modelLibraryButton = buttonContainer.getChildAt(2)
+        
+        mnnButton?.alpha = 1f // MNN按钮
+        modelLibraryButton?.alpha = 1f // AI模型库按钮
+        
+        Timber.d("显示按钮 - MNN按钮: ${mnnButton != null}, AI模型库按钮: ${modelLibraryButton != null}")
+        if (mnnButton is Button) Timber.d("MNN按钮文本: ${mnnButton.text}")
+        if (modelLibraryButton is Button) Timber.d("AI模型库按钮文本: ${modelLibraryButton.text}")
         
         // 获取屏幕高度
         val screenHeight = resources.displayMetrics.heightPixels
@@ -1207,6 +1270,25 @@ class SplashActivity : AppCompatActivity() {
             Timber.e(e, "启动MNN Activity失败")
             // 显示错误提示
             detailText.text = "启动MNN框架失败: ${e.message}"
+        }
+    }
+    
+    /**
+     * 启动AI模型库
+     */
+    private fun startModelLibraryActivity() {
+        try {
+            val intent = Intent(this, com.shenji.aikeyboard.modelscope.ModelLibraryActivity::class.java)
+            startActivity(intent)
+            
+            // 添加淡入淡出动画
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+            
+            Timber.d("启动AI模型库")
+        } catch (e: Exception) {
+            Timber.e(e, "启动AI模型库Activity失败")
+            // 显示错误提示
+            detailText.text = "启动AI模型库失败: ${e.message}"
         }
     }
 

@@ -68,6 +68,13 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
+        <!-- AI模型库按钮容器 -->
+        <FrameLayout
+            android:id="@+id/modelLibraryButtonContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
     </LinearLayout>
 
 </LinearLayout>

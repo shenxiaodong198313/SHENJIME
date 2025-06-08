@@ -24,6 +24,7 @@ attr text
 attr valueText
 bool is_day_mode
 bool is_night_mode
+color accent_color
 color ai_message_background
 color app_theme_color
 color background_color
@@ -256,10 +257,13 @@ color shimmer_color
 color splash_background_color
 color splash_text_color
 color success_green
+color surface_color
 color tag_background
 color teal_200
 color teal_50
 color teal_700
+color text_color
+color text_color_secondary
 color text_primary
 color text_secondary
 color toggle_tint
@@ -316,6 +320,7 @@ drawable bg_user_message
 drawable btn_back_background
 drawable btn_send_background
 drawable btn_white_background
+drawable button_danger
 drawable button_outline
 drawable button_primary
 drawable button_refresh_background
@@ -385,6 +390,7 @@ drawable ic_more_vert
 drawable ic_order
 drawable ic_plan
 drawable ic_plus
+drawable ic_refresh
 drawable ic_reset
 drawable ic_send
 drawable ic_send_disabled
@@ -421,6 +427,7 @@ drawable phi_icon
 drawable phrase_item_background
 drawable progress_m2_style
 drawable qwen_icon
+drawable search_background
 drawable settings_section_background
 drawable shape_button
 drawable shape_tag_view
@@ -446,6 +453,7 @@ id action_search
 id action_settings
 id action_view_logs
 id action_vu_conversion_test
+id activateButton
 id aiTestButtonContainer
 id ai_analysis_button
 id ai_status_icon
@@ -459,6 +467,7 @@ id assistant_text_copy
 id assistant_text_report
 id assistant_text_select
 id audio_seek_bar
+id authorText
 id back_button
 id background
 id backgroundOverlay
@@ -543,6 +552,7 @@ id candidates_container
 id candidates_recycler_view
 id candidates_scroll_view
 id candidates_view
+id categoryChipGroup
 id chat_app_bar
 id chat_history_recycler_view
 id chat_user_copy
@@ -653,13 +663,20 @@ id current_input_text_view
 id customInputEditText
 id customTestButton
 id default_candidates_view
+id deleteButton
+id descriptionText
 id detailText
+id detailsButton
 id dictionary_status_view
 id divider1
 id divider2
 id divider_bottom
+id downloadButton
+id downloadProgressBar
 id download_progress_bar
 id download_progress_view
+id downloadedText
+id downloadsText
 id drag_handle
 id drawer_layout
 id dropdownBackend
@@ -669,6 +686,7 @@ id dropdown_sampler_type
 id editMaxNewTokens
 id editTextSystemPrompt
 id edit_icon
+id emptyView
 id enable_breakpoint_checkbox
 id eng_123_btn
 id eng_ampersand
@@ -714,6 +732,7 @@ id filter_modality
 id filter_vendor
 id floating_button
 id fragment_container
+id frameworkText
 id frequency_filter_spinner
 id generateTestButton
 id gone
@@ -853,6 +872,8 @@ id menu_settings
 id menu_start_download
 id mmapSettingsItem
 id mnnInferenceButtonContainer
+id modelLibraryButtonContainer
+id modelNameText
 id modelStatusScrollView
 id model_list_empty_view
 id model_list_failed_view
@@ -904,6 +925,7 @@ id num_key_symbol
 id optimizedCandidateTestButtonContainer
 id order_icon
 id pageTitle
+id pathText
 id performance_stats_text_view
 id permission_status_text_view
 id phrase_content
@@ -928,6 +950,7 @@ id popupImageView
 id popup_menu_root
 id progressBar
 id progressBarLoading
+id progressText
 id query_condition_text_view
 id query_process_text_view
 id realm_status_text
@@ -936,6 +959,7 @@ id recyclerViewChat
 id recycler_view
 id recycler_view_options
 id recycler_view_test
+id refreshFab
 id refresh_button
 id refresh_logs_button
 id request_permission_button
@@ -961,6 +985,8 @@ id rvLogs
 id rv_candidates
 id sampler_spinner
 id scroll_view
+id searchButton
+id searchEditText
 id seekbar
 id settings_button
 id settings_container
@@ -973,6 +999,7 @@ id shimmerMemoryStatus
 id shimmerMemoryUsage
 id show_performance_metrics
 id simulate_button
+id sizeText
 id smart_tips_container
 id splashIcon
 id split_result_text_view
@@ -1099,10 +1126,12 @@ id symbol_row_1
 id symbol_row_2
 id symbol_row_3
 id symbol_view_flipper
+id tabLayout
 id tab_layout
 id tableModules
 id tagsLayout
 id tags_text
+id taskText
 id test_button
 id test_edit_text
 id text
@@ -1207,6 +1236,7 @@ layout activity_log_detail
 layout activity_main
 layout activity_main_settings
 layout activity_mnn_main
+layout activity_model_library
 layout activity_order
 layout activity_overlay_tool
 layout activity_pinyin_test
@@ -1249,6 +1279,8 @@ layout item_holder_assistant
 layout item_holder_chatheader
 layout item_holder_user
 layout item_llm_model
+layout item_local_model
+layout item_online_model
 layout item_option
 layout item_phrase_list
 layout item_phrase_simple

@@ -1544,6 +1544,7 @@ color abc_tint_edittext
 color abc_tint_seek_thumb
 color abc_tint_spinner
 color abc_tint_switch_track
+color accent_color
 color accent_material_dark
 color accent_material_light
 color ai_message_background
@@ -2523,6 +2524,7 @@ color shimmer_color
 color splash_background_color
 color splash_text_color
 color success_green
+color surface_color
 color switch_thumb_disabled_material_dark
 color switch_thumb_disabled_material_light
 color switch_thumb_material_dark
@@ -2533,6 +2535,8 @@ color tag_background
 color teal_200
 color teal_50
 color teal_700
+color text_color
+color text_color_secondary
 color text_primary
 color text_secondary
 color toggle_tint
@@ -3510,6 +3514,7 @@ drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
 drawable btn_send_background
 drawable btn_white_background
+drawable button_danger
 drawable button_outline
 drawable button_primary
 drawable button_refresh_background
@@ -3603,6 +3608,7 @@ drawable ic_order
 drawable ic_plan
 drawable ic_plus
 drawable ic_plus_white_24dp
+drawable ic_refresh
 drawable ic_reset
 drawable ic_search_black_24
 drawable ic_send
@@ -3714,6 +3720,7 @@ drawable phrase_item_background
 drawable preference_list_divider_material
 drawable progress_m2_style
 drawable qwen_icon
+drawable search_background
 drawable settings_section_background
 drawable shape_button
 drawable shape_tag_view
@@ -3827,6 +3834,7 @@ id action_text
 id action_view_logs
 id action_vu_conversion_test
 id actions
+id activateButton
 id activity_chooser_view_content
 id add
 id aiTestButtonContainer
@@ -3856,6 +3864,7 @@ id assistant_text_report
 id assistant_text_select
 id async
 id audio_seek_bar
+id authorText
 id auto
 id autoComplete
 id autoCompleteToEnd
@@ -3963,6 +3972,7 @@ id candidates_recycler_view
 id candidates_scroll_view
 id candidates_view
 id carryVelocity
+id categoryChipGroup
 id center
 id centerCrop
 id centerInside
@@ -4115,14 +4125,17 @@ id decelerateAndComplete
 id decor_content_parent
 id default_activity_button
 id default_candidates_view
+id deleteButton
 id deltaRelative
 id dependency_ordering
+id descriptionText
 id design_bottom_sheet
 id design_menu_item_action_area
 id design_menu_item_action_area_stub
 id design_menu_item_text
 id design_navigation_view
 id detailText
+id detailsButton
 id dialog_button
 id dialog_layout
 id dictionary_status_view
@@ -4136,8 +4149,12 @@ id disjoint
 id divider1
 id divider2
 id divider_bottom
+id downloadButton
+id downloadProgressBar
 id download_progress_bar
 id download_progress_view
+id downloadedText
+id downloadsText
 id dragAnticlockwise
 id dragClockwise
 id dragDown
@@ -4165,6 +4182,7 @@ id edit_query
 id edit_text_id
 id elastic
 id embed
+id emptyView
 id enable_breakpoint_checkbox
 id end
 id endToStart
@@ -4233,6 +4251,7 @@ id floating_button
 id forever
 id fragment_container
 id fragment_container_view_tag
+id frameworkText
 id frequency_filter_spinner
 id frost
 id fullscreen_header
@@ -4454,6 +4473,8 @@ id middle
 id mini
 id mmapSettingsItem
 id mnnInferenceButtonContainer
+id modelLibraryButtonContainer
+id modelNameText
 id modelStatusScrollView
 id model_list_empty_view
 id model_list_failed_view
@@ -4586,6 +4607,7 @@ id parent_matrix
 id password_toggle
 id path
 id pathRelative
+id pathText
 id peekHeight
 id percent
 id performance_stats_text_view
@@ -4621,6 +4643,7 @@ id preferences_sliding_pane_layout
 id pressed
 id progressBar
 id progressBarLoading
+id progressText
 id progressTextView
 id progress_circular
 id progress_horizontal
@@ -4638,6 +4661,7 @@ id recyclerViewChat
 id recycler_view
 id recycler_view_options
 id recycler_view_test
+id refreshFab
 id refresh_button
 id refresh_logs_button
 id report_drawn
@@ -4685,6 +4709,8 @@ id scrollIndicatorUp
 id scrollView
 id scroll_view
 id scrollable
+id searchButton
+id searchEditText
 id search_badge
 id search_bar
 id search_button
@@ -4718,6 +4744,7 @@ id showTitle
 id show_performance_metrics
 id simulate_button
 id sin
+id sizeText
 id skipCollapsed
 id skipped
 id slide
@@ -4877,6 +4904,7 @@ id symbol_row_1
 id symbol_row_2
 id symbol_row_3
 id symbol_view_flipper
+id tabLayout
 id tabMode
 id tab_layout
 id tableModules
@@ -4895,6 +4923,7 @@ id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
 id tagsLayout
 id tags_text
+id taskText
 id test_button
 id test_edit_text
 id text
@@ -5194,6 +5223,7 @@ layout activity_log_detail
 layout activity_main
 layout activity_main_settings
 layout activity_mnn_main
+layout activity_model_library
 layout activity_order
 layout activity_overlay_tool
 layout activity_pinyin_test
@@ -5256,6 +5286,8 @@ layout item_holder_assistant
 layout item_holder_chatheader
 layout item_holder_user
 layout item_llm_model
+layout item_local_model
+layout item_online_model
 layout item_option
 layout item_phrase_list
 layout item_phrase_simple
