@@ -31,6 +31,7 @@ import java.util.Date
 import java.util.Locale
 import com.alibaba.mls.api.ApplicationProvider
 import com.shenji.aikeyboard.mnn.utils.CrashUtil
+import com.shenji.aikeyboard.ui.FloatingWindowManager
 
 class ShenjiApplication : MultiDexApplication() {
     
@@ -173,6 +174,9 @@ class ShenjiApplication : MultiDexApplication() {
                     Timber.e(e, "优化候选词引擎初始化失败")
                 }
             }
+            
+            // 初始化悬浮窗管理器并自动启动（如果已启用）
+            initFloatingWindow()
             
             logStartupMessage("应用初始化完成")
             Timber.d("应用初始化完成")
@@ -603,6 +607,40 @@ class ShenjiApplication : MultiDexApplication() {
             logStartupMessage("内存状态: 最大=$maxMem MB, 已分配=$totalMem MB, 已使用=$usedMem MB, 空闲=$freeMem MB")
         } catch (e: Exception) {
             logStartupMessage("记录内存信息失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 初始化悬浮窗功能
+     */
+    private fun initFloatingWindow() {
+        try {
+            logStartupMessage("开始初始化悬浮窗功能...")
+            
+            val floatingWindowManager = FloatingWindowManager.getInstance(this)
+            
+            // 检查是否已启用悬浮窗
+            if (floatingWindowManager.isFloatingWindowEnabled()) {
+                logStartupMessage("悬浮窗已启用，尝试自动启动...")
+                
+                // 延迟启动悬浮窗，确保应用完全启动后再显示
+                Handler(Looper.getMainLooper()).postDelayed({
+                    try {
+                        floatingWindowManager.startFloatingWindow()
+                        logStartupMessage("悬浮窗自动启动成功")
+                    } catch (e: Exception) {
+                        logStartupMessage("悬浮窗自动启动失败: ${e.message}")
+                        Timber.e(e, "悬浮窗自动启动失败")
+                    }
+                }, 3000) // 延迟3秒启动
+                
+            } else {
+                logStartupMessage("悬浮窗未启用，跳过自动启动")
+            }
+            
+        } catch (e: Exception) {
+            logStartupMessage("初始化悬浮窗功能失败: ${e.message}")
+            Timber.e(e, "初始化悬浮窗功能失败")
         }
     }
 }

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="end">
+
+    <!-- 展开菜单容器 -->
+    <LinearLayout
+        android:id="@+id/menu_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/floating_menu_background">
+
+        <!-- AI分析按钮 -->
+        <LinearLayout
+            android:id="@+id/ai_analysis_button"
+            android:layout_width="120dp"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="12dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_ai_analysis"
+                android:layout_marginEnd="8dp"
+                android:tint="@android:color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AI分析"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <!-- 分割线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#33FFFFFF"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp" />
+
+        <!-- 设置按钮 -->
+        <LinearLayout
+            android:id="@+id/settings_button"
+            android:layout_width="120dp"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="12dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_settings"
+                android:layout_marginEnd="8dp"
+                android:tint="@android:color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="设置"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 主悬浮按钮 -->
+    <ImageView
+        android:id="@+id/floating_button"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:src="@drawable/ic_floating_button"
+        android:background="@drawable/floating_button_background"
+        android:scaleType="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="8dp" />
+
+</LinearLayout> 

@@ -35,6 +35,9 @@
     <!-- LLM集成相关权限 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    
+    <!-- 悬浮窗权限 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:name=".ShenjiApplication"
@@ -195,6 +198,12 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        
+        <!-- 悬浮窗服务 -->
+        <service
+            android:name=".ui.FloatingWindowService"
+            android:enabled="true"
+            android:exported="false" />
 
         <!-- 输入法设置活动 -->
         <activity

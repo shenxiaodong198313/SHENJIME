@@ -3530,8 +3530,11 @@ drawable design_password_eye
 drawable design_snackbar_background
 drawable download
 drawable edit_text_background
+drawable floating_button_background
+drawable floating_menu_background
 drawable gemma_icon
 drawable ic_add
+drawable ic_ai_analysis
 drawable ic_ai_assistant
 drawable ic_ai_avatar
 drawable ic_ai_model
@@ -3574,6 +3577,7 @@ drawable ic_du_icon
 drawable ic_edit
 drawable ic_emoji
 drawable ic_export
+drawable ic_floating_button
 drawable ic_github
 drawable ic_github_tint
 drawable ic_image
@@ -3710,6 +3714,7 @@ drawable phrase_item_background
 drawable preference_list_divider_material
 drawable progress_m2_style
 drawable qwen_icon
+drawable settings_section_background
 drawable shape_button
 drawable shape_tag_view
 drawable smart_tips_background
@@ -3825,6 +3830,7 @@ id actions
 id activity_chooser_view_content
 id add
 id aiTestButtonContainer
+id ai_analysis_button
 id ai_status_icon
 id alertTitle
 id aligned
@@ -4223,6 +4229,7 @@ id fitXY
 id fixed
 id flip
 id floating
+id floating_button
 id forever
 id fragment_container
 id fragment_container_view_tag
@@ -4438,6 +4445,7 @@ id memory_usage_text
 id menu_delete_model
 id menu_item_benchmark_test
 id menu_item_model_settings
+id menu_layout
 id menu_pause_download
 id menu_settings
 id menu_start_download
@@ -4692,6 +4700,7 @@ id seekbar_value
 id select_dialog_listview
 id selected
 id selection_type
+id settings_button
 id settings_container
 id settings_scroll_view
 id sharedValueSet
@@ -4787,6 +4796,7 @@ id switch_c_ch
 id switch_en_eng
 id switch_f_h
 id switch_feng_hong
+id switch_floating_window
 id switch_fu_hu
 id switch_fuzzy_enabled
 id switch_huang_wang
@@ -5219,6 +5229,7 @@ layout dialog_database_info
 layout dialog_dictionary_settings
 layout dialog_export_settings
 layout expand_button
+layout floating_button_layout
 layout fragment_choose_dataset
 layout fragment_historylist
 layout fragment_log_viewer

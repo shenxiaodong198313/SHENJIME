@@ -9,10 +9,12 @@ import android.widget.Toast
 import android.widget.ImageView
 import android.widget.ImageButton
 import android.widget.FrameLayout
+import android.widget.Switch
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
 import com.shenji.aikeyboard.R
+import com.shenji.aikeyboard.ui.FloatingWindowManager
 import timber.log.Timber
 
 class InputMethodSettingsActivity : AppCompatActivity() {
@@ -21,6 +23,8 @@ class InputMethodSettingsActivity : AppCompatActivity() {
     private lateinit var btnSetDefaultIme: Button
     private lateinit var appIconTop: ImageView
     private lateinit var btnFuzzySettings: ImageButton
+    private lateinit var switchFloatingWindow: Switch
+    private lateinit var floatingWindowManager: FloatingWindowManager
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +36,9 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         
         // 隐藏ActionBar
         supportActionBar?.hide()
+        
+        // 初始化悬浮窗管理器
+        floatingWindowManager = FloatingWindowManager.getInstance(this)
         
         // 初始化UI元素
         initUI()
@@ -83,6 +90,9 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         btnFuzzySettings.setOnClickListener {
             openFuzzyPinyinSettings()
         }
+        
+        // 设置悬浮窗开关
+        setupFloatingWindowSwitch()
     }
     
     /**
@@ -268,6 +278,36 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Timber.e(e, "打开模糊音设置页面失败")
             Toast.makeText(this, "打开模糊音设置失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 设置悬浮窗开关
+     */
+    private fun setupFloatingWindowSwitch() {
+        switchFloatingWindow = findViewById(R.id.switch_floating_window)
+        
+        // 设置初始状态
+        switchFloatingWindow.isChecked = floatingWindowManager.isFloatingWindowEnabled()
+        
+        // 设置开关监听器
+        switchFloatingWindow.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                // 检查权限
+                if (floatingWindowManager.checkAndRequestPermission()) {
+                    // 有权限，直接启用
+                    floatingWindowManager.setFloatingWindowEnabled(true)
+                    Toast.makeText(this, "悬浮窗已启用", Toast.LENGTH_SHORT).show()
+                } else {
+                    // 没有权限，重置开关状态
+                    switchFloatingWindow.isChecked = false
+                    Toast.makeText(this, "请先授权悬浮窗权限", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                // 禁用悬浮窗
+                floatingWindowManager.setFloatingWindowEnabled(false)
+                Toast.makeText(this, "悬浮窗已禁用", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 } 
