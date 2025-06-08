@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
     id("io.realm.kotlin")
 }
 
@@ -46,6 +47,11 @@ android {
     buildFeatures {
         viewBinding = true
         dataBinding = true
+        compose = true
+    }
+    
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
     }
     
     // CMake外部构建配置 - 支持MNN
@@ -109,8 +115,8 @@ dependencies {
     
     // MediaPipe LLM集成
     implementation("com.google.mediapipe:tasks-genai:0.10.24")
+    implementation("com.google.mediapipe:tasks-vision:0.10.15")
     
-
     // OkHttp和Retrofit已在MNN依赖中包含，无需重复添加
     
     // MNN相关依赖 - 严格按照kaifa项目配置
@@ -154,6 +160,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:$jetpackComposeVersion")
     debugImplementation("androidx.compose.ui:ui-tooling:$jetpackComposeVersion")
     implementation("androidx.compose.material3:material3:1.3.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     
     // 数据绑定
     implementation("androidx.databinding:databinding-runtime:8.7.0")

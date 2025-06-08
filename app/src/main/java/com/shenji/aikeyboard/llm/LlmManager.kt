@@ -168,36 +168,36 @@ class LlmManager private constructor(private val context: Context) {
                         GEMMA3_MODEL_FILE_NAME,
                         "/sdcard/shenji_models/gemma3-1b-it-int4.task"
                     )
-                    
+            
                     Log.d(TAG, "获取Gemma3分词器文件...")
                     val tokenizerFile = getModelFile(
                         GEMMA3_TOKENIZER_ASSET_PATH, 
                         GEMMA3_TOKENIZER_FILE_NAME,
                         "/sdcard/shenji_models/tokenizer.model"
                     )
-                    
-                    // 验证文件是否存在
-                    if (!modelFile.exists()) {
+            
+            // 验证文件是否存在
+            if (!modelFile.exists()) {
                         Log.e(TAG, "Gemma3模型文件不存在: ${modelFile.absolutePath}")
-                        return@withContext false
-                    }
-                    
-                    if (!tokenizerFile.exists()) {
+                return@withContext false
+            }
+            
+            if (!tokenizerFile.exists()) {
                         Log.e(TAG, "Gemma3分词器文件不存在: ${tokenizerFile.absolutePath}")
-                        return@withContext false
-                    }
-                    
+                return@withContext false
+            }
+            
                     Log.d(TAG, "Gemma3模型文件路径: ${modelFile.absolutePath}")
                     Log.d(TAG, "Gemma3分词器文件路径: ${tokenizerFile.absolutePath}")
-                    
-                    // 创建LLM推理选项
-                    val options = LlmInference.LlmInferenceOptions.builder()
-                        .setModelPath(modelFile.absolutePath)
-                        .setMaxTokens(1024)
-                        .setMaxTopK(40)
-                        .build()
-                    
-                    // 初始化LLM推理引擎
+            
+            // 创建LLM推理选项
+            val options = LlmInference.LlmInferenceOptions.builder()
+                .setModelPath(modelFile.absolutePath)
+                .setMaxTokens(1024)
+                .setMaxTopK(40)
+                .build()
+            
+            // 初始化LLM推理引擎
                     Log.d(TAG, "创建Gemma3 LLM推理引擎...")
                     llmInference = LlmInference.createFromOptions(context, options)
                 }
@@ -228,7 +228,7 @@ class LlmManager private constructor(private val context: Context) {
                     
                     // 初始化LLM推理引擎
                     Log.d(TAG, "创建Gemma3n LLM推理引擎...")
-                    llmInference = LlmInference.createFromOptions(context, options)
+            llmInference = LlmInference.createFromOptions(context, options)
                 }
             }
             

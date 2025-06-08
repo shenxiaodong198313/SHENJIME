@@ -169,52 +169,7 @@ class SplashActivity : AppCompatActivity() {
         // 添加到容器
         buttonContainer.addView(buildDictButton)
         
-        // 创建MNN推理框架按钮
-        val mnnButton = Button(this)
-        mnnButton.text = "MNN移动推理框架"
-        mnnButton.textSize = 16f
-        mnnButton.setTextColor(getColor(R.color.splash_background_color))
-        
-        // 创建蓝色背景
-        val blueBackground = android.graphics.drawable.GradientDrawable()
-        blueBackground.setColor(android.graphics.Color.parseColor("#2196F3")) // Material Blue
-        blueBackground.cornerRadius = 24 * resources.displayMetrics.density
-        blueBackground.setStroke((2 * resources.displayMetrics.density).toInt(), android.graphics.Color.parseColor("#2196F3"))
-        
-        // 应用背景和样式
-        mnnButton.background = blueBackground
-        mnnButton.elevation = 0f
-        mnnButton.stateListAnimator = null
-        mnnButton.setTextColor(android.graphics.Color.WHITE)
-        
-        // 移除Material Design效果
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            mnnButton.outlineProvider = null
-        }
-        
-        // 设置按钮尺寸和位置 - 下方按钮
-        val layoutParams2 = android.widget.FrameLayout.LayoutParams(
-            (200 * resources.displayMetrics.density).toInt(), // 200dp宽度
-            (48 * resources.displayMetrics.density).toInt()   // 48dp高度
-        )
-        layoutParams2.gravity = android.view.Gravity.CENTER_HORIZONTAL or android.view.Gravity.TOP
-        layoutParams2.topMargin = (70 * resources.displayMetrics.density).toInt() // 距离容器顶部70dp（第一个按钮下方）
-        mnnButton.layoutParams = layoutParams2
-        
-        // 初始时隐藏按钮
-        mnnButton.alpha = 0f
-        
-        // 设置点击事件 - 启动MNN主Activity
-        mnnButton.setOnClickListener {
-            startMnnActivity()
-        }
-        
-        // 添加到容器
-        buttonContainer.addView(mnnButton)
-        
-
-        
-        Timber.d("按钮创建完成：词典构建按钮（白色）、MNN推理框架按钮（蓝色）")
+        Timber.d("按钮创建完成：词典构建按钮（白色）")
         Timber.d("buttonContainer子视图数量: ${buttonContainer.childCount}")
         
         // 验证按钮是否正确添加
@@ -697,11 +652,14 @@ class SplashActivity : AppCompatActivity() {
         
         // 显示所有按钮
         val mnnButton = buttonContainer.getChildAt(1)
+        val gemma3nButton = buttonContainer.getChildAt(2)
         
         mnnButton?.alpha = 1f // MNN按钮
+        gemma3nButton?.alpha = 1f // Gemma-3n按钮
         
-        Timber.d("显示按钮 - MNN按钮: ${mnnButton != null}")
+        Timber.d("显示按钮 - MNN按钮: ${mnnButton != null}, Gemma-3n按钮: ${gemma3nButton != null}")
         if (mnnButton is Button) Timber.d("MNN按钮文本: ${mnnButton.text}")
+        if (gemma3nButton is Button) Timber.d("Gemma-3n按钮文本: ${gemma3nButton.text}")
         
         // 获取屏幕高度
         val screenHeight = resources.displayMetrics.heightPixels
@@ -1210,24 +1168,7 @@ class SplashActivity : AppCompatActivity() {
         }
     }
     
-    /**
-     * 启动MNN移动推理框架
-     */
-    private fun startMnnActivity() {
-        try {
-            val intent = Intent(this, MnnMainActivity::class.java)
-            startActivity(intent)
-            
-            // 添加淡入淡出动画
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-            
-            Timber.d("启动MNN移动推理框架")
-        } catch (e: Exception) {
-            Timber.e(e, "启动MNN Activity失败")
-            // 显示错误提示
-            detailText.text = "启动MNN框架失败: ${e.message}"
-        }
-    }
+
     
 
 

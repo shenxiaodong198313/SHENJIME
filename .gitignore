@@ -65,3 +65,4 @@ app/build/intermediates/assets/debug/mergeDebugAssets/cn_dicts/associational.dic
 *.apk
 app/build/outputs/apk/debug/app-debug.apk
 app/src/main/assets/llm_models/gemma3-1b-it-int4.task
+*.apk

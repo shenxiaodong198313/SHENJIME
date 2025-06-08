@@ -27,6 +27,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final ImageView appIconTop;
 
   @NonNull
+  public final FrameLayout gemma3nButtonContainer;
+
+  @NonNull
   public final FrameLayout inputMethodSettingsButtonContainer;
 
   @NonNull
@@ -40,6 +43,7 @@ public final class ActivityMainBinding implements ViewBinding {
 
   private ActivityMainBinding(@NonNull LinearLayout rootView,
       @NonNull FrameLayout aiTestButtonContainer, @NonNull ImageView appIconTop,
+      @NonNull FrameLayout gemma3nButtonContainer,
       @NonNull FrameLayout inputMethodSettingsButtonContainer,
       @NonNull FrameLayout logDetailButtonContainer,
       @NonNull FrameLayout mnnInferenceButtonContainer,
@@ -47,6 +51,7 @@ public final class ActivityMainBinding implements ViewBinding {
     this.rootView = rootView;
     this.aiTestButtonContainer = aiTestButtonContainer;
     this.appIconTop = appIconTop;
+    this.gemma3nButtonContainer = gemma3nButtonContainer;
     this.inputMethodSettingsButtonContainer = inputMethodSettingsButtonContainer;
     this.logDetailButtonContainer = logDetailButtonContainer;
     this.mnnInferenceButtonContainer = mnnInferenceButtonContainer;
@@ -92,6 +97,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.gemma3nButtonContainer;
+      FrameLayout gemma3nButtonContainer = ViewBindings.findChildViewById(rootView, id);
+      if (gemma3nButtonContainer == null) {
+        break missingId;
+      }
+
       id = R.id.inputMethodSettingsButtonContainer;
       FrameLayout inputMethodSettingsButtonContainer = ViewBindings.findChildViewById(rootView, id);
       if (inputMethodSettingsButtonContainer == null) {
@@ -117,8 +128,8 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((LinearLayout) rootView, aiTestButtonContainer, appIconTop,
-          inputMethodSettingsButtonContainer, logDetailButtonContainer, mnnInferenceButtonContainer,
-          optimizedCandidateTestButtonContainer);
+          gemma3nButtonContainer, inputMethodSettingsButtonContainer, logDetailButtonContainer,
+          mnnInferenceButtonContainer, optimizedCandidateTestButtonContainer);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

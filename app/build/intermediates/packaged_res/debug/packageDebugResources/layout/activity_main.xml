@@ -68,7 +68,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
-
+        <!-- Gemma-3n按钮容器 -->
+        <FrameLayout
+            android:id="@+id/gemma3nButtonContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
 
     </LinearLayout>
 

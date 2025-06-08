@@ -153,7 +153,11 @@ class MainActivity : AppCompatActivity() {
                 "MNN AI助手"
             ) { openMnnInference() }
             
-
+            // Gemma-3n按钮 - 新增
+            createGreenButton(
+                R.id.gemma3nButtonContainer,
+                "Gemma-3n"
+            ) { openGemma3nChat() }
             
             Log.d("MainActivity", "所有按钮创建完成")
         } catch (e: Exception) {
@@ -223,6 +227,49 @@ class MainActivity : AppCompatActivity() {
         
         // 应用背景和样式
         button.background = purpleBackground
+        button.elevation = 0f
+        button.stateListAnimator = null
+        
+        // 移除Material Design效果
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            button.outlineProvider = null
+        }
+        
+        // 设置按钮尺寸
+        val layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            (56 * resources.displayMetrics.density).toInt() // 56dp高度
+        )
+        button.layoutParams = layoutParams
+        
+        // 设置点击事件
+        button.setOnClickListener { onClick() }
+        
+        // 添加到容器
+        container.addView(button)
+        
+        return button
+    }
+    
+    /**
+     * 创建绿色背景按钮
+     */
+    private fun createGreenButton(containerId: Int, text: String, onClick: () -> Unit): Button {
+        val container = findViewById<FrameLayout>(containerId)
+        val button = Button(this)
+        
+        // 设置按钮文本和样式
+        button.text = text
+        button.textSize = 16f
+        button.setTextColor(android.graphics.Color.WHITE)
+        
+        // 创建绿色背景
+        val greenBackground = android.graphics.drawable.GradientDrawable()
+        greenBackground.setColor(android.graphics.Color.parseColor("#4CAF50")) // Material Green
+        greenBackground.cornerRadius = 12 * resources.displayMetrics.density
+        
+        // 应用背景和样式
+        button.background = greenBackground
         button.elevation = 0f
         button.stateListAnimator = null
         
@@ -318,7 +365,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-
+    /**
+     * 打开Gemma-3n聊天界面
+     */
+    private fun openGemma3nChat() {
+        try {
+            Timber.d("打开Gemma-3n聊天界面")
+            val intent = Intent(this, com.shenji.aikeyboard.gallery.Gemma3nChatActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开Gemma-3n聊天界面失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开Gemma-3n聊天界面: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
     
     /**
      * 启动后台词典加载
