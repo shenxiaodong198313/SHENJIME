@@ -8,6 +8,9 @@ import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
 import com.google.mediapipe.tasks.genai.llminference.GraphOptions
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -142,6 +145,123 @@ class MediaPipeMultimodalEngine {
         }
         
         return@withContext runInference(text, null)
+    }
+    
+    /**
+     * 流式分析图片，使用Channel实现真正的流式输出
+     */
+    fun analyzeImageStream(bitmap: Bitmap, question: String): Flow<String> = 
+        channelFlow {
+            try {
+                if (!isInitialized) {
+                    send("❌ AI引擎未初始化")
+                    return@channelFlow
+                }
+                
+                val session = llmSession ?: throw IllegalStateException("推理会话未初始化")
+                
+                Timber.d("$TAG: 开始流式推理 - 文本: '$question', 图片: ${bitmap.width}x${bitmap.height}")
+                
+                // 添加查询文本
+                session.addQueryChunk(question)
+                
+                // 添加图片
+                try {
+                    val mpImage = BitmapImageBuilder(bitmap).build()
+                    session.addImage(mpImage)
+                    Timber.d("$TAG: 成功添加图片到流式推理")
+                } catch (e: Exception) {
+                    Timber.e(e, "$TAG: 添加图片到流式推理失败")
+                    send("❌ 图片处理失败: ${e.message}")
+                    return@channelFlow
+                }
+                
+                // 使用suspendCancellableCoroutine包装异步推理
+                suspendCancellableCoroutine<Unit> { continuation ->
+                    session.generateResponseAsync { partialResult, done ->
+                        try {
+                            if (partialResult != null && partialResult.isNotEmpty()) {
+                                // 使用trySend安全地发送数据
+                                val result = trySend(partialResult)
+                                if (result.isFailure) {
+                                    Timber.w("$TAG: 发送流式数据失败: ${result.exceptionOrNull()}")
+                                }
+                            }
+                            
+                            if (done) {
+                                Timber.d("$TAG: 流式推理完成")
+                                if (continuation.isActive) {
+                                    continuation.resume(Unit)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Timber.e(e, "$TAG: 处理流式推理结果时出错")
+                            if (continuation.isActive) {
+                                continuation.resumeWith(Result.failure(e))
+                            }
+                        }
+                    }
+                    
+                    // 设置取消回调
+                    continuation.invokeOnCancellation {
+                        Timber.d("$TAG: 流式推理被取消")
+                    }
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "$TAG: 启动流式推理失败")
+                send("❌ 启动流式推理失败: ${e.message}")
+            }
+        }.flowOn(Dispatchers.IO)
+    
+    /**
+     * 流式分析图片，使用回调方式实现
+     */
+    fun analyzeImageStreamWithCallback(bitmap: Bitmap, prompt: String, callback: (String) -> Unit) {
+        try {
+            if (!isInitialized) {
+                callback("❌ AI引擎未初始化")
+                return
+            }
+            
+            val session = llmSession ?: throw IllegalStateException("推理会话未初始化")
+            
+            Timber.d("$TAG: 开始流式推理 - 文本: '$prompt', 图片: ${bitmap.width}x${bitmap.height}")
+            
+            // 添加查询文本
+            session.addQueryChunk(prompt)
+            
+            // 添加图片
+            try {
+                val mpImage = BitmapImageBuilder(bitmap).build()
+                session.addImage(mpImage)
+                Timber.d("$TAG: 成功添加图片到流式推理")
+            } catch (e: Exception) {
+                Timber.e(e, "$TAG: 添加图片到流式推理失败")
+                callback("❌ 图片处理失败: ${e.message}")
+                return
+            }
+            
+            // 开始异步推理
+            session.generateResponseAsync { partialResult, done ->
+                try {
+                    if (partialResult != null && partialResult.isNotEmpty()) {
+                        callback(partialResult)
+                    }
+                    
+                    if (done) {
+                        Timber.d("$TAG: 流式推理完成")
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "$TAG: 处理流式推理结果时出错")
+                    callback("❌ 处理推理结果时出错: ${e.message}")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: 启动流式推理失败")
+            callback("❌ 启动流式推理失败: ${e.message}")
+        }
     }
     
     /**

@@ -46,6 +46,12 @@
     <!-- 悬浮窗权限 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
+    <!-- 屏幕录制/截图权限 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
+    <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
     <permission
         android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />
@@ -160,6 +166,31 @@
             android:label="AI功能测试"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- AI分析功能测试活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.TestAIAnalysisActivity"
+            android:exported="true"
+            android:label="AI分析功能测试"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- AI屏幕分析活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.AIAnalysisActivity"
+            android:exported="false"
+            android:label="AI屏幕分析"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.OverlayTool"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
+        <!-- AI微信对话分析活动 -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.WeChatAnalysisActivity"
+            android:exported="false"
+            android:label="AI微信对话分析"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.OverlayTool"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
         <!-- 工具栏页面Activity -->
         <activity
             android:name="com.shenji.aikeyboard.ui.OverlayToolActivity"
@@ -246,7 +277,8 @@
         <service
             android:name="com.shenji.aikeyboard.ui.FloatingWindowService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
 
         <!-- 输入法设置活动 -->
         <activity

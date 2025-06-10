@@ -1,5 +1,6 @@
 package com.shenji.aikeyboard.settings
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -10,14 +11,20 @@ import android.widget.ImageView
 import android.widget.ImageButton
 import android.widget.FrameLayout
 import android.widget.Switch
+import android.widget.TextView
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ui.FloatingWindowManager
+import com.shenji.aikeyboard.ui.ScreenCapturePermissionManager
 import timber.log.Timber
 
 class InputMethodSettingsActivity : AppCompatActivity() {
+
+    companion object {
+        private const val REQUEST_CODE_SCREEN_CAPTURE = 2001
+    }
 
     private lateinit var btnEnableIme: Button
     private lateinit var btnSetDefaultIme: Button
@@ -25,6 +32,15 @@ class InputMethodSettingsActivity : AppCompatActivity() {
     private lateinit var btnFuzzySettings: ImageButton
     private lateinit var switchFloatingWindow: Switch
     private lateinit var floatingWindowManager: FloatingWindowManager
+    
+    // 屏幕录制权限相关UI
+    private lateinit var tvPermissionStatus: TextView
+    private lateinit var ivPermissionIcon: ImageView
+    private lateinit var btnGrantPermission: Button
+    private lateinit var btnClearPermission: Button
+    
+    // 权限管理器
+    private lateinit var permissionManager: ScreenCapturePermissionManager
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,20 +53,46 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         // 隐藏ActionBar
         supportActionBar?.hide()
         
-        // 初始化悬浮窗管理器
+        // 初始化管理器
         floatingWindowManager = FloatingWindowManager.getInstance(this)
+        permissionManager = ScreenCapturePermissionManager.getInstance(this)
         
         // 初始化UI元素
         initUI()
         
         // 检测输入法状态并更新按钮
         updateButtonStates()
+        
+        // 更新权限状态显示
+        updatePermissionStatus()
     }
     
     override fun onResume() {
         super.onResume()
         // 每次回到页面时更新按钮状态
         updateButtonStates()
+        // 更新权限状态
+        updatePermissionStatus()
+    }
+    
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        
+        if (requestCode == REQUEST_CODE_SCREEN_CAPTURE) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                try {
+                    // 保存屏幕录制权限
+                    permissionManager.savePermission(resultCode, data)
+                    updatePermissionStatus()
+                    Toast.makeText(this, "屏幕录制权限授权成功！", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Timber.e(e, "保存屏幕录制权限失败")
+                    Toast.makeText(this, "权限授权失败：${e.message}", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(this, "用户拒绝了屏幕录制权限", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
     
     /**
@@ -93,6 +135,9 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         
         // 设置悬浮窗开关
         setupFloatingWindowSwitch()
+        
+        // 设置屏幕录制权限相关UI
+        setupScreenCapturePermissionUI()
     }
     
     /**
@@ -308,6 +353,93 @@ class InputMethodSettingsActivity : AppCompatActivity() {
                 floatingWindowManager.setFloatingWindowEnabled(false)
                 Toast.makeText(this, "悬浮窗已禁用", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+    
+    /**
+     * 设置屏幕录制权限相关UI
+     */
+    private fun setupScreenCapturePermissionUI() {
+        tvPermissionStatus = findViewById(R.id.tv_permission_status)
+        ivPermissionIcon = findViewById(R.id.iv_permission_icon)
+        btnGrantPermission = findViewById(R.id.btn_grant_permission)
+        btnClearPermission = findViewById(R.id.btn_clear_permission)
+        
+        // 设置授权按钮点击事件
+        btnGrantPermission.setOnClickListener {
+            requestScreenCapturePermission()
+        }
+        
+        // 设置清除权限按钮点击事件
+        btnClearPermission.setOnClickListener {
+            clearScreenCapturePermission()
+        }
+    }
+    
+    /**
+     * 请求屏幕录制权限
+     */
+    private fun requestScreenCapturePermission() {
+        try {
+            val intent = permissionManager.createScreenCaptureIntent()
+            startActivityForResult(intent, REQUEST_CODE_SCREEN_CAPTURE)
+        } catch (e: Exception) {
+            Timber.e(e, "请求屏幕录制权限失败")
+            Toast.makeText(this, "请求权限失败：${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    /**
+     * 清除屏幕录制权限
+     */
+    private fun clearScreenCapturePermission() {
+        try {
+            permissionManager.clearPermission()
+            updatePermissionStatus()
+            Toast.makeText(this, "已清除屏幕录制权限", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Timber.e(e, "清除屏幕录制权限失败")
+            Toast.makeText(this, "清除权限失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 更新权限状态显示
+     */
+    private fun updatePermissionStatus() {
+        val hasPermission = permissionManager.hasStoredPermission()
+        val isValid = permissionManager.isPermissionValid()
+        
+        // 添加调试日志
+        Timber.d("更新权限状态：hasPermission=$hasPermission, isValid=$isValid")
+        
+        if (hasPermission && isValid) {
+            // 权限已授权且有效
+            tvPermissionStatus.text = "权限状态：已授权"
+            ivPermissionIcon.setImageResource(android.R.drawable.ic_dialog_info)
+            ivPermissionIcon.setColorFilter(getColor(android.R.color.holo_green_light))
+            btnGrantPermission.isEnabled = false
+            btnGrantPermission.text = "权限已授权"
+            btnClearPermission.isEnabled = true
+            Timber.d("权限状态显示为：已授权")
+        } else if (hasPermission && !isValid) {
+            // 权限已保存但失效
+            tvPermissionStatus.text = "权限状态：已失效"
+            ivPermissionIcon.setImageResource(android.R.drawable.ic_dialog_alert)
+            ivPermissionIcon.setColorFilter(getColor(android.R.color.holo_orange_light))
+            btnGrantPermission.isEnabled = true
+            btnGrantPermission.text = "重新授权"
+            btnClearPermission.isEnabled = true
+            Timber.d("权限状态显示为：已失效")
+        } else {
+            // 未授权
+            tvPermissionStatus.text = "权限状态：未授权"
+            ivPermissionIcon.setImageResource(android.R.drawable.ic_dialog_alert)
+            ivPermissionIcon.setColorFilter(getColor(android.R.color.holo_red_light))
+            btnGrantPermission.isEnabled = true
+            btnGrantPermission.text = "授权屏幕录制"
+            btnClearPermission.isEnabled = false
+            Timber.d("权限状态显示为：未授权")
         }
     }
 } 

@@ -58,88 +58,193 @@
         android:layout_marginTop="80dp" />
 
     <!-- 主要按钮容器 -->
-    <LinearLayout
-        android:id="@+id/mainButtonContainer"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@+id/appIconTop"
         android:layout_marginTop="60dp"
-        android:orientation="vertical">
+        android:scrollbars="vertical">
 
-        <!-- 第一步：勾选神迹输入法按钮 -->
-        <FrameLayout
-            android:id="@+id/btnEnableImeContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-        </FrameLayout>
-
-        <!-- 第二步：切换到神迹输入法按钮 -->
-        <FrameLayout
-            android:id="@+id/btnSetDefaultImeContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp">
-        </FrameLayout>
-
-        <!-- 悬浮窗设置区域 -->
         <LinearLayout
+            android:id="@+id/mainButtonContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/settings_section_background"
-            android:padding="16dp">
+            android:orientation="vertical">
 
-            <!-- 悬浮窗标题 -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- 第一步：勾选神迹输入法按钮 -->
+            <FrameLayout
+                android:id="@+id/btnEnableImeContainer"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="悬浮窗功能"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="16dp">
+            </FrameLayout>
 
-            <!-- 悬浮窗开关 -->
+            <!-- 第二步：切换到神迹输入法按钮 -->
+            <FrameLayout
+                android:id="@+id/btnSetDefaultImeContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp">
+            </FrameLayout>
+
+            <!-- 悬浮窗设置区域 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:orientation="vertical"
+                android:background="@drawable/settings_section_background"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
 
-                <LinearLayout
-                    android:layout_width="0dp"
+                <!-- 悬浮窗标题 -->
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:text="悬浮窗功能"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
 
-                    <TextView
+                <!-- 悬浮窗开关 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="启用悬浮窗"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="在屏幕右侧显示快捷按钮"
+                            android:textColor="#CCFFFFFF"
+                            android:textSize="12sp"
+                            android:layout_marginTop="2dp" />
+
+                    </LinearLayout>
+
+                    <Switch
+                        android:id="@+id/switch_floating_window"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="启用悬浮窗"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="在屏幕右侧显示快捷按钮"
-                        android:textColor="#CCFFFFFF"
-                        android:textSize="12sp"
-                        android:layout_marginTop="2dp" />
+                        android:layout_marginStart="16dp" />
 
                 </LinearLayout>
 
-                <Switch
-                    android:id="@+id/switch_floating_window"
+            </LinearLayout>
+
+            <!-- 屏幕录制权限设置区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/settings_section_background"
+                android:padding="16dp"
+                android:layout_marginBottom="32dp">
+
+                <!-- 屏幕录制权限标题 -->
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp" />
+                    android:text="屏幕录制权限"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- 权限状态显示 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_permission_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="权限状态：未授权"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="用于AI分析功能的屏幕截图"
+                            android:textColor="#CCFFFFFF"
+                            android:textSize="12sp"
+                            android:layout_marginTop="2dp" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/iv_permission_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_dialog_alert"
+                        android:tint="#FF9800"
+                        android:layout_marginStart="16dp" />
+
+                </LinearLayout>
+
+                <!-- 操作按钮区域 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <!-- 授权按钮 -->
+                    <Button
+                        android:id="@+id/btn_grant_permission"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:text="授权屏幕录制"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        android:background="@drawable/btn_permission_grant_background"
+                        android:layout_marginEnd="8dp" />
+
+                    <!-- 清除权限按钮 -->
+                    <Button
+                        android:id="@+id/btn_clear_permission"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:text="清除权限"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        android:background="@drawable/btn_permission_clear_background"
+                        android:layout_marginStart="8dp"
+                        android:enabled="false" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
         </LinearLayout>
 
-    </LinearLayout>
+    </ScrollView>
 
 </RelativeLayout> 

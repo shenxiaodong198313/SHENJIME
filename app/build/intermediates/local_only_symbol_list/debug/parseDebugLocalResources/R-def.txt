@@ -26,6 +26,7 @@ bool is_day_mode
 bool is_night_mode
 color accent_color
 color ai_message_background
+color analysis_result_text
 color app_theme_color
 color background_color
 color black
@@ -256,6 +257,7 @@ color secondary_gray
 color shimmer_color
 color splash_background_color
 color splash_text_color
+color status_text_color
 color success_green
 color surface_color
 color tag_background
@@ -293,6 +295,8 @@ dimen tag_padding_horizontal
 dimen tag_padding_vertical
 dimen ui_margin_medium
 drawable ai_suggestion_background
+drawable analysis_result_background
+drawable analysis_window_background
 drawable appcon
 drawable appicon
 drawable arrow_right
@@ -318,6 +322,10 @@ drawable bg_send_button
 drawable bg_size_tag
 drawable bg_user_message
 drawable btn_back_background
+drawable btn_close_background
+drawable btn_copy_background
+drawable btn_permission_clear_background
+drawable btn_permission_grant_background
 drawable btn_send_background
 drawable btn_white_background
 drawable button_danger
@@ -333,6 +341,7 @@ drawable candidate_word_bg
 drawable candidate_word_selected_bg
 drawable chatglm_icon
 drawable circle_background
+drawable contact_name_background
 drawable deepseek_icon
 drawable download
 drawable edit_text_background
@@ -410,6 +419,7 @@ drawable ic_think
 drawable ic_thinking
 drawable ic_toolbar_page
 drawable ic_translate
+drawable image_placeholder_background
 drawable input_background
 drawable internlm_icon
 drawable jina_icon
@@ -425,15 +435,20 @@ drawable logo_small
 drawable overlay_tool_background
 drawable phi_icon
 drawable phrase_item_background
+drawable progress_bar_custom
 drawable progress_m2_style
 drawable qwen_icon
+drawable screenshot_preview_background
 drawable search_background
+drawable send_reply_background
 drawable settings_section_background
 drawable shape_button
 drawable shape_tag_view
 drawable smart_tips_background
 drawable smolm_icon
 drawable splash_background
+drawable suggestion_background
+drawable summary_background
 drawable tag_background
 drawable testtest
 drawable tool_item_background
@@ -456,6 +471,7 @@ id action_vu_conversion_test
 id aiTestButtonContainer
 id ai_analysis_button
 id ai_status_icon
+id ai_wechat_analysis_button
 id analysisTextView
 id appIconTop
 id appSubtitle
@@ -517,10 +533,12 @@ id btnEnableImeContainer
 id btnExportRealm
 id btnFuzzySettings
 id btnRebuildRealm
+id btnRequestPermission
 id btnSelectImage
 id btnSend
 id btnSetDefaultImeContainer
 id btnStart
+id btnStartAnalysis
 id btnStartChat
 id btnSwitchModel
 id btnTestContinuation
@@ -530,8 +548,11 @@ id btnTestSemantic
 id btn_auto_send
 id btn_back
 id btn_clear
+id btn_clear_permission
 id btn_clear_results
+id btn_close
 id btn_copy
+id btn_grant_permission
 id btn_quick_test
 id btn_run_test
 id btn_send
@@ -546,6 +567,7 @@ id buttonContainer
 id buttonLayout
 id button_bar_layout
 id button_cancel
+id button_layout
 id button_reset
 id button_save
 id candidate_stats_text_view
@@ -755,7 +777,9 @@ id iv_delete_history
 id iv_download
 id iv_header
 id iv_item_icon
+id iv_permission_icon
 id iv_sampler_type_icon
+id iv_screenshot
 id iv_thinking_header
 id key_0
 id key_1
@@ -941,6 +965,7 @@ id popupImageView
 id popup_menu_root
 id progressBar
 id progressBarLoading
+id progress_bar
 id query_condition_text_view
 id query_process_text_view
 id realm_status_text
@@ -975,6 +1000,7 @@ id rv_candidates
 id sampler_spinner
 id scroll_view
 id seekbar
+id send_reply_button
 id settings_button
 id settings_container
 id settings_scroll_view
@@ -1129,6 +1155,7 @@ id text_voice_hint
 id thread_count_display
 id thread_count_seekbar
 id titleBar
+id title_bar
 id title_text
 id title_text_view
 id toolbar
@@ -1174,6 +1201,7 @@ id tv_chat_image
 id tv_chat_text
 id tv_chat_thinking
 id tv_chat_voice_duration
+id tv_contact_name
 id tv_date
 id tv_error_text
 id tv_frequency
@@ -1182,6 +1210,7 @@ id tv_item_title
 id tv_label_sampler_type
 id tv_message
 id tv_performance
+id tv_permission_status
 id tv_pinyin
 id tv_prompt
 id tv_rank
@@ -1193,6 +1222,9 @@ id tv_smart_tips
 id tv_source
 id tv_stage_results
 id tv_stage_title
+id tv_status
+id tv_suggestion
+id tv_summary
 id tv_thinking_header
 id tv_thread_num_label
 id tv_word
@@ -1201,6 +1233,7 @@ id view_assistant_loading
 id view_pager
 id visible
 id voice_recording_wav
+layout activity_ai_analysis
 layout activity_ai_test
 layout activity_chat
 layout activity_combination_test
@@ -1223,8 +1256,10 @@ layout activity_pinyin_test
 layout activity_select_text
 layout activity_smart_pinyin_mvp_test
 layout activity_splash
+layout activity_test_ai_analysis
 layout activity_trie_build
 layout activity_vu_conversion_test
+layout activity_wechat_analysis
 layout assistant_text_popup_menu
 layout candidates_view
 layout chat_more_menu_item

@@ -105,4 +105,8 @@
     <color name="text_color_secondary">#FF757575</color>
     <color name="surface_color">#FFFFFFFF</color>
     <color name="accent_color">#FF4CAF50</color>
+    
+    <!-- AI分析窗口颜色 -->
+    <color name="status_text_color">#CCFFFFFF</color>
+    <color name="analysis_result_text">#FFFFFF</color>
 </resources> 

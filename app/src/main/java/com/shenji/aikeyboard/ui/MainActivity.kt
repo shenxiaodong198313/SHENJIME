@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
             setupFullScreenMode()
             
             // 记录到系统日志
-            Log.i("MainActivity", "开始创建主界面")
+            Log.i(TAG, "开始创建主界面")
             
             setContentView(R.layout.activity_main)
             
@@ -53,6 +53,9 @@ class MainActivity : AppCompatActivity() {
             
             // 启动后台词典加载
             startBackgroundDictionaryLoading()
+            
+            // 启动悬浮窗服务
+            startFloatingWindowIfNeeded()
             
             Log.i("MainActivity", "主界面创建完成")
         } catch (e: Exception) {
@@ -405,5 +408,30 @@ class MainActivity : AppCompatActivity() {
                 Timber.e(e, "异步词典加载过程异常")
             }
         }
+    }
+    
+    /**
+     * 启动悬浮窗服务（如果有权限）
+     */
+    private fun startFloatingWindowIfNeeded() {
+        try {
+            val floatingManager = FloatingWindowManager.getInstance(this)
+            
+            // 检查是否有悬浮窗权限
+            if (FloatingWindowService.canDrawOverlays(this)) {
+                Timber.d("$TAG: Starting floating window service")
+                floatingManager.startFloatingWindow()
+                Toast.makeText(this, "悬浮窗已启动", Toast.LENGTH_SHORT).show()
+            } else {
+                Timber.d("$TAG: No floating window permission")
+                Toast.makeText(this, "需要悬浮窗权限才能使用AI分析功能", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Failed to start floating window")
+        }
+    }
+    
+    companion object {
+        private const val TAG = "MainActivity"
     }
 } 

@@ -38,6 +38,12 @@
     
     <!-- 悬浮窗权限 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    
+    <!-- 屏幕录制/截图权限 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
+    <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
     <application
         android:name=".ShenjiApplication"
@@ -124,6 +130,31 @@
             android:label="AI功能测试"
             android:windowSoftInputMode="adjustResize" />
             
+        <!-- AI分析功能测试活动 -->
+        <activity
+            android:name=".ui.TestAIAnalysisActivity"
+            android:exported="true"
+            android:label="AI分析功能测试"
+            android:windowSoftInputMode="adjustResize" />
+            
+        <!-- AI屏幕分析活动 -->
+        <activity
+            android:name=".ui.AIAnalysisActivity"
+            android:exported="false"
+            android:label="AI屏幕分析"
+            android:theme="@style/Theme.OverlayTool"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:launchMode="singleTop" />
+            
+        <!-- AI微信对话分析活动 -->
+        <activity
+            android:name=".ui.WeChatAnalysisActivity"
+            android:exported="false"
+            android:label="AI微信对话分析"
+            android:theme="@style/Theme.OverlayTool"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:launchMode="singleTop" />
+            
         <!-- 工具栏页面Activity -->
         <activity
             android:name=".ui.OverlayToolActivity"
@@ -209,11 +240,12 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
         
-        <!-- 悬浮窗服务 -->
-        <service
-            android:name=".ui.FloatingWindowService"
-            android:enabled="true"
-            android:exported="false" />
+            <!-- 悬浮窗服务 -->
+    <service
+        android:name=".ui.FloatingWindowService"
+        android:enabled="true"
+        android:exported="false"
+        android:foregroundServiceType="mediaProjection" />
 
         <!-- 输入法设置活动 -->
         <activity
