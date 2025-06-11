@@ -548,11 +548,10 @@ id btnTestSemantic
 id btn_auto_send
 id btn_back
 id btn_clear
-id btn_clear_permission
 id btn_clear_results
 id btn_close
 id btn_copy
-id btn_grant_permission
+id btn_open_accessibility_settings
 id btn_quick_test
 id btn_run_test
 id btn_send
@@ -770,6 +769,7 @@ id input_edit_text
 id input_layout_other_info
 id invisible
 id ivImagePreview
+id iv_accessibility_icon
 id iv_ai_icon
 id iv_audio_play_pause
 id iv_close
@@ -777,7 +777,6 @@ id iv_delete_history
 id iv_download
 id iv_header
 id iv_item_icon
-id iv_permission_icon
 id iv_sampler_type_icon
 id iv_screenshot
 id iv_thinking_header
@@ -1194,6 +1193,7 @@ id tvSelectContent
 id tvStatus
 id tvTypingIndicator
 id tvWord
+id tv_accessibility_status
 id tv_candidate_weight
 id tv_candidate_word
 id tv_chat_benchmark
@@ -1210,7 +1210,6 @@ id tv_item_title
 id tv_label_sampler_type
 id tv_message
 id tv_performance
-id tv_permission_status
 id tv_pinyin
 id tv_prompt
 id tv_rank

@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ui.FloatingWindowManager
 import com.shenji.aikeyboard.ui.ScreenCapturePermissionManager
+import com.shenji.aikeyboard.utils.AutofillAccessibilityService
 import timber.log.Timber
 
 class InputMethodSettingsActivity : AppCompatActivity() {
@@ -33,11 +34,10 @@ class InputMethodSettingsActivity : AppCompatActivity() {
     private lateinit var switchFloatingWindow: Switch
     private lateinit var floatingWindowManager: FloatingWindowManager
     
-    // 屏幕录制权限相关UI
-    private lateinit var tvPermissionStatus: TextView
-    private lateinit var ivPermissionIcon: ImageView
-    private lateinit var btnGrantPermission: Button
-    private lateinit var btnClearPermission: Button
+    // 无障碍服务相关UI
+    private lateinit var tvAccessibilityStatus: TextView
+    private lateinit var ivAccessibilityIcon: ImageView
+    private lateinit var btnOpenAccessibilitySettings: Button
     
     // 权限管理器
     private lateinit var permissionManager: ScreenCapturePermissionManager
@@ -63,36 +63,23 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         // 检测输入法状态并更新按钮
         updateButtonStates()
         
-        // 更新权限状态显示
-        updatePermissionStatus()
+        // 更新无障碍服务状态显示
+        updateAccessibilityStatus()
     }
     
     override fun onResume() {
         super.onResume()
         // 每次回到页面时更新按钮状态
         updateButtonStates()
-        // 更新权限状态
-        updatePermissionStatus()
+        // 更新无障碍服务状态
+        updateAccessibilityStatus()
     }
     
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         
-        if (requestCode == REQUEST_CODE_SCREEN_CAPTURE) {
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                try {
-                    // 保存屏幕录制权限
-                    permissionManager.savePermission(resultCode, data)
-                    updatePermissionStatus()
-                    Toast.makeText(this, "屏幕录制权限授权成功！", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Timber.e(e, "保存屏幕录制权限失败")
-                    Toast.makeText(this, "权限授权失败：${e.message}", Toast.LENGTH_LONG).show()
-                }
-            } else {
-                Toast.makeText(this, "用户拒绝了屏幕录制权限", Toast.LENGTH_SHORT).show()
-            }
-        }
+        // 保留此方法但移除屏幕录制权限处理，因为现在使用无障碍服务
+        // 如果需要处理其他Activity结果，可以在这里添加
     }
     
     /**
@@ -136,8 +123,8 @@ class InputMethodSettingsActivity : AppCompatActivity() {
         // 设置悬浮窗开关
         setupFloatingWindowSwitch()
         
-        // 设置屏幕录制权限相关UI
-        setupScreenCapturePermissionUI()
+        // 设置无障碍服务相关UI
+        setupAccessibilityServiceUI()
     }
     
     /**
@@ -357,89 +344,59 @@ class InputMethodSettingsActivity : AppCompatActivity() {
     }
     
     /**
-     * 设置屏幕录制权限相关UI
+     * 设置无障碍服务相关UI
      */
-    private fun setupScreenCapturePermissionUI() {
-        tvPermissionStatus = findViewById(R.id.tv_permission_status)
-        ivPermissionIcon = findViewById(R.id.iv_permission_icon)
-        btnGrantPermission = findViewById(R.id.btn_grant_permission)
-        btnClearPermission = findViewById(R.id.btn_clear_permission)
+    private fun setupAccessibilityServiceUI() {
+        tvAccessibilityStatus = findViewById(R.id.tv_accessibility_status)
+        ivAccessibilityIcon = findViewById(R.id.iv_accessibility_icon)
+        btnOpenAccessibilitySettings = findViewById(R.id.btn_open_accessibility_settings)
         
-        // 设置授权按钮点击事件
-        btnGrantPermission.setOnClickListener {
-            requestScreenCapturePermission()
-        }
-        
-        // 设置清除权限按钮点击事件
-        btnClearPermission.setOnClickListener {
-            clearScreenCapturePermission()
+        // 设置打开无障碍设置按钮点击事件
+        btnOpenAccessibilitySettings.setOnClickListener {
+            openAccessibilitySettings()
         }
     }
     
     /**
-     * 请求屏幕录制权限
+     * 打开无障碍服务设置页面
      */
-    private fun requestScreenCapturePermission() {
+    private fun openAccessibilitySettings() {
         try {
-            val intent = permissionManager.createScreenCaptureIntent()
-            startActivityForResult(intent, REQUEST_CODE_SCREEN_CAPTURE)
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+            Toast.makeText(this, "请在无障碍设置中找到并启用「神迹键盘验证码自动填写」服务", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            Timber.e(e, "请求屏幕录制权限失败")
-            Toast.makeText(this, "请求权限失败：${e.message}", Toast.LENGTH_LONG).show()
+            Timber.e(e, "打开无障碍设置失败")
+            Toast.makeText(this, "打开无障碍设置失败：${e.message}", Toast.LENGTH_LONG).show()
         }
     }
     
     /**
-     * 清除屏幕录制权限
+     * 更新无障碍服务状态显示
      */
-    private fun clearScreenCapturePermission() {
-        try {
-            permissionManager.clearPermission()
-            updatePermissionStatus()
-            Toast.makeText(this, "已清除屏幕录制权限", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Timber.e(e, "清除屏幕录制权限失败")
-            Toast.makeText(this, "清除权限失败：${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    /**
-     * 更新权限状态显示
-     */
-    private fun updatePermissionStatus() {
-        val hasPermission = permissionManager.hasStoredPermission()
-        val isValid = permissionManager.isPermissionValid()
+    private fun updateAccessibilityStatus() {
+        Timber.d("正在更新无障碍服务状态显示...")
+        val isServiceEnabled = AutofillAccessibilityService.isServiceEnabled(this)
+        Timber.d("无障碍服务检测结果: $isServiceEnabled")
         
-        // 添加调试日志
-        Timber.d("更新权限状态：hasPermission=$hasPermission, isValid=$isValid")
-        
-        if (hasPermission && isValid) {
-            // 权限已授权且有效
-            tvPermissionStatus.text = "权限状态：已授权"
-            ivPermissionIcon.setImageResource(android.R.drawable.ic_dialog_info)
-            ivPermissionIcon.setColorFilter(getColor(android.R.color.holo_green_light))
-            btnGrantPermission.isEnabled = false
-            btnGrantPermission.text = "权限已授权"
-            btnClearPermission.isEnabled = true
-            Timber.d("权限状态显示为：已授权")
-        } else if (hasPermission && !isValid) {
-            // 权限已保存但失效
-            tvPermissionStatus.text = "权限状态：已失效"
-            ivPermissionIcon.setImageResource(android.R.drawable.ic_dialog_alert)
-            ivPermissionIcon.setColorFilter(getColor(android.R.color.holo_orange_light))
-            btnGrantPermission.isEnabled = true
-            btnGrantPermission.text = "重新授权"
-            btnClearPermission.isEnabled = true
-            Timber.d("权限状态显示为：已失效")
+        if (isServiceEnabled) {
+            // 服务已启用
+            tvAccessibilityStatus.text = "服务状态：已开启"
+            ivAccessibilityIcon.setImageResource(android.R.drawable.ic_dialog_info)
+            ivAccessibilityIcon.setColorFilter(getColor(android.R.color.holo_green_light))
+            btnOpenAccessibilitySettings.text = "无障碍服务已开启"
+            btnOpenAccessibilitySettings.isEnabled = false
+            Timber.d("UI更新完成: 无障碍服务状态显示为已开启")
         } else {
-            // 未授权
-            tvPermissionStatus.text = "权限状态：未授权"
-            ivPermissionIcon.setImageResource(android.R.drawable.ic_dialog_alert)
-            ivPermissionIcon.setColorFilter(getColor(android.R.color.holo_red_light))
-            btnGrantPermission.isEnabled = true
-            btnGrantPermission.text = "授权屏幕录制"
-            btnClearPermission.isEnabled = false
-            Timber.d("权限状态显示为：未授权")
+            // 服务未启用
+            tvAccessibilityStatus.text = "服务状态：未开启"
+            ivAccessibilityIcon.setImageResource(android.R.drawable.ic_dialog_alert)
+            ivAccessibilityIcon.setColorFilter(getColor(android.R.color.holo_red_light))
+            btnOpenAccessibilitySettings.text = "开启无障碍服务"
+            btnOpenAccessibilitySettings.isEnabled = true
+            Timber.d("UI更新完成: 无障碍服务状态显示为未开启")
         }
     }
 } 

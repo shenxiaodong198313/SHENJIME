@@ -35,6 +35,7 @@
     <!-- LLM集成相关权限 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     
     <!-- 悬浮窗权限 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -245,7 +246,10 @@
         android:name=".ui.FloatingWindowService"
         android:enabled="true"
         android:exported="false"
-        android:foregroundServiceType="mediaProjection" />
+        android:foregroundServiceType="specialUse">
+        <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                  android:value="悬浮窗和AI分析服务" />
+    </service>
 
         <!-- 输入法设置活动 -->
         <activity

@@ -4,19 +4,27 @@ import android.accessibilityservice.AccessibilityService
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import androidx.annotation.RequiresApi
 import timber.log.Timber
 
 /**
- * 无障碍服务，用于自动填写验证码
+ * 增强无障碍服务，用于自动填写验证码和屏幕截图
  */
 class AutofillAccessibilityService : AccessibilityService() {
 
     companion object {
+        private const val TAG = "AutofillAccessibilityService"
+        
         // 保存当前验证码
         private var currentVerificationCode: String? = null
+        
+        // 服务实例
+        private var serviceInstance: AutofillAccessibilityService? = null
         
         /**
          * 设置当前验证码
@@ -32,13 +40,122 @@ class AutofillAccessibilityService : AccessibilityService() {
          * @return 服务是否启用
          */
         fun isServiceEnabled(context: Context): Boolean {
-            val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
-            val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityEvent.TYPES_ALL_MASK)
-            
-            return enabledServices.any {
-                it.id.contains(AutofillAccessibilityService::class.java.name)
+            try {
+                val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+                val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityEvent.TYPES_ALL_MASK)
+                
+                val packageName = context.packageName
+                Timber.d("$TAG: Checking for accessibility service in package: $packageName")
+                
+                // 打印所有已启用的服务，用于调试
+                enabledServices.forEach { serviceInfo ->
+                    Timber.d("$TAG: Found enabled service: ${serviceInfo.id}")
+                }
+                
+                // 方法1：通过服务列表检查
+                val foundInList = enabledServices.any { serviceInfo ->
+                    val serviceId = serviceInfo.id
+                    val isOurService = serviceId.contains(packageName) && 
+                        serviceId.contains("AutofillAccessibilityService")
+                    
+                    if (isOurService) {
+                        Timber.d("$TAG: Found our accessibility service: $serviceId")
+                    }
+                    
+                    isOurService
+                }
+                
+                // 方法2：通过设置检查（兼容性更好）
+                val enabledSetting = android.provider.Settings.Secure.getString(
+                    context.contentResolver,
+                    android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+                )
+                
+                val foundInSettings = enabledSetting?.contains(packageName) == true
+                
+                Timber.d("$TAG: Service check results - List: $foundInList, Settings: $foundInSettings")
+                Timber.d("$TAG: Enabled services setting: $enabledSetting")
+                
+                // 只要其中一个方法检测到服务启用就返回true
+                return foundInList || foundInSettings
+                
+            } catch (e: Exception) {
+                Timber.e(e, "$TAG: Error checking accessibility service status")
+                return false
             }
         }
+        
+        /**
+         * 获取服务实例
+         * @return 服务实例，如果服务未启用则返回null
+         */
+        fun getInstance(): AutofillAccessibilityService? {
+            return serviceInstance
+        }
+        
+        /**
+         * 通过无障碍服务截取屏幕
+         * @param callback 截图回调
+         */
+        @RequiresApi(Build.VERSION_CODES.R)
+        fun takeScreenshotViaAccessibility(callback: (Bitmap?) -> Unit) {
+            val instance = getInstance()
+            if (instance != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                try {
+                    instance.takeScreenshot(
+                        android.view.Display.DEFAULT_DISPLAY,
+                        instance.mainExecutor,
+                        object : AccessibilityService.TakeScreenshotCallback {
+                            override fun onSuccess(screenshot: AccessibilityService.ScreenshotResult) {
+                                try {
+                                    val originalBitmap = Bitmap.wrapHardwareBuffer(
+                                        screenshot.hardwareBuffer,
+                                        screenshot.colorSpace
+                                    )
+                                    
+                                    // 确保Bitmap格式为ARGB_8888
+                                    val convertedBitmap = if (originalBitmap?.config != Bitmap.Config.ARGB_8888) {
+                                        Timber.d("$TAG: Converting bitmap from ${originalBitmap?.config} to ARGB_8888")
+                                        originalBitmap?.copy(Bitmap.Config.ARGB_8888, false)
+                                    } else {
+                                        originalBitmap
+                                    }
+                                    
+                                    Timber.d("$TAG: Screenshot taken successfully, size: ${convertedBitmap?.width}x${convertedBitmap?.height}, config: ${convertedBitmap?.config}")
+                                    callback(convertedBitmap)
+                                } catch (e: Exception) {
+                                    Timber.e(e, "$TAG: Error converting screenshot to bitmap")
+                                    callback(null)
+                                }
+                            }
+                            
+                            override fun onFailure(errorCode: Int) {
+                                Timber.e("$TAG: Screenshot failed with error code: $errorCode")
+                                callback(null)
+                            }
+                        }
+                    )
+                } catch (e: Exception) {
+                    Timber.e(e, "$TAG: Error taking screenshot")
+                    callback(null)
+                }
+            } else {
+                Timber.w("$TAG: Accessibility service not available or Android version < R")
+                callback(null)
+            }
+        }
+    }
+    
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        serviceInstance = this
+        Timber.d("$TAG: Accessibility service connected")
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceInstance = null
+        Timber.d("$TAG: Accessibility service destroyed")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {

@@ -20,7 +20,10 @@ import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ai.engines.Gemma3nWeChatAnalysisEngine
 import com.shenji.aikeyboard.ai.engines.WeChatAnalysisResult
+import com.shenji.aikeyboard.utils.AutofillAccessibilityService
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import android.os.Build
 import timber.log.Timber
 
 /**
@@ -190,6 +193,58 @@ class WeChatAnalysisActivity : AppCompatActivity() {
      */
     private fun startScreenCapture() {
         try {
+            // 检查是否从悬浮窗启动
+            val fromFloatingWindow = intent.getBooleanExtra("from_floating_window", false)
+            
+            // 检查无障碍服务是否可用（Android 11+）
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && AutofillAccessibilityService.isServiceEnabled(this)) {
+                Timber.d("$TAG: Using accessibility service for screenshot")
+                showLoadingState("正在通过无障碍服务截取微信对话...")
+                
+                // 检查是否从悬浮窗启动
+                if (fromFloatingWindow) {
+                    hideFloatingWindow()
+                }
+                
+                // 隐藏当前窗口
+                window.decorView.visibility = View.INVISIBLE
+                
+                // 延迟截图，确保截取的是微信界面
+                tvStatus.postDelayed({
+                    AutofillAccessibilityService.takeScreenshotViaAccessibility { bitmap ->
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            if (bitmap != null) {
+                                currentBitmap = bitmap
+                                
+                                // 恢复窗口显示并显示截图
+                                window.decorView.alpha = 1f
+                                window.decorView.visibility = View.VISIBLE
+                                ivScreenshot.setImageBitmap(bitmap)
+                                ivScreenshot.visibility = View.VISIBLE
+                                
+                                // 恢复悬浮窗显示
+                                restoreFloatingWindow()
+                                
+                                // 开始微信对话分析
+                                startWeChatAnalysis(bitmap)
+                            } else {
+                                Timber.w("$TAG: Accessibility screenshot failed, falling back to MediaProjection")
+                                showErrorState("无障碍截图失败")
+                                // 确保窗口可见
+                                window.decorView.alpha = 1f
+                                window.decorView.visibility = View.VISIBLE
+                                restoreFloatingWindow()
+                            }
+                        }
+                    }
+                }, 1500) // 延迟1.5秒确保用户返回到微信
+                
+                return
+            }
+            
+            // 降级到MediaProjection方式
+            Timber.d("$TAG: Using MediaProjection for screenshot")
+            
             // 检查是否已有有效的MediaProjection实例
             if (screenCaptureManager.hasActiveMediaProjection()) {
                 Timber.d("$TAG: MediaProjection already initialized, starting capture")

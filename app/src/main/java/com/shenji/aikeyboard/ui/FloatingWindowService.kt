@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.SupervisorJob
+import com.shenji.aikeyboard.utils.AutofillAccessibilityService
 
 /**
  * 悬浮窗服务
@@ -370,14 +371,52 @@ class FloatingWindowService : Service() {
         try {
             Timber.d("$TAG: AI Interface Analysis button clicked")
             
-            // 直接启动AI分析Activity，让它处理权限和截图逻辑
-            val intent = Intent(this, AIAnalysisActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                putExtra("from_floating_window", true)
+            // 检查无障碍服务是否开启
+            if (!AutofillAccessibilityService.isServiceEnabled(this)) {
+                Toast.makeText(this, "请先开启无障碍服务以使用AI分析功能", Toast.LENGTH_LONG).show()
+                // 打开设置页面引导用户开启服务
+                val intent = Intent(this, com.shenji.aikeyboard.settings.InputMethodSettingsActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+                return
             }
             
-            Toast.makeText(this, "正在启动AI界面分析...", Toast.LENGTH_SHORT).show()
-            startActivity(intent)
+            // 检查Android版本是否支持无障碍截图（需要Android 11+）
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                Toast.makeText(this, "正在通过无障碍服务截取屏幕...", Toast.LENGTH_SHORT).show()
+                
+                // 使用无障碍服务截图
+                AutofillAccessibilityService.takeScreenshotViaAccessibility { bitmap ->
+                    serviceScope.launch(Dispatchers.Main) {
+                        if (bitmap != null) {
+                            // 保存截图到临时存储
+                            TempBitmapHolder.bitmap = bitmap
+                            
+                            // 启动AI分析Activity
+                            val intent = Intent(this@FloatingWindowService, AIAnalysisActivity::class.java).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                putExtra("from_floating_window", true)
+                                putExtra("use_accessibility_screenshot", true)
+                            }
+                            
+                            Toast.makeText(this@FloatingWindowService, "正在启动AI界面分析...", Toast.LENGTH_SHORT).show()
+                            startActivity(intent)
+                        } else {
+                            Toast.makeText(this@FloatingWindowService, "屏幕截图失败，请重试", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } else {
+                // Android 11以下版本，仍使用原来的方法
+                val intent = Intent(this, AIAnalysisActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra("from_floating_window", true)
+                }
+                
+                Toast.makeText(this, "正在启动AI界面分析...", Toast.LENGTH_SHORT).show()
+                startActivity(intent)
+            }
             
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error in handleAIAnalysisClick")

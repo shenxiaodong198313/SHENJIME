@@ -146,7 +146,7 @@
 
             </LinearLayout>
 
-            <!-- 屏幕录制权限设置区域 -->
+            <!-- 无障碍服务设置区域 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -155,17 +155,17 @@
                 android:padding="16dp"
                 android:layout_marginBottom="32dp">
 
-                <!-- 屏幕录制权限标题 -->
+                <!-- 无障碍服务标题 -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="屏幕录制权限"
+                    android:text="无障碍服务"
                     android:textColor="@android:color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="8dp" />
 
-                <!-- 权限状态显示 -->
+                <!-- 服务状态显示 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -180,17 +180,17 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/tv_permission_status"
+                            android:id="@+id/tv_accessibility_status"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="权限状态：未授权"
+                            android:text="服务状态：未开启"
                             android:textColor="@android:color/white"
                             android:textSize="14sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="用于AI分析功能的屏幕截图"
+                            android:text="用于验证码填写和AI屏幕分析"
                             android:textColor="#CCFFFFFF"
                             android:textSize="12sp"
                             android:layout_marginTop="2dp" />
@@ -198,7 +198,7 @@
                     </LinearLayout>
 
                     <ImageView
-                        android:id="@+id/iv_permission_icon"
+                        android:id="@+id/iv_accessibility_icon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/ic_dialog_alert"
@@ -214,30 +214,15 @@
                     android:orientation="horizontal"
                     android:gravity="center">
 
-                    <!-- 授权按钮 -->
+                    <!-- 开启无障碍服务按钮 -->
                     <Button
-                        android:id="@+id/btn_grant_permission"
-                        android:layout_width="0dp"
+                        android:id="@+id/btn_open_accessibility_settings"
+                        android:layout_width="match_parent"
                         android:layout_height="42dp"
-                        android:layout_weight="1"
-                        android:text="授权屏幕录制"
+                        android:text="开启无障碍服务"
                         android:textColor="@android:color/white"
                         android:textSize="13sp"
-                        android:background="@drawable/btn_permission_grant_background"
-                        android:layout_marginEnd="8dp" />
-
-                    <!-- 清除权限按钮 -->
-                    <Button
-                        android:id="@+id/btn_clear_permission"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_weight="1"
-                        android:text="清除权限"
-                        android:textColor="@android:color/white"
-                        android:textSize="13sp"
-                        android:background="@drawable/btn_permission_clear_background"
-                        android:layout_marginStart="8dp"
-                        android:enabled="false" />
+                        android:background="@drawable/btn_permission_grant_background" />
 
                 </LinearLayout>
 

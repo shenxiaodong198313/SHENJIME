@@ -299,7 +299,7 @@
     <string name="about">About</string>
     <string name="accessibility_disabled">无障碍服务未启用</string>
     <string name="accessibility_enabled">无障碍服务已启用</string>
-    <string name="accessibility_service_description">用于自动检测和填写短信验证码到输入框中，提高用户验证体验。无需手动复制粘贴，收到短信验证码后会自动填入当前焦点的输入框。</string>
+    <string name="accessibility_service_description">神迹AI键盘无障碍服务，提供以下功能：1)自动检测和填写短信验证码；2)为AI分析功能提供屏幕截图支持。该服务仅用于提升用户体验，不会收集或上传任何个人数据。</string>
     <string name="action_settings">Settings</string>
     <string name="add_local_models">Add Local Model</string>
     <string name="add_local_models_message">To add local models, first download them to your desktop, then run \'%1$s\'. After that, the models will appear in the model list.</string>

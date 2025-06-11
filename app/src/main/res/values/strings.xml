@@ -76,7 +76,7 @@
     
     <!-- 验证码自动填写相关 -->
     <string name="verification_code_test">验证码测试</string>
-    <string name="accessibility_service_description">用于自动检测和填写短信验证码到输入框中，提高用户验证体验。无需手动复制粘贴，收到短信验证码后会自动填入当前焦点的输入框。</string>
+    <string name="accessibility_service_description">神迹AI键盘无障碍服务，提供以下功能：1)自动检测和填写短信验证码；2)为AI分析功能提供屏幕截图支持。该服务仅用于提升用户体验，不会收集或上传任何个人数据。</string>
     <string name="request_sms_permission">请求短信权限</string>
     <string name="open_accessibility_settings">打开无障碍服务设置</string>
     <string name="simulate_code">模拟验证码</string>
