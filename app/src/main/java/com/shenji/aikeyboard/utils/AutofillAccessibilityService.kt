@@ -1,6 +1,7 @@
 package com.shenji.aikeyboard.utils
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -93,77 +94,142 @@ class AutofillAccessibilityService : AccessibilityService() {
             return serviceInstance
         }
         
-        /**
-         * 读取当前界面所有文本节点
-         * @param callback 文本节点列表回调
-         */
-        fun getAllTextNodes(callback: (List<String>) -> Unit) {
-            val instance = getInstance()
-            if (instance != null) {
-                try {
-                    val rootNode = instance.rootInActiveWindow
-                    if (rootNode != null) {
-                        val textNodes = mutableListOf<String>()
-                        collectTextNodes(rootNode, textNodes)
-                        
-                        // 过滤和清理文本
-                        val cleanedNodes = textNodes
-                            .filter { it.isNotBlank() }
-                            .map { it.trim() }
-                            .distinct()
-                            .filter { text ->
-                                // 过滤掉一些系统UI文本
-                                !text.matches(Regex("^[0-9]{1,2}:[0-9]{2}$")) && // 时间格式
-                                !text.matches(Regex("^[0-9]+%$")) && // 百分比
-                                text.length > 1 && // 至少2个字符
-                                !text.matches(Regex("^[\\s\\n\\r]+$")) // 不是纯空白字符
-                            }
-                        
-                        Timber.d("$TAG: Found ${cleanedNodes.size} text nodes")
-                        callback(cleanedNodes)
-                    } else {
-                        Timber.w("$TAG: Root node is null")
-                        callback(emptyList())
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "$TAG: Error reading text nodes")
-                    callback(emptyList())
-                }
-            } else {
-                Timber.w("$TAG: Accessibility service not available")
-                callback(emptyList())
-            }
-        }
+                 /**
+          * 读取当前界面所有文本节点 - 增强版本，针对微信限制
+          * @param callback 文本节点列表回调
+          */
+         fun getAllTextNodes(callback: (List<String>) -> Unit) {
+             val instance = getInstance()
+             if (instance != null) {
+                 try {
+                     val allTextNodes = mutableListOf<String>()
+                     
+                     // 策略1: 读取主窗口
+                     val rootNode = instance.rootInActiveWindow
+                     if (rootNode != null) {
+                         allTextNodes.add("=== 主窗口节点 ===")
+                         collectTextNodes(rootNode, allTextNodes)
+                     } else {
+                         allTextNodes.add("警告: 主窗口节点为空")
+                     }
+                     
+                     // 策略2: 尝试读取所有可用窗口（Android API 21+）
+                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                         try {
+                             val windows = instance.windows
+                             if (windows != null && windows.isNotEmpty()) {
+                                 allTextNodes.add("=== 所有窗口 (${windows.size}个) ===")
+                                 windows.forEachIndexed { index, window ->
+                                     allTextNodes.add("--- 窗口 $index ---")
+                                     val windowRoot = window.root
+                                     if (windowRoot != null) {
+                                         collectTextNodes(windowRoot, allTextNodes)
+                                     } else {
+                                         allTextNodes.add("窗口 $index 根节点为空")
+                                     }
+                                 }
+                             } else {
+                                 allTextNodes.add("无法获取窗口列表")
+                             }
+                         } catch (e: Exception) {
+                             allTextNodes.add("读取窗口列表异常: ${e.message}")
+                         }
+                     }
+                     
+                     // 策略3: 专门针对微信的包名过滤
+                     val weChatNodes = allTextNodes.filter { text ->
+                         text.contains("com.tencent.mm") || 
+                         text.contains("Text:") ||
+                         text.contains("Desc:")
+                     }
+                     
+                     if (weChatNodes.isNotEmpty()) {
+                         allTextNodes.add("=== 微信相关节点 ===")
+                         allTextNodes.addAll(weChatNodes)
+                     }
+                     
+                     // 过滤和清理文本
+                     val cleanedNodes = allTextNodes
+                         .filter { it.isNotBlank() }
+                         .map { it.trim() }
+                         .distinct()
+                         .filter { text ->
+                             // 基本过滤规则
+                             text.length > 1 && 
+                             !text.matches(Regex("^[\\s\\n\\r]+$"))
+                         }
+                     
+                     Timber.d("$TAG: Found ${cleanedNodes.size} text nodes (enhanced)")
+                     callback(cleanedNodes)
+                     
+                 } catch (e: Exception) {
+                     Timber.e(e, "$TAG: Error reading text nodes (enhanced)")
+                     callback(listOf("读取异常: ${e.message}"))
+                 }
+             } else {
+                 Timber.w("$TAG: Accessibility service not available")
+                 callback(listOf("无障碍服务不可用"))
+             }
+         }
 
-        /**
-         * 递归收集所有文本节点
-         */
-        private fun collectTextNodes(node: AccessibilityNodeInfo?, textNodes: MutableList<String>) {
-            if (node == null) return
-            
-            try {
-                // 检查当前节点是否有文本
-                val nodeText = node.text?.toString()
-                if (!nodeText.isNullOrBlank()) {
-                    textNodes.add(nodeText)
-                }
-                
-                // 检查内容描述
-                val contentDescription = node.contentDescription?.toString()
-                if (!contentDescription.isNullOrBlank() && contentDescription != nodeText) {
-                    textNodes.add(contentDescription)
-                }
-                
-                // 递归遍历子节点
-                for (i in 0 until node.childCount) {
-                    val childNode = node.getChild(i)
-                    collectTextNodes(childNode, textNodes)
-                }
-                
-            } catch (e: Exception) {
-                Timber.e(e, "$TAG: Error collecting text from node")
-            }
-        }
+                 /**
+          * 递归收集所有文本节点 - 增强版本，针对微信限制优化
+          */
+         private fun collectTextNodes(node: AccessibilityNodeInfo?, textNodes: MutableList<String>) {
+             if (node == null) return
+             
+             try {
+                 // 检查当前节点是否有文本
+                 val nodeText = node.text?.toString()
+                 if (!nodeText.isNullOrBlank()) {
+                     textNodes.add("Text: $nodeText")
+                 }
+                 
+                 // 检查内容描述
+                 val contentDescription = node.contentDescription?.toString()
+                 if (!contentDescription.isNullOrBlank() && contentDescription != nodeText) {
+                     textNodes.add("Desc: $contentDescription")
+                 }
+                 
+                 // 检查类名信息（有助于理解节点类型）
+                 val className = node.className?.toString()
+                 if (!className.isNullOrBlank()) {
+                     textNodes.add("Class: $className")
+                 }
+                 
+                 // 检查ViewId信息
+                 val viewId = node.viewIdResourceName
+                 if (!viewId.isNullOrBlank()) {
+                     textNodes.add("ViewId: $viewId")
+                 }
+                 
+                 // 检查包名信息
+                 val packageName = node.packageName?.toString()
+                 if (!packageName.isNullOrBlank() && packageName != "com.android.systemui") {
+                     textNodes.add("Package: $packageName")
+                 }
+                 
+                 // 检查节点状态信息
+                 val nodeInfo = StringBuilder()
+                 if (node.isClickable) nodeInfo.append("Clickable ")
+                 if (node.isEditable) nodeInfo.append("Editable ")
+                 if (node.isScrollable) nodeInfo.append("Scrollable ")
+                 if (node.isCheckable) nodeInfo.append("Checkable ")
+                 if (nodeInfo.isNotEmpty()) {
+                     textNodes.add("Props: ${nodeInfo.toString().trim()}")
+                 }
+                 
+                 // 递归遍历子节点
+                 for (i in 0 until node.childCount) {
+                     val childNode = node.getChild(i)
+                     collectTextNodes(childNode, textNodes)
+                 }
+                 
+             } catch (e: Exception) {
+                 Timber.e(e, "$TAG: Error collecting text from node")
+                 textNodes.add("Error: ${e.message}")
+             }
+         }
 
         /**
          * 通过无障碍服务截取屏幕
@@ -221,6 +287,34 @@ class AutofillAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         serviceInstance = this
+        
+        // 设置增强的无障碍服务配置，针对微信限制
+        try {
+            val info = AccessibilityServiceInfo()
+            info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
+            info.flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or 
+                        AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS or
+                        AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
+                        AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+            
+            // Android API 18+ 支持的标志
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                info.flags = info.flags or AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY
+            }
+            
+            info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
+            info.notificationTimeout = 50
+            
+            // 设置目标包名（可以指定特定应用）
+            info.packageNames = null // null表示监听所有应用
+            
+            setServiceInfo(info)
+            Timber.d("$TAG: Enhanced accessibility service configured")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error configuring enhanced accessibility service")
+        }
+        
         Timber.d("$TAG: Accessibility service connected")
     }
     
