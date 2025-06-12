@@ -94,6 +94,78 @@ class AutofillAccessibilityService : AccessibilityService() {
         }
         
         /**
+         * 读取当前界面所有文本节点
+         * @param callback 文本节点列表回调
+         */
+        fun getAllTextNodes(callback: (List<String>) -> Unit) {
+            val instance = getInstance()
+            if (instance != null) {
+                try {
+                    val rootNode = instance.rootInActiveWindow
+                    if (rootNode != null) {
+                        val textNodes = mutableListOf<String>()
+                        collectTextNodes(rootNode, textNodes)
+                        
+                        // 过滤和清理文本
+                        val cleanedNodes = textNodes
+                            .filter { it.isNotBlank() }
+                            .map { it.trim() }
+                            .distinct()
+                            .filter { text ->
+                                // 过滤掉一些系统UI文本
+                                !text.matches(Regex("^[0-9]{1,2}:[0-9]{2}$")) && // 时间格式
+                                !text.matches(Regex("^[0-9]+%$")) && // 百分比
+                                text.length > 1 && // 至少2个字符
+                                !text.matches(Regex("^[\\s\\n\\r]+$")) // 不是纯空白字符
+                            }
+                        
+                        Timber.d("$TAG: Found ${cleanedNodes.size} text nodes")
+                        callback(cleanedNodes)
+                    } else {
+                        Timber.w("$TAG: Root node is null")
+                        callback(emptyList())
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "$TAG: Error reading text nodes")
+                    callback(emptyList())
+                }
+            } else {
+                Timber.w("$TAG: Accessibility service not available")
+                callback(emptyList())
+            }
+        }
+
+        /**
+         * 递归收集所有文本节点
+         */
+        private fun collectTextNodes(node: AccessibilityNodeInfo?, textNodes: MutableList<String>) {
+            if (node == null) return
+            
+            try {
+                // 检查当前节点是否有文本
+                val nodeText = node.text?.toString()
+                if (!nodeText.isNullOrBlank()) {
+                    textNodes.add(nodeText)
+                }
+                
+                // 检查内容描述
+                val contentDescription = node.contentDescription?.toString()
+                if (!contentDescription.isNullOrBlank() && contentDescription != nodeText) {
+                    textNodes.add(contentDescription)
+                }
+                
+                // 递归遍历子节点
+                for (i in 0 until node.childCount) {
+                    val childNode = node.getChild(i)
+                    collectTextNodes(childNode, textNodes)
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "$TAG: Error collecting text from node")
+            }
+        }
+
+        /**
          * 通过无障碍服务截取屏幕
          * @param callback 截图回调
          */

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#E0000000"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- 弹窗内容区域 -->
+    <LinearLayout
+        android:id="@+id/dialog_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_margin="20dp"
+        android:orientation="vertical"
+        android:background="@drawable/dialog_background"
+        android:elevation="8dp">
+
+        <!-- 标题栏 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#2C2C2C"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="无障碍界面分析"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_close_dialog"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/btn_close_background"
+                android:text="✕"
+                android:textColor="@android:color/white"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <!-- 状态提示 -->
+        <TextView
+            android:id="@+id/tv_status_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="正在读取界面文本节点..."
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:padding="16dp" />
+
+        <!-- 内容滚动区域 -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- 文本节点列表 -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="发现的文本节点："
+                    android:textColor="#333333"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tv_text_nodes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#666666"
+                    android:textSize="12sp"
+                    android:lineSpacingExtra="4dp"
+                    android:background="#F5F5F5"
+                    android:padding="12dp"
+                    android:text="等待读取..." />
+
+            </LinearLayout>
+
+        </ScrollView>
+
+        <!-- 底部按钮区域 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btn_refresh"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="刷新读取"
+                android:textColor="@android:color/white"
+                android:background="@drawable/btn_primary_background"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btn_copy_text"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="复制文本"
+                android:textColor="@android:color/white"
+                android:background="@drawable/btn_secondary_background"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout> 

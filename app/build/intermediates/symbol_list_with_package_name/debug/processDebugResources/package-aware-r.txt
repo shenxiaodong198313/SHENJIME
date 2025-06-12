@@ -3516,10 +3516,12 @@ drawable btn_close_background
 drawable btn_copy_background
 drawable btn_permission_clear_background
 drawable btn_permission_grant_background
+drawable btn_primary_background
 drawable btn_radio_off_mtrl
 drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
+drawable btn_secondary_background
 drawable btn_send_background
 drawable btn_white_background
 drawable button_danger
@@ -3542,11 +3544,13 @@ drawable design_ic_visibility
 drawable design_ic_visibility_off
 drawable design_password_eye
 drawable design_snackbar_background
+drawable dialog_background
 drawable download
 drawable edit_text_background
 drawable floating_button_background
 drawable floating_menu_background
 drawable gemma_icon
+drawable ic_accessibility
 drawable ic_add
 drawable ic_ai_analysis
 drawable ic_ai_assistant
@@ -3781,6 +3785,7 @@ id Wave
 id above
 id accelerate
 id accessibility_action_clickable_span
+id accessibility_analysis_button
 id accessibility_custom_action_0
 id accessibility_custom_action_1
 id accessibility_custom_action_10
@@ -3968,9 +3973,12 @@ id btn_back
 id btn_clear
 id btn_clear_results
 id btn_close
+id btn_close_dialog
 id btn_copy
+id btn_copy_text
 id btn_open_accessibility_settings
 id btn_quick_test
+id btn_refresh
 id btn_run_test
 id btn_send
 id btn_test
@@ -4162,6 +4170,7 @@ id design_menu_item_text
 id design_navigation_view
 id detailText
 id dialog_button
+id dialog_content
 id dialog_layout
 id dictionary_status_view
 id dimensions
@@ -5063,8 +5072,10 @@ id tv_source
 id tv_stage_results
 id tv_stage_title
 id tv_status
+id tv_status_hint
 id tv_suggestion
 id tv_summary
+id tv_text_nodes
 id tv_thinking_header
 id tv_thread_num_label
 id tv_word
@@ -5277,6 +5288,7 @@ layout design_navigation_menu
 layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
+layout dialog_accessibility_analysis
 layout dialog_build_config
 layout dialog_build_status
 layout dialog_build_trie_settings

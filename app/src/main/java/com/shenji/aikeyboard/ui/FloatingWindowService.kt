@@ -14,8 +14,10 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import com.shenji.aikeyboard.R
 import timber.log.Timber
@@ -47,6 +49,7 @@ class FloatingWindowService : Service() {
     private var menuLayout: LinearLayout? = null
     private var aiAnalysisButton: LinearLayout? = null
     private var aiWeChatAnalysisButton: LinearLayout? = null
+    private var accessibilityAnalysisButton: LinearLayout? = null
     private var settingsButton: LinearLayout? = null
     
     // 触摸相关变量
@@ -188,6 +191,7 @@ class FloatingWindowService : Service() {
             menuLayout = floatingView?.findViewById(R.id.menu_layout)
             aiAnalysisButton = floatingView?.findViewById(R.id.ai_analysis_button)
             aiWeChatAnalysisButton = floatingView?.findViewById(R.id.ai_wechat_analysis_button)
+            accessibilityAnalysisButton = floatingView?.findViewById(R.id.accessibility_analysis_button)
             settingsButton = floatingView?.findViewById(R.id.settings_button)
             
             // 设置点击事件
@@ -242,6 +246,13 @@ class FloatingWindowService : Service() {
         aiWeChatAnalysisButton?.setOnClickListener {
             Timber.d("$TAG: AI WeChat Analysis clicked")
             handleWeChatAnalysisClick()
+            collapseMenu()
+        }
+        
+        // 无障碍分析界面按钮点击事件
+        accessibilityAnalysisButton?.setOnClickListener {
+            Timber.d("$TAG: Accessibility Analysis clicked")
+            handleAccessibilityAnalysisClick()
             collapseMenu()
         }
         
@@ -446,6 +457,172 @@ class FloatingWindowService : Service() {
         }
     }
     
+    /**
+     * 处理无障碍分析界面按钮点击
+     */
+    private fun handleAccessibilityAnalysisClick() {
+        try {
+            Timber.d("$TAG: Accessibility Analysis button clicked")
+            
+            // 检查无障碍服务是否可用
+            if (!AutofillAccessibilityService.isServiceEnabled(this)) {
+                Toast.makeText(this, "请先开启无障碍服务权限", Toast.LENGTH_LONG).show()
+                // 可以引导用户去开启无障碍服务
+                val intent = Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+                return
+            }
+            
+            // 显示无障碍分析弹窗
+            showAccessibilityAnalysisDialog()
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error in handleAccessibilityAnalysisClick")
+            Toast.makeText(this, "启动无障碍分析失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 显示无障碍分析弹窗
+     */
+    private fun showAccessibilityAnalysisDialog() {
+        try {
+            // 创建弹窗视图
+            val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_accessibility_analysis, null)
+            
+            // 配置弹窗窗口参数
+            val dialogParams = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                } else {
+                    @Suppress("DEPRECATION")
+                    WindowManager.LayoutParams.TYPE_PHONE
+                },
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT
+            )
+            
+            dialogParams.gravity = Gravity.CENTER
+            
+            // 添加弹窗到窗口管理器
+            windowManager?.addView(dialogView, dialogParams)
+            
+            // 设置弹窗UI
+            setupAccessibilityAnalysisDialog(dialogView)
+            
+            Timber.d("$TAG: Accessibility analysis dialog shown")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error showing accessibility analysis dialog")
+            Toast.makeText(this, "显示无障碍分析弹窗失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 设置无障碍分析弹窗UI
+     */
+    private fun setupAccessibilityAnalysisDialog(dialogView: View) {
+        try {
+            val btnClose = dialogView.findViewById<Button>(R.id.btn_close_dialog)
+            val btnRefresh = dialogView.findViewById<Button>(R.id.btn_refresh)
+            val btnCopyText = dialogView.findViewById<Button>(R.id.btn_copy_text)
+            val tvStatusHint = dialogView.findViewById<TextView>(R.id.tv_status_hint)
+            val tvTextNodes = dialogView.findViewById<TextView>(R.id.tv_text_nodes)
+            
+            // 关闭按钮点击事件
+            btnClose.setOnClickListener {
+                windowManager?.removeView(dialogView)
+            }
+            
+            // 点击弹窗背景区域关闭
+            dialogView.setOnClickListener {
+                windowManager?.removeView(dialogView)
+            }
+            
+            // 防止点击内容区域关闭弹窗
+            dialogView.findViewById<LinearLayout>(R.id.dialog_content)?.setOnClickListener { 
+                // 阻止事件冒泡
+            }
+            
+            // 刷新读取按钮
+            btnRefresh.setOnClickListener {
+                readAccessibilityTextNodes(tvStatusHint, tvTextNodes)
+            }
+            
+            // 复制文本按钮
+            btnCopyText.setOnClickListener {
+                copyTextToClipboard(tvTextNodes.text.toString())
+            }
+            
+            // 立即开始读取文本节点
+            readAccessibilityTextNodes(tvStatusHint, tvTextNodes)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error setting up accessibility analysis dialog")
+        }
+    }
+
+    /**
+     * 读取无障碍文本节点
+     */
+    private fun readAccessibilityTextNodes(tvStatusHint: TextView, tvTextNodes: TextView) {
+        try {
+            tvStatusHint.text = "正在读取界面文本节点..."
+            tvTextNodes.text = "读取中..."
+            
+            // 使用无障碍服务读取当前界面的文本节点
+            AutofillAccessibilityService.getAllTextNodes { textNodes ->
+                serviceScope.launch {
+                    try {
+                        if (textNodes.isNotEmpty()) {
+                            val nodeText = StringBuilder()
+                            nodeText.append("共发现 ${textNodes.size} 个文本节点：\n\n")
+                            
+                            textNodes.forEachIndexed { index, text ->
+                                nodeText.append("${index + 1}. $text\n")
+                            }
+                            
+                            tvStatusHint.text = "读取完成，共发现 ${textNodes.size} 个文本节点"
+                            tvTextNodes.text = nodeText.toString()
+                        } else {
+                            tvStatusHint.text = "未发现任何文本节点"
+                            tvTextNodes.text = "当前界面没有找到包含文本的节点，可能是图片界面或者无障碍权限不足。"
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "$TAG: Error processing text nodes")
+                        tvStatusHint.text = "读取失败"
+                        tvTextNodes.text = "读取文本节点时出现错误：${e.message}"
+                    }
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error reading accessibility text nodes")
+            tvStatusHint.text = "读取失败"
+            tvTextNodes.text = "读取文本节点时出现错误：${e.message}"
+        }
+    }
+
+    /**
+     * 复制文本到剪贴板
+     */
+    private fun copyTextToClipboard(text: String) {
+        try {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("无障碍分析结果", text)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "已复制到剪贴板", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error copying text to clipboard")
+            Toast.makeText(this, "复制失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     /**
      * 处理设置按钮点击
      */

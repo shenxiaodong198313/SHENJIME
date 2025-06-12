@@ -326,6 +326,8 @@ drawable btn_close_background
 drawable btn_copy_background
 drawable btn_permission_clear_background
 drawable btn_permission_grant_background
+drawable btn_primary_background
+drawable btn_secondary_background
 drawable btn_send_background
 drawable btn_white_background
 drawable button_danger
@@ -343,11 +345,13 @@ drawable chatglm_icon
 drawable circle_background
 drawable contact_name_background
 drawable deepseek_icon
+drawable dialog_background
 drawable download
 drawable edit_text_background
 drawable floating_button_background
 drawable floating_menu_background
 drawable gemma_icon
+drawable ic_accessibility
 drawable ic_add
 drawable ic_ai_analysis
 drawable ic_ai_assistant
@@ -453,6 +457,7 @@ drawable tag_background
 drawable testtest
 drawable tool_item_background
 drawable yi_icon
+id accessibility_analysis_button
 id accessibility_settings_button
 id action_build_trie
 id action_clear_cache
@@ -553,9 +558,12 @@ id btn_back
 id btn_clear
 id btn_clear_results
 id btn_close
+id btn_close_dialog
 id btn_copy
+id btn_copy_text
 id btn_open_accessibility_settings
 id btn_quick_test
+id btn_refresh
 id btn_run_test
 id btn_send
 id btn_test
@@ -692,6 +700,7 @@ id customInputEditText
 id customTestButton
 id default_candidates_view
 id detailText
+id dialog_content
 id dictionary_status_view
 id divider1
 id divider2
@@ -1231,8 +1240,10 @@ id tv_source
 id tv_stage_results
 id tv_stage_title
 id tv_status
+id tv_status_hint
 id tv_suggestion
 id tv_summary
+id tv_text_nodes
 id tv_thinking_header
 id tv_thread_num_label
 id tv_word
@@ -1274,6 +1285,7 @@ layout calendar_overlay
 layout candidates_view
 layout chat_more_menu_item
 layout custom_drop_down_line_view
+layout dialog_accessibility_analysis
 layout dialog_build_config
 layout dialog_build_status
 layout dialog_build_trie_settings
