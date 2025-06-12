@@ -18,7 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ui.FloatingWindowManager
 import com.shenji.aikeyboard.ui.ScreenCapturePermissionManager
-import com.shenji.aikeyboard.utils.AutofillAccessibilityService
+import com.shenji.aikeyboard.assists.service.EnhancedAssistsService
 import timber.log.Timber
 
 class InputMethodSettingsActivity : AppCompatActivity() {
@@ -378,7 +378,7 @@ class InputMethodSettingsActivity : AppCompatActivity() {
      */
     private fun updateAccessibilityStatus() {
         Timber.d("正在更新无障碍服务状态显示...")
-        val isServiceEnabled = AutofillAccessibilityService.isServiceEnabled(this)
+                    val isServiceEnabled = EnhancedAssistsService.isServiceEnabled()
         Timber.d("无障碍服务检测结果: $isServiceEnabled")
         
         if (isServiceEnabled) {

@@ -16,4 +16,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "SHENJI"
-include(":app") 
+include(":app")
+include(":assists-framework") 

@@ -1,0 +1,72 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'org.jetbrains.dokka'
+android {
+    namespace 'com.ven.assists.base'
+    compileSdk rootProject.ext.compileSdk
+
+    defaultConfig {
+        minSdk rootProject.ext.minSdk
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    viewBinding {
+        enabled = true
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core-ktx:${rootProject.ext.coreKtxVersion}"
+    implementation "androidx.activity:activity-ktx:${rootProject.ext.activityKtxVersion}"
+    implementation "androidx.appcompat:appcompat:${rootProject.ext.appcompatVersion}"
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:${rootProject.ext.kotlinBomVersion}")
+    api "com.blankj:utilcodex:${rootProject.ext.utilcodexVersion}"
+}
+
+dokkaHtml {
+//    outputDirectory.set(file("docs"))
+//    dokkaSourceSets {
+//        configureEach {
+//            reportUndocumented.set(true) // 允许生成没有 KDoc 的代码
+//        }
+//    }
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from android.sourceSets.main.java.srcDirs
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId = 'com.github.ven-coder'
+                artifactId = 'assists-base'
+                version = rootProject.ext.mavenVersion
+
+                artifact sourcesJar
+            }
+        }
+    }
+}
+
+

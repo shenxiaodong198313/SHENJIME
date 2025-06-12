@@ -210,6 +210,15 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.SHENJI" />
             
+        <!-- Assists框架测试Activity -->
+        <activity
+            android:name=".ui.AssistsTestActivity"
+            android:exported="false"
+            android:label="Assists框架测试"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.SHENJI" />
+        
+    
 
             
         <!-- 输入法服务 -->
@@ -227,19 +236,21 @@
                 android:resource="@xml/method" />
         </service>
         
-        <!-- 无障碍服务 - 用于自动填写验证码 -->
+        <!-- 增强无障碍服务 - 集成Assists框架和自动填写功能 -->
         <service
-            android:name=".utils.AutofillAccessibilityService"
-            android:label="神迹键盘验证码自动填写"
+            android:name=".assists.service.EnhancedAssistsService"
+            android:label="神迹键盘Assists无障碍服务"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
-            <intent-filter>
+            <intent-filter android:priority="10000">
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
             <meta-data
                 android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
+                android:resource="@xml/assists_service_config" />
         </service>
+        
+
         
             <!-- 悬浮窗服务 -->
     <service

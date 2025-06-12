@@ -221,4 +221,15 @@
     <string name="add_local_models_title">Add Local Models</string>
     <string name="add_local_models_message">To add local models, first download them to your desktop, then run \'%1$s\'. After that, the models will appear in the model list.</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
+    
+    <!-- Assists框架相关 -->
+    <string name="assists_service_description">
+        神迹键盘Assists无障碍服务提供强大的自动化功能：\n
+        1. 高级界面元素分析和自动化操作\n
+        2. 智能屏幕截图和内容识别\n
+        3. 自定义自动化脚本执行\n
+        4. 验证码自动检测和填写\n
+        5. AI驱动的界面智能分析\n\n
+        基于开源Assists框架构建，安全可靠，所有数据处理均在本地完成。
+    </string>
 </resources> 

@@ -1,0 +1,5 @@
+include ':simple'
+include ':assists'
+include ':assists-opcv'
+include ':assists-mp'
+include ':assists-web'

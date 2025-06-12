@@ -53,6 +53,15 @@
     <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+        </intent>
+    </queries>
+
     <permission
         android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />
@@ -243,6 +252,14 @@
             android:theme="@style/Theme.SHENJI"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Assists框架测试Activity -->
+        <activity
+            android:name="com.shenji.aikeyboard.ui.AssistsTestActivity"
+            android:exported="false"
+            android:label="Assists框架测试"
+            android:theme="@style/Theme.SHENJI"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- 输入法服务 -->
         <service
             android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"
@@ -259,19 +276,19 @@
                 android:resource="@xml/method" />
         </service>
 
-        <!-- 无障碍服务 - 用于自动填写验证码 -->
+        <!-- 增强无障碍服务 - 集成Assists框架和自动填写功能 -->
         <service
-            android:name="com.shenji.aikeyboard.utils.AutofillAccessibilityService"
+            android:name="com.shenji.aikeyboard.assists.service.EnhancedAssistsService"
             android:exported="true"
-            android:label="神迹键盘验证码自动填写"
+            android:label="神迹键盘Assists无障碍服务"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
-            <intent-filter>
+            <intent-filter android:priority="10000" >
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
 
             <meta-data
                 android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
+                android:resource="@xml/assists_service_config" />
         </service>
 
         <!-- 悬浮窗服务 -->
@@ -311,6 +328,48 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        <provider
+            android:name="com.ven.assists.utils.AssistsFileProvider"
+            android:authorities="com.shenji.aikeyboard.assists.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/assists_provider_paths" />
+        </provider>
+
+        <activity
+            android:name="com.blankj.utilcode.util.UtilsTransActivity4MainProcess"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="false"
+            android:theme="@style/ActivityTranslucent"
+            android:windowSoftInputMode="stateHidden|stateAlwaysHidden" />
+        <activity
+            android:name="com.blankj.utilcode.util.UtilsTransActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="false"
+            android:multiprocess="true"
+            android:theme="@style/ActivityTranslucent"
+            android:windowSoftInputMode="stateHidden|stateAlwaysHidden" />
+
+        <provider
+            android:name="com.blankj.utilcode.util.UtilsFileProvider"
+            android:authorities="com.shenji.aikeyboard.utilcode.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/util_code_provider_paths" />
+        </provider>
+
+        <service
+            android:name="com.blankj.utilcode.util.MessengerUtils$ServerService"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.shenji.aikeyboard.messenger" />
+            </intent-filter>
+        </service>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.shenji.aikeyboard.androidx-startup"

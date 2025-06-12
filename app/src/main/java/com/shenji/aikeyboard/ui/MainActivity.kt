@@ -162,6 +162,12 @@ class MainActivity : AppCompatActivity() {
                 "Gemma-3n"
             ) { openGemma3nChat() }
             
+            // Assists框架测试按钮 - 新增
+            createOrangeButton(
+                R.id.assistsTestButtonContainer,
+                "Assists框架测试"
+            ) { openAssistsTest() }
+            
             Log.d("MainActivity", "所有按钮创建完成")
         } catch (e: Exception) {
             Log.e("MainActivity", "按钮创建失败: ${e.message}", e)
@@ -298,6 +304,49 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
+     * 创建橙色背景按钮
+     */
+    private fun createOrangeButton(containerId: Int, text: String, onClick: () -> Unit): Button {
+        val container = findViewById<FrameLayout>(containerId)
+        val button = Button(this)
+        
+        // 设置按钮文本和样式
+        button.text = text
+        button.textSize = 16f
+        button.setTextColor(android.graphics.Color.WHITE)
+        
+        // 创建橙色背景
+        val orangeBackground = android.graphics.drawable.GradientDrawable()
+        orangeBackground.setColor(android.graphics.Color.parseColor("#FF9800")) // Material Orange
+        orangeBackground.cornerRadius = 12 * resources.displayMetrics.density
+        
+        // 应用背景和样式
+        button.background = orangeBackground
+        button.elevation = 0f
+        button.stateListAnimator = null
+        
+        // 移除Material Design效果
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            button.outlineProvider = null
+        }
+        
+        // 设置按钮尺寸
+        val layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            (56 * resources.displayMetrics.density).toInt() // 56dp高度
+        )
+        button.layoutParams = layoutParams
+        
+        // 设置点击事件
+        button.setOnClickListener { onClick() }
+        
+        // 添加到容器
+        container.addView(button)
+        
+        return button
+    }
+    
+    /**
      * 打开输入法设置
      */
     private fun openInputMethodSettings() {
@@ -379,6 +428,20 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "打开Gemma-3n聊天界面失败: ${e.message}", e)
             Toast.makeText(this, "无法打开Gemma-3n聊天界面: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 打开Assists框架测试
+     */
+    private fun openAssistsTest() {
+        try {
+            Timber.d("打开Assists框架测试")
+            val intent = Intent(this, AssistsTestActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "打开Assists框架测试失败: ${e.message}", e)
+            Toast.makeText(this, "无法打开Assists框架测试: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     

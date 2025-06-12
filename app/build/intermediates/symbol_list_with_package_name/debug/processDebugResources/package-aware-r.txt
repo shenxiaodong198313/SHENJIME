@@ -3489,6 +3489,7 @@ drawable baseline_arrow_drop_down_24
 drawable baseline_arrow_drop_up_24
 drawable baseline_history_24
 drawable baseline_search_24
+drawable bg_1
 drawable bg_ai_avatar
 drawable bg_ai_message
 drawable bg_bottom_sheet
@@ -3642,6 +3643,10 @@ drawable ic_think
 drawable ic_thinking
 drawable ic_toolbar_page
 drawable ic_translate
+drawable icon1
+drawable icon2
+drawable icon3
+drawable icon_close
 drawable image_placeholder_background
 drawable indeterminate_static
 drawable input_background
@@ -3677,6 +3682,8 @@ drawable material_ic_keyboard_arrow_previous_black_24dp
 drawable material_ic_keyboard_arrow_right_black_24dp
 drawable material_ic_menu_arrow_down_black_24dp
 drawable material_ic_menu_arrow_up_black_24dp
+drawable minimize
+drawable move
 drawable mtrl_bottomsheet_drag_handle
 drawable mtrl_checkbox_button
 drawable mtrl_checkbox_button_checked_unchecked
@@ -3735,6 +3742,7 @@ drawable preference_list_divider_material
 drawable progress_bar_custom
 drawable progress_m2_style
 drawable qwen_icon
+drawable scale
 drawable screenshot_preview_background
 drawable search_background
 drawable send_reply_background
@@ -3752,6 +3760,7 @@ drawable testtest
 drawable tool_item_background
 drawable tooltip_frame_dark
 drawable tooltip_frame_light
+drawable utils_toast_bg
 drawable yi_icon
 id ALT
 id BOTTOM_END
@@ -3885,6 +3894,7 @@ id asConfigured
 id assistant_text_copy
 id assistant_text_report
 id assistant_text_select
+id assistsTestButtonContainer
 id async
 id audio_seek_bar
 id auto
@@ -3968,19 +3978,31 @@ id btnTestContinuation
 id btnTestCorrection
 id btnTestMultimodal
 id btnTestSemantic
+id btn_assists_core_test
 id btn_auto_send
 id btn_back
+id btn_check_service
 id btn_clear
+id btn_clear_log
 id btn_clear_results
 id btn_close
 id btn_close_dialog
 id btn_copy
 id btn_copy_text
+id btn_find_nodes
+id btn_get_all_nodes
+id btn_get_app_info
+id btn_get_text_nodes
 id btn_open_accessibility_settings
+id btn_open_settings
 id btn_quick_test
 id btn_refresh
 id btn_run_test
 id btn_send
+id btn_service_details
+id btn_start_analysis
+id btn_stop_analysis
+id btn_take_screenshot
 id btn_test
 id btn_toggle_audio_output
 id btn_toggle_thinking
@@ -4274,6 +4296,8 @@ id fitStart
 id fitToContents
 id fitXY
 id fixed
+id fl_container
+id fl_header
 id flip
 id floating
 id floating_button
@@ -4345,9 +4369,15 @@ id iv_delete_history
 id iv_download
 id iv_header
 id iv_item_icon
+id iv_minimize
+id iv_move
 id iv_sampler_type_icon
+id iv_scale
 id iv_screenshot
 id iv_thinking_header
+id iv_web_back
+id iv_web_forward
+id iv_web_refresh
 id jumpToEnd
 id jumpToStart
 id key_0
@@ -4421,6 +4451,7 @@ id line3
 id linear
 id listMode
 id list_item
+id ll_bottom_bar
 id ll_preset_tests
 id ll_thinking_toggle
 id loadMoreButton
@@ -5044,6 +5075,7 @@ id tvStatus
 id tvTypingIndicator
 id tvWord
 id tv_accessibility_status
+id tv_analysis_result
 id tv_candidate_weight
 id tv_candidate_word
 id tv_chat_benchmark
@@ -5058,7 +5090,10 @@ id tv_frequency
 id tv_item_subtitle
 id tv_item_title
 id tv_label_sampler_type
+id tv_log_output
 id tv_message
+id tv_node_count
+id tv_package_name
 id tv_performance
 id tv_pinyin
 id tv_prompt
@@ -5067,6 +5102,7 @@ id tv_result
 id tv_results
 id tv_sampler_type_value
 id tv_section_general
+id tv_service_status
 id tv_smart_tips
 id tv_source
 id tv_stage_results
@@ -5078,12 +5114,17 @@ id tv_summary
 id tv_text_nodes
 id tv_thinking_header
 id tv_thread_num_label
+id tv_title
 id tv_word
 id unchecked
 id uniform
 id unlabeled
 id up
 id useLogo
+id utvBottomIconView
+id utvLeftIconView
+id utvRightIconView
+id utvTopIconView
 id value_slider
 id vertical
 id vertical_only
@@ -5241,6 +5282,8 @@ layout abc_select_dialog_material
 layout abc_tooltip
 layout activity_ai_analysis
 layout activity_ai_test
+layout activity_assists_analysis
+layout activity_assists_test
 layout activity_chat
 layout activity_combination_test
 layout activity_continuous_pinyin_test
@@ -5268,6 +5311,8 @@ layout activity_vu_conversion_test
 layout activity_wechat_analysis
 layout ai_chat_overlay
 layout assistant_text_popup_menu
+layout assists_window_layout_wrapper
+layout assists_window_wrapper_layout
 layout calendar_overlay
 layout candidates_view
 layout chat_more_menu_item
@@ -5425,8 +5470,10 @@ layout symbol_keyboard_layout
 layout symbol_keyboard_layout_fixed
 layout symbol_keyboard_layout_new
 layout test_recycler_item
+layout utils_toast_view
 layout view_dictionary_status
 layout view_settings_item
+layout view_window
 layout zxing_barcode_scanner
 layout zxing_capture
 menu chat_context_menu_user
@@ -5486,6 +5533,8 @@ string androidx_startup
 string app_name
 string app_version
 string appbar_scrolling_view_behavior
+string assists_description
+string assists_service_description
 string audio_output_confirm
 string back
 string backend
@@ -5921,6 +5970,7 @@ string zxing_app_name
 string zxing_button_ok
 string zxing_msg_camera_framework_bug
 string zxing_msg_default_status
+style ActivityTranslucent
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
 style Animation_AppCompat_Dialog
@@ -7355,7 +7405,10 @@ styleable include constraintSet
 styleable zxing_camera_preview zxing_framing_rect_height zxing_framing_rect_width zxing_preview_scaling_strategy zxing_use_texture_view
 styleable zxing_finder zxing_possible_result_points zxing_result_view zxing_viewfinder_laser zxing_viewfinder_laser_visibility zxing_viewfinder_mask
 styleable zxing_view zxing_scanner_layout
-xml accessibility_service_config
+xml assists_provider_paths
+xml assists_service
+xml assists_service_config
 xml file_paths
 xml main_settings_prefs
 xml method
+xml util_code_provider_paths

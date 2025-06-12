@@ -75,6 +75,13 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
+        <!-- Assists框架测试按钮容器 -->
+        <FrameLayout
+            android:id="@+id/assistsTestButtonContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
     </LinearLayout>
 
 </LinearLayout>

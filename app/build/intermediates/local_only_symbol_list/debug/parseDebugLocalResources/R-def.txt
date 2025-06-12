@@ -489,6 +489,7 @@ id app_icon_toolbar
 id assistant_text_copy
 id assistant_text_report
 id assistant_text_select
+id assistsTestButtonContainer
 id audio_seek_bar
 id back_button
 id background
@@ -553,19 +554,31 @@ id btnTestContinuation
 id btnTestCorrection
 id btnTestMultimodal
 id btnTestSemantic
+id btn_assists_core_test
 id btn_auto_send
 id btn_back
+id btn_check_service
 id btn_clear
+id btn_clear_log
 id btn_clear_results
 id btn_close
 id btn_close_dialog
 id btn_copy
 id btn_copy_text
+id btn_find_nodes
+id btn_get_all_nodes
+id btn_get_app_info
+id btn_get_text_nodes
 id btn_open_accessibility_settings
+id btn_open_settings
 id btn_quick_test
 id btn_refresh
 id btn_run_test
 id btn_send
+id btn_service_details
+id btn_start_analysis
+id btn_stop_analysis
+id btn_take_screenshot
 id btn_test
 id btn_toggle_audio_output
 id btn_toggle_thinking
@@ -1212,6 +1225,7 @@ id tvStatus
 id tvTypingIndicator
 id tvWord
 id tv_accessibility_status
+id tv_analysis_result
 id tv_candidate_weight
 id tv_candidate_word
 id tv_chat_benchmark
@@ -1226,7 +1240,10 @@ id tv_frequency
 id tv_item_subtitle
 id tv_item_title
 id tv_label_sampler_type
+id tv_log_output
 id tv_message
+id tv_node_count
+id tv_package_name
 id tv_performance
 id tv_pinyin
 id tv_prompt
@@ -1235,6 +1252,7 @@ id tv_result
 id tv_results
 id tv_sampler_type_value
 id tv_section_general
+id tv_service_status
 id tv_smart_tips
 id tv_source
 id tv_stage_results
@@ -1254,6 +1272,8 @@ id visible
 id voice_recording_wav
 layout activity_ai_analysis
 layout activity_ai_test
+layout activity_assists_analysis
+layout activity_assists_test
 layout activity_chat
 layout activity_combination_test
 layout activity_continuous_pinyin_test
@@ -1367,6 +1387,7 @@ string add_local_models_title
 string all
 string all_permissions_granted
 string app_name
+string assists_service_description
 string audio_output_confirm
 string back
 string backend
@@ -1597,7 +1618,7 @@ styleable DropDownLineView labelText valueText icon
 styleable MoreMenuItemView text icon
 styleable SettingsItemView itemText checked
 styleable SettingsRowSlideSwitch labelText seekbarValue switchVisibility switchEnabled
-xml accessibility_service_config
+xml assists_service_config
 xml file_paths
 xml main_settings_prefs
 xml method

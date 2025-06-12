@@ -97,631 +97,739 @@
 54-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:47:5-94
 54-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:47:22-91
 55
-56    <permission
-56-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
-57        android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-57-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
-58        android:protectionLevel="signature" />
-58-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
-59
-60    <uses-permission android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-60-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
-60-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
-61    <uses-permission android:name="android.permission.CAMERA" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
-61-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:22:5-65
-61-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:22:22-62
-62    <uses-feature
-62-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:25:5-27:36
-63        android:name="android.hardware.camera"
-63-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:26:9-47
-64        android:required="false" />
-64-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:27:9-33
-65    <uses-feature
-65-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:28:5-30:36
-66        android:name="android.hardware.camera.front"
-66-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:29:9-53
-67        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
-67-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:30:9-33
-68    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
-69    <uses-feature
-69-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:33:5-35:36
-70        android:name="android.hardware.camera.autofocus"
-70-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:34:9-57
-71        android:required="false" />
-71-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:35:9-33
-72    <uses-feature
-72-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:36:5-38:36
-73        android:name="android.hardware.camera.flash"
-73-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:37:9-53
-74        android:required="false" />
-74-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:38:9-33
-75    <uses-feature
-75-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:39:5-41:36
-76        android:name="android.hardware.screen.landscape"
-76-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:40:9-57
-77        android:required="false" />
-77-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:41:9-33
+56    <queries>
+56-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:9:5-16:15
+57        <intent>
+57-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:10:9-12:18
+58            <action android:name="android.intent.action.MAIN" />
+58-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:17-69
+58-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:25-66
+59        </intent>
+60        <intent>
+60-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:13:9-15:18
+61            <action android:name="android.intent.action.VIEW" />
+61-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:14:13-65
+61-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:14:21-62
+62        </intent>
+63    </queries>
+64
+65    <permission
+65-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+66        android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+66-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+67        android:protectionLevel="signature" />
+67-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+68
+69    <uses-permission android:name="com.shenji.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+69-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+69-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+70    <uses-permission android:name="android.permission.CAMERA" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+70-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:22:5-65
+70-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:22:22-62
+71    <uses-feature
+71-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:25:5-27:36
+72        android:name="android.hardware.camera"
+72-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:26:9-47
+73        android:required="false" />
+73-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:27:9-33
+74    <uses-feature
+74-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:28:5-30:36
+75        android:name="android.hardware.camera.front"
+75-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:29:9-53
+76        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
+76-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:30:9-33
+77    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
 78    <uses-feature
-78-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:42:5-44:36
-79        android:name="android.hardware.wifi"
-79-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:43:9-45
+78-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:33:5-35:36
+79        android:name="android.hardware.camera.autofocus"
+79-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:34:9-57
 80        android:required="false" />
-80-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:44:9-33
-81
-82    <application
-82-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:49:5-281:19
-83        android:name="com.shenji.aikeyboard.ShenjiApplication"
-83-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:50:9-42
-84        android:allowBackup="true"
-84-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:51:9-35
-85        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-85-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
-86        android:debuggable="true"
-87        android:extractNativeLibs="false"
-88        android:hardwareAccelerated="true"
-88-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:57:9-43
-89        android:icon="@mipmap/ic_launcher"
-89-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:52:9-43
-90        android:label="@string/app_name"
-90-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:53:9-41
-91        android:largeHeap="true"
-91-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:56:9-33
-92        android:requestLegacyExternalStorage="true"
-92-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:59:9-52
-93        android:roundIcon="@mipmap/ic_launcher_round"
-93-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:54:9-54
-94        android:supportsRtl="true"
-94-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:55:9-35
-95        android:theme="@style/Theme.SHENJI"
-95-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:60:9-44
-96        android:vmSafeMode="false" >
-96-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:58:9-35
-97
-98        <!-- 启动页面 -->
-99        <activity
-99-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:64:9-72:20
-100            android:name="com.shenji.aikeyboard.SplashActivity"
-100-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:65:13-43
-101            android:exported="true"
-101-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:66:13-36
-102            android:theme="@style/Theme.SHENJI.Splash" >
-102-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:67:13-55
-103            <intent-filter>
-103-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:68:13-71:29
-104                <action android:name="android.intent.action.MAIN" />
-104-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:17-69
-104-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:25-66
-105
-106                <category android:name="android.intent.category.LAUNCHER" />
-106-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:70:17-77
-106-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:70:27-74
-107            </intent-filter>
-108        </activity>
-109
-110        <!-- 主活动 -->
-111        <activity
-111-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:75:9-78:20
-112            android:name="com.shenji.aikeyboard.ui.MainActivity"
-112-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:76:13-44
-113            android:exported="true" >
-113-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:77:13-36
-114        </activity>
-115
-116        <!-- 日志详情活动 -->
-117        <activity
-117-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:81:9-83:40
-118            android:name="com.shenji.aikeyboard.ui.LogDetailActivity"
-118-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:82:13-49
-119            android:exported="false" />
-119-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:83:13-37
-120
-121        <!-- 优化候选词测试活动 -->
-122        <activity
-122-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:86:9-90:58
-123            android:name="com.shenji.aikeyboard.ui.OptimizedCandidateTestActivity"
-123-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:87:13-62
-124            android:exported="false"
-124-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:88:13-37
-125            android:label="智能候选词引擎测试"
-125-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:89:13-38
-126            android:windowSoftInputMode="adjustResize" />
-126-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:90:13-55
-127
-128        <!-- SmartPinyinEngine MVP测试活动 -->
-129        <activity
-129-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:93:9-97:58
-130            android:name="com.shenji.aikeyboard.ui.SmartPinyinMvpTestActivity"
-130-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:94:13-58
-131            android:exported="true"
-131-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:95:13-36
-132            android:label="SmartPinyinEngine MVP测试"
-132-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:96:13-52
-133            android:windowSoftInputMode="adjustResize" />
-133-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:97:13-55
-134
-135        <!-- v/ü转换功能测试活动 -->
-136        <activity
-136-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:100:9-104:58
-137            android:name="com.shenji.aikeyboard.ui.VUConversionTestActivity"
-137-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:101:13-56
-138            android:exported="false"
-138-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:102:13-37
-139            android:label="v/ü转换功能测试"
-139-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:103:13-38
-140            android:windowSoftInputMode="adjustResize" />
-140-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:104:13-55
-141
-142        <!-- 连续拼音测试活动 -->
-143        <activity
-143-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:107:9-111:58
-144            android:name="com.shenji.aikeyboard.ui.ContinuousPinyinTestActivity"
-144-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:108:13-60
-145            android:exported="true"
-145-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:109:13-36
-146            android:label="连续拼音测试"
-146-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:110:13-35
-147            android:windowSoftInputMode="adjustResize" />
-147-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:111:13-55
-148
-149        <!-- LLM模型列表活动 -->
-150        <activity
-150-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:114:9-118:58
-151            android:name="com.shenji.aikeyboard.ui.LlmModelsActivity"
-151-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:115:13-49
-152            android:exported="true"
-152-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:116:13-36
-153            android:label="AI Chat models"
-153-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:117:13-43
-154            android:windowSoftInputMode="adjustResize" />
-154-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:118:13-55
-155
-156        <!-- LLM聊天活动 -->
-157        <activity
-157-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:121:9-125:58
-158            android:name="com.shenji.aikeyboard.ui.LlmChatActivity"
-158-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:122:13-47
-159            android:exported="false"
-159-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:123:13-37
-160            android:label="AI Chat"
-160-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:124:13-36
-161            android:windowSoftInputMode="adjustResize" />
-161-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:125:13-55
-162
-163        <!-- AI功能测试活动 -->
-164        <activity
-164-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:128:9-132:58
-165            android:name="com.shenji.aikeyboard.ui.AITestActivity"
-165-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:129:13-46
-166            android:exported="false"
-166-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:130:13-37
-167            android:label="AI功能测试"
-167-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:131:13-35
-168            android:windowSoftInputMode="adjustResize" />
-168-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:132:13-55
-169
-170        <!-- AI分析功能测试活动 -->
-171        <activity
-171-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:135:9-139:58
-172            android:name="com.shenji.aikeyboard.ui.TestAIAnalysisActivity"
-172-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:136:13-54
-173            android:exported="true"
-173-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:137:13-36
-174            android:label="AI分析功能测试"
-174-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:138:13-37
-175            android:windowSoftInputMode="adjustResize" />
-175-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:139:13-55
-176
-177        <!-- AI屏幕分析活动 -->
-178        <activity
-178-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:142:9-148:46
-179            android:name="com.shenji.aikeyboard.ui.AIAnalysisActivity"
-179-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:143:13-50
-180            android:exported="false"
-180-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:144:13-37
-181            android:label="AI屏幕分析"
-181-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:145:13-35
-182            android:launchMode="singleTop"
-182-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:148:13-43
-183            android:theme="@style/Theme.OverlayTool"
-183-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:146:13-53
-184            android:windowSoftInputMode="adjustResize|stateHidden" />
-184-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:147:13-67
+80-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:35:9-33
+81    <uses-feature
+81-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:36:5-38:36
+82        android:name="android.hardware.camera.flash"
+82-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:37:9-53
+83        android:required="false" />
+83-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:38:9-33
+84    <uses-feature
+84-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:39:5-41:36
+85        android:name="android.hardware.screen.landscape"
+85-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:40:9-57
+86        android:required="false" />
+86-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:41:9-33
+87    <uses-feature
+87-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:42:5-44:36
+88        android:name="android.hardware.wifi"
+88-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:43:9-45
+89        android:required="false" />
+89-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:44:9-33
+90
+91    <application
+91-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:49:5-292:19
+92        android:name="com.shenji.aikeyboard.ShenjiApplication"
+92-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:50:9-42
+93        android:allowBackup="true"
+93-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:51:9-35
+94        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+94-->[androidx.core:core:1.13.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\60024c8c68625191e906c635a472857f\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+95        android:debuggable="true"
+96        android:extractNativeLibs="false"
+97        android:hardwareAccelerated="true"
+97-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:57:9-43
+98        android:icon="@mipmap/ic_launcher"
+98-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:52:9-43
+99        android:label="@string/app_name"
+99-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:53:9-41
+100        android:largeHeap="true"
+100-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:56:9-33
+101        android:requestLegacyExternalStorage="true"
+101-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:59:9-52
+102        android:roundIcon="@mipmap/ic_launcher_round"
+102-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:54:9-54
+103        android:supportsRtl="true"
+103-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:55:9-35
+104        android:theme="@style/Theme.SHENJI"
+104-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:60:9-44
+105        android:vmSafeMode="false" >
+105-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:58:9-35
+106
+107        <!-- 启动页面 -->
+108        <activity
+108-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:64:9-72:20
+109            android:name="com.shenji.aikeyboard.SplashActivity"
+109-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:65:13-43
+110            android:exported="true"
+110-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:66:13-36
+111            android:theme="@style/Theme.SHENJI.Splash" >
+111-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:67:13-55
+112            <intent-filter>
+112-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:68:13-71:29
+113                <action android:name="android.intent.action.MAIN" />
+113-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:17-69
+113-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:25-66
+114
+115                <category android:name="android.intent.category.LAUNCHER" />
+115-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:70:17-77
+115-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:70:27-74
+116            </intent-filter>
+117        </activity>
+118
+119        <!-- 主活动 -->
+120        <activity
+120-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:75:9-78:20
+121            android:name="com.shenji.aikeyboard.ui.MainActivity"
+121-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:76:13-44
+122            android:exported="true" >
+122-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:77:13-36
+123        </activity>
+124
+125        <!-- 日志详情活动 -->
+126        <activity
+126-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:81:9-83:40
+127            android:name="com.shenji.aikeyboard.ui.LogDetailActivity"
+127-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:82:13-49
+128            android:exported="false" />
+128-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:83:13-37
+129
+130        <!-- 优化候选词测试活动 -->
+131        <activity
+131-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:86:9-90:58
+132            android:name="com.shenji.aikeyboard.ui.OptimizedCandidateTestActivity"
+132-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:87:13-62
+133            android:exported="false"
+133-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:88:13-37
+134            android:label="智能候选词引擎测试"
+134-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:89:13-38
+135            android:windowSoftInputMode="adjustResize" />
+135-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:90:13-55
+136
+137        <!-- SmartPinyinEngine MVP测试活动 -->
+138        <activity
+138-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:93:9-97:58
+139            android:name="com.shenji.aikeyboard.ui.SmartPinyinMvpTestActivity"
+139-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:94:13-58
+140            android:exported="true"
+140-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:95:13-36
+141            android:label="SmartPinyinEngine MVP测试"
+141-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:96:13-52
+142            android:windowSoftInputMode="adjustResize" />
+142-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:97:13-55
+143
+144        <!-- v/ü转换功能测试活动 -->
+145        <activity
+145-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:100:9-104:58
+146            android:name="com.shenji.aikeyboard.ui.VUConversionTestActivity"
+146-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:101:13-56
+147            android:exported="false"
+147-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:102:13-37
+148            android:label="v/ü转换功能测试"
+148-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:103:13-38
+149            android:windowSoftInputMode="adjustResize" />
+149-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:104:13-55
+150
+151        <!-- 连续拼音测试活动 -->
+152        <activity
+152-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:107:9-111:58
+153            android:name="com.shenji.aikeyboard.ui.ContinuousPinyinTestActivity"
+153-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:108:13-60
+154            android:exported="true"
+154-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:109:13-36
+155            android:label="连续拼音测试"
+155-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:110:13-35
+156            android:windowSoftInputMode="adjustResize" />
+156-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:111:13-55
+157
+158        <!-- LLM模型列表活动 -->
+159        <activity
+159-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:114:9-118:58
+160            android:name="com.shenji.aikeyboard.ui.LlmModelsActivity"
+160-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:115:13-49
+161            android:exported="true"
+161-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:116:13-36
+162            android:label="AI Chat models"
+162-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:117:13-43
+163            android:windowSoftInputMode="adjustResize" />
+163-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:118:13-55
+164
+165        <!-- LLM聊天活动 -->
+166        <activity
+166-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:121:9-125:58
+167            android:name="com.shenji.aikeyboard.ui.LlmChatActivity"
+167-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:122:13-47
+168            android:exported="false"
+168-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:123:13-37
+169            android:label="AI Chat"
+169-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:124:13-36
+170            android:windowSoftInputMode="adjustResize" />
+170-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:125:13-55
+171
+172        <!-- AI功能测试活动 -->
+173        <activity
+173-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:128:9-132:58
+174            android:name="com.shenji.aikeyboard.ui.AITestActivity"
+174-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:129:13-46
+175            android:exported="false"
+175-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:130:13-37
+176            android:label="AI功能测试"
+176-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:131:13-35
+177            android:windowSoftInputMode="adjustResize" />
+177-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:132:13-55
+178
+179        <!-- AI分析功能测试活动 -->
+180        <activity
+180-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:135:9-139:58
+181            android:name="com.shenji.aikeyboard.ui.TestAIAnalysisActivity"
+181-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:136:13-54
+182            android:exported="true"
+182-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:137:13-36
+183            android:label="AI分析功能测试"
+183-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:138:13-37
+184            android:windowSoftInputMode="adjustResize" />
+184-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:139:13-55
 185
-186        <!-- AI微信对话分析活动 -->
+186        <!-- AI屏幕分析活动 -->
 187        <activity
-187-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:151:9-157:46
-188            android:name="com.shenji.aikeyboard.ui.WeChatAnalysisActivity"
-188-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:152:13-54
+187-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:142:9-148:46
+188            android:name="com.shenji.aikeyboard.ui.AIAnalysisActivity"
+188-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:143:13-50
 189            android:exported="false"
-189-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:153:13-37
-190            android:label="AI微信对话分析"
-190-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:154:13-37
+189-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:144:13-37
+190            android:label="AI屏幕分析"
+190-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:145:13-35
 191            android:launchMode="singleTop"
-191-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:157:13-43
+191-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:148:13-43
 192            android:theme="@style/Theme.OverlayTool"
-192-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:155:13-53
+192-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:146:13-53
 193            android:windowSoftInputMode="adjustResize|stateHidden" />
-193-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:156:13-67
+193-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:147:13-67
 194
-195        <!-- 工具栏页面Activity -->
+195        <!-- AI微信对话分析活动 -->
 196        <activity
-196-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:160:9-166:46
-197            android:name="com.shenji.aikeyboard.ui.OverlayToolActivity"
-197-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:161:13-51
+196-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:151:9-157:46
+197            android:name="com.shenji.aikeyboard.ui.WeChatAnalysisActivity"
+197-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:152:13-54
 198            android:exported="false"
-198-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:162:13-37
-199            android:label="工具栏"
-199-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:163:13-32
+198-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:153:13-37
+199            android:label="AI微信对话分析"
+199-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:154:13-37
 200            android:launchMode="singleTop"
-200-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:166:13-43
+200-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:157:13-43
 201            android:theme="@style/Theme.OverlayTool"
-201-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:164:13-53
+201-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:155:13-53
 202            android:windowSoftInputMode="adjustResize|stateHidden" />
-202-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:165:13-67
+202-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:156:13-67
 203
-204        <!-- 订单页面Activity -->
+204        <!-- 工具栏页面Activity -->
 205        <activity
-205-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:169:9-177:49
-206            android:name="com.shenji.aikeyboard.ui.OrderActivity"
-206-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:170:13-45
-207            android:excludeFromRecents="true"
-207-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:177:13-46
-208            android:exported="false"
-208-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:171:13-37
-209            android:label="话术库"
-209-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:172:13-32
-210            android:launchMode="singleTask"
-210-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:175:13-44
-211            android:taskAffinity=""
-211-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:176:13-36
-212            android:theme="@style/Theme.OverlayTool"
-212-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:173:13-53
-213            android:windowSoftInputMode="adjustResize|stateHidden" />
-213-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:174:13-67
-214
-215        <!-- MNN移动推理框架相关Activity -->
-216        <activity
-216-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:180:9-185:51
-217            android:name="com.shenji.aikeyboard.mnn.main.MainActivity"
-217-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:181:13-50
-218            android:exported="true"
-218-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:182:13-36
-219            android:label="MNN AI助手"
-219-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:183:13-37
-220            android:theme="@style/Theme.SHENJI"
-220-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:185:13-48
-221            android:windowSoftInputMode="adjustResize" />
-221-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:184:13-55
-222        <activity
-222-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:187:9-191:58
-223            android:name="com.shenji.aikeyboard.mnn.modelist.ModelListActivity"
-223-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:188:13-59
-224            android:exported="false"
-224-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:189:13-37
-225            android:label="模型列表"
-225-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:190:13-33
-226            android:windowSoftInputMode="adjustResize" />
-226-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:191:13-55
-227        <activity
-227-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:193:9-197:58
-228            android:name="com.shenji.aikeyboard.mnn.chat.ChatActivity"
-228-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:194:13-50
-229            android:exported="false"
-229-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:195:13-37
-230            android:label="AI对话"
-230-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:196:13-33
-231            android:windowSoftInputMode="adjustResize" />
-231-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:197:13-55
-232        <activity
-232-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:199:9-203:58
-233            android:name="com.shenji.aikeyboard.mnn.mainsettings.MainSettingsActivity"
-233-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:200:13-66
-234            android:exported="false"
-234-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:201:13-37
-235            android:label="MNN设置"
-235-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:202:13-34
-236            android:windowSoftInputMode="adjustResize" />
-236-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:203:13-55
-237
-238        <!-- Gemma-3n多模态对话Activity -->
-239        <activity
-239-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:206:9-211:51
-240            android:name="com.shenji.aikeyboard.gallery.Gemma3nChatActivity"
-240-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:207:13-56
-241            android:exported="false"
-241-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:208:13-37
-242            android:label="Gemma-3n多模态对话"
-242-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:209:13-42
-243            android:theme="@style/Theme.SHENJI"
-243-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:211:13-48
-244            android:windowSoftInputMode="adjustResize" />
-244-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:210:13-55
-245
-246        <!-- 输入法服务 -->
-247        <service
-247-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:216:9-228:19
-248            android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"
-248-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:217:13-62
-249            android:exported="true"
-249-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:221:13-36
-250            android:hardwareAccelerated="true"
-250-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:220:13-47
-251            android:label="@string/ime_name"
-251-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:218:13-45
-252            android:permission="android.permission.BIND_INPUT_METHOD" >
-252-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:219:13-70
-253            <intent-filter>
-253-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:222:13-224:29
-254                <action android:name="android.view.InputMethod" />
-254-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:223:17-67
-254-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:223:25-64
-255            </intent-filter>
-256
-257            <meta-data
-257-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:225:13-227:50
-258                android:name="android.view.im"
-258-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:226:17-47
-259                android:resource="@xml/method" />
-259-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:227:17-47
-260        </service>
-261
-262        <!-- 无障碍服务 - 用于自动填写验证码 -->
-263        <service
-263-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:231:9-242:19
-264            android:name="com.shenji.aikeyboard.utils.AutofillAccessibilityService"
-264-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:232:13-63
-265            android:exported="true"
-265-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:235:13-36
-266            android:label="神迹键盘验证码自动填写"
-266-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:233:13-40
-267            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
-267-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:234:13-79
-268            <intent-filter>
-268-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:236:13-238:29
-269                <action android:name="android.accessibilityservice.AccessibilityService" />
-269-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:237:17-92
-269-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:237:25-89
-270            </intent-filter>
-271
-272            <meta-data
-272-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:239:13-241:72
-273                android:name="android.accessibilityservice"
-273-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:240:17-60
-274                android:resource="@xml/accessibility_service_config" />
-274-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:241:17-69
-275        </service>
-276
-277        <!-- 悬浮窗服务 -->
-278        <service
-278-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:245:5-252:15
-279            android:name="com.shenji.aikeyboard.ui.FloatingWindowService"
-279-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:246:9-49
-280            android:enabled="true"
-280-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:247:9-31
-281            android:exported="false"
-281-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:248:9-33
-282            android:foregroundServiceType="specialUse" >
-282-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:249:9-51
-283            <property
-283-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:250:9-251:48
-284                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-284-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:250:19-78
-285                android:value="悬浮窗和AI分析服务" />
-285-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:251:19-45
-286        </service>
-287
-288        <!-- 输入法设置活动 -->
-289        <activity
-289-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:255:9-262:20
-290            android:name="com.shenji.aikeyboard.settings.InputMethodSettingsActivity"
-290-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:256:13-65
-291            android:exported="true"
-291-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:258:13-36
-292            android:label="@string/ime_settings" >
-292-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:257:13-49
-293            <intent-filter>
-293-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:259:13-261:29
-294                <action android:name="android.intent.action.MAIN" />
-294-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:17-69
-294-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:25-66
-295            </intent-filter>
-296        </activity>
-297
-298        <!-- 模糊拼音设置 -->
-299        <activity
-299-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:265:9-268:40
-300            android:name="com.shenji.aikeyboard.settings.FuzzyPinyinSettingsActivity"
-300-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:266:13-65
-301            android:exported="false"
-301-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:268:13-37
-302            android:label="模糊拼音设置" />
-302-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:267:13-35
-303
-304        <!-- FileProvider配置 -->
-305        <provider
-305-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:271:9-279:20
-306            android:name="androidx.core.content.FileProvider"
-306-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:272:13-62
-307            android:authorities="com.shenji.aikeyboard.fileprovider"
-307-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:273:13-69
-308            android:exported="false"
-308-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:274:13-37
-309            android:grantUriPermissions="true" >
-309-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:275:13-47
-310            <meta-data
-310-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:276:13-278:54
-311                android:name="android.support.FILE_PROVIDER_PATHS"
-311-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:277:17-67
-312                android:resource="@xml/file_paths" />
-312-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:278:17-51
-313        </provider>
-314        <provider
-314-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
-315            android:name="androidx.startup.InitializationProvider"
-315-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:25:13-67
-316            android:authorities="com.shenji.aikeyboard.androidx-startup"
-316-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:26:13-68
-317            android:exported="false" >
-317-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:27:13-37
-318            <meta-data
-318-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
-319                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-319-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:30:17-75
-320                android:value="androidx.startup" />
-320-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:31:17-49
-321            <meta-data
-321-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\2493c19e33844f6dc92229f6f54bbd84\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:29:13-31:52
-322                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-322-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\2493c19e33844f6dc92229f6f54bbd84\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:30:17-78
-323                android:value="androidx.startup" />
-323-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\2493c19e33844f6dc92229f6f54bbd84\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:31:17-49
-324            <meta-data
-324-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\cba817826f47521a879e3529dbe2a7bd\transformed\jetified-cinterop-release\AndroidManifest.xml:32:13-34:52
-325                android:name="io.realm.kotlin.internal.RealmInitializer"
-325-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\cba817826f47521a879e3529dbe2a7bd\transformed\jetified-cinterop-release\AndroidManifest.xml:33:17-73
-326                android:value="androidx.startup" />
-326-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\cba817826f47521a879e3529dbe2a7bd\transformed\jetified-cinterop-release\AndroidManifest.xml:34:17-49
+205-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:160:9-166:46
+206            android:name="com.shenji.aikeyboard.ui.OverlayToolActivity"
+206-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:161:13-51
+207            android:exported="false"
+207-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:162:13-37
+208            android:label="工具栏"
+208-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:163:13-32
+209            android:launchMode="singleTop"
+209-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:166:13-43
+210            android:theme="@style/Theme.OverlayTool"
+210-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:164:13-53
+211            android:windowSoftInputMode="adjustResize|stateHidden" />
+211-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:165:13-67
+212
+213        <!-- 订单页面Activity -->
+214        <activity
+214-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:169:9-177:49
+215            android:name="com.shenji.aikeyboard.ui.OrderActivity"
+215-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:170:13-45
+216            android:excludeFromRecents="true"
+216-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:177:13-46
+217            android:exported="false"
+217-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:171:13-37
+218            android:label="话术库"
+218-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:172:13-32
+219            android:launchMode="singleTask"
+219-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:175:13-44
+220            android:taskAffinity=""
+220-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:176:13-36
+221            android:theme="@style/Theme.OverlayTool"
+221-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:173:13-53
+222            android:windowSoftInputMode="adjustResize|stateHidden" />
+222-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:174:13-67
+223
+224        <!-- MNN移动推理框架相关Activity -->
+225        <activity
+225-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:180:9-185:51
+226            android:name="com.shenji.aikeyboard.mnn.main.MainActivity"
+226-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:181:13-50
+227            android:exported="true"
+227-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:182:13-36
+228            android:label="MNN AI助手"
+228-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:183:13-37
+229            android:theme="@style/Theme.SHENJI"
+229-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:185:13-48
+230            android:windowSoftInputMode="adjustResize" />
+230-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:184:13-55
+231        <activity
+231-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:187:9-191:58
+232            android:name="com.shenji.aikeyboard.mnn.modelist.ModelListActivity"
+232-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:188:13-59
+233            android:exported="false"
+233-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:189:13-37
+234            android:label="模型列表"
+234-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:190:13-33
+235            android:windowSoftInputMode="adjustResize" />
+235-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:191:13-55
+236        <activity
+236-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:193:9-197:58
+237            android:name="com.shenji.aikeyboard.mnn.chat.ChatActivity"
+237-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:194:13-50
+238            android:exported="false"
+238-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:195:13-37
+239            android:label="AI对话"
+239-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:196:13-33
+240            android:windowSoftInputMode="adjustResize" />
+240-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:197:13-55
+241        <activity
+241-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:199:9-203:58
+242            android:name="com.shenji.aikeyboard.mnn.mainsettings.MainSettingsActivity"
+242-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:200:13-66
+243            android:exported="false"
+243-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:201:13-37
+244            android:label="MNN设置"
+244-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:202:13-34
+245            android:windowSoftInputMode="adjustResize" />
+245-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:203:13-55
+246
+247        <!-- Gemma-3n多模态对话Activity -->
+248        <activity
+248-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:206:9-211:51
+249            android:name="com.shenji.aikeyboard.gallery.Gemma3nChatActivity"
+249-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:207:13-56
+250            android:exported="false"
+250-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:208:13-37
+251            android:label="Gemma-3n多模态对话"
+251-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:209:13-42
+252            android:theme="@style/Theme.SHENJI"
+252-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:211:13-48
+253            android:windowSoftInputMode="adjustResize" />
+253-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:210:13-55
+254
+255        <!-- Assists框架测试Activity -->
+256        <activity
+256-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:214:9-219:51
+257            android:name="com.shenji.aikeyboard.ui.AssistsTestActivity"
+257-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:215:13-51
+258            android:exported="false"
+258-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:216:13-37
+259            android:label="Assists框架测试"
+259-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:217:13-40
+260            android:theme="@style/Theme.SHENJI"
+260-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:219:13-48
+261            android:windowSoftInputMode="adjustResize" />
+261-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:218:13-55
+262
+263        <!-- 输入法服务 -->
+264        <service
+264-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:225:9-237:19
+265            android:name="com.shenji.aikeyboard.keyboard.ShenjiInputMethodService"
+265-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:226:13-62
+266            android:exported="true"
+266-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:230:13-36
+267            android:hardwareAccelerated="true"
+267-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:229:13-47
+268            android:label="@string/ime_name"
+268-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:227:13-45
+269            android:permission="android.permission.BIND_INPUT_METHOD" >
+269-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:228:13-70
+270            <intent-filter>
+270-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:231:13-233:29
+271                <action android:name="android.view.InputMethod" />
+271-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:232:17-67
+271-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:232:25-64
+272            </intent-filter>
+273
+274            <meta-data
+274-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:234:13-236:50
+275                android:name="android.view.im"
+275-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:235:17-47
+276                android:resource="@xml/method" />
+276-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:236:17-47
+277        </service>
+278
+279        <!-- 增强无障碍服务 - 集成Assists框架和自动填写功能 -->
+280        <service
+280-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:240:9-251:19
+281            android:name="com.shenji.aikeyboard.assists.service.EnhancedAssistsService"
+281-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:241:13-67
+282            android:exported="true"
+282-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:244:13-36
+283            android:label="神迹键盘Assists无障碍服务"
+283-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:242:13-45
+284            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+284-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:243:13-79
+285            <intent-filter android:priority="10000" >
+285-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:245:13-247:29
+285-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:245:28-52
+286                <action android:name="android.accessibilityservice.AccessibilityService" />
+286-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:246:17-92
+286-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:246:25-89
+287            </intent-filter>
+288
+289            <meta-data
+289-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:248:13-250:66
+290                android:name="android.accessibilityservice"
+290-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:249:17-60
+291                android:resource="@xml/assists_service_config" />
+291-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:250:17-63
+292        </service>
+293
+294        <!-- 悬浮窗服务 -->
+295        <service
+295-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:256:5-263:15
+296            android:name="com.shenji.aikeyboard.ui.FloatingWindowService"
+296-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:257:9-49
+297            android:enabled="true"
+297-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:258:9-31
+298            android:exported="false"
+298-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:259:9-33
+299            android:foregroundServiceType="specialUse" >
+299-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:260:9-51
+300            <property
+300-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:261:9-262:48
+301                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+301-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:261:19-78
+302                android:value="悬浮窗和AI分析服务" />
+302-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:262:19-45
+303        </service>
+304
+305        <!-- 输入法设置活动 -->
+306        <activity
+306-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:266:9-273:20
+307            android:name="com.shenji.aikeyboard.settings.InputMethodSettingsActivity"
+307-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:267:13-65
+308            android:exported="true"
+308-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:269:13-36
+309            android:label="@string/ime_settings" >
+309-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:268:13-49
+310            <intent-filter>
+310-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:270:13-272:29
+311                <action android:name="android.intent.action.MAIN" />
+311-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:17-69
+311-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:69:25-66
+312            </intent-filter>
+313        </activity>
+314
+315        <!-- 模糊拼音设置 -->
+316        <activity
+316-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:276:9-279:40
+317            android:name="com.shenji.aikeyboard.settings.FuzzyPinyinSettingsActivity"
+317-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:277:13-65
+318            android:exported="false"
+318-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:279:13-37
+319            android:label="模糊拼音设置" />
+319-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:278:13-35
+320
+321        <!-- FileProvider配置 -->
+322        <provider
+322-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:282:9-290:20
+323            android:name="androidx.core.content.FileProvider"
+323-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:283:13-62
+324            android:authorities="com.shenji.aikeyboard.fileprovider"
+324-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:284:13-69
+325            android:exported="false"
+325-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:285:13-37
+326            android:grantUriPermissions="true" >
+326-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:286:13-47
 327            <meta-data
-327-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:29:13-31:52
-328                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-328-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:30:17-85
-329                android:value="androidx.startup" />
-329-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:31:17-49
+327-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:287:13-289:54
+328                android:name="android.support.FILE_PROVIDER_PATHS"
+328-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:288:17-67
+329                android:resource="@xml/file_paths" />
+329-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:289:17-51
 330        </provider>
-331
-332        <uses-library
-332-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:25:9-27:40
-333            android:name="androidx.window.extensions"
-333-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:26:13-54
-334            android:required="false" />
-334-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:27:13-37
-335        <uses-library
-335-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:28:9-30:40
-336            android:name="androidx.window.sidecar"
-336-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:29:13-51
-337            android:required="false" />
-337-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:30:13-37
-338
-339        <activity
-339-->[androidx.compose.ui:ui-tooling-android:1.7.8] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\ed69acd0ebfb2c27250b0b772ed6a7e6\transformed\jetified-ui-tooling-release\AndroidManifest.xml:23:9-25:39
-340            android:name="androidx.compose.ui.tooling.PreviewActivity"
-340-->[androidx.compose.ui:ui-tooling-android:1.7.8] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\ed69acd0ebfb2c27250b0b772ed6a7e6\transformed\jetified-ui-tooling-release\AndroidManifest.xml:24:13-71
-341            android:exported="true" />
-341-->[androidx.compose.ui:ui-tooling-android:1.7.8] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\ed69acd0ebfb2c27250b0b772ed6a7e6\transformed\jetified-ui-tooling-release\AndroidManifest.xml:25:13-36
-342        <!--
-343             Applications that target Android S+ require explicit declaration of
-344             any referenced vendor-provided libraries.
-345        -->
-346        <uses-native-library
-346-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:15:9-17:40
-347            android:name="libOpenCL.so"
-347-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:16:13-40
-348            android:required="false" />
-348-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:17:13-37
-349        <uses-native-library
-349-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:15:9-17:40
-350            android:name="libOpenCL-car.so"
-350-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:16:13-40
-351            android:required="false" />
-351-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:17:13-37
-352        <uses-native-library
-352-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:15:9-17:40
-353            android:name="libOpenCL-pixel.so"
-353-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:16:13-40
-354            android:required="false" />
-354-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:17:13-37
-355
-356        <provider
-356-->[ru.noties:jlatexmath-android:0.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\4e903b6bbbeb1ee9079d0be97cbd847a\transformed\jetified-jlatexmath-android-0.2.0\AndroidManifest.xml:12:9-15:40
-357            android:name="ru.noties.jlatexmath.JLatexMathInitProvider"
-357-->[ru.noties:jlatexmath-android:0.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\4e903b6bbbeb1ee9079d0be97cbd847a\transformed\jetified-jlatexmath-android-0.2.0\AndroidManifest.xml:13:13-71
-358            android:authorities="com.shenji.aikeyboard.jlatexmathinitprovider"
-358-->[ru.noties:jlatexmath-android:0.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\4e903b6bbbeb1ee9079d0be97cbd847a\transformed\jetified-jlatexmath-android-0.2.0\AndroidManifest.xml:14:13-74
-359            android:exported="false" />
-359-->[ru.noties:jlatexmath-android:0.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\4e903b6bbbeb1ee9079d0be97cbd847a\transformed\jetified-jlatexmath-android-0.2.0\AndroidManifest.xml:15:13-37
-360
-361        <receiver
-361-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:34:9-52:20
-362            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-362-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:35:13-76
-363            android:directBootAware="false"
-363-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:36:13-44
-364            android:enabled="true"
-364-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:37:13-35
-365            android:exported="true"
-365-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:38:13-36
-366            android:permission="android.permission.DUMP" >
-366-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:39:13-57
-367            <intent-filter>
-367-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:40:13-42:29
-368                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-368-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:41:17-91
-368-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:41:25-88
-369            </intent-filter>
-370            <intent-filter>
-370-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:43:13-45:29
-371                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-371-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:44:17-85
-371-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:44:25-82
-372            </intent-filter>
-373            <intent-filter>
-373-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:46:13-48:29
-374                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-374-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:47:17-88
-374-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:47:25-85
-375            </intent-filter>
-376            <intent-filter>
-376-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:49:13-51:29
-377                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-377-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:50:17-95
-377-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:50:25-92
-378            </intent-filter>
-379        </receiver>
-380
-381        <service
-381-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:29:9-35:19
-382            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
-382-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:30:13-103
-383            android:exported="false" >
-383-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:31:13-37
-384            <meta-data
-384-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:32:13-34:39
-385                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
-385-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:33:17-94
-386                android:value="cct" />
-386-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:34:17-36
-387        </service>
-388        <service
-388-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:26:9-30:19
-389            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
-389-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:27:13-117
-390            android:exported="false"
-390-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:28:13-37
-391            android:permission="android.permission.BIND_JOB_SERVICE" >
-391-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:29:13-69
-392        </service>
-393
-394        <receiver
-394-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:32:9-34:40
-395            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
-395-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:33:13-132
-396            android:exported="false" />
-396-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:34:13-37
+331        <provider
+331-->[:assists-framework] C:\ProjectD\SHENJIME\assists-framework\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:8:9-16:20
+332            android:name="com.ven.assists.utils.AssistsFileProvider"
+332-->[:assists-framework] C:\ProjectD\SHENJIME\assists-framework\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:9:13-69
+333            android:authorities="com.shenji.aikeyboard.assists.fileprovider"
+333-->[:assists-framework] C:\ProjectD\SHENJIME\assists-framework\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:10:13-72
+334            android:exported="false"
+334-->[:assists-framework] C:\ProjectD\SHENJIME\assists-framework\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:11:13-37
+335            android:grantUriPermissions="true" >
+335-->[:assists-framework] C:\ProjectD\SHENJIME\assists-framework\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:12:13-47
+336            <meta-data
+336-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:287:13-289:54
+337                android:name="android.support.FILE_PROVIDER_PATHS"
+337-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:288:17-67
+338                android:resource="@xml/assists_provider_paths" />
+338-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:289:17-51
+339        </provider>
+340
+341        <activity
+341-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:19:9-24:75
+342            android:name="com.blankj.utilcode.util.UtilsTransActivity4MainProcess"
+342-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:20:13-83
+343            android:configChanges="orientation|keyboardHidden|screenSize"
+343-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:21:13-74
+344            android:exported="false"
+344-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:22:13-37
+345            android:theme="@style/ActivityTranslucent"
+345-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:23:13-55
+346            android:windowSoftInputMode="stateHidden|stateAlwaysHidden" />
+346-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:24:13-72
+347        <activity
+347-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:25:9-31:75
+348            android:name="com.blankj.utilcode.util.UtilsTransActivity"
+348-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:26:13-71
+349            android:configChanges="orientation|keyboardHidden|screenSize"
+349-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:27:13-74
+350            android:exported="false"
+350-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:28:13-37
+351            android:multiprocess="true"
+351-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:29:13-40
+352            android:theme="@style/ActivityTranslucent"
+352-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:30:13-55
+353            android:windowSoftInputMode="stateHidden|stateAlwaysHidden" />
+353-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:31:13-72
+354
+355        <provider
+355-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:33:9-41:20
+356            android:name="com.blankj.utilcode.util.UtilsFileProvider"
+356-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:34:13-70
+357            android:authorities="com.shenji.aikeyboard.utilcode.fileprovider"
+357-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:35:13-73
+358            android:exported="false"
+358-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:36:13-37
+359            android:grantUriPermissions="true" >
+359-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:37:13-47
+360            <meta-data
+360-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:287:13-289:54
+361                android:name="android.support.FILE_PROVIDER_PATHS"
+361-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:288:17-67
+362                android:resource="@xml/util_code_provider_paths" />
+362-->C:\ProjectD\SHENJIME\app\src\main\AndroidManifest.xml:289:17-51
+363        </provider>
+364
+365        <service
+365-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:43:9-49:19
+366            android:name="com.blankj.utilcode.util.MessengerUtils$ServerService"
+366-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:44:13-81
+367            android:exported="false" >
+367-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:45:13-37
+368            <intent-filter>
+368-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:46:13-48:29
+369                <action android:name="com.shenji.aikeyboard.messenger" />
+369-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:47:17-69
+369-->[com.blankj:utilcodex:1.31.1] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bc4f99460e52dac9903ade9e5cb3fd4e\transformed\jetified-utilcodex-1.31.1\AndroidManifest.xml:47:25-66
+370            </intent-filter>
+371        </service>
+372
+373        <provider
+373-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+374            android:name="androidx.startup.InitializationProvider"
+374-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:25:13-67
+375            android:authorities="com.shenji.aikeyboard.androidx-startup"
+375-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:26:13-68
+376            android:exported="false" >
+376-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:27:13-37
+377            <meta-data
+377-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+378                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+378-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:30:17-75
+379                android:value="androidx.startup" />
+379-->[androidx.emoji2:emoji2:1.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\b195be7269edda290c9792ddf311f52e\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:31:17-49
+380            <meta-data
+380-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\2493c19e33844f6dc92229f6f54bbd84\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:29:13-31:52
+381                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+381-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\2493c19e33844f6dc92229f6f54bbd84\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:30:17-78
+382                android:value="androidx.startup" />
+382-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\2493c19e33844f6dc92229f6f54bbd84\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:31:17-49
+383            <meta-data
+383-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\cba817826f47521a879e3529dbe2a7bd\transformed\jetified-cinterop-release\AndroidManifest.xml:32:13-34:52
+384                android:name="io.realm.kotlin.internal.RealmInitializer"
+384-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\cba817826f47521a879e3529dbe2a7bd\transformed\jetified-cinterop-release\AndroidManifest.xml:33:17-73
+385                android:value="androidx.startup" />
+385-->[io.realm.kotlin:cinterop-android:2.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\cba817826f47521a879e3529dbe2a7bd\transformed\jetified-cinterop-release\AndroidManifest.xml:34:17-49
+386            <meta-data
+386-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:29:13-31:52
+387                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+387-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:30:17-85
+388                android:value="androidx.startup" />
+388-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:31:17-49
+389        </provider>
+390
+391        <uses-library
+391-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:25:9-27:40
+392            android:name="androidx.window.extensions"
+392-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:26:13-54
+393            android:required="false" />
+393-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:27:13-37
+394        <uses-library
+394-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:28:9-30:40
+395            android:name="androidx.window.sidecar"
+395-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:29:13-51
+396            android:required="false" />
+396-->[androidx.window:window:1.0.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\fc549e028d7b7fafb45dd7cf4971ebd6\transformed\jetified-window-1.0.0\AndroidManifest.xml:30:13-37
 397
 398        <activity
-398-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:47:9-53:63
-399            android:name="com.journeyapps.barcodescanner.CaptureActivity"
-399-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:48:13-74
-400            android:clearTaskOnLaunch="true"
-400-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:49:13-45
-401            android:screenOrientation="sensorLandscape"
-401-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:50:13-56
-402            android:stateNotNeeded="true"
-402-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:51:13-42
-403            android:theme="@style/zxing_CaptureTheme"
-403-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:52:13-54
-404            android:windowSoftInputMode="stateAlwaysHidden" />
-404-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:53:13-60
-405    </application>
-406
-407</manifest>
+398-->[androidx.compose.ui:ui-tooling-android:1.7.8] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\ed69acd0ebfb2c27250b0b772ed6a7e6\transformed\jetified-ui-tooling-release\AndroidManifest.xml:23:9-25:39
+399            android:name="androidx.compose.ui.tooling.PreviewActivity"
+399-->[androidx.compose.ui:ui-tooling-android:1.7.8] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\ed69acd0ebfb2c27250b0b772ed6a7e6\transformed\jetified-ui-tooling-release\AndroidManifest.xml:24:13-71
+400            android:exported="true" />
+400-->[androidx.compose.ui:ui-tooling-android:1.7.8] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\ed69acd0ebfb2c27250b0b772ed6a7e6\transformed\jetified-ui-tooling-release\AndroidManifest.xml:25:13-36
+401        <!--
+402             Applications that target Android S+ require explicit declaration of
+403             any referenced vendor-provided libraries.
+404        -->
+405        <uses-native-library
+405-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:15:9-17:40
+406            android:name="libOpenCL.so"
+406-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:16:13-40
+407            android:required="false" />
+407-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:17:13-37
+408        <uses-native-library
+408-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:15:9-17:40
+409            android:name="libOpenCL-car.so"
+409-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:16:13-40
+410            android:required="false" />
+410-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:17:13-37
+411        <uses-native-library
+411-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:15:9-17:40
+412            android:name="libOpenCL-pixel.so"
+412-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:16:13-40
+413            android:required="false" />
+413-->[com.google.mediapipe:tasks-genai:0.10.24] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\15345157a61055ff345514dbb6d50d14\transformed\jetified-tasks-genai-0.10.24\AndroidManifest.xml:17:13-37
+414
+415        <provider
+415-->[ru.noties:jlatexmath-android:0.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\4e903b6bbbeb1ee9079d0be97cbd847a\transformed\jetified-jlatexmath-android-0.2.0\AndroidManifest.xml:12:9-15:40
+416            android:name="ru.noties.jlatexmath.JLatexMathInitProvider"
+416-->[ru.noties:jlatexmath-android:0.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\4e903b6bbbeb1ee9079d0be97cbd847a\transformed\jetified-jlatexmath-android-0.2.0\AndroidManifest.xml:13:13-71
+417            android:authorities="com.shenji.aikeyboard.jlatexmathinitprovider"
+417-->[ru.noties:jlatexmath-android:0.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\4e903b6bbbeb1ee9079d0be97cbd847a\transformed\jetified-jlatexmath-android-0.2.0\AndroidManifest.xml:14:13-74
+418            android:exported="false" />
+418-->[ru.noties:jlatexmath-android:0.2.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\4e903b6bbbeb1ee9079d0be97cbd847a\transformed\jetified-jlatexmath-android-0.2.0\AndroidManifest.xml:15:13-37
+419
+420        <receiver
+420-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:34:9-52:20
+421            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+421-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:35:13-76
+422            android:directBootAware="false"
+422-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:36:13-44
+423            android:enabled="true"
+423-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:37:13-35
+424            android:exported="true"
+424-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:38:13-36
+425            android:permission="android.permission.DUMP" >
+425-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:39:13-57
+426            <intent-filter>
+426-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:40:13-42:29
+427                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+427-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:41:17-91
+427-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:41:25-88
+428            </intent-filter>
+429            <intent-filter>
+429-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:43:13-45:29
+430                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+430-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:44:17-85
+430-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:44:25-82
+431            </intent-filter>
+432            <intent-filter>
+432-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:46:13-48:29
+433                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+433-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:47:17-88
+433-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:47:25-85
+434            </intent-filter>
+435            <intent-filter>
+435-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:49:13-51:29
+436                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+436-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:50:17-95
+436-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\05723ca17af31c4bb1408e8954e078ed\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:50:25-92
+437            </intent-filter>
+438        </receiver>
+439
+440        <service
+440-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:29:9-35:19
+441            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+441-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:30:13-103
+442            android:exported="false" >
+442-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:31:13-37
+443            <meta-data
+443-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:32:13-34:39
+444                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+444-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:33:17-94
+445                android:value="cct" />
+445-->[com.google.android.datatransport:transport-backend-cct:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\bada02f94e4dc2e04f775495cf2510ed\transformed\jetified-transport-backend-cct-3.1.0\AndroidManifest.xml:34:17-36
+446        </service>
+447        <service
+447-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:26:9-30:19
+448            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+448-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:27:13-117
+449            android:exported="false"
+449-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:28:13-37
+450            android:permission="android.permission.BIND_JOB_SERVICE" >
+450-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:29:13-69
+451        </service>
+452
+453        <receiver
+453-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:32:9-34:40
+454            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+454-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:33:13-132
+455            android:exported="false" />
+455-->[com.google.android.datatransport:transport-runtime:3.1.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\01ce0b15e65038ef1d09e8d7fb7f0eb3\transformed\jetified-transport-runtime-3.1.0\AndroidManifest.xml:34:13-37
+456
+457        <activity
+457-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:47:9-53:63
+458            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+458-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:48:13-74
+459            android:clearTaskOnLaunch="true"
+459-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:49:13-45
+460            android:screenOrientation="sensorLandscape"
+460-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:50:13-56
+461            android:stateNotNeeded="true"
+461-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:51:13-42
+462            android:theme="@style/zxing_CaptureTheme"
+462-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:52:13-54
+463            android:windowSoftInputMode="stateAlwaysHidden" />
+463-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\15811\scoop\apps\gradle\current\.gradle\caches\8.9\transforms\dedcb3618f224af32dceb423c8ea3c27\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:53:13-60
+464    </application>
+465
+466</manifest>

@@ -178,6 +178,9 @@ class ShenjiApplication : MultiDexApplication() {
             // 初始化悬浮窗管理器并自动启动（如果已启用）
             initFloatingWindow()
             
+            // 🔧 新增：初始化Assists框架
+            initAssistsFramework()
+            
             logStartupMessage("应用初始化完成")
             Timber.d("应用初始化完成")
         } catch (e: Exception) {
@@ -544,6 +547,25 @@ class ShenjiApplication : MultiDexApplication() {
         } catch (e: Exception) {
             logStartupMessage("❌ 创建空数据库失败: ${e.message}")
             throw e
+        }
+    }
+    
+    /**
+     * 初始化Assists框架
+     */
+    private fun initAssistsFramework() {
+        try {
+            logStartupMessage("开始初始化Assists框架...")
+            
+            // 初始化Assists管理器
+            com.shenji.aikeyboard.assists.AssistsManager.initialize(this)
+            
+            logStartupMessage("✅ Assists框架初始化完成")
+            Timber.d("Assists框架初始化完成")
+            
+        } catch (e: Exception) {
+            logStartupMessage("❌ Assists框架初始化失败: ${e.message}")
+            Timber.e(e, "Assists框架初始化失败")
         }
     }
     

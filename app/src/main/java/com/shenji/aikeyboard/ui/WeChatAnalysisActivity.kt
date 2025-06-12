@@ -20,7 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ai.engines.Gemma3nWeChatAnalysisEngine
 import com.shenji.aikeyboard.ai.engines.WeChatAnalysisResult
-import com.shenji.aikeyboard.utils.AutofillAccessibilityService
+import com.shenji.aikeyboard.assists.service.EnhancedAssistsService
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import android.os.Build
@@ -197,7 +197,7 @@ class WeChatAnalysisActivity : AppCompatActivity() {
             val fromFloatingWindow = intent.getBooleanExtra("from_floating_window", false)
             
             // 检查无障碍服务是否可用（Android 11+）
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && AutofillAccessibilityService.isServiceEnabled(this)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && EnhancedAssistsService.isServiceEnabled()) {
                 Timber.d("$TAG: Using accessibility service for screenshot")
                 showLoadingState("正在通过无障碍服务截取微信对话...")
                 
@@ -211,7 +211,7 @@ class WeChatAnalysisActivity : AppCompatActivity() {
                 
                 // 延迟截图，确保截取的是微信界面
                 tvStatus.postDelayed({
-                    AutofillAccessibilityService.takeScreenshotViaAccessibility { bitmap ->
+                    EnhancedAssistsService.takeScreenshotViaAccessibility { bitmap ->
                         lifecycleScope.launch(Dispatchers.Main) {
                             if (bitmap != null) {
                                 currentBitmap = bitmap

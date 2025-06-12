@@ -307,6 +307,15 @@
     <string name="all">All</string>
     <string name="all_permissions_granted">所有权限已授予</string>
     <string name="app_name">神迹</string>
+    <string name="assists_service_description">
+        神迹键盘Assists无障碍服务提供强大的自动化功能：\n
+        1. 高级界面元素分析和自动化操作\n
+        2. 智能屏幕截图和内容识别\n
+        3. 自定义自动化脚本执行\n
+        4. 验证码自动检测和填写\n
+        5. AI驱动的界面智能分析\n\n
+        基于开源Assists框架构建，安全可靠，所有数据处理均在本地完成。
+    </string>
     <string name="audio_output_confirm">Audio Output is very slow for now, Would you like to continue anyway?</string>
     <string name="back">返回</string>
     <string name="backend">use opencl</string>

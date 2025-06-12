@@ -19,7 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.ai.engines.Gemma3nImageAnalysisEngine
-import com.shenji.aikeyboard.utils.AutofillAccessibilityService
+import com.shenji.aikeyboard.assists.service.EnhancedAssistsService
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -205,7 +205,7 @@ class AIAnalysisActivity : AppCompatActivity() {
             }
             
             // 检查无障碍服务是否可用（Android 11+）
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && AutofillAccessibilityService.isServiceEnabled(this)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && EnhancedAssistsService.isServiceEnabled()) {
                 Timber.d("$TAG: Using accessibility service for screenshot")
                 showLoadingState("正在通过无障碍服务截取屏幕...")
                 
@@ -219,7 +219,7 @@ class AIAnalysisActivity : AppCompatActivity() {
                 
                 // 延迟截图，确保截取的是目标界面
                 tvStatus.postDelayed({
-                    AutofillAccessibilityService.takeScreenshotViaAccessibility { bitmap ->
+                    EnhancedAssistsService.takeScreenshotViaAccessibility { bitmap ->
                         lifecycleScope.launch(Dispatchers.Main) {
                             if (bitmap != null) {
                                 currentBitmap = bitmap

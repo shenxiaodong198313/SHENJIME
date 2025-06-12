@@ -31,7 +31,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.SupervisorJob
-import com.shenji.aikeyboard.utils.AutofillAccessibilityService
+import com.shenji.aikeyboard.assists.service.EnhancedAssistsService
 
 /**
  * 悬浮窗服务
@@ -383,7 +383,7 @@ class FloatingWindowService : Service() {
             Timber.d("$TAG: AI Interface Analysis button clicked")
             
             // 检查无障碍服务是否开启
-            if (!AutofillAccessibilityService.isServiceEnabled(this)) {
+            if (!EnhancedAssistsService.isServiceEnabled()) {
                 Toast.makeText(this, "请先开启无障碍服务以使用AI分析功能", Toast.LENGTH_LONG).show()
                 // 打开设置页面引导用户开启服务
                 val intent = Intent(this, com.shenji.aikeyboard.settings.InputMethodSettingsActivity::class.java).apply {
@@ -398,7 +398,7 @@ class FloatingWindowService : Service() {
                 Toast.makeText(this, "正在通过无障碍服务截取屏幕...", Toast.LENGTH_SHORT).show()
                 
                 // 使用无障碍服务截图
-                AutofillAccessibilityService.takeScreenshotViaAccessibility { bitmap ->
+                EnhancedAssistsService.takeScreenshotViaAccessibility { bitmap ->
                     serviceScope.launch(Dispatchers.Main) {
                         if (bitmap != null) {
                             // 保存截图到临时存储
@@ -458,36 +458,37 @@ class FloatingWindowService : Service() {
     }
     
     /**
-     * 处理无障碍分析界面按钮点击
+     * 处理无障碍分析界面按钮点击 - 升级为Assists框架入口
      */
     private fun handleAccessibilityAnalysisClick() {
         try {
-            Timber.d("$TAG: Accessibility Analysis button clicked")
+            Timber.d("$TAG: Assists Analysis button clicked")
             
-            // 检查无障碍服务是否可用
-            if (!AutofillAccessibilityService.isServiceEnabled(this)) {
-                Toast.makeText(this, "请先开启无障碍服务权限", Toast.LENGTH_LONG).show()
-                // 可以引导用户去开启无障碍服务
-                val intent = Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(intent)
+            // 检查Assists无障碍服务是否可用
+            if (!com.shenji.aikeyboard.assists.AssistsManager.isAccessibilityServiceEnabled()) {
+                Toast.makeText(this, "请先开启Assists无障碍服务权限", Toast.LENGTH_LONG).show()
+                // 引导用户去开启Assists无障碍服务
+                com.shenji.aikeyboard.assists.AssistsManager.openAccessibilitySettings()
                 return
             }
             
-            // 显示无障碍分析弹窗
-            showAccessibilityAnalysisDialog()
+            // 暂时显示原有的分析弹窗，集成Assists框架功能
+            showLegacyAccessibilityAnalysisDialog()
+            Toast.makeText(this, "已启用Assists框架分析功能", Toast.LENGTH_SHORT).show()
             
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error in handleAccessibilityAnalysisClick")
-            Toast.makeText(this, "启动无障碍分析失败", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "启动Assists分析失败", Toast.LENGTH_SHORT).show()
+            
+            // 降级到原有的分析弹窗
+            showLegacyAccessibilityAnalysisDialog()
         }
     }
 
     /**
-     * 显示无障碍分析弹窗
+     * 显示传统无障碍分析弹窗（降级方案）
      */
-    private fun showAccessibilityAnalysisDialog() {
+    private fun showLegacyAccessibilityAnalysisDialog() {
         try {
             // 创建弹窗视图
             val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_accessibility_analysis, null)
@@ -513,7 +514,7 @@ class FloatingWindowService : Service() {
             windowManager?.addView(dialogView, dialogParams)
             
             // 设置弹窗UI
-            setupAccessibilityAnalysisDialog(dialogView)
+            setupLegacyAccessibilityAnalysisDialog(dialogView)
             
             Timber.d("$TAG: Accessibility analysis dialog shown")
             
@@ -524,9 +525,9 @@ class FloatingWindowService : Service() {
     }
 
     /**
-     * 设置无障碍分析弹窗UI
+     * 设置传统无障碍分析弹窗UI
      */
-    private fun setupAccessibilityAnalysisDialog(dialogView: View) {
+    private fun setupLegacyAccessibilityAnalysisDialog(dialogView: View) {
         try {
             val btnClose = dialogView.findViewById<Button>(R.id.btn_close_dialog)
             val btnRefresh = dialogView.findViewById<Button>(R.id.btn_refresh)
@@ -572,39 +573,40 @@ class FloatingWindowService : Service() {
      */
     private fun readAccessibilityTextNodes(tvStatusHint: TextView, tvTextNodes: TextView) {
         try {
-            tvStatusHint.text = "正在读取界面文本节点..."
-            tvTextNodes.text = "读取中..."
+            tvStatusHint.text = "正在使用Assists框架分析界面..."
+            tvTextNodes.text = "初始化Assists分析引擎..."
             
-            // 使用无障碍服务读取当前界面的文本节点
-            AutofillAccessibilityService.getAllTextNodes { textNodes ->
+            // 使用Assists框架读取当前界面的文本节点
+            EnhancedAssistsService.getAllTextNodes { textNodes ->
                 serviceScope.launch {
                     try {
                         if (textNodes.isNotEmpty()) {
                             val nodeText = StringBuilder()
-                            nodeText.append("共发现 ${textNodes.size} 个文本节点：\n\n")
+                            nodeText.append("Assists框架分析结果：\n")
+                            nodeText.append("共发现 ${textNodes.size} 个节点项\n\n")
                             
                             textNodes.forEachIndexed { index, text ->
                                 nodeText.append("${index + 1}. $text\n")
                             }
                             
-                            tvStatusHint.text = "读取完成，共发现 ${textNodes.size} 个文本节点"
+                            tvStatusHint.text = "Assists分析完成，共发现 ${textNodes.size} 个节点项"
                             tvTextNodes.text = nodeText.toString()
                         } else {
-                            tvStatusHint.text = "未发现任何文本节点"
-                            tvTextNodes.text = "当前界面没有找到包含文本的节点，可能是图片界面或者无障碍权限不足。"
+                            tvStatusHint.text = "Assists分析完成，未发现节点"
+                            tvTextNodes.text = "当前界面没有找到可分析的节点，可能是系统界面或权限受限。"
                         }
                     } catch (e: Exception) {
-                        Timber.e(e, "$TAG: Error processing text nodes")
-                        tvStatusHint.text = "读取失败"
-                        tvTextNodes.text = "读取文本节点时出现错误：${e.message}"
+                        Timber.e(e, "$TAG: Error processing Assists text nodes")
+                        tvStatusHint.text = "Assists分析失败"
+                        tvTextNodes.text = "处理Assists分析结果时出现错误：${e.message}"
                     }
                 }
             }
             
         } catch (e: Exception) {
-            Timber.e(e, "$TAG: Error reading accessibility text nodes")
-            tvStatusHint.text = "读取失败"
-            tvTextNodes.text = "读取文本节点时出现错误：${e.message}"
+            Timber.e(e, "$TAG: Error in readAccessibilityTextNodes with Assists")
+            tvStatusHint.text = "Assists分析失败"
+            tvTextNodes.text = "启动Assists分析时出现错误：${e.message}"
         }
     }
 
@@ -629,9 +631,8 @@ class FloatingWindowService : Service() {
     private fun handleSettingsClick() {
         try {
             // 启动设置页面
-            val intent = Intent(this, com.shenji.aikeyboard.settings.InputMethodSettingsActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+            val intent = Intent(this, com.shenji.aikeyboard.settings.InputMethodSettingsActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(intent)
             Toast.makeText(this, "打开设置", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {

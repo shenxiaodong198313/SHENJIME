@@ -86,6 +86,9 @@ android {
 }
 
 dependencies {
+    // Assists框架依赖
+    implementation(project(":assists-framework"))
+    
     // Core Android libraries
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
