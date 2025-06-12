@@ -470,6 +470,9 @@ id action_view_logs
 id action_vu_conversion_test
 id aiTestButtonContainer
 id ai_analysis_button
+id ai_chat_add_btn
+id ai_chat_close_btn
+id ai_chat_overlay_container
 id ai_status_icon
 id ai_wechat_analysis_button
 id analysisTextView
@@ -569,6 +572,9 @@ id button_cancel
 id button_layout
 id button_reset
 id button_save
+id calendar_add_btn
+id calendar_close_btn
+id calendar_overlay_container
 id candidate_stats_text_view
 id candidatesTextView
 id candidates_container
@@ -912,6 +918,9 @@ id nav_models
 id nav_numbers
 id nav_superscript
 id nav_view
+id notes_add_btn
+id notes_close_btn
+id notes_overlay_container
 id num_key_0
 id num_key_1
 id num_key_2
@@ -1259,7 +1268,9 @@ layout activity_test_ai_analysis
 layout activity_trie_build
 layout activity_vu_conversion_test
 layout activity_wechat_analysis
+layout ai_chat_overlay
 layout assistant_text_popup_menu
+layout calendar_overlay
 layout candidates_view
 layout chat_more_menu_item
 layout custom_drop_down_line_view
@@ -1302,6 +1313,7 @@ layout keyboard_layout
 layout layout_mllm_test_activity
 layout layout_toolbar_filters_content
 layout list_item_dataset
+layout notes_overlay
 layout number_keyboard_layout
 layout phrases_overlay
 layout popup_image_dialog

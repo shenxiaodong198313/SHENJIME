@@ -3853,6 +3853,9 @@ id activity_chooser_view_content
 id add
 id aiTestButtonContainer
 id ai_analysis_button
+id ai_chat_add_btn
+id ai_chat_close_btn
+id ai_chat_overlay_container
 id ai_status_icon
 id ai_wechat_analysis_button
 id alertTitle
@@ -3986,6 +3989,9 @@ id button_layout
 id button_reset
 id button_save
 id cache_measures
+id calendar_add_btn
+id calendar_close_btn
+id calendar_overlay_container
 id callMeasure
 id cancel_button
 id candidate_stats_text_view
@@ -4560,6 +4566,9 @@ id noState
 id none
 id normal
 id north
+id notes_add_btn
+id notes_close_btn
+id notes_overlay_container
 id notification_background
 id notification_main_column
 id notification_main_column_container
@@ -5246,7 +5255,9 @@ layout activity_test_ai_analysis
 layout activity_trie_build
 layout activity_vu_conversion_test
 layout activity_wechat_analysis
+layout ai_chat_overlay
 layout assistant_text_popup_menu
+layout calendar_overlay
 layout candidates_view
 layout chat_more_menu_item
 layout custom_dialog
@@ -5361,6 +5372,7 @@ layout mtrl_picker_text_input_date
 layout mtrl_picker_text_input_date_range
 layout mtrl_search_bar
 layout mtrl_search_view
+layout notes_overlay
 layout notification_action
 layout notification_action_tombstone
 layout notification_template_custom_big

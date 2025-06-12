@@ -62,6 +62,21 @@ class ShenjiInputMethodService : InputMethodService() {
     private var isPhrasesVisible = false
     private var phrasesOverlayView: View? = null
     
+    // 🆕 新增面板管理相关组件
+    private var calendarOverlayView: View? = null
+    private var notesOverlayView: View? = null
+    private var aiChatOverlayView: View? = null
+    
+    // 面板状态枚举
+    private enum class PanelType {
+        NONE,       // 无面板显示
+        PHRASES,    // 常用话术
+        CALENDAR,   // 日历
+        NOTES,      // 小记
+        AI_CHAT     // AI聊天
+    }
+    private var currentPanelType = PanelType.NONE
+    
     // AI建议显示相关组件 - 已移除拼音栏AI建议功能
     // private lateinit var aiSuggestionContainer: LinearLayout
     // private lateinit var aiStatusIcon: TextView  
@@ -1154,25 +1169,22 @@ class ShenjiInputMethodService : InputMethodService() {
     private fun setupToolbarIcons() {
         // 订单图标 - 切换话术库显示
         candidatesViewLayout.findViewById<ImageView>(R.id.order_icon)?.setOnClickListener {
-            togglePhrasesView()
+            togglePanel(PanelType.PHRASES)
         }
         
-        // 计划图标
+        // 计划图标 - 切换日历面板显示
         candidatesViewLayout.findViewById<ImageView>(R.id.plan_icon)?.setOnClickListener {
-            Toast.makeText(this, "计划功能即将上线", Toast.LENGTH_SHORT).show()
-            Timber.d("点击了计划图标")
+            togglePanel(PanelType.CALENDAR)
         }
         
-        // 编辑图标
+        // 编辑图标 - 切换小记面板显示
         candidatesViewLayout.findViewById<ImageView>(R.id.edit_icon)?.setOnClickListener {
-            Toast.makeText(this, "编辑功能即将上线", Toast.LENGTH_SHORT).show()
-            Timber.d("点击了编辑图标")
+            togglePanel(PanelType.NOTES)
         }
         
-        // 评论图标
+        // 评论图标 - 切换AI聊天面板显示
         candidatesViewLayout.findViewById<ImageView>(R.id.comment_icon)?.setOnClickListener {
-            Toast.makeText(this, "评论功能即将上线", Toast.LENGTH_SHORT).show()
-            Timber.d("点击了评论图标")
+            togglePanel(PanelType.AI_CHAT)
         }
         
         // App图标 - 改为触发工具栏页面
@@ -1495,6 +1507,209 @@ class ShenjiInputMethodService : InputMethodService() {
     }
 
     /**
+     * 🆕 统一面板切换管理方法
+     */
+    private fun togglePanel(panelType: PanelType) {
+        try {
+            if (currentPanelType == panelType) {
+                // 如果当前面板已显示，则隐藏
+                hideAllPanels()
+                currentPanelType = PanelType.NONE
+            } else {
+                // 先隐藏所有面板，再显示指定面板
+                hideAllPanels()
+                showPanel(panelType)
+                currentPanelType = panelType
+            }
+            
+            Timber.d("面板切换: ${currentPanelType.name}")
+        } catch (e: Exception) {
+            Timber.e(e, "面板切换失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 🆕 显示指定面板
+     */
+    private fun showPanel(panelType: PanelType) {
+        when (panelType) {
+            PanelType.PHRASES -> showPhrasesView()
+            PanelType.CALENDAR -> showCalendarView()
+            PanelType.NOTES -> showNotesView()
+            PanelType.AI_CHAT -> showAiChatView()
+            PanelType.NONE -> hideAllPanels()
+        }
+    }
+
+    /**
+     * 🆕 隐藏所有面板
+     */
+    private fun hideAllPanels() {
+        // 隐藏话术库面板
+        if (isPhrasesVisible) {
+            hidePhrasesView()
+        }
+        
+        // 隐藏日历面板
+        calendarOverlayView?.let { overlayView ->
+            val parent = overlayView.parent as? ViewGroup
+            parent?.removeView(overlayView)
+            calendarOverlayView = null
+        }
+        
+        // 隐藏小记面板
+        notesOverlayView?.let { overlayView ->
+            val parent = overlayView.parent as? ViewGroup
+            parent?.removeView(overlayView)
+            notesOverlayView = null
+        }
+        
+        // 隐藏AI聊天面板
+        aiChatOverlayView?.let { overlayView ->
+            val parent = overlayView.parent as? ViewGroup
+            parent?.removeView(overlayView)
+            aiChatOverlayView = null
+        }
+        
+        // 恢复原始候选词视图和工具栏显示
+        candidatesViewLayout.visibility = View.VISIBLE
+        
+        // 显示软键盘
+        showKeyboard()
+        
+        Timber.d("所有面板已隐藏")
+    }
+
+    /**
+     * 🆕 显示日历面板
+     */
+    private fun showCalendarView() {
+        try {
+            // 创建日历覆盖层
+            val layoutInflater = android.view.LayoutInflater.from(this)
+            calendarOverlayView = layoutInflater.inflate(R.layout.calendar_overlay, null)
+            
+            // 获取主视图容器
+            val rootView = candidatesViewLayout.parent as? ViewGroup
+            if (rootView != null) {
+                // 计算合适的高度
+                val screenHeight = resources.displayMetrics.heightPixels
+                val overlayHeight = (screenHeight * 0.5).toInt() // 50%屏幕高度
+                
+                // 设置布局参数
+                val layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    overlayHeight
+                )
+                
+                // 添加覆盖层到根视图
+                rootView.addView(calendarOverlayView, layoutParams)
+                
+                // 隐藏原始候选词视图和工具栏
+                candidatesViewLayout.visibility = View.GONE
+                
+                // 设置日历面板
+                setupCalendarOverlay()
+                
+                // 隐藏软键盘
+                hideKeyboard()
+                
+                Timber.d("日历面板已显示")
+            } else {
+                Timber.e("无法获取根视图容器")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "显示日历面板失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 🆕 显示小记面板
+     */
+    private fun showNotesView() {
+        try {
+            // 创建小记覆盖层
+            val layoutInflater = android.view.LayoutInflater.from(this)
+            notesOverlayView = layoutInflater.inflate(R.layout.notes_overlay, null)
+            
+            // 获取主视图容器
+            val rootView = candidatesViewLayout.parent as? ViewGroup
+            if (rootView != null) {
+                // 计算合适的高度
+                val screenHeight = resources.displayMetrics.heightPixels
+                val overlayHeight = (screenHeight * 0.5).toInt() // 50%屏幕高度
+                
+                // 设置布局参数
+                val layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    overlayHeight
+                )
+                
+                // 添加覆盖层到根视图
+                rootView.addView(notesOverlayView, layoutParams)
+                
+                // 隐藏原始候选词视图和工具栏
+                candidatesViewLayout.visibility = View.GONE
+                
+                // 设置小记面板
+                setupNotesOverlay()
+                
+                // 隐藏软键盘
+                hideKeyboard()
+                
+                Timber.d("小记面板已显示")
+            } else {
+                Timber.e("无法获取根视图容器")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "显示小记面板失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 🆕 显示AI聊天面板
+     */
+    private fun showAiChatView() {
+        try {
+            // 创建AI聊天覆盖层
+            val layoutInflater = android.view.LayoutInflater.from(this)
+            aiChatOverlayView = layoutInflater.inflate(R.layout.ai_chat_overlay, null)
+            
+            // 获取主视图容器
+            val rootView = candidatesViewLayout.parent as? ViewGroup
+            if (rootView != null) {
+                // 计算合适的高度
+                val screenHeight = resources.displayMetrics.heightPixels
+                val overlayHeight = (screenHeight * 0.5).toInt() // 50%屏幕高度
+                
+                // 设置布局参数
+                val layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    overlayHeight
+                )
+                
+                // 添加覆盖层到根视图
+                rootView.addView(aiChatOverlayView, layoutParams)
+                
+                // 隐藏原始候选词视图和工具栏
+                candidatesViewLayout.visibility = View.GONE
+                
+                // 设置AI聊天面板
+                setupAiChatOverlay()
+                
+                // 隐藏软键盘
+                hideKeyboard()
+                
+                Timber.d("AI聊天面板已显示")
+            } else {
+                Timber.e("无法获取根视图容器")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "显示AI聊天面板失败: ${e.message}")
+        }
+    }
+
+    /**
      * 设置话术库覆盖层
      */
     private fun setupPhrasesOverlay() {
@@ -1503,7 +1718,8 @@ class ShenjiInputMethodService : InputMethodService() {
                 // 设置关闭按钮
                 val closeButton = overlayView.findViewById<ImageView>(R.id.phrases_close_btn)
                 closeButton.setOnClickListener {
-                    hidePhrasesView()
+                    hideAllPanels()
+                    currentPanelType = PanelType.NONE
                 }
                 
                 // 设置添加按钮
@@ -5253,6 +5469,84 @@ class ShenjiInputMethodService : InputMethodService() {
             Timber.d("🤖 隐藏智能提示")
         } catch (e: Exception) {
             Timber.e(e, "隐藏智能提示失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 🆕 设置日历面板
+     */
+    private fun setupCalendarOverlay() {
+        try {
+            calendarOverlayView?.let { overlayView ->
+                // 设置关闭按钮
+                val closeButton = overlayView.findViewById<ImageView>(R.id.calendar_close_btn)
+                closeButton.setOnClickListener {
+                    hideAllPanels()
+                    currentPanelType = PanelType.NONE
+                }
+                
+                // 设置添加按钮
+                val addButton = overlayView.findViewById<ImageView>(R.id.calendar_add_btn)
+                addButton.setOnClickListener {
+                    Toast.makeText(this, "添加日历事件功能即将上线", Toast.LENGTH_SHORT).show()
+                }
+                
+                Timber.d("日历面板设置完成")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "设置日历面板失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 🆕 设置小记面板
+     */
+    private fun setupNotesOverlay() {
+        try {
+            notesOverlayView?.let { overlayView ->
+                // 设置关闭按钮
+                val closeButton = overlayView.findViewById<ImageView>(R.id.notes_close_btn)
+                closeButton.setOnClickListener {
+                    hideAllPanels()
+                    currentPanelType = PanelType.NONE
+                }
+                
+                // 设置添加按钮
+                val addButton = overlayView.findViewById<ImageView>(R.id.notes_add_btn)
+                addButton.setOnClickListener {
+                    Toast.makeText(this, "添加小记功能即将上线", Toast.LENGTH_SHORT).show()
+                }
+                
+                Timber.d("小记面板设置完成")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "设置小记面板失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 🆕 设置AI聊天面板
+     */
+    private fun setupAiChatOverlay() {
+        try {
+            aiChatOverlayView?.let { overlayView ->
+                // 设置关闭按钮
+                val closeButton = overlayView.findViewById<ImageView>(R.id.ai_chat_close_btn)
+                closeButton.setOnClickListener {
+                    hideAllPanels()
+                    currentPanelType = PanelType.NONE
+                }
+                
+                // 设置添加按钮
+                val addButton = overlayView.findViewById<ImageView>(R.id.ai_chat_add_btn)
+                addButton.setOnClickListener {
+                    Toast.makeText(this, "添加AI对话功能即将上线", Toast.LENGTH_SHORT).show()
+                }
+                
+                Timber.d("AI聊天面板设置完成")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "设置AI聊天面板失败: ${e.message}")
         }
     }
 
