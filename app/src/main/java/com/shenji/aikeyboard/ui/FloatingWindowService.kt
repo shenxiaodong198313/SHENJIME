@@ -552,7 +552,7 @@ class FloatingWindowService : Service() {
             
             // 刷新读取按钮
             btnRefresh.setOnClickListener {
-                readAccessibilityTextNodes(tvStatusHint, tvTextNodes)
+                readAccessibilityFullAnalysis(tvStatusHint, tvTextNodes)
             }
             
             // 复制文本按钮
@@ -561,7 +561,7 @@ class FloatingWindowService : Service() {
             }
             
             // 立即开始读取文本节点
-            readAccessibilityTextNodes(tvStatusHint, tvTextNodes)
+            readAccessibilityFullAnalysis(tvStatusHint, tvTextNodes)
             
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error setting up accessibility analysis dialog")
@@ -569,44 +569,112 @@ class FloatingWindowService : Service() {
     }
 
     /**
-     * 读取无障碍文本节点
+     * 读取无障碍分析内容（6大功能分组，彩色分区显示）
      */
-    private fun readAccessibilityTextNodes(tvStatusHint: TextView, tvTextNodes: TextView) {
-        try {
-            tvStatusHint.text = "正在使用Assists框架分析界面..."
-            tvTextNodes.text = "初始化Assists分析引擎..."
-            
-            // 使用Assists框架读取当前界面的文本节点
-            EnhancedAssistsService.getAllTextNodes { textNodes ->
-                serviceScope.launch {
-                    try {
-                        if (textNodes.isNotEmpty()) {
-                            val nodeText = StringBuilder()
-                            nodeText.append("Assists框架分析结果：\n")
-                            nodeText.append("共发现 ${textNodes.size} 个节点项\n\n")
-                            
-                            textNodes.forEachIndexed { index, text ->
-                                nodeText.append("${index + 1}. $text\n")
-                            }
-                            
-                            tvStatusHint.text = "Assists分析完成，共发现 ${textNodes.size} 个节点项"
-                            tvTextNodes.text = nodeText.toString()
-                        } else {
-                            tvStatusHint.text = "Assists分析完成，未发现节点"
-                            tvTextNodes.text = "当前界面没有找到可分析的节点，可能是系统界面或权限受限。"
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "$TAG: Error processing Assists text nodes")
-                        tvStatusHint.text = "Assists分析失败"
-                        tvTextNodes.text = "处理Assists分析结果时出现错误：${e.message}"
+    private fun readAccessibilityFullAnalysis(tvStatusHint: TextView, tvTextNodes: TextView) {
+        tvStatusHint.text = "正在使用Assists框架分析界面..."
+        tvTextNodes.text = "初始化Assists分析引擎..."
+        
+        serviceScope.launch {
+            try {
+                val sb = StringBuilder()
+                
+                // 1. 应用信息
+                sb.append("<font color='#4CAF50'><b>=== 应用信息 ===</b></font><br>")
+                try {
+                    val pkg = com.shenji.aikeyboard.assists.AssistsManager.getCurrentPackageName()
+                    sb.append("包名: $pkg<br>")
+                } catch (e: Exception) {
+                    sb.append("获取应用信息失败: ${e.message}<br>")
+                }
+                sb.append("<br>")
+                
+                // 2. 所有节点
+                sb.append("<font color='#2196F3'><b>=== 所有节点 ===</b></font><br>")
+                try {
+                    val allNodes = com.shenji.aikeyboard.assists.AssistsManager.getAllNodes()
+                    sb.append("节点总数: ${allNodes.size}<br>")
+                    val limitedNodes = allNodes.take(10)
+                    limitedNodes.forEachIndexed { i, node ->
+                        sb.append("${i+1}. 类型: ${node.className}  文本: ${node.text}  id: ${node.viewIdResourceName}<br>")
                     }
+                    if (allNodes.size > 10) sb.append("...<br>")
+                } catch (e: Exception) {
+                    sb.append("获取所有节点失败: ${e.message}<br>")
+                }
+                sb.append("<br>")
+                
+                // 3. 文本节点
+                sb.append("<font color='#9C27B0'><b>=== 文本节点 ===</b></font><br>")
+                try {
+                    // 使用AssistsManager获取文本节点，避免直接调用EnhancedAssistsService
+                    val textNodesList = mutableListOf<String>()
+                    com.shenji.aikeyboard.assists.AssistsManager.getAllTextNodes { nodes ->
+                        textNodesList.addAll(nodes)
+                    }
+                    // 等待一下让回调执行
+                    kotlinx.coroutines.delay(100)
+                    
+                    if (textNodesList.isNotEmpty()) {
+                        sb.append("文本节点数: ${textNodesList.size}<br>")
+                        val limitedTextNodes = textNodesList.take(20)
+                        limitedTextNodes.forEachIndexed { i, text ->
+                            sb.append("${i+1}. $text<br>")
+                        }
+                        if (textNodesList.size > 20) sb.append("...<br>")
+                    } else {
+                        sb.append("未发现文本节点<br>")
+                    }
+                } catch (e: Exception) {
+                    sb.append("文本节点采集失败: ${e.message}<br>")
+                }
+                sb.append("<br>")
+                
+                // 4. 查找测试
+                sb.append("<font color='#FF9800'><b>=== 查找测试 ===</b></font><br>")
+                try {
+                    val found = com.shenji.aikeyboard.assists.AssistsManager.findNodesById("android:id/content")
+                    sb.append("通过id查找(android:id/content): ${found.size} 个<br>")
+                } catch (e: Exception) {
+                    sb.append("查找测试失败: ${e.message}<br>")
+                }
+                sb.append("<br>")
+                
+                // 5. Core测试
+                sb.append("<font color='#F44336'><b>=== Core测试 ===</b></font><br>")
+                try {
+                    val allNodes = com.ven.assists.AssistsCore.getAllNodes()
+                    val clickable = allNodes.count { it.isClickable }
+                    val editable = allNodes.count { it.isEditable }
+                    val scrollable = allNodes.count { it.isScrollable }
+                    sb.append("可点击: $clickable  可编辑: $editable  可滚动: $scrollable<br>")
+                } catch (e: Exception) {
+                    sb.append("Core测试失败: ${e.message}<br>")
+                }
+                sb.append("<br>")
+                
+                // 6. 服务详情
+                sb.append("<font color='#607D8B'><b>=== 服务详情 ===</b></font><br>")
+                try {
+                    val statusInfo = com.shenji.aikeyboard.assists.AssistsManager.isAccessibilityServiceEnabled()
+                    sb.append("Assists无障碍服务: ${if (statusInfo) "已启用" else "未启用"}<br>")
+                } catch (e: Exception) {
+                    sb.append("服务详情获取失败: ${e.message}<br>")
+                }
+                
+                // 更新UI
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    tvStatusHint.text = "Assists分析完成，已分组展示"
+                    tvTextNodes.text = android.text.Html.fromHtml(sb.toString())
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "$TAG: 分析过程出错")
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    tvStatusHint.text = "Assists分析失败"
+                    tvTextNodes.text = "分析过程出错：${e.message}"
                 }
             }
-            
-        } catch (e: Exception) {
-            Timber.e(e, "$TAG: Error in readAccessibilityTextNodes with Assists")
-            tvStatusHint.text = "Assists分析失败"
-            tvTextNodes.text = "启动Assists分析时出现错误：${e.message}"
         }
     }
 
