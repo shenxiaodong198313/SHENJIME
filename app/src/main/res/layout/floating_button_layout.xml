@@ -88,6 +88,42 @@
             android:layout_marginStart="12dp"
             android:layout_marginEnd="12dp" />
 
+        <!-- 微信AI自动聊天按钮 -->
+        <LinearLayout
+            android:id="@+id/wechat_auto_chat_button"
+            android:layout_width="150dp"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="12dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_auto_chat"
+                android:layout_marginEnd="8dp"
+                android:tint="@android:color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="微信AI自动聊天"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- 分割线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#33FFFFFF"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp" />
+
         <!-- 无障碍分析界面按钮 -->
         <LinearLayout
             android:id="@+id/accessibility_analysis_button"
@@ -110,7 +146,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Assists框架分析"
+                android:text="无障碍分析界面"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
 

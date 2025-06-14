@@ -112,4 +112,7 @@
     
     <!-- 新增建议文本颜色 -->
     <color name="suggestion_text_color">#4CAF50</color>
+    
+    <!-- 窗口背景颜色 -->
+    <color name="window_background">#E6000000</color>
 </resources> 

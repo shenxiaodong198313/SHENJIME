@@ -272,6 +272,7 @@ color text_secondary
 color toggle_tint
 color warning_orange
 color white
+color window_background
 dimen candidate_divider_height
 dimen candidate_word_margin
 dimen h1
@@ -328,6 +329,7 @@ drawable btn_copy_background
 drawable btn_permission_clear_background
 drawable btn_permission_grant_background
 drawable btn_primary_background
+drawable btn_refresh_background
 drawable btn_secondary_background
 drawable btn_send_background
 drawable btn_white_background
@@ -377,6 +379,7 @@ drawable ic_audio_file
 drawable ic_audio_output
 drawable ic_audio_pause
 drawable ic_audio_play
+drawable ic_auto_chat
 drawable ic_back_arrow
 drawable ic_backspace
 drawable ic_bottom
@@ -1284,6 +1287,7 @@ id view_assistant_loading
 id view_pager
 id visible
 id voice_recording_wav
+id wechat_auto_chat_button
 layout activity_ai_analysis
 layout activity_ai_test
 layout activity_assists_analysis
@@ -1321,6 +1325,7 @@ layout chat_more_menu_item
 layout content_ai_analysis
 layout content_assists_analysis
 layout content_wechat_analysis
+layout content_wechat_auto_chat
 layout custom_drop_down_line_view
 layout dialog_accessibility_analysis
 layout dialog_build_config

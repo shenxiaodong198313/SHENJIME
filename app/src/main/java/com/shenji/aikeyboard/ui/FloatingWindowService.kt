@@ -49,6 +49,7 @@ class FloatingWindowService : Service() {
     private var menuLayout: LinearLayout? = null
     private var aiAnalysisButton: LinearLayout? = null
     private var aiWeChatAnalysisButton: LinearLayout? = null
+    private var weChatAutoChatButton: LinearLayout? = null
     private var accessibilityAnalysisButton: LinearLayout? = null
     private var settingsButton: LinearLayout? = null
     
@@ -171,9 +172,11 @@ class FloatingWindowService : Service() {
         // 关闭悬浮分析窗口
         floatingAIAnalysisWindow?.close()
         floatingWeChatAnalysisWindow?.close()
+        floatingWeChatAutoChatWindow?.close()
         floatingAssistsAnalysisWindow?.close()
         floatingAIAnalysisWindow = null
         floatingWeChatAnalysisWindow = null
+        floatingWeChatAutoChatWindow = null
         floatingAssistsAnalysisWindow = null
         
         // 取消注册广播接收器
@@ -199,6 +202,7 @@ class FloatingWindowService : Service() {
             menuLayout = floatingView?.findViewById(R.id.menu_layout)
             aiAnalysisButton = floatingView?.findViewById(R.id.ai_analysis_button)
             aiWeChatAnalysisButton = floatingView?.findViewById(R.id.ai_wechat_analysis_button)
+            weChatAutoChatButton = floatingView?.findViewById(R.id.wechat_auto_chat_button)
             accessibilityAnalysisButton = floatingView?.findViewById(R.id.accessibility_analysis_button)
             settingsButton = floatingView?.findViewById(R.id.settings_button)
             
@@ -254,6 +258,13 @@ class FloatingWindowService : Service() {
         aiWeChatAnalysisButton?.setOnClickListener {
             Timber.d("$TAG: AI WeChat Analysis clicked")
             handleWeChatAnalysisClick()
+            collapseMenu()
+        }
+        
+        // 微信AI自动聊天按钮点击事件
+        weChatAutoChatButton?.setOnClickListener {
+            Timber.d("$TAG: WeChat Auto Chat clicked")
+            handleWeChatAutoChatClick()
             collapseMenu()
         }
         
@@ -386,6 +397,7 @@ class FloatingWindowService : Service() {
     // 悬浮窗口实例
     private var floatingAIAnalysisWindow: FloatingAIAnalysisWindow? = null
     private var floatingWeChatAnalysisWindow: FloatingWeChatAnalysisWindow? = null
+    private var floatingWeChatAutoChatWindow: FloatingWeChatAutoChatWindow? = null
     private var floatingAssistsAnalysisWindow: FloatingAssistsAnalysisWindow? = null
 
     /**
@@ -454,6 +466,36 @@ class FloatingWindowService : Service() {
         }
     }
     
+    /**
+     * 处理微信AI自动聊天按钮点击
+     */
+    private fun handleWeChatAutoChatClick() {
+        try {
+            Timber.d("$TAG: WeChat Auto Chat button clicked")
+            
+            // 检查Assists无障碍服务是否可用
+            if (!com.shenji.aikeyboard.assists.AssistsManager.isAccessibilityServiceEnabled()) {
+                Toast.makeText(this, "请先开启Assists无障碍服务权限", Toast.LENGTH_LONG).show()
+                // 引导用户去开启Assists无障碍服务
+                com.shenji.aikeyboard.assists.AssistsManager.openAccessibilitySettings()
+                return
+            }
+            
+            // 创建并显示微信AI自动聊天窗口
+            if (floatingWeChatAutoChatWindow == null) {
+                floatingWeChatAutoChatWindow = FloatingWeChatAutoChatWindow(this, serviceScope)
+                floatingWeChatAutoChatWindow?.initializeWindow()
+            }
+            
+            Toast.makeText(this, "正在启动微信AI自动聊天...", Toast.LENGTH_SHORT).show()
+            floatingWeChatAutoChatWindow?.showAndAnalyze()
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error in handleWeChatAutoChatClick")
+            Toast.makeText(this, "启动微信AI自动聊天失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     /**
      * 处理无障碍分析界面按钮点击 - 升级为Assists框架入口
      */
