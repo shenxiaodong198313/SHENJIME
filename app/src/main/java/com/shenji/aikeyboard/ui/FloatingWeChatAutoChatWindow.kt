@@ -674,12 +674,24 @@ class FloatingWeChatAutoChatWindow(
                 
                 kotlinx.coroutines.delay(1000) // 让用户看到发送信息
                 
-                // 阶段3：AI模型生成回复中
+                // 阶段3：AI模型生成回复中 - 准备输入框
                 withContext(Dispatchers.Main) {
-                    updateStatusContent("🤖 AI_GEMMA3N-4B已生成回复，正在调用神迹进行自动回复")
+                    updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...\n\n📝 正在准备输入框...")
                 }
                 
-                // 使用流式生成AI回复
+                // 先点击输入框获得焦点，为流式填充做准备
+                val inputClicked = clickWeChatInputField()
+                if (!inputClicked) {
+                    withContext(Dispatchers.Main) {
+                        updateStatusContent("❌ 无法点击输入框，将只在窗口中显示AI回复")
+                    }
+                    kotlinx.coroutines.delay(1000)
+                }
+                
+                // 延迟一下确保输入框获得焦点
+                kotlinx.coroutines.delay(500)
+                
+                // 使用流式生成AI回复 - 双重流式显示
                 var finalAiReply = ""
                 isStreaming = true
                 currentStreamingText = ""
@@ -692,8 +704,13 @@ class FloatingWeChatAutoChatWindow(
                                 currentStreamingText = partialText
                                 val cleanedPartialText = cleanAIReply(partialText)
                                 
-                                // 实时更新显示内容
+                                // 1. 实时更新窗口显示内容
                                 updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...\n\n生成的回复：\n「$cleanedPartialText」")
+                                
+                                // 2. 同时在输入框中流式填充内容
+                                if (inputClicked) {
+                                    fillInputFieldStreamingly(cleanedPartialText)
+                                }
                                 
                                 // 自动滚动到底部
                                 scrollViewStatus?.post {
@@ -717,15 +734,38 @@ class FloatingWeChatAutoChatWindow(
                     
                     // 验证AI回复是否有效（基础验证）
                     if (isValidAIReply(cleanedReply)) {
-                        // 阶段4：AI模型生成结果
+                        // 阶段4：AI模型生成完毕，准备发送
                         withContext(Dispatchers.Main) {
-                            updateStatusContent("🤖 AI_GEMMA3N-4B已生成回复，正在调用神迹进行自动回复\n\n生成的回复：\n「$cleanedReply」")
+                            updateStatusContent("🤖 AI_GEMMA3N-4B生成完毕，正在发送回复...\n\n生成的回复：\n「$cleanedReply」")
                         }
                         
-                        kotlinx.coroutines.delay(2000) // 让用户看到生成的回复
-                        
-                        // 自动填充到输入框并发送
-                        autoFillAndSendMessage(cleanedReply)
+                        // 如果输入框已经填充了内容，直接发送
+                        if (inputClicked) {
+                            kotlinx.coroutines.delay(500) // 等待最后的流式填充完成
+                            
+                            // 直接发送（内容已经通过流式填充到输入框了）
+                            val sent = sendMessageDirectly()
+                            
+                            if (sent) {
+                                // 增加AI回复计数
+                                aiReplyCount++
+                                updateReplyCountDisplay()
+                                
+                                updateStatusContent("✅ AI回复发送成功！\n\n⏳ 未检测到有新的聊天消息")
+                                Toast.makeText(context, "✅ AI回复已自动发送", Toast.LENGTH_SHORT).show()
+                                Timber.d("$TAG: AI reply sent successfully via streaming, count: $aiReplyCount")
+                                
+                                // 发送成功后继续监控，不关闭窗口
+                                kotlinx.coroutines.delay(2000)
+                                updateStatusContent("⏳ 未检测到有新的聊天消息")
+                            } else {
+                                // 发送失败，回退到传统方式
+                                autoFillAndSendMessage(cleanedReply)
+                            }
+                        } else {
+                            // 输入框点击失败，使用传统方式
+                            autoFillAndSendMessage(cleanedReply)
+                        }
                     } else {
                         withContext(Dispatchers.Main) {
                             updateStatusContent("❌ AI生成的回复内容无效：\n「$cleanedReply」\n\n停止自动发送")
@@ -1247,6 +1287,80 @@ class FloatingWeChatAutoChatWindow(
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error copying conversation content")
             Toast.makeText(context, "复制失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 流式填充输入框内容
+     * 实时更新输入框中的文本内容
+     */
+    private fun fillInputFieldStreamingly(text: String) {
+        try {
+            // 方法1：通过输入法服务流式填充
+            val inputMethodService = com.shenji.aikeyboard.keyboard.ShenjiInputMethodService.instance
+            if (inputMethodService != null) {
+                inputMethodService.autoFillText(text)
+                return
+            }
+            
+            // 方法2：通过无障碍服务流式填充
+            val allNodes = AssistsCore.getAllNodes()
+            val inputNodes = allNodes.filter { node ->
+                val className = node.className?.toString() ?: ""
+                val description = node.contentDescription?.toString() ?: ""
+                
+                // 查找输入框节点
+                (className.contains("EditText") || 
+                 description.contains("输入") || 
+                 node.isEditable) &&
+                node.isEnabled
+            }
+            
+            if (inputNodes.isNotEmpty()) {
+                val inputNode = inputNodes.first()
+                
+                // 直接设置文本内容（覆盖之前的内容）
+                val arguments = android.os.Bundle()
+                arguments.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+                inputNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error in streaming input field fill")
+        }
+    }
+    
+    /**
+     * 直接发送消息（不需要再填充内容）
+     * 用于流式填充完成后直接发送
+     */
+    private fun sendMessageDirectly(): Boolean {
+        return try {
+            // 方法1：通过输入法服务发送
+            val inputMethodService = com.shenji.aikeyboard.keyboard.ShenjiInputMethodService.instance
+            if (inputMethodService != null) {
+                // 发送回车键
+                val inputConnection = inputMethodService.currentInputConnection
+                if (inputConnection != null) {
+                    val downEvent = android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_ENTER)
+                    val upEvent = android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_ENTER)
+                    
+                    val sendDown = inputConnection.sendKeyEvent(downEvent)
+                    val sendUp = inputConnection.sendKeyEvent(upEvent)
+                    
+                    if (sendDown && sendUp) {
+                        Timber.d("$TAG: Message sent via input method service")
+                        return true
+                    }
+                }
+            }
+            
+            // 方法2：通过无障碍服务点击发送按钮
+            clickWeChatSendButton()
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error sending message directly")
+            false
         }
     }
 } 
