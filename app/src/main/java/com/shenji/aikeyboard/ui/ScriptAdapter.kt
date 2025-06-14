@@ -52,10 +52,11 @@ class ScriptAdapter(
     private fun autoFillToInputField(context: Context, text: String) {
         try {
             // 首先尝试通过输入法服务直接填充
-            val inputMethodService = com.shenji.aikeyboard.keyboard.ShenjiInputMethodService.getInstance()
+            val inputMethodService = com.shenji.aikeyboard.keyboard.ShenjiInputMethodService.instance
             if (inputMethodService != null) {
-                inputMethodService.autoFillText(text)
-                Toast.makeText(context, "已自动填充到输入框", Toast.LENGTH_SHORT).show()
+                // 注意：这里应该使用fillTextAndSend方法，但ScriptAdapter不是AI回复模式
+                // 所以我们暂时使用剪贴板方式
+                copyToClipboard(context, text)
             } else {
                 // 如果输入法服务不可用，则复制到剪贴板作为备选方案
                 copyToClipboard(context, text)

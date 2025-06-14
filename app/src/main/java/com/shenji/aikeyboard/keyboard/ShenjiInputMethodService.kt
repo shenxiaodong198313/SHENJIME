@@ -157,11 +157,41 @@ class ShenjiInputMethodService : InputMethodService() {
     // 符号键盘管理器
     private lateinit var symbolKeyboardManager: SymbolKeyboardManager
     
+    // AI回复模式相关
+    private var isAIReplyMode = false
+    private var aiReplyModeView: View? = null
+    private var normalKeyboardView: View? = null
+    
+    // 广播接收器
+    private val aiReplyModeReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            when (intent?.action) {
+                "com.shenji.aikeyboard.ENABLE_AI_REPLY_MODE" -> {
+                    enableAIReplyMode()
+                }
+                "com.shenji.aikeyboard.DISABLE_AI_REPLY_MODE" -> {
+                    disableAIReplyMode()
+                }
+            }
+        }
+    }
+    
     override fun onCreate() {
         super.onCreate()
         instance = this
         Timber.d("神迹输入法服务已创建")
         Timber.d("输入法服务生命周期: onCreate")
+        
+        // 注册广播接收器
+        val filter = android.content.IntentFilter().apply {
+            addAction("com.shenji.aikeyboard.ENABLE_AI_REPLY_MODE")
+            addAction("com.shenji.aikeyboard.DISABLE_AI_REPLY_MODE")
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(aiReplyModeReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(aiReplyModeReceiver, filter)
+        }
         
         // 🔧 新增：智能Trie状态检测和自动重建机制
         initializeInputMethodServiceSmart()
@@ -859,6 +889,7 @@ class ShenjiInputMethodService : InputMethodService() {
         Timber.d("🔍 onCreateInputView被调用")
         Timber.d("🔍 当前线程: ${Thread.currentThread().name}")
         Timber.d("🔍 开始创建键盘视图...")
+        Timber.d("🔍 当前AI回复模式状态: $isAIReplyMode")
         
         try {
             // 创建主容器，包含候选词和键盘
@@ -893,15 +924,6 @@ class ShenjiInputMethodService : InputMethodService() {
             Timber.d("🔍 步骤3: 初始化拼音显示区域...")
             pinyinDisplay = candidatesViewLayout.findViewById(R.id.pinyin_display)
             Timber.d("🔍 pinyinDisplay: ${if (pinyinDisplay != null) "✅ 成功" else "❌ 失败"}")
-            
-            // 🔧 已移除拼音栏AI建议功能，保留独立的AI功能测试
-            // aiSuggestionContainer = candidatesViewLayout.findViewById(R.id.ai_suggestion_container)
-            // aiStatusIcon = candidatesViewLayout.findViewById(R.id.ai_status_icon)
-            // aiSuggestionText = candidatesViewLayout.findViewById(R.id.ai_suggestion_text)
-            // aiConfidenceIndicator = candidatesViewLayout.findViewById(R.id.ai_confidence_indicator)
-            
-            // 初始化AI状态图标（默认灰色，表示不可用）
-            // updateAIStatusIcon(false)
             
             // 初始化工具栏 - 添加详细调试
             Timber.d("🔍 步骤4: 开始初始化toolbarView...")
@@ -953,17 +975,23 @@ class ShenjiInputMethodService : InputMethodService() {
             // 初始化话术库
             setupPhrasesRecyclerView()
             
-            // 加载键盘布局（默认字母键盘）
+            // 始终使用正常键盘布局（不再根据AI模式切换）
+            Timber.d("🔍 步骤5: 创建正常键盘...")
+            // 加载正常键盘布局
             keyboardView = layoutInflater.inflate(R.layout.keyboard_layout, null)
+            normalKeyboardView = keyboardView
             
-            // 设置字母按键监听器
+            // 创建AI回复模式视图（备用，但不在这里使用）
+            aiReplyModeView = layoutInflater.inflate(R.layout.keyboard_ai_reply_mode, null)
+            
+            // 设置正常键盘的事件监听器
             setupLetterKeys()
-            
-            // 设置功能按键监听器
             setupFunctionKeys()
             
             // 初始化中/英切换按钮状态
             updateLanguageSwitchButton()
+            
+            Timber.d("🔍 ✅ 正常键盘创建成功")
             
             // 设置候选词视图布局参数
             val candidatesLayoutParams = LinearLayout.LayoutParams(
@@ -1006,6 +1034,9 @@ class ShenjiInputMethodService : InputMethodService() {
             Timber.d("🔍 toolbarView: ${::toolbarView.isInitialized}")
             Timber.d("🔍 pinyinDisplay: ${::pinyinDisplay.isInitialized}")
             Timber.d("🔍 keyboardView: ${::keyboardView.isInitialized}")
+            Timber.d("🔍 isAIReplyMode: $isAIReplyMode")
+            Timber.d("🔍 aiReplyModeView: ${aiReplyModeView != null}")
+            Timber.d("🔍 normalKeyboardView: ${normalKeyboardView != null}")
             
             if (::toolbarView.isInitialized) {
                 Timber.d("🔍 toolbarView详细信息:")
@@ -2255,11 +2286,8 @@ class ShenjiInputMethodService : InputMethodService() {
 
     companion object {
         @Volatile
-        private var instance: ShenjiInputMethodService? = null
-        
-        fun getInstance(): ShenjiInputMethodService? {
-            return instance
-        }
+        var instance: ShenjiInputMethodService? = null
+            private set
     }
     
     // 处理字母输入
@@ -5552,7 +5580,242 @@ class ShenjiInputMethodService : InputMethodService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        
+        // 取消注册广播接收器
+        try {
+            unregisterReceiver(aiReplyModeReceiver)
+        } catch (e: Exception) {
+            Timber.e(e, "取消注册AI回复模式广播接收器失败")
+        }
+        
         instance = null
+    }
+    
+    /**
+     * 启用AI回复模式
+     */
+    private fun enableAIReplyMode() {
+        try {
+            if (isAIReplyMode) {
+                Timber.d("AI回复模式已经启用")
+                return
+            }
+            
+            isAIReplyMode = true
+            Timber.d("启用AI回复模式")
+            
+            // 切换到AI回复模式视图
+            switchToAIReplyModeView()
+            
+        } catch (e: Exception) {
+            Timber.e(e, "启用AI回复模式失败")
+        }
+    }
+    
+    /**
+     * 禁用AI回复模式
+     */
+    private fun disableAIReplyMode() {
+        try {
+            if (!isAIReplyMode) {
+                Timber.d("AI回复模式已经禁用")
+                return
+            }
+            
+            isAIReplyMode = false
+            Timber.d("禁用AI回复模式")
+            
+            // 切换回正常键盘视图
+            switchToNormalKeyboardView()
+            
+        } catch (e: Exception) {
+            Timber.e(e, "禁用AI回复模式失败")
+        }
+    }
+    
+    /**
+     * 切换到AI回复模式视图
+     */
+    private fun switchToAIReplyModeView() {
+        try {
+            aiReplyModeView?.let { aiView ->
+                // 更新状态文本
+                val statusText = aiView.findViewById<TextView>(R.id.tv_ai_reply_status)
+                statusText?.text = "GEMMA3N-4B智能回复接管中"
+                
+                val statusIndicator = aiView.findViewById<TextView>(R.id.tv_ai_status_indicator)
+                statusIndicator?.setTextColor(android.graphics.Color.parseColor("#4CAF50")) // 绿色表示活跃
+                
+                // 动态替换键盘视图
+                replaceKeyboardView(aiView)
+                
+                Timber.d("已切换到AI回复模式视图")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "切换到AI回复模式视图失败")
+        }
+    }
+    
+    /**
+     * 切换回正常键盘视图
+     */
+    private fun switchToNormalKeyboardView() {
+        try {
+            normalKeyboardView?.let { normalView ->
+                // 动态替换键盘视图
+                replaceKeyboardView(normalView)
+                
+                Timber.d("已切换回正常键盘视图")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "切换回正常键盘视图失败")
+        }
+    }
+    
+    /**
+     * 动态替换键盘视图
+     */
+    private fun replaceKeyboardView(newKeyboardView: View) {
+        try {
+            // 获取主容器
+            val mainContainer = keyboardView.parent as? LinearLayout
+            if (mainContainer != null) {
+                // 找到当前键盘视图的索引
+                val keyboardIndex = mainContainer.indexOfChild(keyboardView)
+                
+                if (keyboardIndex >= 0) {
+                    // 移除旧的键盘视图
+                    mainContainer.removeView(keyboardView)
+                    
+                    // 更新键盘视图引用
+                    keyboardView = newKeyboardView
+                    
+                    // 设置新键盘视图的布局参数
+                    val keyboardLayoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    newKeyboardView.layoutParams = keyboardLayoutParams
+                    
+                    // 添加新的键盘视图
+                    mainContainer.addView(newKeyboardView, keyboardIndex)
+                    
+                    Timber.d("键盘视图替换成功")
+                } else {
+                    Timber.w("无法找到键盘视图索引")
+                }
+            } else {
+                Timber.w("无法获取主容器")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "替换键盘视图失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 更新输入视图
+     */
+    private fun updateInputView() {
+        try {
+            // 通过设置输入视图来触发更新
+            setInputView(onCreateInputView())
+        } catch (e: Exception) {
+            Timber.e(e, "更新输入视图失败")
+        }
+    }
+    
+    /**
+     * 直接填充文本到输入框并发送
+     */
+    fun fillTextAndSend(text: String) {
+        try {
+            Timber.d("fillTextAndSend被调用，文本: $text")
+            
+            val inputConnection = currentInputConnection
+            if (inputConnection == null) {
+                Timber.w("无法获取输入连接，填充文本失败")
+                return
+            }
+            
+            // 获取当前输入框的文本
+            val currentText = inputConnection.getTextBeforeCursor(1000, 0)?.toString() ?: ""
+            Timber.d("当前输入框文本: '$currentText'")
+            
+            // 清空当前文本
+            if (currentText.isNotEmpty()) {
+                inputConnection.deleteSurroundingText(currentText.length, 0)
+                Timber.d("已清空当前文本")
+            }
+            
+            // 填充AI生成的文本
+            val success = inputConnection.commitText(text, 1)
+            Timber.d("填充文本结果: $success")
+            
+            // 延迟一下再点击确定按钮并收起键盘
+            Handler(Looper.getMainLooper()).postDelayed({
+                try {
+                    // 1. 先点击键盘的确定按钮
+                    val enterButton = keyboardView.findViewById<android.widget.Button>(R.id.key_enter)
+                    if (enterButton != null) {
+                        enterButton.performClick()
+                        Timber.d("已点击键盘确定按钮")
+                    } else {
+                        // 备用方案：发送回车键事件
+                        val downEvent = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)
+                        val upEvent = KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER)
+                        
+                        val sendDown = inputConnection.sendKeyEvent(downEvent)
+                        val sendUp = inputConnection.sendKeyEvent(upEvent)
+                        
+                        Timber.d("发送按键事件结果 - DOWN: $sendDown, UP: $sendUp")
+                    }
+                    
+                    // 2. 延迟一下再收起键盘
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        try {
+                            // 收起键盘
+                            requestHideSelf(0)
+                            Timber.d("键盘已自动收起")
+                            
+                            // 禁用AI回复模式
+                            disableAIReplyMode()
+                            
+                        } catch (e: Exception) {
+                            Timber.e(e, "收起键盘失败")
+                        }
+                    }, 500)
+                    
+                    Timber.d("AI回复已填充并发送: $text")
+                    
+                } catch (e: Exception) {
+                    Timber.e(e, "点击确定按钮失败")
+                }
+            }, 300)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "填充文本并发送失败")
+        }
+    }
+    
+    /**
+     * 设置AI回复模式的事件监听器
+     */
+    private fun setupAIReplyModeListeners() {
+        try {
+            Timber.d("设置AI回复模式事件监听器")
+            
+            // AI回复模式下的键盘只有一个横条，不需要设置按键监听器
+            // 只需要确保状态显示正确
+            val statusText = keyboardView.findViewById<TextView>(R.id.tv_ai_reply_status)
+            statusText?.text = "GEMMA3N-4B智能回复接管中"
+            
+            val statusIndicator = keyboardView.findViewById<TextView>(R.id.tv_ai_status_indicator)
+            statusIndicator?.setTextColor(android.graphics.Color.parseColor("#4CAF50")) // 绿色表示活跃
+            
+            Timber.d("AI回复模式事件监听器设置完成")
+        } catch (e: Exception) {
+            Timber.e(e, "设置AI回复模式事件监听器失败")
+        }
     }
     
 }

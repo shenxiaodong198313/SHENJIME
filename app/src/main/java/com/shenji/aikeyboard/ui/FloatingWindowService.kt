@@ -70,15 +70,35 @@ class FloatingWindowService : Service() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 "com.shenji.aikeyboard.HIDE_FLOATING_WINDOW" -> {
-                    floatingView?.visibility = View.INVISIBLE
-                    Timber.d("$TAG: Floating window hidden via broadcast")
+                    Timber.d("$TAG: Received HIDE_FLOATING_WINDOW broadcast")
+                    hideFloatingButton()
                 }
                 "com.shenji.aikeyboard.RESTORE_FLOATING_WINDOW" -> {
-                    floatingView?.visibility = View.VISIBLE
-                    Timber.d("$TAG: Floating window restored via broadcast")
+                    Timber.d("$TAG: Received RESTORE_FLOATING_WINDOW broadcast")
+                    showFloatingButton()
                 }
             }
         }
+    }
+    
+    /**
+     * 隐藏悬浮按钮
+     */
+    private fun hideFloatingButton() {
+        floatingView?.let { view ->
+            view.visibility = View.GONE
+            Timber.d("$TAG: Floating button hidden (GONE)")
+        } ?: Timber.w("$TAG: floatingView is null, cannot hide")
+    }
+    
+    /**
+     * 显示悬浮按钮
+     */
+    private fun showFloatingButton() {
+        floatingView?.let { view ->
+            view.visibility = View.VISIBLE
+            Timber.d("$TAG: Floating button restored (VISIBLE)")
+        } ?: Timber.w("$TAG: floatingView is null, cannot restore")
     }
     
     companion object {
@@ -161,7 +181,20 @@ class FloatingWindowService : Service() {
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Timber.d("$TAG: FloatingWindowService onStartCommand")
+        Timber.d("$TAG: FloatingWindowService onStartCommand with action: ${intent?.action}")
+        
+        // 处理通过服务Intent发送的隐藏/显示命令
+        when (intent?.action) {
+            "HIDE_FLOATING_WINDOW" -> {
+                Timber.d("$TAG: Received HIDE_FLOATING_WINDOW via service intent")
+                hideFloatingButton()
+            }
+            "RESTORE_FLOATING_WINDOW" -> {
+                Timber.d("$TAG: Received RESTORE_FLOATING_WINDOW via service intent")
+                showFloatingButton()
+            }
+        }
+        
         return START_STICKY
     }
     
@@ -169,7 +202,7 @@ class FloatingWindowService : Service() {
         super.onDestroy()
         Timber.d("$TAG: FloatingWindowService onDestroy")
         
-        // 关闭悬浮分析窗口
+        // 关闭悬浮分析窗口（但不影响悬浮按钮显示）
         floatingAIAnalysisWindow?.close()
         floatingWeChatAnalysisWindow?.close()
         floatingWeChatAutoChatWindow?.close()
@@ -186,6 +219,7 @@ class FloatingWindowService : Service() {
             Timber.e(e, "$TAG: Error unregistering broadcast receiver")
         }
         
+        // 只移除悬浮视图，不影响其他窗口
         removeFloatingView()
     }
     

@@ -89,6 +89,11 @@ dependencies {
     // Assists框架依赖
     implementation(project(":assists-framework"))
     
+    // OpenCV和OCR依赖
+    implementation("org.opencv:opencv:4.9.0")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+    
     // Core Android libraries
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")

@@ -3,80 +3,35 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
     android:background="@color/window_background">
 
-    <!-- 标题区域 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="微信AI自动聊天"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center" />
-
-    </LinearLayout>
-
-    <!-- 对话消息显示区域 (70%) -->
+    <!-- 状态显示区域 -->
     <ScrollView
-        android:id="@+id/scroll_view_conversation"
+        android:id="@+id/scroll_view_status"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.7"
-        android:background="@drawable/analysis_result_background"
+        android:layout_height="match_parent"
+        android:background="@drawable/analysis_result_background_transparent"
         android:padding="12dp"
         android:scrollbars="vertical"
         android:fadeScrollbars="false">
 
         <TextView
-            android:id="@+id/tv_conversation_content"
+            android:id="@+id/tv_status_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:lineSpacingExtra="4dp"
-            android:fontFamily="monospace"
-            android:text="正在获取对话内容..." />
-
-    </ScrollView>
-
-    <!-- 分隔线 -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/darker_gray"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp" />
-
-    <!-- AI状态显示区域 (30%) -->
-    <ScrollView
-        android:id="@+id/scroll_view_ai_status"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.3"
-        android:background="@drawable/analysis_result_background"
-        android:padding="12dp"
-        android:scrollbars="vertical"
-        android:fadeScrollbars="false">
-
-        <TextView
-            android:id="@+id/tv_ai_status"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/ai_status_color"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:lineSpacingExtra="3dp"
             android:fontFamily="sans-serif"
-            android:text="🤖 AI系统准备中..." />
+            android:text="🤖 AI-GEMMA3N-4B模型初始化中..." />
 
     </ScrollView>
+
+    <!-- 隐藏的对话对象显示（保留用于兼容性） -->
+    <TextView
+        android:id="@+id/tv_chat_target"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
 </LinearLayout> 

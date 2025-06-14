@@ -272,6 +272,10 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\drawable\\search_background.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_analysis_result_background_transparent.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/analysis_result_background_transparent.xml"
+    },
+    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-debug-4:\\drawable_ic_refresh.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\drawable\\ic_refresh.xml"
     },
@@ -442,6 +446,10 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-debug-4:\\drawable_ic_plan.png.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\drawable\\ic_plan.png"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/layout_keyboard_ai_reply_mode.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/keyboard_ai_reply_mode.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-debug-4:\\drawable_ic_lang_switch.xml.flat",
@@ -1206,6 +1214,10 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-debug-4:\\drawable_btn_refresh_background.xml.flat",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\drawable\\btn_refresh_background.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-debug-4:/drawable_ai_reply_mode_background.xml.flat",
+        "source": "com.shenji.aikeyboard.app-main-6:/drawable/ai_reply_mode_background.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-debug-4:\\drawable_bg_bottom_sheet.xml.flat",

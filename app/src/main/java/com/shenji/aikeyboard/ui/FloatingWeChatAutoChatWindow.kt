@@ -3,6 +3,7 @@ package com.shenji.aikeyboard.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -13,6 +14,7 @@ import android.widget.Toast
 import com.shenji.aikeyboard.R
 import com.shenji.aikeyboard.assists.AssistsManager
 import com.shenji.aikeyboard.llm.LlmManager
+import com.shenji.aikeyboard.utils.ScreenOCRHelper
 import com.ven.assists.AssistsCore
 import com.ven.assists.window.AssistsWindowManager
 import com.ven.assists.window.AssistsWindowWrapper
@@ -55,10 +57,9 @@ class FloatingWeChatAutoChatWindow(
     
     // UI组件
     private var contentView: View? = null
-    private var tvConversationContent: TextView? = null
-    private var tvAIStatus: TextView? = null
-    private var scrollViewConversation: ScrollView? = null
-    private var scrollViewAIStatus: ScrollView? = null
+    private var tvChatTarget: TextView? = null
+    private var tvStatusContent: TextView? = null
+    private var scrollViewStatus: ScrollView? = null
     
     // Assists窗口包装器
     private var windowWrapper: AssistsWindowWrapper? = null
@@ -74,6 +75,11 @@ class FloatingWeChatAutoChatWindow(
     private var isAIProcessing = false
     private var lastProcessedMessages = mutableSetOf<String>() // 记录已处理的消息
     private var isMonitoring = false
+    // 添加消息检测相关的状态变量
+    private var lastMessageCount = 0 // 记录上次检测到的消息总数
+    private var lastOtherPersonMessageCount = 0 // 记录上次检测到的对方消息数量
+    private var lastDetectedMessageContent = "" // 记录上次检测到的最新消息内容
+    private var aiReplyCount = 0 // 记录AI回复次数，用于调试
     
     /**
      * 初始化窗口
@@ -123,19 +129,97 @@ class FloatingWeChatAutoChatWindow(
      */
     fun showAndAnalyze() {
         try {
+            // 检查是否已经有窗口在显示
             windowWrapper?.let { wrapper ->
-                if (!AssistsWindowManager.contains(wrapper)) {
-                    AssistsWindowManager.add(wrapper)
+                if (AssistsWindowManager.contains(wrapper)) {
+                    Timber.d("$TAG: Window already exists and is visible, not creating duplicate")
+                    return
                 }
-                
-                // 开始持续监控模式
-                startContinuousMonitoring()
-                
-                // 自动显示输入法键盘
-                showInputMethodKeyboard()
+            }
+            
+            // 如果没有窗口或窗口不存在，创建新窗口
+            createContentView()
+            setupAssistsWindow()
+            setupUI()
+            
+            windowWrapper?.let { wrapper ->
+                // 延迟一下再添加窗口，确保Service完全启动
+                coroutineScope.launch {
+                    try {
+                        kotlinx.coroutines.delay(100) // 延迟100ms
+                        withContext(Dispatchers.Main) {
+                            AssistsWindowManager.add(wrapper)
+                            
+                            // 隐藏悬浮按钮
+                            hideFloatingButton()
+                            
+                            // 开始持续监控模式
+                            startContinuousMonitoring()
+                            
+                            // 自动点击输入框并启用AI回复模式
+                            autoClickInputBoxAndEnableAIMode()
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "$TAG: Failed to add window with delay")
+                        // 如果还是失败，尝试重新创建窗口
+                        withContext(Dispatchers.Main) {
+                            recreateWindow()
+                        }
+                    }
+                }
+            } ?: run {
+                Timber.w("$TAG: WindowWrapper is null after setup")
+                recreateWindow()
             }
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Failed to show window")
+            recreateWindow()
+        }
+    }
+    
+    /**
+     * 重新创建窗口
+     */
+    private fun recreateWindow() {
+        try {
+            Timber.d("$TAG: Recreating window")
+            
+            // 清理旧窗口
+            windowWrapper?.let { wrapper ->
+                try {
+                    if (AssistsWindowManager.contains(wrapper)) {
+                        AssistsWindowManager.removeView(wrapper.getView())
+                    }
+                } catch (e: Exception) {
+                    Timber.w(e, "$TAG: Error removing old window")
+                }
+            }
+            
+            // 重新初始化
+            createContentView()
+            setupAssistsWindow()
+            setupUI()
+            
+            // 延迟添加新窗口
+            coroutineScope.launch {
+                try {
+                    kotlinx.coroutines.delay(200) // 延迟200ms
+                    withContext(Dispatchers.Main) {
+                        windowWrapper?.let { wrapper ->
+                            AssistsWindowManager.add(wrapper)
+                            startContinuousMonitoring()
+                            autoClickInputBoxAndEnableAIMode()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "$TAG: Failed to recreate window")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "窗口创建失败，请重试", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error in recreateWindow")
         }
     }
     
@@ -149,6 +233,12 @@ class FloatingWeChatAutoChatWindow(
             monitoringJob?.cancel()
             isMonitoring = false
             
+            // 恢复悬浮按钮显示
+            showFloatingButton()
+            
+            // 退出AI回复模式
+            disableAIReplyMode()
+            
             windowWrapper?.let { wrapper ->
                 try {
                     if (AssistsWindowManager.contains(wrapper)) {
@@ -158,7 +248,13 @@ class FloatingWeChatAutoChatWindow(
                     Timber.w(e, "$TAG: Error removing window view, window may already be removed")
                 }
             }
-            windowWrapper = null
+            
+            // 延迟清理窗口引用，确保关闭操作完成
+            Handler(android.os.Looper.getMainLooper()).postDelayed({
+                windowWrapper = null
+                Timber.d("$TAG: Window reference cleared")
+            }, 500)
+            
             Timber.d("$TAG: Window closed")
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error closing window")
@@ -181,10 +277,33 @@ class FloatingWeChatAutoChatWindow(
                 view = view,
                 wmLayoutParams = AssistsWindowManager.createLayoutParams().apply {
                     width = (context.resources.displayMetrics.widthPixels * 0.6).toInt() // 减少宽度到60%
-                    height = (context.resources.displayMetrics.heightPixels * 0.4).toInt()
+                    height = (context.resources.displayMetrics.heightPixels * 0.28).toInt() // 减少高度30% (0.4 * 0.7 = 0.28)
                     // 设置默认位置在右上角
                     x = (context.resources.displayMetrics.widthPixels * 0.3).toInt()
                     y = (context.resources.displayMetrics.heightPixels * 0.1).toInt()
+                },
+                onClose = { parent ->
+                    // 当用户点击关闭按钮时的回调
+                    Timber.d("$TAG: User clicked close button, restoring floating button")
+                    
+                    // 恢复悬浮按钮显示
+                    showFloatingButton()
+                    
+                    // 退出AI回复模式
+                    disableAIReplyMode()
+                    
+                    // 停止监控任务
+                    analysisJob?.cancel()
+                    monitoringJob?.cancel()
+                    isMonitoring = false
+                    
+                    // 延迟清理窗口引用，确保AssistsWindowWrapper完成关闭操作
+                    Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        windowWrapper = null
+                        Timber.d("$TAG: Window reference cleared by user close")
+                    }, 500)
+                    
+                    Timber.d("$TAG: Window closed by user")
                 }
             ).apply {
                 showOption = true
@@ -200,10 +319,9 @@ class FloatingWeChatAutoChatWindow(
     private fun setupUI() {
         contentView?.let { view ->
             try {
-                tvConversationContent = view.findViewById(R.id.tv_conversation_content)
-                tvAIStatus = view.findViewById(R.id.tv_ai_status)
-                scrollViewConversation = view.findViewById(R.id.scroll_view_conversation)
-                scrollViewAIStatus = view.findViewById(R.id.scroll_view_ai_status)
+                tvChatTarget = view.findViewById(R.id.tv_chat_target)
+                tvStatusContent = view.findViewById(R.id.tv_status_content)
+                scrollViewStatus = view.findViewById(R.id.scroll_view_status)
                 
                 // 初始显示
                 showInitialState()
@@ -224,8 +342,11 @@ class FloatingWeChatAutoChatWindow(
             return
         }
         
+        // 重置监控状态
+        resetMonitoringState()
+        
         isMonitoring = true
-        updateAIStatus("🔄 开始持续监控模式...\n每5秒检查新消息", "#FF2196F3")
+        updateStatusContent("🤖 AI-GEMMA3N-4B模型加载成功\n\n⏳ 未检测到有新的聊天消息")
         
         monitoringJob = coroutineScope.launch {
             while (isMonitoring) {
@@ -239,12 +360,25 @@ class FloatingWeChatAutoChatWindow(
                 } catch (e: Exception) {
                     Timber.e(e, "$TAG: Error in monitoring loop")
                     withContext(Dispatchers.Main) {
-                        updateAIStatus("❌ 监控过程中出现错误：${e.message}", "#FFF44336")
+                        updateStatusContent("❌ 监控过程中出现错误：${e.message}")
                     }
                     kotlinx.coroutines.delay(5000) // 错误后也等待5秒再重试
                 }
             }
         }
+    }
+    
+    /**
+     * 重置监控状态
+     */
+    private fun resetMonitoringState() {
+        Timber.d("$TAG: Resetting monitoring state")
+        lastProcessedMessages.clear()
+        lastMessageCount = 0
+        lastOtherPersonMessageCount = 0
+        lastDetectedMessageContent = ""
+        aiReplyCount = 0
+        isAIProcessing = false
     }
     
     /**
@@ -260,7 +394,7 @@ class FloatingWeChatAutoChatWindow(
             // 检查assists服务状态
             if (!AssistsManager.isAccessibilityServiceEnabled()) {
                 withContext(Dispatchers.Main) {
-                    updateAIStatus("❌ Assists无障碍服务未启用", "#FFF44336")
+                    updateStatusContent("❌ Assists无障碍服务未启用")
                 }
                 return
             }
@@ -270,75 +404,148 @@ class FloatingWeChatAutoChatWindow(
                 WeChatConversationFilter.filterWeChatConversation()
             }
             
+            // 更新对话对象显示
+            withContext(Dispatchers.Main) {
+                val targetName = if (filteredData.otherPersonName.isNotEmpty()) {
+                    filteredData.otherPersonName
+                } else {
+                    "未获取到"
+                }
+                updateChatTarget(targetName)
+            }
+            
             // 检查是否有新消息
             val newMessages = checkForNewConversationMessages(filteredData)
             
+            // 统计当前消息状态
+            val currentMessageCount = filteredData.conversationMessages.size
+            val currentOtherPersonMessages = filteredData.conversationMessages.filter { it.isFromOther }
+            val currentOtherPersonMessageCount = currentOtherPersonMessages.size
+            val currentLatestOtherMessage = currentOtherPersonMessages.lastOrNull()?.content ?: ""
+            
             // 添加详细调试信息
-            Timber.d("$TAG: Total messages: ${filteredData.conversationMessages.size}, New messages: ${newMessages.size}")
-            Timber.d("$TAG: All messages: ${filteredData.conversationMessages.map { "${it.senderName}: ${it.content}" }}")
-            Timber.d("$TAG: Processed messages count: ${lastProcessedMessages.size}")
+            Timber.d("$TAG: === 消息检测状态 ===")
+            Timber.d("$TAG: 总消息数: $currentMessageCount (上次: $lastMessageCount)")
+            Timber.d("$TAG: 对方消息数: $currentOtherPersonMessageCount (上次: $lastOtherPersonMessageCount)")
+            Timber.d("$TAG: 最新对方消息: '$currentLatestOtherMessage' (上次: '$lastDetectedMessageContent')")
+            Timber.d("$TAG: 新消息数量: ${newMessages.size}")
+            Timber.d("$TAG: AI回复次数: $aiReplyCount")
+            Timber.d("$TAG: 已处理消息数: ${lastProcessedMessages.size}")
             
             if (newMessages.isNotEmpty()) {
                 Timber.d("$TAG: Found ${newMessages.size} new messages")
                 
-                // 更新显示内容（仅显示对话内容）
-                val displayText = WeChatConversationFilter.formatConversationForSimpleDisplay(filteredData)
+                // 显示检测到新消息的状态
+                val latestMessage = newMessages.last()
                 withContext(Dispatchers.Main) {
-                    showConversationContent(displayText)
-                    updateAIStatus("📨 检测到新消息，准备AI分析...", "#FFFF9800")
+                    updateStatusContent("✅ 检测到有新的聊天消息\n\n最新消息：\n${latestMessage.senderName}: ${latestMessage.content}")
                 }
+                
+                // 更新检测状态
+                lastMessageCount = currentMessageCount
+                lastOtherPersonMessageCount = currentOtherPersonMessageCount
+                lastDetectedMessageContent = latestMessage.content
+                
+                // 延迟一下让用户看到消息
+                kotlinx.coroutines.delay(1000)
                 
                 // 准备AI分析的上下文（最多5条消息）
                 val contextMessages = getRecentMessagesForAI(filteredData, 5)
                 currentConversationData = contextMessages
                 
+                // 显示正在发送给AI的状态
+                withContext(Dispatchers.Main) {
+                    updateStatusContent("📤 正在把最新的聊天消息发送给AI_GEMMA3N-4B进行分析\n\n发送内容：\n${latestMessage.content}")
+                }
+                
                 // 生成AI回复
                 generateAIReply()
                 
             } else {
-                // 没有新消息，更新状态（仅显示对话内容）
-                val displayText = WeChatConversationFilter.formatConversationForSimpleDisplay(filteredData)
+                // 没有新消息，显示等待状态
                 withContext(Dispatchers.Main) {
-                    showConversationContent(displayText)
-                    updateAIStatus("👁️ 持续监控中...\n等待新消息 (每5秒检查)", "#FF81C784")
+                    val statusText = if (aiReplyCount > 0) {
+                        "⏳ 未检测到有新的聊天消息\n\n(已自动回复 $aiReplyCount 次，每5秒检查一次)"
+                    } else {
+                        "⏳ 未检测到有新的聊天消息"
+                    }
+                    updateStatusContent(statusText)
                 }
+                
+                // 更新当前状态（即使没有新消息也要更新，用于下次比较）
+                lastMessageCount = currentMessageCount
+                lastOtherPersonMessageCount = currentOtherPersonMessageCount
             }
             
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error checking for new messages")
             withContext(Dispatchers.Main) {
-                updateAIStatus("❌ 检查新消息时出错：${e.message}", "#FFF44336")
+                updateStatusContent("❌ 检查新消息时出错：${e.message}")
             }
         }
     }
     
     /**
-     * 检查是否有新的对话消息
+     * 检查是否有新的对话消息（只检查对方的消息）
+     * 优化后的检测逻辑：基于消息数量和内容变化来判断新消息
      */
     private fun checkForNewConversationMessages(data: WeChatConversationFilter.FilteredWeChatData): List<WeChatConversationFilter.ConversationMessage> {
         val newMessages = mutableListOf<WeChatConversationFilter.ConversationMessage>()
         
-        for (message in data.conversationMessages) {
-            val messageKey = "${message.senderName}:${message.content}"
+        // 获取所有对方的消息
+        val otherPersonMessages = data.conversationMessages.filter { it.isFromOther }
+        
+        Timber.d("$TAG: === 新消息检测详情 ===")
+        Timber.d("$TAG: 当前对方消息数: ${otherPersonMessages.size}")
+        Timber.d("$TAG: 上次对方消息数: $lastOtherPersonMessageCount")
+        
+        // 方法1：基于消息数量变化检测新消息
+        if (otherPersonMessages.size > lastOtherPersonMessageCount) {
+            // 有新的对方消息
+            val newCount = otherPersonMessages.size - lastOtherPersonMessageCount
+            val latestMessages = otherPersonMessages.takeLast(newCount)
             
-            // 只跳过已经处理过的消息
-            if (lastProcessedMessages.contains(messageKey)) {
-                continue
+            Timber.d("$TAG: 检测到 $newCount 条新的对方消息（基于数量变化）")
+            latestMessages.forEach { message ->
+                Timber.d("$TAG: 新消息: ${message.senderName}: ${message.content}")
             }
             
-            // 这是新消息
-            newMessages.add(message)
-            lastProcessedMessages.add(messageKey)
+            newMessages.addAll(latestMessages)
+        }
+        // 方法2：基于最新消息内容变化检测（防止消息数量相同但内容变化的情况）
+        else if (otherPersonMessages.isNotEmpty()) {
+            val currentLatestMessage = otherPersonMessages.last()
             
-            // 添加调试日志
-            Timber.d("$TAG: New message detected - Sender: ${message.senderName}, Content: ${message.content}")
+            if (currentLatestMessage.content != lastDetectedMessageContent && 
+                lastDetectedMessageContent.isNotEmpty()) {
+                
+                Timber.d("$TAG: 检测到消息内容变化（基于内容比较）")
+                Timber.d("$TAG: 当前最新: '${currentLatestMessage.content}'")
+                Timber.d("$TAG: 上次记录: '$lastDetectedMessageContent'")
+                
+                newMessages.add(currentLatestMessage)
+            }
         }
         
-        // 清理过旧的已处理消息记录（保持最多50条）
-        if (lastProcessedMessages.size > 50) {
-            val messagesToRemove = lastProcessedMessages.take(lastProcessedMessages.size - 50)
+        // 方法3：如果是第一次检测且有对方消息，也算作新消息
+        if (lastOtherPersonMessageCount == 0 && otherPersonMessages.isNotEmpty()) {
+            Timber.d("$TAG: 首次检测到对方消息")
+            newMessages.addAll(otherPersonMessages.takeLast(1)) // 只取最新的一条
+        }
+        
+        // 更新已处理消息记录（使用更精确的去重策略）
+        for (message in data.conversationMessages) {
+            val messageKey = "${message.senderName}:${message.content}:${message.isFromOther}"
+            lastProcessedMessages.add(messageKey)
+        }
+        
+        // 清理过旧的已处理消息记录（保持最多100条）
+        if (lastProcessedMessages.size > 100) {
+            val messagesToRemove = lastProcessedMessages.take(lastProcessedMessages.size - 100)
             lastProcessedMessages.removeAll(messagesToRemove.toSet())
         }
+        
+        Timber.d("$TAG: 最终检测到 ${newMessages.size} 条新消息")
         
         return newMessages
     }
@@ -378,7 +585,7 @@ class FloatingWeChatAutoChatWindow(
                 
                 // 阶段1：检查AI模型状态
                 withContext(Dispatchers.Main) {
-                    updateAIStatus("🔍 检查AI模型状态...", "#FF2196F3")
+                    updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...")
                 }
                 
                 var modelReady = false
@@ -386,7 +593,7 @@ class FloatingWeChatAutoChatWindow(
                 // 检查AI模型是否已初始化
                 if (llmManager == null) {
                     withContext(Dispatchers.Main) {
-                        updateAIStatus("⚠️ AI模型未初始化，开始初始化GEMMA3N-4b模型...", "#FFFF9800")
+                        updateStatusContent("⚠️ AI模型未初始化，开始初始化GEMMA3N-4b模型...")
                     }
                     
                     // 重新初始化AI模型
@@ -410,19 +617,19 @@ class FloatingWeChatAutoChatWindow(
                     
                     if (initSuccess) {
                         withContext(Dispatchers.Main) {
-                            updateAIStatus("✅ AI模型初始化成功！", "#FF4CAF50")
+                            updateStatusContent("✅ AI模型初始化成功！")
                         }
                         modelReady = true
                         kotlinx.coroutines.delay(1000) // 让用户看到成功信息
                     } else {
                         withContext(Dispatchers.Main) {
-                            updateAIStatus("❌ AI模型初始化失败，无法生成回复", "#FFF44336")
+                            updateStatusContent("❌ AI模型初始化失败，无法生成回复")
                         }
                         return@launch
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        updateAIStatus("✅ AI模型已就绪", "#FF4CAF50")
+                        updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...")
                     }
                     modelReady = true
                     kotlinx.coroutines.delay(500)
@@ -434,7 +641,7 @@ class FloatingWeChatAutoChatWindow(
                 
                 // 阶段2：准备发送消息给AI模型
                 withContext(Dispatchers.Main) {
-                    updateAIStatus("📤 正在将对话内容发送给AI模型...\n\n对话内容：\n$currentConversationData", "#FF2196F3")
+                    updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...")
                 }
                 
                 // 构建AI提示词
@@ -444,7 +651,7 @@ class FloatingWeChatAutoChatWindow(
                 
                 // 阶段3：AI模型生成回复中
                 withContext(Dispatchers.Main) {
-                    updateAIStatus("🤖 AI模型正在分析对话并生成回复...\n\n请稍候，这可能需要几秒钟时间", "#FF9C27B0")
+                    updateStatusContent("🤖 AI_GEMMA3N-4B已生成回复，正在调用神迹进行自动回复")
                 }
                 
                 // 在IO线程中调用AI模型生成回复
@@ -471,7 +678,7 @@ class FloatingWeChatAutoChatWindow(
                     if (isValidAIReply(cleanedReply)) {
                         // 阶段4：AI模型生成结果
                         withContext(Dispatchers.Main) {
-                            updateAIStatus("✅ AI模型生成回复成功！\n\n生成的回复：\n「$cleanedReply」\n\n⏳ 准备自动发送...", "#FF4CAF50")
+                            updateStatusContent("🤖 AI_GEMMA3N-4B已生成回复，正在调用神迹进行自动回复\n\n生成的回复：\n「$cleanedReply」")
                         }
                         
                         kotlinx.coroutines.delay(2000) // 让用户看到生成的回复
@@ -480,19 +687,19 @@ class FloatingWeChatAutoChatWindow(
                         autoFillAndSendMessage(cleanedReply)
                     } else {
                         withContext(Dispatchers.Main) {
-                            updateAIStatus("❌ AI生成的回复内容无效：\n「$cleanedReply」\n\n停止自动发送", "#FFF44336")
+                            updateStatusContent("❌ AI生成的回复内容无效：\n「$cleanedReply」\n\n停止自动发送")
                         }
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        updateAIStatus("❌ AI模型未能生成回复\n\n可能原因：\n• 模型处理超时\n• 输入内容过长\n• 模型内部错误", "#FFF44336")
+                        updateStatusContent("❌ AI模型未能生成回复\n\n可能原因：\n• 模型处理超时\n• 输入内容过长\n• 模型内部错误")
                     }
                 }
                 
             } catch (e: Exception) {
                 Timber.e(e, "$TAG: Error in AI reply generation")
                 withContext(Dispatchers.Main) {
-                    updateAIStatus("❌ AI处理过程中发生异常：\n${e.message}\n\n请重试或手动回复", "#FFF44336")
+                    updateStatusContent("❌ AI处理过程中发生异常：\n${e.message}\n\n请重试或手动回复")
                 }
             } finally {
                 isAIProcessing = false
@@ -545,7 +752,7 @@ class FloatingWeChatAutoChatWindow(
             try {
                 // 验证消息内容
                 if (!isValidAIReply(message)) {
-                    updateAIStatus("❌ AI回复内容无效，停止自动发送", "#FFF44336")
+                    updateStatusContent("❌ AI回复内容无效，停止自动发送")
                     return@launch
                 }
                 
@@ -562,48 +769,113 @@ class FloatingWeChatAutoChatWindow(
                 val packageName = AssistsCore.getPackageName()
                 if (packageName != "com.tencent.mm") {
                     Timber.w("$TAG: Not in WeChat app, cannot auto-fill message")
-                    updateAIStatus("⚠️ 请切换到微信应用", "#FFFF9800")
+                    updateStatusContent("⚠️ 请切换到微信应用")
                     return@launch
                 }
                 
-                // 查找输入框并填充内容
-                val inputFilled = fillWeChatInputField(message)
+                // 先点击输入框，然后填充内容并发送
+                updateStatusContent("📝 正在点击输入框...")
+                val inputClicked = clickWeChatInputField()
                 
-                if (inputFilled) {
-                    updateAIStatus("📝 消息已填充，正在发送...", "#FF2196F3")
+                if (inputClicked) {
+                    // 延迟一下确保输入框获得焦点
+                    kotlinx.coroutines.delay(300)
                     
-                    // 延迟后自动点击发送按钮
-                    kotlinx.coroutines.delay(800)
-                    val sent = clickWeChatSendButton()
+                    updateStatusContent("📝 正在填充AI回复内容...")
                     
-                    if (sent) {
-                        updateAIStatus("✅ AI回复发送成功！\n继续监控新消息...", "#FF4CAF50")
+                    // 使用输入法服务直接填充并发送
+                    val inputMethodFilled = fillTextViaInputMethod(message)
+                    
+                    if (inputMethodFilled) {
+                        // 增加AI回复计数
+                        aiReplyCount++
+                        
+                        updateStatusContent("✅ AI回复发送成功！\n\n⏳ 未检测到有新的聊天消息\n\n(已自动回复 $aiReplyCount 次，每5秒检查一次)")
                         Toast.makeText(context, "✅ AI回复已自动发送", Toast.LENGTH_SHORT).show()
-                        Timber.d("$TAG: AI reply sent successfully")
+                        Timber.d("$TAG: AI reply sent successfully via input method, count: $aiReplyCount")
                         
                         // 发送成功后继续监控，不关闭窗口
                         kotlinx.coroutines.delay(2000)
                         
                         // 重新开始监控状态显示
-                        updateAIStatus("👁️ 持续监控中...\n等待新消息 (每5秒检查)", "#FF81C784")
+                        updateStatusContent("⏳ 未检测到有新的聊天消息\n\n(已自动回复 $aiReplyCount 次，每5秒检查一次)")
                     } else {
-                        updateAIStatus("⚠️ 消息已填充，请手动点击发送\n将继续监控新消息", "#FFFF9800")
-                        Toast.makeText(context, "⚠️ 消息已填充，请手动点击发送", Toast.LENGTH_SHORT).show()
+                        // 如果输入法方式失败，回退到传统方式
+                        updateStatusContent("⚠️ 输入法填充失败，尝试传统方式...")
                         
-                        // 即使发送失败也继续监控
-                        kotlinx.coroutines.delay(3000)
-                        updateAIStatus("👁️ 持续监控中...\n等待新消息 (每5秒检查)", "#FF81C784")
+                        val inputFilled = fillWeChatInputField(message)
+                        
+                        if (inputFilled) {
+                            updateStatusContent("📝 消息已填充，正在发送...")
+                            
+                            // 延迟后自动点击发送按钮
+                            kotlinx.coroutines.delay(800)
+                            val sent = clickWeChatSendButton()
+                            
+                            if (sent) {
+                                // 增加AI回复计数
+                                aiReplyCount++
+                                
+                                updateStatusContent("✅ AI回复发送成功！\n\n⏳ 未检测到有新的聊天消息\n\n(已自动回复 $aiReplyCount 次，每5秒检查一次)")
+                                Toast.makeText(context, "✅ AI回复已自动发送", Toast.LENGTH_SHORT).show()
+                                Timber.d("$TAG: AI reply sent successfully, count: $aiReplyCount")
+                                
+                                // 发送成功后继续监控，不关闭窗口
+                                kotlinx.coroutines.delay(2000)
+                                
+                                // 重新开始监控状态显示
+                                updateStatusContent("⏳ 未检测到有新的聊天消息\n\n(已自动回复 $aiReplyCount 次，每5秒检查一次)")
+                            } else {
+                                updateStatusContent("⚠️ 消息已填充，请手动点击发送\n将继续监控新消息")
+                                Toast.makeText(context, "⚠️ 消息已填充，请手动点击发送", Toast.LENGTH_SHORT).show()
+                                
+                                // 即使发送失败也继续监控
+                                kotlinx.coroutines.delay(3000)
+                                val statusText = if (aiReplyCount > 0) {
+                                    "⏳ 未检测到有新的聊天消息\n\n(已自动回复 $aiReplyCount 次，每5秒检查一次)"
+                                } else {
+                                    "⏳ 未检测到有新的聊天消息\n\n(每5秒检查一次)"
+                                }
+                                updateStatusContent(statusText)
+                            }
+                        } else {
+                            updateStatusContent("❌ 无法找到输入框，请手动输入")
+                            Toast.makeText(context, "❌ 无法自动填充消息，请手动输入", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 } else {
-                    updateAIStatus("❌ 无法找到输入框，请手动输入", "#FFF44336")
-                    Toast.makeText(context, "❌ 无法自动填充消息，请手动输入", Toast.LENGTH_SHORT).show()
+                    updateStatusContent("❌ 无法点击输入框，请手动操作")
+                    Toast.makeText(context, "❌ 无法点击输入框，请手动操作", Toast.LENGTH_SHORT).show()
                 }
                 
             } catch (e: Exception) {
                 Timber.e(e, "$TAG: Error auto-filling and sending message")
-                updateAIStatus("❌ 自动发送失败，请手动操作", "#FFF44336")
+                updateStatusContent("❌ 自动发送失败，请手动操作")
                 Toast.makeText(context, "自动发送失败，请手动操作", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+    
+    /**
+     * 通过输入法服务填充文本并发送
+     */
+    private fun fillTextViaInputMethod(text: String): Boolean {
+        return try {
+            // 获取输入法服务实例
+            val inputMethodService = com.shenji.aikeyboard.keyboard.ShenjiInputMethodService.instance
+            
+            if (inputMethodService != null) {
+                // 调用输入法服务的填充方法
+                inputMethodService.fillTextAndSend(text)
+                Timber.d("$TAG: Text filled via input method service")
+                return true
+            } else {
+                Timber.w("$TAG: Input method service instance is null")
+                return false
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error filling text via input method")
+            false
         }
     }
     
@@ -713,113 +985,157 @@ class FloatingWeChatAutoChatWindow(
      * 显示初始状态
      */
     private fun showInitialState() {
-        currentConversationText = "正在获取微信对话内容..."
-        tvConversationContent?.text = currentConversationText
-        updateAIStatus("🤖 AI系统准备中...", "#FF81C784")
+        updateChatTarget("获取中...")
+        updateStatusContent("🤖 AI-GEMMA3N-4B模型初始化中...")
     }
     
     /**
      * 显示加载状态
      */
     private fun showLoadingState() {
-        currentConversationText = "正在分析微信对话内容...\n\n请确保：\n1. 已开启Assists无障碍服务\n2. 当前在微信聊天界面\n3. 聊天界面有对话内容"
-        tvConversationContent?.text = currentConversationText
-        updateAIStatus("📡 正在获取对话数据...", "#FF2196F3")
+        updateStatusContent("📡 正在获取对话数据...\n\n请确保：\n1. 已开启Assists无障碍服务\n2. 当前在微信聊天界面\n3. 聊天界面有对话内容")
     }
     
     /**
      * 显示错误状态
      */
     private fun showErrorState(message: String) {
-        currentConversationText = "❌ $message"
-        tvConversationContent?.text = currentConversationText
-        updateAIStatus("❌ 获取对话失败", "#FFF44336")
+        updateStatusContent("❌ $message")
     }
     
     /**
-     * 显示对话内容
+     * 更新对话对象显示
      */
-    private fun showConversationContent(content: String) {
-        currentConversationText = content
-        tvConversationContent?.text = content
-        
-        // 自动滚动到顶部
-        scrollViewConversation?.post {
-            scrollViewConversation?.scrollTo(0, 0)
-        }
+    private fun updateChatTarget(targetName: String) {
+        // 更新窗口标题栏显示对话对象昵称
+        windowWrapper?.viewBinding?.tvTitle?.text = targetName
+        // 同时更新内容区域的显示（备用）
+        tvChatTarget?.text = targetName
     }
     
     /**
-     * 更新AI状态显示
+     * 更新状态内容显示
      */
-    private fun updateAIStatus(status: String, colorHex: String) {
-        tvAIStatus?.text = status
-        try {
-            tvAIStatus?.setTextColor(android.graphics.Color.parseColor(colorHex))
-        } catch (e: Exception) {
-            // 如果颜色解析失败，使用默认颜色
-            tvAIStatus?.setTextColor(android.graphics.Color.parseColor("#FF81C784"))
-        }
+    private fun updateStatusContent(content: String) {
+        tvStatusContent?.text = content
         
         // 自动滚动到底部显示最新状态
-        scrollViewAIStatus?.post {
-            scrollViewAIStatus?.fullScroll(View.FOCUS_DOWN)
+        scrollViewStatus?.post {
+            scrollViewStatus?.fullScroll(View.FOCUS_DOWN)
         }
     }
     
     /**
-     * 自动显示输入法键盘
+     * 显示对话内容（已废弃，现在合并到状态显示中）
      */
-    private fun showInputMethodKeyboard() {
-        try {
-            coroutineScope.launch(Dispatchers.Main) {
-                // 延迟一小段时间确保窗口已完全显示
-                kotlinx.coroutines.delay(500)
+    private fun showConversationContent(content: String) {
+        // 不再单独显示对话内容，而是合并到状态显示中
+        currentConversationText = content
+    }
+    
+    /**
+     * 更新AI状态显示（已废弃，使用updateStatusContent替代）
+     */
+    private fun updateAIStatus(status: String, colorHex: String) {
+        updateStatusContent(status)
+    }
+    
+    /**
+     * 启用AI回复模式（不自动点击输入框）
+     */
+    private fun autoClickInputBoxAndEnableAIMode() {
+        coroutineScope.launch {
+            try {
+                kotlinx.coroutines.delay(500) // 延迟500ms，确保窗口完全显示
                 
-                // 方法1：尝试通过无障碍服务点击微信输入框
-                val success = clickWeChatInputField()
-                
-                if (!success) {
-                    // 方法2：显示输入法选择器
-                    val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                withContext(Dispatchers.Main) {
+                    updateStatusContent("🤖 AI回复模式已启用\n\n⏳ 等待检测新消息...")
                     
-                    try {
-                        inputMethodManager.showInputMethodPicker()
-                        Timber.d("$TAG: Input method picker shown")
-                    } catch (e: Exception) {
-                        Timber.w(e, "$TAG: Failed to show input method picker, trying alternative method")
-                        
-                        // 方法3：检查并提示切换到我们的输入法
-                        try {
-                            // 获取当前输入法
-                            val currentInputMethod = android.provider.Settings.Secure.getString(
-                                context.contentResolver,
-                                android.provider.Settings.Secure.DEFAULT_INPUT_METHOD
-                            )
-                            
-                            Timber.d("$TAG: Current input method: $currentInputMethod")
-                            
-                            // 如果当前不是我们的输入法，提示用户切换
-                            if (!currentInputMethod.contains("com.shenji.aikeyboard")) {
-                                Toast.makeText(context, "请切换到神迹AI键盘以使用自动聊天功能", Toast.LENGTH_LONG).show()
-                                
-                                // 显示输入法设置
-                                val intent = android.content.Intent(android.provider.Settings.ACTION_INPUT_METHOD_SETTINGS)
-                                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(intent)
-                            } else {
-                                Toast.makeText(context, "神迹AI键盘已激活，请点击输入框开始聊天", Toast.LENGTH_SHORT).show()
-                            }
-                            
-                        } catch (e2: Exception) {
-                            Timber.e(e2, "$TAG: Failed to check/switch input method")
-                            Toast.makeText(context, "请手动点击输入框并切换到神迹AI键盘", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    // 启用AI回复模式（不自动点击输入框）
+                    enableAIReplyMode()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "$TAG: Error enabling AI mode")
+                withContext(Dispatchers.Main) {
+                    updateStatusContent("❌ 启用AI模式时出错：${e.message}")
                 }
             }
+        }
+    }
+    
+    /**
+     * 隐藏悬浮按钮
+     */
+    private fun hideFloatingButton() {
+        try {
+            val intent = android.content.Intent("com.shenji.aikeyboard.HIDE_FLOATING_WINDOW")
+            intent.setPackage(context.packageName) // 确保广播只发送给本应用
+            context.sendBroadcast(intent)
+            Timber.d("$TAG: Sent hide floating button broadcast with package: ${context.packageName}")
+            
+            // 额外的调试：直接尝试通过服务引用隐藏
+            try {
+                val serviceIntent = android.content.Intent(context, FloatingWindowService::class.java)
+                serviceIntent.action = "HIDE_FLOATING_WINDOW"
+                context.startService(serviceIntent)
+                Timber.d("$TAG: Also sent hide command via service intent")
+            } catch (e: Exception) {
+                Timber.w(e, "$TAG: Failed to send via service intent")
+            }
+            
         } catch (e: Exception) {
-            Timber.e(e, "$TAG: Error showing input method keyboard")
+            Timber.e(e, "$TAG: Error hiding floating button")
+        }
+    }
+    
+    /**
+     * 显示悬浮按钮
+     */
+    private fun showFloatingButton() {
+        try {
+            val intent = android.content.Intent("com.shenji.aikeyboard.RESTORE_FLOATING_WINDOW")
+            intent.setPackage(context.packageName) // 确保广播只发送给本应用
+            context.sendBroadcast(intent)
+            Timber.d("$TAG: Sent show floating button broadcast with package: ${context.packageName}")
+            
+            // 额外的调试：直接尝试通过服务引用显示
+            try {
+                val serviceIntent = android.content.Intent(context, FloatingWindowService::class.java)
+                serviceIntent.action = "RESTORE_FLOATING_WINDOW"
+                context.startService(serviceIntent)
+                Timber.d("$TAG: Also sent show command via service intent")
+            } catch (e: Exception) {
+                Timber.w(e, "$TAG: Failed to send via service intent")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error showing floating button")
+        }
+    }
+    
+    /**
+     * 启用AI回复模式
+     */
+    private fun enableAIReplyMode() {
+        try {
+            val intent = android.content.Intent("com.shenji.aikeyboard.ENABLE_AI_REPLY_MODE")
+            context.sendBroadcast(intent)
+            Timber.d("$TAG: Sent enable AI reply mode broadcast")
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error enabling AI reply mode")
+        }
+    }
+    
+    /**
+     * 禁用AI回复模式
+     */
+    private fun disableAIReplyMode() {
+        try {
+            val intent = android.content.Intent("com.shenji.aikeyboard.DISABLE_AI_REPLY_MODE")
+            context.sendBroadcast(intent)
+            Timber.d("$TAG: Sent disable AI reply mode broadcast")
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Error disabling AI reply mode")
         }
     }
     

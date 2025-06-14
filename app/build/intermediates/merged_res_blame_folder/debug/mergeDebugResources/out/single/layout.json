@@ -148,6 +148,10 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\phrases_overlay.xml"
     },
     {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/keyboard_ai_reply_mode.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/keyboard_ai_reply_mode.xml"
+    },
+    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\view_settings_item.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\view_settings_item.xml"
     },

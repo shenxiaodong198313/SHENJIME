@@ -297,8 +297,10 @@ dimen tag_margin
 dimen tag_padding_horizontal
 dimen tag_padding_vertical
 dimen ui_margin_medium
+drawable ai_reply_mode_background
 drawable ai_suggestion_background
 drawable analysis_result_background
+drawable analysis_result_background_transparent
 drawable analysis_window_background
 drawable appcon
 drawable appicon
@@ -1047,8 +1049,7 @@ id rvLogs
 id rv_candidates
 id sampler_spinner
 id scroll_view
-id scroll_view_ai_status
-id scroll_view_conversation
+id scroll_view_status
 id seekbar
 id send_reply_button
 id settings_button
@@ -1245,17 +1246,18 @@ id tvStatus
 id tvTypingIndicator
 id tvWord
 id tv_accessibility_status
-id tv_ai_status
+id tv_ai_reply_status
+id tv_ai_status_indicator
 id tv_analysis_result
 id tv_candidate_weight
 id tv_candidate_word
 id tv_chat_benchmark
 id tv_chat_image
+id tv_chat_target
 id tv_chat_text
 id tv_chat_thinking
 id tv_chat_voice_duration
 id tv_contact_name
-id tv_conversation_content
 id tv_date
 id tv_error_text
 id tv_frequency
@@ -1280,6 +1282,7 @@ id tv_source
 id tv_stage_results
 id tv_stage_title
 id tv_status
+id tv_status_content
 id tv_status_hint
 id tv_suggestion
 id tv_summary
@@ -1369,6 +1372,7 @@ layout item_phrase_simple
 layout item_phrase_vertical
 layout item_sampler_spinner
 layout item_script
+layout keyboard_ai_reply_mode
 layout keyboard_layout
 layout layout_mllm_test_activity
 layout layout_toolbar_filters_content
