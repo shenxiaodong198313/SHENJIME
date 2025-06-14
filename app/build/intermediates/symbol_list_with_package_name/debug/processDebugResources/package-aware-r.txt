@@ -5170,6 +5170,7 @@ id tv_performance
 id tv_pinyin
 id tv_prompt
 id tv_rank
+id tv_reply_count
 id tv_result
 id tv_results
 id tv_sampler_type_value

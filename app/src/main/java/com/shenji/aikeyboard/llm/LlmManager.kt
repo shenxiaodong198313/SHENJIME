@@ -297,6 +297,83 @@ class LlmManager private constructor(private val context: Context) {
     }
     
     /**
+     * 流式生成文本回复
+     * @param prompt 输入提示词
+     * @param onProgress 流式回调，参数为(部分文本, 是否完成)
+     */
+    suspend fun generateResponseStream(
+        prompt: String, 
+        onProgress: (String, Boolean) -> Unit
+    ): String? = withContext(Dispatchers.IO) {
+        if (!isInitialized) {
+            Log.w(TAG, "LLM未初始化，无法生成回复")
+            onProgress("模型未初始化，请稍后再试", true)
+            return@withContext "模型未初始化，请稍后再试"
+        }
+        
+        if (prompt.isBlank()) {
+            Log.w(TAG, "输入为空")
+            onProgress("请输入有效的问题", true)
+            return@withContext "请输入有效的问题"
+        }
+        
+        try {
+            Log.d(TAG, "开始流式生成回复，输入长度: ${prompt.length}")
+            Log.d(TAG, "输入内容: $prompt")
+            
+            val startTime = System.currentTimeMillis()
+            val responseBuilder = StringBuilder()
+            
+            // 使用MediaPipe的流式生成（如果支持）
+            // 由于MediaPipe LlmInference可能不直接支持流式，我们需要使用MNN的LlmSession
+            // 这里我们先实现一个模拟的流式效果，后续可以集成真正的流式API
+            
+            val response = llmInference?.generateResponse(prompt)
+            
+            if (response.isNullOrBlank()) {
+                Log.w(TAG, "LLM返回空回复")
+                onProgress("抱歉，我现在无法生成回复，请重新尝试", true)
+                return@withContext "抱歉，我现在无法生成回复，请重新尝试"
+            }
+            
+                         // 模拟流式输出效果 - 按字符逐步显示
+             for (i in response.indices) {
+                 val partialResponse = response.substring(0, i + 1)
+                 responseBuilder.clear()
+                 responseBuilder.append(partialResponse)
+                 
+                 // 调用进度回调
+                 withContext(Dispatchers.Main) {
+                     onProgress(partialResponse, i == response.length - 1)
+                 }
+                 
+                 // 添加延迟模拟流式效果
+                 if (i < response.length - 1) {
+                     // 根据字符类型调整延迟时间
+                     val delay = when {
+                         response[i] in "，。！？；：" -> 200L // 标点符号停顿长一些
+                         response[i] == ' ' -> 30L // 空格停顿短一些
+                         response[i] == '\n' -> 100L // 换行停顿中等
+                         else -> 20L // 普通字符
+                     }
+                     kotlinx.coroutines.delay(delay)
+                 }
+             }
+            
+            val endTime = System.currentTimeMillis()
+            Log.d(TAG, "LLM流式推理耗时: ${endTime - startTime}ms")
+            Log.d(TAG, "生成回复长度: ${response.length}")
+            
+            response
+        } catch (e: Exception) {
+            Log.e(TAG, "流式生成回复失败", e)
+            val errorMsg = "抱歉，生成回复时发生错误: ${e.message}"
+            onProgress(errorMsg, true)
+            errorMsg
+        }
+    }
+    
+    /**
      * 检查LLM是否已初始化
      */
     fun isReady(): Boolean = isInitialized
