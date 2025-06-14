@@ -1,9 +1,5 @@
 [
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_dictionary_settings.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_dictionary_settings.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_assists_test.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_assists_test.xml"
     },
@@ -36,10 +32,6 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\symbol_keyboard_layout.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_build_config.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_build_config.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_dictionary_detail.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_dictionary_detail.xml"
     },
@@ -50,18 +42,6 @@
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_chat_message_user.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_chat_message_user.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_phrase_vertical.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_phrase_vertical.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_overlay_tool.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_overlay_tool.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_combination_test.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_combination_test.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_holder_chatheader.xml",
@@ -80,28 +60,8 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\settings_row_slider.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_option.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_option.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\layout_mllm_test_activity.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\layout_mllm_test_activity.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_continuous_pinyin_test.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_continuous_pinyin_test.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_input_method_settings.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_input_method_settings.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_dictionary_entry.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_dictionary_entry.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_check_result.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_check_result.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_log_detail.xml",
@@ -112,10 +72,6 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_order.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_fragment_container.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_fragment_container.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_dictionary_log.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_dictionary_log.xml"
     },
@@ -124,28 +80,16 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_historylist.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\calendar_overlay.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\calendar_overlay.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\chat_more_menu_item.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\chat_more_menu_item.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_sampler_spinner.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_sampler_spinner.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_assists_analysis.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_assists_analysis.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_dictionary_logs.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_dictionary_logs.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\smart_tips_layout.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\smart_tips_layout.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/content_wechat_analysis.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/content_wechat_analysis.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_log_viewer.xml",
@@ -156,36 +100,20 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_database_info.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\settings_row_slider_switch.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\settings_row_slider_switch.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_ai_test.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_ai_test.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\assistant_text_popup_menu.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\assistant_text_popup_menu.xml"
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\settings_row_slider_switch.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\settings_row_slider_switch.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_build_trie_settings.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_build_trie_settings.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_llm_chat.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_llm_chat.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_input_debug.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_input_debug.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_mnn_main.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_mnn_main.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_vu_conversion_test.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_vu_conversion_test.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_accessibility_analysis.xml",
@@ -204,16 +132,8 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_holder_assistant.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\shimmer_dictionary_stat_card.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\shimmer_dictionary_stat_card.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_build_status.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_build_status.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\layout_toolbar_filters_content.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\layout_toolbar_filters_content.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\phrases_overlay.xml",
@@ -228,28 +148,164 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_dictionary_module.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_candidate.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_candidate.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_export_settings.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_export_settings.xml"
-    },
-    {
-        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/floating_button_layout.xml",
-        "source": "com.shenji.aikeyboard.app-main-6:/layout/floating_button_layout.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\keyboard_layout.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\keyboard_layout.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\view_dictionary_status.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\view_dictionary_status.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\symbol_keyboard_layout_new.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\symbol_keyboard_layout_new.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\notes_overlay.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\notes_overlay.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\list_item_dataset.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\list_item_dataset.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_chat.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_chat.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_debug_weight.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_debug_weight.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_settings_sheet.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_settings_sheet.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_phrase_list.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_phrase_list.xml"
+    },
+    {
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/content_ai_analysis.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/content_ai_analysis.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_splash.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_splash.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\candidates_view.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\candidates_view.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\recycle_item_history.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\recycle_item_history.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_permission_check.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_permission_check.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_pinyin_test.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_pinyin_test.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_smart_pinyin_mvp_test.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_smart_pinyin_mvp_test.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_main_settings.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_main_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_dictionary_settings.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_dictionary_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\dialog_build_config.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\dialog_build_config.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_phrase_vertical.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_phrase_vertical.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_overlay_tool.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_overlay_tool.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_combination_test.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_combination_test.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_option.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_option.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_continuous_pinyin_test.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_continuous_pinyin_test.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_input_method_settings.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_input_method_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_check_result.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_check_result.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_dictionary_entry.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_dictionary_entry.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_fragment_container.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_fragment_container.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\calendar_overlay.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\calendar_overlay.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\chat_more_menu_item.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\chat_more_menu_item.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_assists_analysis.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_assists_analysis.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_dictionary_logs.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_dictionary_logs.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\assistant_text_popup_menu.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\assistant_text_popup_menu.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_llm_chat.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_llm_chat.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_mnn_main.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_mnn_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_vu_conversion_test.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_vu_conversion_test.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\shimmer_dictionary_stat_card.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\shimmer_dictionary_stat_card.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\layout_toolbar_filters_content.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\layout_toolbar_filters_content.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_candidate.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_candidate.xml"
+    },
+    {
+        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\view_dictionary_status.xml",
+        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\view_dictionary_status.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_llm_models.xml",
@@ -272,36 +328,20 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_dictionary_group_header.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\notes_overlay.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\notes_overlay.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_script_library.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_script_library.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\list_item_dataset.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\list_item_dataset.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_chat.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_chat.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_verification_code.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_verification_code.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_debug_weight.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_debug_weight.xml"
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/draggable_floating_window.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/draggable_floating_window.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_ai_analysis.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_ai_analysis.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_settings_sheet.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_settings_sheet.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_phrase_simple.xml",
@@ -312,20 +352,8 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_pinyin_test.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\item_phrase_list.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_phrase_list.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\recycle_item_model.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\recycle_item_model.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\candidates_view.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\candidates_view.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_splash.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_splash.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\custom_drop_down_line_view.xml",
@@ -340,10 +368,6 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\shimmer_dictionary_module.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\recycle_item_history.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\recycle_item_history.xml"
-    },
-    {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\test_recycler_item.xml",
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\test_recycler_item.xml"
     },
@@ -352,20 +376,8 @@
         "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\item_script.xml"
     },
     {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_permission_check.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_permission_check.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\fragment_pinyin_test.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\fragment_pinyin_test.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_smart_pinyin_mvp_test.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_smart_pinyin_mvp_test.xml"
-    },
-    {
-        "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_main_settings.xml",
-        "source": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-main-6:\\layout\\activity_main_settings.xml"
+        "merged": "com.shenji.aikeyboard.app-mergeDebugResources-3:/layout/content_assists_analysis.xml",
+        "source": "com.shenji.aikeyboard.app-main-6:/layout/content_assists_analysis.xml"
     },
     {
         "merged": "C:\\Users\\15811\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.9\\com.shenji.aikeyboard.app-mergeDebugResources-3:\\layout\\activity_test_ai_analysis.xml",

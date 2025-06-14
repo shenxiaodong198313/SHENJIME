@@ -122,11 +122,16 @@ fi
 
 # Generate merged MCP config
 USERNAME=$(whoami)
+# Write existing servers to temporary file to avoid shell expansion issues
+echo "$EXISTING_SERVERS" > /tmp/existing_mcp_servers.json
+
 python3 -c "
 import json
+import os
 
-# Parse existing servers
-existing_servers = json.loads('$EXISTING_SERVERS')
+# Read existing servers from file (avoids shell expansion issues)
+with open('/tmp/existing_mcp_servers.json', 'r') as f:
+    existing_servers = json.load(f)
 
 # Add Review Gate V2 server
 existing_servers['review-gate-v2'] = {
@@ -147,6 +152,9 @@ with open('$CURSOR_MCP_FILE', 'w') as f:
     json.dump(config, f, indent=2)
 
 print('MCP configuration updated successfully')
+
+# Clean up temporary file
+os.unlink('/tmp/existing_mcp_servers.json')
 "
 
 # Validate the generated configuration
@@ -180,18 +188,19 @@ fi
 echo -e "${YELLOW}🧪 Testing MCP server...${NC}"
 cd "$REVIEW_GATE_DIR"
 source venv/bin/activate
-timeout 5s python review_gate_v2_mcp.py > /tmp/mcp_test.log 2>&1 || true
+TEMP_DIR=$(python3 -c 'import tempfile; print(tempfile.gettempdir())')
+timeout 5s python review_gate_v2_mcp.py > "$TEMP_DIR/mcp_test.log" 2>&1 || true
 deactivate
 
-if grep -q "Review Gate 2.0 server initialized" /tmp/mcp_test.log; then
+if grep -q "Review Gate 2.0 server initialized" "$TEMP_DIR/mcp_test.log"; then
     echo -e "${GREEN}✅ MCP server test successful${NC}"
 else
     echo -e "${YELLOW}⚠️ MCP server test inconclusive (may be normal)${NC}"
 fi
-rm -f /tmp/mcp_test.log
+rm -f "$TEMP_DIR/mcp_test.log"
 
 # Install Cursor extension
-EXTENSION_FILE="$SCRIPT_DIR/cursor-extension/review-gate-v2-2.5.2.vsix"
+EXTENSION_FILE="$SCRIPT_DIR/cursor-extension/review-gate-v2-2.6.4.vsix"
 if [[ -f "$EXTENSION_FILE" ]]; then
     echo -e "${YELLOW}🔌 Installing Cursor extension...${NC}"
     
@@ -203,7 +212,7 @@ if [[ -f "$EXTENSION_FILE" ]]; then
     echo -e "1. Open Cursor IDE"
     echo -e "2. Press Cmd+Shift+P"
     echo -e "3. Type 'Extensions: Install from VSIX'"
-    echo -e "4. Select: $REVIEW_GATE_DIR/review-gate-v2-2.5.2.vsix"
+    echo -e "4. Select: $REVIEW_GATE_DIR/review-gate-v2-2.6.4.vsix"
     echo -e "5. Restart Cursor when prompted"
     echo ""
     
@@ -233,7 +242,8 @@ fi
 
 # Clean up any existing temp files
 echo -e "${YELLOW}🧹 Cleaning up temporary files...${NC}"
-rm -f /tmp/review_gate_* /tmp/mcp_response* 2>/dev/null || true
+TEMP_DIR=$(python3 -c 'import tempfile; print(tempfile.gettempdir())')
+rm -f "$TEMP_DIR"/review_gate_* "$TEMP_DIR"/mcp_response* 2>/dev/null || true
 
 echo ""
 echo -e "${GREEN}🎉 Review Gate V2 Installation Complete!${NC}"
@@ -242,7 +252,7 @@ echo ""
 echo -e "${BLUE}📍 Installation Summary:${NC}"
 echo -e "   • MCP Server: $REVIEW_GATE_DIR"
 echo -e "   • MCP Config: $CURSOR_MCP_FILE"
-echo -e "   • Extension: $REVIEW_GATE_DIR/review-gate-v2-2.5.2.vsix"
+echo -e "   • Extension: $REVIEW_GATE_DIR/review-gate-v2-2.6.4.vsix"
 echo -e "   • Global Rule: $CURSOR_RULES_DIR/ReviewGate.mdc"
 echo ""
 echo -e "${BLUE}🧪 Testing Your Installation:${NC}"
@@ -261,7 +271,7 @@ echo -e "   • Select images (PNG, JPG, etc.)"
 echo -e "   • Images are included in response"
 echo ""
 echo -e "${BLUE}🔧 Troubleshooting:${NC}"
-echo -e "   • Logs: ${YELLOW}tail -f /tmp/review_gate_v2.log${NC}"
+echo -e "   • Logs: ${YELLOW}tail -f $(python3 -c 'import tempfile; print(tempfile.gettempdir())')/review_gate_v2.log${NC}"
 echo -e "   • Test SoX: ${YELLOW}sox --version${NC}"
 echo -e "   • Browser Console: ${YELLOW}F12 in Cursor${NC}"
 echo ""

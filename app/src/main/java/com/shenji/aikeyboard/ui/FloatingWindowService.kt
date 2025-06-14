@@ -168,6 +168,14 @@ class FloatingWindowService : Service() {
         super.onDestroy()
         Timber.d("$TAG: FloatingWindowService onDestroy")
         
+        // 关闭悬浮分析窗口
+        floatingAIAnalysisWindow?.close()
+        floatingWeChatAnalysisWindow?.close()
+        floatingAssistsAnalysisWindow?.close()
+        floatingAIAnalysisWindow = null
+        floatingWeChatAnalysisWindow = null
+        floatingAssistsAnalysisWindow = null
+        
         // 取消注册广播接收器
         try {
             unregisterReceiver(floatingWindowReceiver)
@@ -375,6 +383,11 @@ class FloatingWindowService : Service() {
         }
     }
     
+    // 悬浮窗口实例
+    private var floatingAIAnalysisWindow: FloatingAIAnalysisWindow? = null
+    private var floatingWeChatAnalysisWindow: FloatingWeChatAnalysisWindow? = null
+    private var floatingAssistsAnalysisWindow: FloatingAssistsAnalysisWindow? = null
+
     /**
      * 处理AI界面分析按钮点击
      */
@@ -393,41 +406,14 @@ class FloatingWindowService : Service() {
                 return
             }
             
-            // 检查Android版本是否支持无障碍截图（需要Android 11+）
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Toast.makeText(this, "正在通过无障碍服务截取屏幕...", Toast.LENGTH_SHORT).show()
-                
-                // 使用无障碍服务截图
-                EnhancedAssistsService.takeScreenshotViaAccessibility { bitmap ->
-                    serviceScope.launch(Dispatchers.Main) {
-                        if (bitmap != null) {
-                            // 保存截图到临时存储
-                            TempBitmapHolder.bitmap = bitmap
-                            
-                            // 启动AI分析Activity
-                            val intent = Intent(this@FloatingWindowService, AIAnalysisActivity::class.java).apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                putExtra("from_floating_window", true)
-                                putExtra("use_accessibility_screenshot", true)
-                            }
-                            
-                            Toast.makeText(this@FloatingWindowService, "正在启动AI界面分析...", Toast.LENGTH_SHORT).show()
-                            startActivity(intent)
-                        } else {
-                            Toast.makeText(this@FloatingWindowService, "屏幕截图失败，请重试", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            } else {
-                // Android 11以下版本，仍使用原来的方法
-                val intent = Intent(this, AIAnalysisActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra("from_floating_window", true)
-                }
-                
-                Toast.makeText(this, "正在启动AI界面分析...", Toast.LENGTH_SHORT).show()
-                startActivity(intent)
+            // 创建并显示悬浮AI分析窗口
+            if (floatingAIAnalysisWindow == null) {
+                floatingAIAnalysisWindow = FloatingAIAnalysisWindow(this, serviceScope)
+                floatingAIAnalysisWindow?.initializeWindow()
             }
+            
+            Toast.makeText(this, "正在启动AI界面分析...", Toast.LENGTH_SHORT).show()
+            floatingAIAnalysisWindow?.startAnalysis()
             
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error in handleAIAnalysisClick")
@@ -442,14 +428,25 @@ class FloatingWindowService : Service() {
         try {
             Timber.d("$TAG: AI WeChat Analysis button clicked")
             
-            // 启动微信对话分析Activity
-            val intent = Intent(this, WeChatAnalysisActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                putExtra("from_floating_window", true)
+            // 检查无障碍服务是否开启
+            if (!EnhancedAssistsService.isServiceEnabled()) {
+                Toast.makeText(this, "请先开启无障碍服务以使用微信对话分析功能", Toast.LENGTH_LONG).show()
+                // 打开设置页面引导用户开启服务
+                val intent = Intent(this, com.shenji.aikeyboard.settings.InputMethodSettingsActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+                return
+            }
+            
+            // 创建并显示悬浮微信分析窗口
+            if (floatingWeChatAnalysisWindow == null) {
+                floatingWeChatAnalysisWindow = FloatingWeChatAnalysisWindow(this, serviceScope)
+                floatingWeChatAnalysisWindow?.initializeWindow()
             }
             
             Toast.makeText(this, "正在启动AI微信对话分析...", Toast.LENGTH_SHORT).show()
-            startActivity(intent)
+            floatingWeChatAnalysisWindow?.startAnalysis()
             
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error in handleWeChatAnalysisClick")
@@ -472,16 +469,18 @@ class FloatingWindowService : Service() {
                 return
             }
             
-            // 暂时显示原有的分析弹窗，集成Assists框架功能
-            showLegacyAccessibilityAnalysisDialog()
-            Toast.makeText(this, "已启用Assists框架分析功能", Toast.LENGTH_SHORT).show()
+            // 创建并显示悬浮Assists分析窗口
+            if (floatingAssistsAnalysisWindow == null) {
+                floatingAssistsAnalysisWindow = FloatingAssistsAnalysisWindow(this, serviceScope)
+                floatingAssistsAnalysisWindow?.initializeWindow()
+            }
+            
+            Toast.makeText(this, "正在启动Assists框架分析...", Toast.LENGTH_SHORT).show()
+            floatingAssistsAnalysisWindow?.startAnalysis()
             
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error in handleAccessibilityAnalysisClick")
             Toast.makeText(this, "启动Assists分析失败", Toast.LENGTH_SHORT).show()
-            
-            // 降级到原有的分析弹窗
-            showLegacyAccessibilityAnalysisDialog()
         }
     }
 

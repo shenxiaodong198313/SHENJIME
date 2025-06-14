@@ -4,15 +4,7 @@
     <!-- 按下状态 -->
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#804CAF50" />
-            <corners android:radius="6dp" />
-        </shape>
-    </item>
-    
-    <!-- 禁用状态 -->
-    <item android:state_enabled="false">
-        <shape android:shape="rectangle">
-            <solid android:color="#40666666" />
+            <solid android:color="#80FF5722" />
             <corners android:radius="6dp" />
         </shape>
     </item>
@@ -20,7 +12,7 @@
     <!-- 默认状态 -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#404CAF50" />
+            <solid android:color="#40FF5722" />
             <corners android:radius="6dp" />
         </shape>
     </item>

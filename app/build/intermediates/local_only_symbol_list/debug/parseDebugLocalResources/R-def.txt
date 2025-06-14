@@ -259,6 +259,7 @@ color splash_background_color
 color splash_text_color
 color status_text_color
 color success_green
+color suggestion_text_color
 color surface_color
 color tag_background
 color teal_200
@@ -343,6 +344,7 @@ drawable candidate_word_bg
 drawable candidate_word_selected_bg
 drawable chatglm_icon
 drawable circle_background
+drawable close_button_background
 drawable contact_name_background
 drawable deepseek_icon
 drawable dialog_background
@@ -350,7 +352,12 @@ drawable download
 drawable edit_text_background
 drawable floating_button_background
 drawable floating_menu_background
+drawable floating_window_background
+drawable floating_window_content_background
+drawable floating_window_footer_background
+drawable floating_window_header_background
 drawable gemma_icon
+drawable handle_background
 drawable ic_accessibility
 drawable ic_add
 drawable ic_ai_analysis
@@ -400,11 +407,13 @@ drawable ic_microphone
 drawable ic_model
 drawable ic_more
 drawable ic_more_vert
+drawable ic_move_handle
 drawable ic_order
 drawable ic_plan
 drawable ic_plus
 drawable ic_refresh
 drawable ic_reset
+drawable ic_resize_handle
 drawable ic_send
 drawable ic_send_disabled
 drawable ic_send_tint
@@ -575,6 +584,7 @@ id btn_quick_test
 id btn_refresh
 id btn_run_test
 id btn_send
+id btn_send_reply
 id btn_service_details
 id btn_start_analysis
 id btn_stop_analysis
@@ -772,6 +782,7 @@ id filter_buttons_layout
 id filter_download_state
 id filter_modality
 id filter_vendor
+id fl_content_container
 id floating_button
 id fragment_container
 id frequency_filter_spinner
@@ -801,10 +812,13 @@ id iv_accessibility_icon
 id iv_ai_icon
 id iv_audio_play_pause
 id iv_close
+id iv_close_button
 id iv_delete_history
 id iv_download
 id iv_header
 id iv_item_icon
+id iv_move_handle
+id iv_resize_handle
 id iv_sampler_type_icon
 id iv_screenshot
 id iv_thinking_header
@@ -1304,6 +1318,9 @@ layout assistant_text_popup_menu
 layout calendar_overlay
 layout candidates_view
 layout chat_more_menu_item
+layout content_ai_analysis
+layout content_assists_analysis
+layout content_wechat_analysis
 layout custom_drop_down_line_view
 layout dialog_accessibility_analysis
 layout dialog_build_config
@@ -1312,6 +1329,7 @@ layout dialog_build_trie_settings
 layout dialog_database_info
 layout dialog_dictionary_settings
 layout dialog_export_settings
+layout draggable_floating_window
 layout floating_button_layout
 layout fragment_choose_dataset
 layout fragment_historylist

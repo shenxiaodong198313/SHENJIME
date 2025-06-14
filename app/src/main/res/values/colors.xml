@@ -109,4 +109,7 @@
     <!-- AI分析窗口颜色 -->
     <color name="status_text_color">#CCFFFFFF</color>
     <color name="analysis_result_text">#FFFFFF</color>
+    
+    <!-- 新增建议文本颜色 -->
+    <color name="suggestion_text_color">#4CAF50</color>
 </resources> 
