@@ -236,4 +236,43 @@ object WeChatConversationFilter {
             }
         }
     }
+    
+    /**
+     * 格式化对话数据为简洁显示文本（仅显示对话内容）
+     */
+    fun formatConversationForSimpleDisplay(data: FilteredWeChatData): String {
+        return buildString {
+            if (data.conversationMessages.isEmpty()) {
+                append("暂无对话消息")
+            } else {
+                data.conversationMessages.forEach { message ->
+                    append("${message.senderName}: ${message.content}\n\n")
+                }
+            }
+        }.trim()
+    }
+    
+    /**
+     * 格式化对话数据为AI模型输入格式
+     * 专门用于AI模型理解和生成回复
+     */
+    fun formatConversationForAI(data: FilteredWeChatData): String {
+        return buildString {
+            if (data.conversationMessages.isEmpty()) {
+                append("没有检测到对话内容")
+            } else {
+                // 只保留最近的对话消息，按时间顺序排列
+                val recentMessages = data.conversationMessages.takeLast(10)
+                
+                recentMessages.forEach { message ->
+                    append("${message.senderName}: ${message.content}\n")
+                }
+                
+                // 如果消息太少，添加上下文提示
+                if (recentMessages.size < 3) {
+                    append("\n[注意：对话内容较少，请生成友好的回复]")
+                }
+            }
+        }.trim()
+    }
 } 

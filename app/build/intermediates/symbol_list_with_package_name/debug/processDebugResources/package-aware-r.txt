@@ -1548,6 +1548,7 @@ color accent_color
 color accent_material_dark
 color accent_material_light
 color ai_message_background
+color ai_status_color
 color analysis_result_text
 color androidx_core_ripple_material_light
 color androidx_core_secondary_text_default_material_light
@@ -4787,6 +4788,8 @@ id scrollIndicatorDown
 id scrollIndicatorUp
 id scrollView
 id scroll_view
+id scroll_view_ai_status
+id scroll_view_conversation
 id scrollable
 id search_badge
 id search_bar
@@ -5092,6 +5095,7 @@ id tvStatus
 id tvTypingIndicator
 id tvWord
 id tv_accessibility_status
+id tv_ai_status
 id tv_analysis_result
 id tv_candidate_weight
 id tv_candidate_word
@@ -5101,6 +5105,7 @@ id tv_chat_text
 id tv_chat_thinking
 id tv_chat_voice_duration
 id tv_contact_name
+id tv_conversation_content
 id tv_date
 id tv_error_text
 id tv_frequency

@@ -15,77 +15,68 @@
         android:layout_marginBottom="16dp">
 
         <TextView
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="微信AI自动聊天"
             android:textColor="@android:color/white"
             android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <Button
-            android:id="@+id/btn_refresh"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:background="@drawable/btn_refresh_background"
-            android:text="🔄 刷新"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:layout_marginEnd="8dp" />
-
-        <Button
-            android:id="@+id/btn_close"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="@drawable/btn_close_background"
-            android:text="✕"
-            android:textColor="@android:color/white"
-            android:textSize="14sp" />
+            android:textStyle="bold"
+            android:gravity="center" />
 
     </LinearLayout>
 
-    <!-- 分析结果显示区域 -->
+    <!-- 对话消息显示区域 (70%) -->
     <ScrollView
-        android:id="@+id/scroll_view"
+        android:id="@+id/scroll_view_conversation"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="0.7"
         android:background="@drawable/analysis_result_background"
         android:padding="12dp"
         android:scrollbars="vertical"
         android:fadeScrollbars="false">
 
         <TextView
-            android:id="@+id/tv_analysis_result"
+            android:id="@+id/tv_conversation_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
             android:textSize="14sp"
             android:lineSpacingExtra="4dp"
             android:fontFamily="monospace"
-            android:text="正在初始化..." />
+            android:text="正在获取对话内容..." />
 
     </ScrollView>
 
-    <!-- 底部按钮区域 -->
-    <LinearLayout
+    <!-- 分隔线 -->
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="16dp"
-        android:gravity="center">
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
 
-        <Button
-            android:id="@+id/btn_copy"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:background="@drawable/btn_copy_background"
-            android:text="📋 复制结果"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:enabled="false" />
+    <!-- AI状态显示区域 (30%) -->
+    <ScrollView
+        android:id="@+id/scroll_view_ai_status"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.3"
+        android:background="@drawable/analysis_result_background"
+        android:padding="12dp"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false">
 
-    </LinearLayout>
+        <TextView
+            android:id="@+id/tv_ai_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/ai_status_color"
+            android:textSize="13sp"
+            android:lineSpacingExtra="3dp"
+            android:fontFamily="sans-serif"
+            android:text="🤖 AI系统准备中..." />
+
+    </ScrollView>
 
 </LinearLayout> 

@@ -115,4 +115,7 @@
     
     <!-- 窗口背景颜色 -->
     <color name="window_background">#E6000000</color>
+    
+    <!-- AI状态颜色 -->
+    <color name="ai_status_color">#FF81C784</color>
 </resources> 
