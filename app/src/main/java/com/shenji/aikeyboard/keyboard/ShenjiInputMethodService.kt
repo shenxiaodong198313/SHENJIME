@@ -162,6 +162,10 @@ class ShenjiInputMethodService : InputMethodService() {
     private var aiReplyModeView: View? = null
     private var normalKeyboardView: View? = null
     
+    // 微信AI自动聊天模式相关
+    private var isWeChatAIMode = false
+    private var wechatAIKeyboardView: View? = null
+    
     // 广播接收器
     private val aiReplyModeReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
@@ -171,6 +175,12 @@ class ShenjiInputMethodService : InputMethodService() {
                 }
                 "com.shenji.aikeyboard.DISABLE_AI_REPLY_MODE" -> {
                     disableAIReplyMode()
+                }
+                "com.shenji.aikeyboard.ENABLE_WECHAT_AI_MODE" -> {
+                    enableWeChatAIMode()
+                }
+                "com.shenji.aikeyboard.DISABLE_WECHAT_AI_MODE" -> {
+                    disableWeChatAIMode()
                 }
             }
         }
@@ -186,6 +196,8 @@ class ShenjiInputMethodService : InputMethodService() {
         val filter = android.content.IntentFilter().apply {
             addAction("com.shenji.aikeyboard.ENABLE_AI_REPLY_MODE")
             addAction("com.shenji.aikeyboard.DISABLE_AI_REPLY_MODE")
+            addAction("com.shenji.aikeyboard.ENABLE_WECHAT_AI_MODE")
+            addAction("com.shenji.aikeyboard.DISABLE_WECHAT_AI_MODE")
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(aiReplyModeReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
@@ -892,7 +904,7 @@ class ShenjiInputMethodService : InputMethodService() {
         Timber.d("🔍 当前AI回复模式状态: $isAIReplyMode")
         
         try {
-            // 创建主容器，包含候选词和键盘
+            // 创建主容器
             val mainContainer = LinearLayout(this)
             mainContainer.orientation = LinearLayout.VERTICAL
             mainContainer.layoutParams = LinearLayout.LayoutParams(
@@ -901,104 +913,125 @@ class ShenjiInputMethodService : InputMethodService() {
             )
             mainContainer.setBackgroundColor(android.graphics.Color.parseColor("#F0F0F0")) // 调试背景色
             
-            // 加载候选词布局
-            Timber.d("🔍 步骤1: 加载候选词布局...")
-            candidatesViewLayout = layoutInflater.inflate(R.layout.candidates_view, null)
-            Timber.d("🔍 候选词布局加载成功: ${candidatesViewLayout::class.java.simpleName}")
-            
-            // 初始化候选词区域
-            Timber.d("🔍 步骤2: 初始化候选词区域组件...")
-            candidatesContainer = candidatesViewLayout.findViewById(R.id.candidates_container)
-            Timber.d("🔍 candidatesContainer: ${if (candidatesContainer != null) "✅ 成功" else "❌ 失败"}")
-            
-            defaultCandidatesView = candidatesViewLayout.findViewById(R.id.default_candidates_view)
-            Timber.d("🔍 defaultCandidatesView: ${if (defaultCandidatesView != null) "✅ 成功" else "❌ 失败"}")
-            
-            candidatesView = candidatesViewLayout.findViewById(R.id.candidates_view)
-            Timber.d("🔍 candidatesView: ${if (candidatesView != null) "✅ 成功" else "❌ 失败"}")
-            
-            expandCandidatesButton = candidatesViewLayout.findViewById(R.id.expand_candidates_button)
-            Timber.d("🔍 expandCandidatesButton: ${if (expandCandidatesButton != null) "✅ 成功" else "❌ 失败"}")
-            
-            // 初始化拼音显示区域
-            Timber.d("🔍 步骤3: 初始化拼音显示区域...")
-            pinyinDisplay = candidatesViewLayout.findViewById(R.id.pinyin_display)
-            Timber.d("🔍 pinyinDisplay: ${if (pinyinDisplay != null) "✅ 成功" else "❌ 失败"}")
-            
-            // 初始化工具栏 - 添加详细调试
-            Timber.d("🔍 步骤4: 开始初始化toolbarView...")
-            Timber.d("🔍 尝试查找R.id.toolbar_view (${R.id.toolbar_view})")
-            val toolbarViewTemp = candidatesViewLayout.findViewById<LinearLayout>(R.id.toolbar_view)
-            if (toolbarViewTemp != null) {
-                toolbarView = toolbarViewTemp
-                Timber.d("🔍 ✅ toolbarView初始化成功")
-                Timber.d("🔍 toolbarView类型: ${toolbarView::class.java.simpleName}")
-                Timber.d("🔍 toolbarView可见性: ${toolbarView.visibility}")
-            } else {
-                Timber.e("🔍 ❌ toolbarView初始化失败：findViewById返回null")
-                Timber.e("🔍 candidatesViewLayout类型: ${candidatesViewLayout::class.java.simpleName}")
-                Timber.e("🔍 candidatesViewLayout ID: ${candidatesViewLayout.id}")
+            // 根据模式决定是否加载候选词布局
+            if (!isWeChatAIMode) {
+                // 正常模式：加载候选词布局
+                Timber.d("🔍 步骤1: 加载候选词布局...")
+                candidatesViewLayout = layoutInflater.inflate(R.layout.candidates_view, null)
+                Timber.d("🔍 候选词布局加载成功: ${candidatesViewLayout::class.java.simpleName}")
                 
-                if (candidatesViewLayout is ViewGroup) {
-                    val viewGroup = candidatesViewLayout as ViewGroup
-                    Timber.e("🔍 candidatesViewLayout子视图数量: ${viewGroup.childCount}")
-                    // 遍历所有子视图
-                    for (i in 0 until viewGroup.childCount) {
-                        val child = viewGroup.getChildAt(i)
-                        Timber.e("🔍 子视图$i: ${child::class.java.simpleName}, id=${child.id}, 资源名=${try { resources.getResourceEntryName(child.id) } catch (e: Exception) { "unknown" }}")
+                // 初始化候选词区域
+                Timber.d("🔍 步骤2: 初始化候选词区域组件...")
+                candidatesContainer = candidatesViewLayout.findViewById(R.id.candidates_container)
+                Timber.d("🔍 candidatesContainer: ${if (candidatesContainer != null) "✅ 成功" else "❌ 失败"}")
+                
+                defaultCandidatesView = candidatesViewLayout.findViewById(R.id.default_candidates_view)
+                Timber.d("🔍 defaultCandidatesView: ${if (defaultCandidatesView != null) "✅ 成功" else "❌ 失败"}")
+                
+                candidatesView = candidatesViewLayout.findViewById(R.id.candidates_view)
+                Timber.d("🔍 candidatesView: ${if (candidatesView != null) "✅ 成功" else "❌ 失败"}")
+                
+                expandCandidatesButton = candidatesViewLayout.findViewById(R.id.expand_candidates_button)
+                Timber.d("🔍 expandCandidatesButton: ${if (expandCandidatesButton != null) "✅ 成功" else "❌ 失败"}")
+                
+                // 初始化拼音显示区域
+                Timber.d("🔍 步骤3: 初始化拼音显示区域...")
+                pinyinDisplay = candidatesViewLayout.findViewById(R.id.pinyin_display)
+                Timber.d("🔍 pinyinDisplay: ${if (pinyinDisplay != null) "✅ 成功" else "❌ 失败"}")
+                
+                // 初始化工具栏 - 添加详细调试
+                Timber.d("🔍 步骤4: 开始初始化toolbarView...")
+                Timber.d("🔍 尝试查找R.id.toolbar_view (${R.id.toolbar_view})")
+                val toolbarViewTemp = candidatesViewLayout.findViewById<LinearLayout>(R.id.toolbar_view)
+                if (toolbarViewTemp != null) {
+                    toolbarView = toolbarViewTemp
+                    Timber.d("🔍 ✅ toolbarView初始化成功")
+                    Timber.d("🔍 toolbarView类型: ${toolbarView::class.java.simpleName}")
+                    Timber.d("🔍 toolbarView可见性: ${toolbarView.visibility}")
+                } else {
+                    Timber.e("🔍 ❌ toolbarView初始化失败：findViewById返回null")
+                    Timber.e("🔍 candidatesViewLayout类型: ${candidatesViewLayout::class.java.simpleName}")
+                    Timber.e("🔍 candidatesViewLayout ID: ${candidatesViewLayout.id}")
+                    
+                    if (candidatesViewLayout is ViewGroup) {
+                        val viewGroup = candidatesViewLayout as ViewGroup
+                        Timber.e("🔍 candidatesViewLayout子视图数量: ${viewGroup.childCount}")
+                        // 遍历所有子视图
+                        for (i in 0 until viewGroup.childCount) {
+                            val child = viewGroup.getChildAt(i)
+                            Timber.e("🔍 子视图$i: ${child::class.java.simpleName}, id=${child.id}, 资源名=${try { resources.getResourceEntryName(child.id) } catch (e: Exception) { "unknown" }}")
+                        }
+                    } else {
+                        Timber.e("🔍 candidatesViewLayout不是ViewGroup类型")
                     }
-                } else {
-                    Timber.e("🔍 candidatesViewLayout不是ViewGroup类型")
+                    
+                    // 尝试通过其他方式查找
+                    Timber.e("🔍 尝试通过rootView查找toolbar_view...")
+                    val rootView = candidatesViewLayout.rootView
+                    val toolbarFromRoot = rootView.findViewById<LinearLayout>(R.id.toolbar_view)
+                    if (toolbarFromRoot != null) {
+                        Timber.e("🔍 ✅ 通过rootView找到了toolbar_view!")
+                        toolbarView = toolbarFromRoot
+                    } else {
+                        Timber.e("🔍 ❌ 通过rootView也找不到toolbar_view")
+                    }
                 }
                 
-                // 尝试通过其他方式查找
-                Timber.e("🔍 尝试通过rootView查找toolbar_view...")
-                val rootView = candidatesViewLayout.rootView
-                val toolbarFromRoot = rootView.findViewById<LinearLayout>(R.id.toolbar_view)
-                if (toolbarFromRoot != null) {
-                    Timber.e("🔍 ✅ 通过rootView找到了toolbar_view!")
-                    toolbarView = toolbarFromRoot
-                } else {
-                    Timber.e("🔍 ❌ 通过rootView也找不到toolbar_view")
+                // 设置展开按钮点击事件
+                expandCandidatesButton.setOnClickListener {
+                    Toast.makeText(this, "展开候选词功能 - 正在开发中", Toast.LENGTH_SHORT).show()
+                    Timber.d("点击了展开候选词按钮")
                 }
+                
+                // 设置工具栏图标点击事件
+                setupToolbarIcons()
+                
+                // 初始化话术库
+                setupPhrasesRecyclerView()
+            } else {
+                // 微信AI模式：跳过候选词布局初始化
+                Timber.d("🔍 微信AI模式：跳过候选词布局初始化")
             }
             
-            // 设置展开按钮点击事件
-            expandCandidatesButton.setOnClickListener {
-                Toast.makeText(this, "展开候选词功能 - 正在开发中", Toast.LENGTH_SHORT).show()
-                Timber.d("点击了展开候选词按钮")
+            // 根据模式选择键盘布局
+            Timber.d("🔍 步骤5: 创建键盘...")
+            Timber.d("🔍 当前微信AI模式状态: $isWeChatAIMode")
+            
+            if (isWeChatAIMode) {
+                // 微信AI自动聊天模式：使用蓝色键盘布局
+                Timber.d("🔍 创建微信AI专用键盘...")
+                keyboardView = layoutInflater.inflate(R.layout.keyboard_wechat_ai_mode, null)
+                wechatAIKeyboardView = keyboardView
+                
+                // 设置蓝色键盘区域的点击事件
+                setupWeChatAIKeyboardClickListener()
+                
+                Timber.d("🔍 ✅ 微信AI专用键盘创建成功")
+            } else {
+                // 正常模式：使用标准键盘布局
+                Timber.d("🔍 创建正常键盘...")
+                keyboardView = layoutInflater.inflate(R.layout.keyboard_layout, null)
+                normalKeyboardView = keyboardView
+                
+                // 设置正常键盘的事件监听器
+                setupLetterKeys()
+                setupFunctionKeys()
+                
+                // 初始化中/英切换按钮状态
+                updateLanguageSwitchButton()
+                
+                Timber.d("🔍 ✅ 正常键盘创建成功")
             }
-            
-            // 设置工具栏图标点击事件
-            setupToolbarIcons()
-            
-            // 初始化话术库
-            setupPhrasesRecyclerView()
-            
-            // 始终使用正常键盘布局（不再根据AI模式切换）
-            Timber.d("🔍 步骤5: 创建正常键盘...")
-            // 加载正常键盘布局
-            keyboardView = layoutInflater.inflate(R.layout.keyboard_layout, null)
-            normalKeyboardView = keyboardView
             
             // 创建AI回复模式视图（备用，但不在这里使用）
-            aiReplyModeView = layoutInflater.inflate(R.layout.keyboard_ai_reply_mode, null)
+            if (aiReplyModeView == null) {
+                aiReplyModeView = layoutInflater.inflate(R.layout.keyboard_ai_reply_mode, null)
+            }
             
-            // 设置正常键盘的事件监听器
-            setupLetterKeys()
-            setupFunctionKeys()
-            
-            // 初始化中/英切换按钮状态
-            updateLanguageSwitchButton()
-            
-            Timber.d("🔍 ✅ 正常键盘创建成功")
-            
-            // 设置候选词视图布局参数
-            val candidatesLayoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            candidatesViewLayout.layoutParams = candidatesLayoutParams
+            // 创建微信AI模式视图（备用）
+            if (wechatAIKeyboardView == null && !isWeChatAIMode) {
+                wechatAIKeyboardView = layoutInflater.inflate(R.layout.keyboard_wechat_ai_mode, null)
+            }
             
             // 设置键盘视图布局参数
             val keyboardLayoutParams = LinearLayout.LayoutParams(
@@ -1007,23 +1040,37 @@ class ShenjiInputMethodService : InputMethodService() {
             )
             keyboardView.layoutParams = keyboardLayoutParams
             
-            // 创建分隔线 - 修复：使用更细的分隔线，避免遮挡候选词
-            val separator = View(this)
-            separator.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                1 // 改为1dp高度，减少遮挡
-            )
-            separator.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0")) // 改为浅灰色，不那么突兀
-            
-            // 将候选词视图和键盘视图添加到主容器（确保顺序正确）
-            mainContainer.addView(candidatesViewLayout, 0) // 候选词在顶部
-            mainContainer.addView(separator, 1)            // 分隔线
-            mainContainer.addView(keyboardView, 2)         // 键盘在底部
+            if (isWeChatAIMode) {
+                // 微信AI模式：只添加键盘视图，不添加候选词视图
+                mainContainer.addView(keyboardView)
+                Timber.d("🔍 微信AI模式布局层级: 只有键盘视图")
+            } else {
+                // 正常模式：添加候选词视图和键盘视图
+                // 设置候选词视图布局参数
+                val candidatesLayoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                candidatesViewLayout.layoutParams = candidatesLayoutParams
+                
+                // 创建分隔线 - 修复：使用更细的分隔线，避免遮挡候选词
+                val separator = View(this)
+                separator.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    1 // 改为1dp高度，减少遮挡
+                )
+                separator.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0")) // 改为浅灰色，不那么突兀
+                
+                // 将候选词视图和键盘视图添加到主容器（确保顺序正确）
+                mainContainer.addView(candidatesViewLayout, 0) // 候选词在顶部
+                mainContainer.addView(separator, 1)            // 分隔线
+                mainContainer.addView(keyboardView, 2)         // 键盘在底部
+                
+                Timber.d("🔍 正常模式布局层级: 候选词(index=0) -> 分隔线(index=1) -> 键盘(index=2)")
+            }
             
             // 暂时禁用全屏话术库功能，确保键盘正常显示
             // createFullScreenPhrasesOverlay(mainContainer)
-            
-            Timber.d("🔍 布局层级: 候选词(index=0) -> 分隔线(index=1) -> 键盘(index=2)")
             
             // 🔍 最终验证所有关键组件
             Timber.d("🔍 ========== 最终组件验证 ==========")
@@ -1195,6 +1242,59 @@ class ShenjiInputMethodService : InputMethodService() {
     }
     
     /**
+     * 设置微信AI键盘点击事件
+     */
+    private fun setupWeChatAIKeyboardClickListener() {
+        try {
+            val wechatAIArea = keyboardView.findViewById<RelativeLayout>(R.id.wechat_ai_keyboard_area)
+            wechatAIArea?.setOnClickListener {
+                Timber.d("用户点击了微信AI键盘区域，准备关闭微信AI窗口并显示正常键盘")
+                
+                // 关闭微信AI自动聊天窗口
+                closeWeChatAIWindow()
+                
+                // 禁用微信AI键盘模式，恢复正常键盘
+                disableWeChatAIModePublic()
+                
+                // 重新创建输入视图以显示正常键盘
+                recreateInputView()
+                
+                Toast.makeText(this, "已转为人工模式", Toast.LENGTH_SHORT).show()
+            }
+            
+            Timber.d("微信AI键盘点击事件设置完成")
+        } catch (e: Exception) {
+            Timber.e(e, "设置微信AI键盘点击事件失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 关闭微信AI自动聊天窗口
+     */
+    private fun closeWeChatAIWindow() {
+        try {
+            val intent = android.content.Intent("com.shenji.aikeyboard.CLOSE_WECHAT_AI_WINDOW")
+            sendBroadcast(intent)
+            Timber.d("已发送关闭微信AI窗口广播")
+        } catch (e: Exception) {
+            Timber.e(e, "关闭微信AI窗口失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 重新创建输入视图
+     */
+    private fun recreateInputView() {
+        try {
+            // 重新设置输入视图
+            setInputView(onCreateInputView())
+            Timber.d("输入视图已重新创建")
+        } catch (e: Exception) {
+            Timber.e(e, "重新创建输入视图失败: ${e.message}")
+        }
+    }
+
+    /**
      * 设置工具栏图标点击事件
      */
     private fun setupToolbarIcons() {
@@ -1238,8 +1338,15 @@ class ShenjiInputMethodService : InputMethodService() {
         try {
             Timber.d("准备打开工具栏页面")
             
-            // 先收起键盘
-            requestHideSelf(0)
+            // 根据模式决定是否收起键盘
+            if (!isWeChatAIMode) {
+                // 正常模式：收起键盘
+                requestHideSelf(0)
+                Timber.d("正常模式：收起键盘")
+            } else {
+                // 微信AI模式：保持键盘唤起状态
+                Timber.d("微信AI模式：保持键盘唤起状态")
+            }
             
             // 启动OverlayToolActivity
             val intent = android.content.Intent(this, com.shenji.aikeyboard.ui.OverlayToolActivity::class.java)
@@ -5770,18 +5877,23 @@ class ShenjiInputMethodService : InputMethodService() {
                         Timber.d("发送按键事件结果 - DOWN: $sendDown, UP: $sendUp")
                     }
                     
-                    // 2. 延迟一下再收起键盘
+                    // 2. 根据模式决定是否收起键盘
                     Handler(Looper.getMainLooper()).postDelayed({
                         try {
-                            // 收起键盘
-                            requestHideSelf(0)
-                            Timber.d("键盘已自动收起")
-                            
-                            // 禁用AI回复模式
-                            disableAIReplyMode()
+                            if (isWeChatAIMode) {
+                                // 微信AI模式：保持键盘唤起状态，不收起键盘
+                                Timber.d("微信AI模式：保持蓝色键盘唤起状态")
+                            } else {
+                                // 正常模式：收起键盘
+                                requestHideSelf(0)
+                                Timber.d("正常模式：键盘已自动收起")
+                                
+                                // 禁用AI回复模式
+                                disableAIReplyMode()
+                            }
                             
                         } catch (e: Exception) {
-                            Timber.e(e, "收起键盘失败")
+                            Timber.e(e, "处理键盘状态失败")
                         }
                     }, 500)
                     
@@ -5816,6 +5928,90 @@ class ShenjiInputMethodService : InputMethodService() {
         } catch (e: Exception) {
             Timber.e(e, "设置AI回复模式事件监听器失败")
         }
+    }
+    
+    /**
+     * 启用微信AI自动聊天模式
+     */
+    private fun enableWeChatAIMode() {
+        try {
+            if (isWeChatAIMode) {
+                Timber.d("微信AI模式已经启用")
+                return
+            }
+            
+            isWeChatAIMode = true
+            Timber.d("启用微信AI自动聊天模式")
+            
+            // 重新创建输入视图以显示微信AI专用键盘
+            setInputView(onCreateInputView())
+            
+            Timber.d("微信AI模式启用完成，键盘视图已更新")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "启用微信AI模式失败")
+        }
+    }
+    
+    /**
+     * 禁用微信AI自动聊天模式
+     */
+    private fun disableWeChatAIMode() {
+        try {
+            if (!isWeChatAIMode) {
+                Timber.d("微信AI模式已经禁用")
+                return
+            }
+            
+            isWeChatAIMode = false
+            Timber.d("禁用微信AI自动聊天模式")
+            
+            // 重新创建输入视图以显示正常键盘
+            setInputView(onCreateInputView())
+            
+            Timber.d("微信AI模式禁用完成，键盘视图已恢复正常")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "禁用微信AI模式失败")
+        }
+    }
+    
+    /**
+     * 切换到微信AI专用键盘视图
+     */
+    private fun switchToWeChatAIKeyboardView() {
+        try {
+            wechatAIKeyboardView?.let { wechatAIView ->
+                // 动态替换键盘视图
+                replaceKeyboardView(wechatAIView)
+                
+                Timber.d("已切换到微信AI专用键盘视图")
+            } ?: run {
+                // 如果视图不存在，重新创建
+                Timber.d("微信AI键盘视图不存在，重新创建...")
+                wechatAIKeyboardView = layoutInflater.inflate(R.layout.keyboard_wechat_ai_mode, null)
+                wechatAIKeyboardView?.let { wechatAIView ->
+                    replaceKeyboardView(wechatAIView)
+                    Timber.d("已重新创建并切换到微信AI专用键盘视图")
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "切换到微信AI专用键盘视图失败")
+        }
+    }
+    
+    /**
+     * 公开方法：启用微信AI模式（供外部调用）
+     */
+    fun enableWeChatAIModePublic() {
+        enableWeChatAIMode()
+    }
+    
+    /**
+     * 公开方法：禁用微信AI模式（供外部调用）
+     */
+    fun disableWeChatAIModePublic() {
+        disableWeChatAIMode()
     }
     
 }

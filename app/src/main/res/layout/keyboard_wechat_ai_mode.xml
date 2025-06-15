@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@android:color/transparent">
+
+    <!-- 微信AI自动聊天专用键盘 - 只显示蓝色区域，高度与工具栏相同 -->
+    <RelativeLayout
+        android:id="@+id/wechat_ai_keyboard_area"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="#4285F4"
+        android:clickable="true"
+        android:focusable="true">
+
+        <!-- 居中显示的提示文本 -->
+        <TextView
+            android:id="@+id/tv_ai_takeover_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="当前对话正被神迹AI接管，点击转人工"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+    </RelativeLayout>
+
+</LinearLayout> 

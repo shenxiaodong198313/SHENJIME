@@ -5146,6 +5146,7 @@ id tvWord
 id tv_accessibility_status
 id tv_ai_reply_status
 id tv_ai_status_indicator
+id tv_ai_takeover_hint
 id tv_analysis_result
 id tv_candidate_weight
 id tv_candidate_word
@@ -5214,6 +5215,7 @@ id view_tree_view_model_store_owner
 id visible
 id visible_removing_fragment_view_tag
 id voice_recording_wav
+id wechat_ai_keyboard_area
 id wechat_auto_chat_button
 id west
 id wide
@@ -5457,6 +5459,7 @@ layout item_sampler_spinner
 layout item_script
 layout keyboard_ai_reply_mode
 layout keyboard_layout
+layout keyboard_wechat_ai_mode
 layout layout_mllm_test_activity
 layout layout_progressdialog
 layout layout_toolbar_filters_content

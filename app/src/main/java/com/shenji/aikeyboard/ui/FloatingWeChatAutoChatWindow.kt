@@ -1,8 +1,11 @@
 package com.shenji.aikeyboard.ui
 
+import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
@@ -92,6 +95,9 @@ class FloatingWeChatAutoChatWindow(
     private var lastDetectedMessageContent = "" // 记录上次检测到的最新消息内容
     private var aiReplyCount = 0 // 记录AI回复次数，用于调试
     
+    // 广播接收器
+    private var closeWindowReceiver: BroadcastReceiver? = null
+    
     /**
      * 初始化窗口
      */
@@ -101,9 +107,42 @@ class FloatingWeChatAutoChatWindow(
             setupAssistsWindow()
             setupUI()
             initializeAIModel()
+            setupBroadcastReceiver()
             Timber.d("$TAG: Window initialized successfully")
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Failed to initialize window")
+        }
+    }
+
+    /**
+     * 设置广播接收器
+     */
+    private fun setupBroadcastReceiver() {
+        try {
+            closeWindowReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    when (intent?.action) {
+                        "com.shenji.aikeyboard.CLOSE_WECHAT_AI_WINDOW" -> {
+                            Timber.d("$TAG: 收到关闭窗口广播，执行关闭操作")
+                            close()
+                        }
+                    }
+                }
+            }
+            
+            val filter = IntentFilter().apply {
+                addAction("com.shenji.aikeyboard.CLOSE_WECHAT_AI_WINDOW")
+            }
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(closeWindowReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                context.registerReceiver(closeWindowReceiver, filter)
+            }
+            
+            Timber.d("$TAG: 广播接收器设置完成")
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: 设置广播接收器失败")
         }
     }
     
@@ -278,6 +317,9 @@ class FloatingWeChatAutoChatWindow(
             // 退出AI回复模式
             disableAIReplyMode()
             
+            // 禁用微信AI专用键盘
+            disableWeChatAIKeyboard()
+            
             // 移除窗口视图
             windowWrapper?.let { wrapper ->
                 try {
@@ -297,11 +339,31 @@ class FloatingWeChatAutoChatWindow(
             // 清理窗口引用
             windowWrapper = null
             
+            // 注销广播接收器
+            closeWindowReceiver?.let { receiver ->
+                try {
+                    context.unregisterReceiver(receiver)
+                    closeWindowReceiver = null
+                    Timber.d("$TAG: 广播接收器已注销")
+                } catch (e: Exception) {
+                    Timber.w(e, "$TAG: 注销广播接收器失败")
+                }
+            }
+            
             Timber.d("$TAG: Window closed and reference cleared")
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error closing window")
             // 即使出错也要尝试清理引用
             windowWrapper = null
+            // 尝试注销广播接收器
+            closeWindowReceiver?.let { receiver ->
+                try {
+                    context.unregisterReceiver(receiver)
+                    closeWindowReceiver = null
+                } catch (cleanupError: Exception) {
+                    Timber.w(cleanupError, "$TAG: 清理时注销广播接收器失败")
+                }
+            }
         }
     }
     
@@ -351,6 +413,9 @@ class FloatingWeChatAutoChatWindow(
                             // 退出AI回复模式
                             disableAIReplyMode()
                             
+                            // 禁用微信AI专用键盘
+                            disableWeChatAIKeyboard()
+                            
                             // 实际移除窗口视图
                             windowWrapper?.let { wrapper ->
                                 try {
@@ -365,6 +430,17 @@ class FloatingWeChatAutoChatWindow(
                             // 清理窗口引用
                             windowWrapper = null
                             
+                            // 注销广播接收器
+                            closeWindowReceiver?.let { receiver ->
+                                try {
+                                    context.unregisterReceiver(receiver)
+                                    closeWindowReceiver = null
+                                    Timber.d("$TAG: 广播接收器已注销")
+                                } catch (e: Exception) {
+                                    Timber.w(e, "$TAG: 注销广播接收器失败")
+                                }
+                            }
+                            
                             Timber.d("$TAG: Window closed by user, cleanup completed")
                         } catch (e: Exception) {
                             Timber.e(e, "$TAG: Error in onClose callback")
@@ -373,6 +449,15 @@ class FloatingWeChatAutoChatWindow(
                                 AssistsWindowManager.removeView(parent)
                             } catch (removeError: Exception) {
                                 Timber.e(removeError, "$TAG: Failed to remove window in error recovery")
+                            }
+                            // 尝试注销广播接收器
+                            closeWindowReceiver?.let { receiver ->
+                                try {
+                                    context.unregisterReceiver(receiver)
+                                    closeWindowReceiver = null
+                                } catch (cleanupError: Exception) {
+                                    Timber.w(cleanupError, "$TAG: 清理时注销广播接收器失败")
+                                }
                             }
                         }
                     }
@@ -1376,18 +1461,59 @@ class FloatingWeChatAutoChatWindow(
     }
     
     /**
-     * 启用AI回复模式（不自动点击输入框）
+     * 启用AI回复模式并自动点击输入框启用蓝色键盘
      */
     private fun autoClickInputBoxAndEnableAIMode() {
         coroutineScope.launch {
             try {
-                kotlinx.coroutines.delay(500) // 延迟500ms，确保窗口完全显示
+                kotlinx.coroutines.delay(300) // 减少延迟，更快响应
                 
                 withContext(Dispatchers.Main) {
-                    updateStatusContent("🤖 AI回复模式已启用\n\n⏳ 等待检测新消息...")
+                    updateStatusContent("🤖 AI回复模式已启用\n\n⏳ 正在启用微信AI专用键盘...")
                     
-                    // 启用AI回复模式（不自动点击输入框）
+                    // 启用AI回复模式
                     enableAIReplyMode()
+                    
+                    // 立即启用微信AI专用键盘
+                    enableWeChatAIKeyboard()
+                    
+                    // 延迟一下确保键盘模式已切换
+                    kotlinx.coroutines.delay(200)
+                    
+                    // 强制点击输入框以确保蓝色键盘显示
+                    var clickSuccess = false
+                    var retryCount = 0
+                    val maxRetries = 3
+                    
+                    while (!clickSuccess && retryCount < maxRetries) {
+                        clickSuccess = clickWeChatInputField()
+                        if (!clickSuccess) {
+                            retryCount++
+                            Timber.d("$TAG: 点击输入框失败，重试 $retryCount/$maxRetries")
+                            kotlinx.coroutines.delay(500) // 等待500ms再重试
+                        }
+                    }
+                    
+                    if (clickSuccess) {
+                        updateStatusContent("🤖 AI回复模式已启用\n\n✅ 微信AI专用键盘已启用\n\n⏳ 等待检测新消息...")
+                    } else {
+                        updateStatusContent("🤖 AI回复模式已启用\n\n✅ 微信AI专用键盘已启用\n\n💡 请手动点击输入框以完全激活键盘\n\n⏳ 等待检测新消息...")
+                        
+                        // 如果自动点击失败，尝试强制显示键盘
+                        try {
+                            val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                            // 这里我们无法直接调用showSoftInput，因为需要一个View参数
+                            // 但我们可以通过输入法服务强制重新创建键盘视图
+                            val inputMethodService = com.shenji.aikeyboard.keyboard.ShenjiInputMethodService.instance
+                            inputMethodService?.let { service ->
+                                // 强制重新创建输入视图以确保显示蓝色键盘
+                                kotlinx.coroutines.delay(100)
+                                service.enableWeChatAIModePublic() // 再次调用确保状态正确
+                            }
+                        } catch (e: Exception) {
+                            Timber.w(e, "$TAG: 强制显示键盘失败")
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Timber.e(e, "$TAG: Error enabling AI mode")
@@ -1509,7 +1635,8 @@ class FloatingWeChatAutoChatWindow(
                 
                 if (clicked) {
                     Timber.d("$TAG: Successfully clicked WeChat input field")
-                    Toast.makeText(context, "已自动点击输入框，键盘应该显示", Toast.LENGTH_SHORT).show()
+                    
+                    Toast.makeText(context, "已自动点击输入框，微信AI键盘已启用", Toast.LENGTH_SHORT).show()
                     return true
                 } else {
                     Timber.w("$TAG: Failed to click input field")
@@ -1983,5 +2110,57 @@ class FloatingWeChatAutoChatWindow(
         }
         
         return status.toString()
+    }
+    
+    /**
+     * 启用微信AI专用键盘
+     */
+    private fun enableWeChatAIKeyboard() {
+        try {
+            Timber.d("$TAG: 启用微信AI专用键盘")
+            
+            // 方法1：通过输入法服务直接调用
+            val inputMethodService = com.shenji.aikeyboard.keyboard.ShenjiInputMethodService.instance
+            if (inputMethodService != null) {
+                inputMethodService.enableWeChatAIModePublic()
+                Timber.d("$TAG: 通过输入法服务启用微信AI键盘成功")
+            } else {
+                Timber.w("$TAG: 输入法服务实例为空，尝试广播方式")
+                
+                // 方法2：通过广播启用
+                val intent = android.content.Intent("com.shenji.aikeyboard.ENABLE_WECHAT_AI_MODE")
+                context.sendBroadcast(intent)
+                Timber.d("$TAG: 已发送启用微信AI键盘广播")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: 启用微信AI键盘失败")
+        }
+    }
+    
+    /**
+     * 禁用微信AI专用键盘
+     */
+    private fun disableWeChatAIKeyboard() {
+        try {
+            Timber.d("$TAG: 禁用微信AI专用键盘")
+            
+            // 方法1：通过输入法服务直接调用
+            val inputMethodService = com.shenji.aikeyboard.keyboard.ShenjiInputMethodService.instance
+            if (inputMethodService != null) {
+                inputMethodService.disableWeChatAIModePublic()
+                Timber.d("$TAG: 通过输入法服务禁用微信AI键盘成功")
+            } else {
+                Timber.w("$TAG: 输入法服务实例为空，尝试广播方式")
+                
+                // 方法2：通过广播禁用
+                val intent = android.content.Intent("com.shenji.aikeyboard.DISABLE_WECHAT_AI_MODE")
+                context.sendBroadcast(intent)
+                Timber.d("$TAG: 已发送禁用微信AI键盘广播")
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: 禁用微信AI键盘失败")
+        }
     }
 } 
