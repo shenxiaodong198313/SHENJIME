@@ -37,21 +37,19 @@ class FloatingWeChatAutoChatWindow(
     companion object {
         private const val TAG = "FloatingWeChatAutoChatWindow"
         
-        // AI聊天提示词模板
+        // AI聊天提示词模板 - 简化版本，提高响应速度
         private const val CHAT_PROMPT_TEMPLATE = """
-你是一个智能聊天助手，请根据以下微信对话内容，生成一个合适的回复。
+你是一个年轻朋友，正在微信聊天。
+
+规则：
+1. 回复1-2句话，不超过30字
+2. 语气轻松自然，像朋友聊天
+3. 可以用简单表情如😂👍👀
 
 对话内容：
 %s
 
-要求：
-1. 回复要自然、友好、符合对话语境
-2. 回复长度适中，不要太长或太短
-3. 根据对话内容的情感色彩调整回复语调
-4. 如果是问题，请给出有用的回答
-5. 如果是日常聊天，请保持轻松愉快的语调
-
-请直接给出回复内容，不要包含任何解释或格式标记：
+请直接回复，不要解释：
         """
     }
     
@@ -61,10 +59,18 @@ class FloatingWeChatAutoChatWindow(
     private var tvStatusContent: TextView? = null
     private var scrollViewStatus: ScrollView? = null
     private var tvReplyCount: TextView? = null
+    private var btnSendImmediately: android.widget.Button? = null
+    private var btnCancelSending: android.widget.Button? = null
+    private var layoutDelayControls: android.widget.LinearLayout? = null
     
     // 流式显示相关
     private var currentStreamingText = ""
     private var isStreaming = false
+    
+    // 延迟发送相关
+    private var isDelayedSending = false
+    private var delayJob: kotlinx.coroutines.Job? = null
+    private var currentPendingMessage = ""
     
     // Assists窗口包装器
     private var windowWrapper: AssistsWindowWrapper? = null
@@ -134,11 +140,17 @@ class FloatingWeChatAutoChatWindow(
      */
     fun showAndAnalyze() {
         try {
+            Timber.d("$TAG: Starting showAndAnalyze")
+            
             // 检查是否已经有窗口在显示
             windowWrapper?.let { wrapper ->
                 if (AssistsWindowManager.contains(wrapper)) {
                     Timber.d("$TAG: Window already exists and is visible, not creating duplicate")
                     return
+                } else {
+                    // 窗口引用存在但不在管理器中，清理引用
+                    Timber.w("$TAG: Window reference exists but not in manager, cleaning up")
+                    windowWrapper = null
                 }
             }
             
@@ -189,16 +201,26 @@ class FloatingWeChatAutoChatWindow(
         try {
             Timber.d("$TAG: Recreating window")
             
+            // 停止所有任务
+            analysisJob?.cancel()
+            monitoringJob?.cancel()
+            isMonitoring = false
+            stopStreaming()
+            
             // 清理旧窗口
             windowWrapper?.let { wrapper ->
                 try {
                     if (AssistsWindowManager.contains(wrapper)) {
                         AssistsWindowManager.removeView(wrapper.getView())
+                        Timber.d("$TAG: Old window removed during recreation")
                     }
                 } catch (e: Exception) {
-                    Timber.w(e, "$TAG: Error removing old window")
+                    Timber.w(e, "$TAG: Error removing old window during recreation")
                 }
             }
+            
+            // 清理旧引用
+            windowWrapper = null
             
             // 重新初始化
             createContentView()
@@ -214,6 +236,10 @@ class FloatingWeChatAutoChatWindow(
                             AssistsWindowManager.add(wrapper)
                             startContinuousMonitoring()
                             autoClickInputBoxAndEnableAIMode()
+                            Timber.d("$TAG: Window recreated successfully")
+                        } ?: run {
+                            Timber.e("$TAG: Failed to recreate window - windowWrapper is null")
+                            Toast.makeText(context, "窗口重建失败，请重试", Toast.LENGTH_SHORT).show()
                         }
                     }
                 } catch (e: Exception) {
@@ -233,10 +259,15 @@ class FloatingWeChatAutoChatWindow(
      */
     fun close() {
         try {
+            Timber.d("$TAG: Closing window programmatically")
+            
             // 停止所有任务
             analysisJob?.cancel()
             monitoringJob?.cancel()
+            delayJob?.cancel()
             isMonitoring = false
+            isDelayedSending = false
+            currentPendingMessage = ""
             
             // 停止流式显示
             stopStreaming()
@@ -247,22 +278,30 @@ class FloatingWeChatAutoChatWindow(
             // 退出AI回复模式
             disableAIReplyMode()
             
+            // 移除窗口视图
             windowWrapper?.let { wrapper ->
                 try {
                     if (AssistsWindowManager.contains(wrapper)) {
                         AssistsWindowManager.removeView(wrapper.getView())
+                        Timber.d("$TAG: Window view removed from AssistsWindowManager")
+                    } else {
+                        Timber.w("$TAG: Window wrapper not found in AssistsWindowManager")
                     }
                 } catch (e: Exception) {
                     Timber.w(e, "$TAG: Error removing window view, window may already be removed")
                 }
+            } ?: run {
+                Timber.w("$TAG: WindowWrapper is null, cannot remove window")
             }
             
-            // 直接清理窗口引用
+            // 清理窗口引用
             windowWrapper = null
             
             Timber.d("$TAG: Window closed and reference cleared")
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error closing window")
+            // 即使出错也要尝试清理引用
+            windowWrapper = null
         }
     }
     
@@ -288,24 +327,55 @@ class FloatingWeChatAutoChatWindow(
                     y = (context.resources.displayMetrics.heightPixels * 0.1).toInt()
                 },
                 onClose = { parent ->
-                    // 当用户点击关闭按钮时的回调
-                    Timber.d("$TAG: User clicked close button, starting cleanup")
-                    
-                    // 停止所有任务
-                    analysisJob?.cancel()
-                    monitoringJob?.cancel()
-                    isMonitoring = false
-                    
-                    // 停止流式显示
-                    stopStreaming()
-                    
-                    // 恢复悬浮按钮显示
-                    showFloatingButton()
-                    
-                    // 退出AI回复模式
-                    disableAIReplyMode()
-                    
-                    Timber.d("$TAG: Window closed by user, cleanup completed")
+                    // 使用协程确保关闭操作不阻塞UI，即使在AI处理时也能关闭
+                    coroutineScope.launch(Dispatchers.Main) {
+                        try {
+                            // 当用户点击关闭按钮时的回调
+                            Timber.d("$TAG: User clicked close button, starting cleanup")
+                            
+                            // 立即停止所有任务，包括AI处理
+                            analysisJob?.cancel()
+                            monitoringJob?.cancel()
+                            delayJob?.cancel()
+                            isMonitoring = false
+                            isAIProcessing = false // 重要：立即停止AI处理
+                            isDelayedSending = false
+                            currentPendingMessage = ""
+                            
+                            // 停止流式显示
+                            stopStreaming()
+                            
+                            // 恢复悬浮按钮显示
+                            showFloatingButton()
+                            
+                            // 退出AI回复模式
+                            disableAIReplyMode()
+                            
+                            // 实际移除窗口视图
+                            windowWrapper?.let { wrapper ->
+                                try {
+                                    if (AssistsWindowManager.contains(wrapper)) {
+                                        AssistsWindowManager.removeView(wrapper.getView())
+                                    }
+                                } catch (e: Exception) {
+                                    Timber.w(e, "$TAG: Error removing window view in onClose callback")
+                                }
+                            }
+                            
+                            // 清理窗口引用
+                            windowWrapper = null
+                            
+                            Timber.d("$TAG: Window closed by user, cleanup completed")
+                        } catch (e: Exception) {
+                            Timber.e(e, "$TAG: Error in onClose callback")
+                            // 即使出错也要尝试移除窗口
+                            try {
+                                AssistsWindowManager.removeView(parent)
+                            } catch (removeError: Exception) {
+                                Timber.e(removeError, "$TAG: Failed to remove window in error recovery")
+                            }
+                        }
+                    }
                 }
             ).apply {
                 showOption = true
@@ -326,6 +396,9 @@ class FloatingWeChatAutoChatWindow(
                 scrollViewStatus = view.findViewById(R.id.scroll_view_status)
                 tvReplyCount = view.findViewById(R.id.tv_reply_count)
                 
+                // 创建延迟发送控制按钮
+                setupDelayControls(view)
+                
                 // 初始显示
                 showInitialState()
                 
@@ -333,6 +406,122 @@ class FloatingWeChatAutoChatWindow(
             } catch (e: Exception) {
                 Timber.e(e, "$TAG: Failed to setup UI")
             }
+        }
+    }
+    
+    /**
+     * 设置延迟发送控制按钮
+     */
+    private fun setupDelayControls(parentView: View) {
+        try {
+            // 直接使用父视图作为容器
+            val mainContainer = parentView as? android.view.ViewGroup
+            
+            if (mainContainer != null) {
+                // 创建延迟控制按钮容器
+                layoutDelayControls = android.widget.LinearLayout(context).apply {
+                    orientation = android.widget.LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER
+                    visibility = View.GONE // 初始隐藏
+                    
+                    val layoutParams = android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        setMargins(16, 8, 16, 8)
+                    }
+                    this.layoutParams = layoutParams
+                }
+                
+                // 创建立即发送按钮
+                btnSendImmediately = android.widget.Button(context).apply {
+                    text = "立即发送"
+                    setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
+                    setTextColor(android.graphics.Color.WHITE)
+                    textSize = 14f
+                    
+                    val layoutParams = android.widget.LinearLayout.LayoutParams(
+                        0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f
+                    ).apply {
+                        setMargins(0, 0, 8, 0)
+                    }
+                    this.layoutParams = layoutParams
+                    
+                    setOnClickListener {
+                        handleImmediateSend()
+                    }
+                }
+                
+                // 创建取消发送按钮
+                btnCancelSending = android.widget.Button(context).apply {
+                    text = "取消发送"
+                    setBackgroundColor(android.graphics.Color.parseColor("#F44336"))
+                    setTextColor(android.graphics.Color.WHITE)
+                    textSize = 14f
+                    
+                    val layoutParams = android.widget.LinearLayout.LayoutParams(
+                        0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f
+                    ).apply {
+                        setMargins(8, 0, 0, 0)
+                    }
+                    this.layoutParams = layoutParams
+                    
+                    setOnClickListener {
+                        handleCancelSend()
+                    }
+                }
+                
+                // 添加按钮到容器
+                layoutDelayControls?.addView(btnSendImmediately)
+                layoutDelayControls?.addView(btnCancelSending)
+                
+                // 添加容器到主布局
+                mainContainer.addView(layoutDelayControls)
+                
+                Timber.d("$TAG: Delay control buttons created successfully")
+            } else {
+                Timber.w("$TAG: Could not find suitable container for delay controls")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Failed to setup delay controls")
+        }
+    }
+    
+    /**
+     * 显示延迟控制按钮
+     */
+    private fun showDelayControls() {
+        layoutDelayControls?.visibility = View.VISIBLE
+    }
+    
+    /**
+     * 隐藏延迟控制按钮
+     */
+    private fun hideDelayControls() {
+        layoutDelayControls?.visibility = View.GONE
+    }
+    
+    /**
+     * 处理立即发送
+     */
+    private fun handleImmediateSend() {
+        if (isDelayedSending && currentPendingMessage.isNotEmpty()) {
+            sendMessageImmediately(currentPendingMessage)
+            hideDelayControls()
+        }
+    }
+    
+    /**
+     * 处理取消发送
+     */
+    private fun handleCancelSend() {
+        if (isDelayedSending) {
+            cancelSending()
+            hideDelayControls()
         }
     }
     
@@ -596,6 +785,25 @@ class FloatingWeChatAutoChatWindow(
     }
     
     /**
+     * 格式化对话数据为简化聊天输入格式
+     */
+    private fun formatConversationForHumanizedChat(data: WeChatConversationFilter.FilteredWeChatData): String {
+        val recentMessages = data.conversationMessages.takeLast(3) // 只取最近3条，减少token消耗
+        
+        return buildString {
+            if (recentMessages.isEmpty()) {
+                append("没有对话内容")
+            } else {
+                // 简化格式化消息记录
+                recentMessages.forEach { message ->
+                    val prefix = if (message.isFromOther) "朋友" else "我"
+                    append("$prefix: ${message.content}\n")
+                }
+            }
+        }.trim()
+    }
+    
+    /**
      * 生成AI回复
      */
     private fun generateAIReply() {
@@ -604,7 +812,8 @@ class FloatingWeChatAutoChatWindow(
             return
         }
         
-        coroutineScope.launch {
+        // 使用独立的协程，确保不阻塞UI操作
+        coroutineScope.launch(Dispatchers.IO) {
             try {
                 isAIProcessing = true
                 
@@ -669,59 +878,67 @@ class FloatingWeChatAutoChatWindow(
                     updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...")
                 }
                 
-                // 构建AI提示词
-                val prompt = String.format(CHAT_PROMPT_TEMPLATE, currentConversationData)
+                // 构建AI提示词 - 使用拟人化格式
+                // 重新获取当前对话数据用于拟人化格式化
+                val currentFilteredData = WeChatConversationFilter.filterWeChatConversation()
+                val humanizedConversationData = if (currentFilteredData != null) {
+                    formatConversationForHumanizedChat(currentFilteredData)
+                } else {
+                    currentConversationData // 回退到原始数据
+                }
+                val prompt = String.format(CHAT_PROMPT_TEMPLATE, humanizedConversationData)
                 
                 kotlinx.coroutines.delay(1000) // 让用户看到发送信息
                 
-                // 阶段3：AI模型生成回复中 - 准备输入框
+                // 阶段3：AI模型生成回复中
                 withContext(Dispatchers.Main) {
-                    updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...\n\n📝 正在准备输入框...")
+                    updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...")
                 }
                 
-                // 先点击输入框获得焦点，为流式填充做准备
-                val inputClicked = clickWeChatInputField()
-                if (!inputClicked) {
-                    withContext(Dispatchers.Main) {
-                        updateStatusContent("❌ 无法点击输入框，将只在窗口中显示AI回复")
-                    }
-                    kotlinx.coroutines.delay(1000)
-                }
-                
-                // 延迟一下确保输入框获得焦点
-                kotlinx.coroutines.delay(500)
-                
-                // 使用流式生成AI回复 - 双重流式显示
+                // 使用流式生成AI回复 - 添加超时机制
                 var finalAiReply = ""
                 isStreaming = true
                 currentStreamingText = ""
                 
                 try {
-                    finalAiReply = llmManager?.generateResponseStream(prompt) { partialText, isComplete ->
-                        // 在主线程更新UI
-                        coroutineScope.launch(Dispatchers.Main) {
-                            if (isStreaming) {
-                                currentStreamingText = partialText
-                                val cleanedPartialText = cleanAIReply(partialText)
+                    // 添加30秒超时
+                    finalAiReply = withContext(Dispatchers.IO) {
+                        kotlinx.coroutines.withTimeoutOrNull(30000) {
+                            llmManager?.generateResponseStream(prompt) { partialText, isComplete ->
+                                // 检查是否仍在处理中（用户可能已关闭窗口）
+                                if (!isAIProcessing) return@generateResponseStream
                                 
-                                // 1. 实时更新窗口显示内容
-                                updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...\n\n生成的回复：\n「$cleanedPartialText」")
-                                
-                                // 2. 同时在输入框中流式填充内容
-                                if (inputClicked) {
-                                    fillInputFieldStreamingly(cleanedPartialText)
-                                }
-                                
-                                // 自动滚动到底部
-                                scrollViewStatus?.post {
-                                    scrollViewStatus?.fullScroll(View.FOCUS_DOWN)
+                                // 在主线程更新UI
+                                coroutineScope.launch(Dispatchers.Main) {
+                                    if (isStreaming && isAIProcessing) {
+                                        currentStreamingText = partialText
+                                        val cleanedPartialText = cleanAIReply(partialText)
+                                        
+                                        // 1. 实时更新窗口显示内容
+                                        updateStatusContent("🤖 AI_GEMMA3N-4B正在生成回复中...\n\n生成的回复：\n「$cleanedPartialText」")
+                                        
+                                        // 自动滚动到底部
+                                        scrollViewStatus?.post {
+                                            scrollViewStatus?.fullScroll(View.FOCUS_DOWN)
+                                        }
+                                    }
                                 }
                             }
+                        } ?: ""
+                    }
+                    
+                    if (finalAiReply.isEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            updateStatusContent("⚠️ AI回复生成超时，请重试")
                         }
-                    } ?: ""
+                        return@launch
+                    }
                 } catch (e: Exception) {
                     Timber.e(e, "$TAG: Error in streaming AI response")
                     finalAiReply = ""
+                    withContext(Dispatchers.Main) {
+                        updateStatusContent("❌ AI回复生成失败：${e.message}")
+                    }
                 } finally {
                     isStreaming = false
                 }
@@ -734,41 +951,38 @@ class FloatingWeChatAutoChatWindow(
                     
                     // 验证AI回复是否有效（基础验证）
                     if (isValidAIReply(cleanedReply)) {
-                        // 阶段4：AI模型生成完毕，准备发送
+                        // 阶段4：AI模型生成完毕，使用智能延迟发送
                         withContext(Dispatchers.Main) {
-                            updateStatusContent("🤖 AI_GEMMA3N-4B生成完毕，正在发送回复...\n\n生成的回复：\n「$cleanedReply」")
+                            updateStatusContent("🤖 AI_GEMMA3N-4B生成完毕！\n\n生成的回复：\n「$cleanedReply」\n\n⏰ 正在计算最佳发送时机...")
                         }
                         
-                        // 如果输入框已经填充了内容，直接发送
-                        if (inputClicked) {
-                            kotlinx.coroutines.delay(500) // 等待最后的流式填充完成
-                            
-                            // 直接发送（内容已经通过流式填充到输入框了）
-                            val sent = sendMessageDirectly()
-                            
-                            if (sent) {
-                                // 增加AI回复计数
-                                aiReplyCount++
-                                updateReplyCountDisplay()
-                                
-                                updateStatusContent("✅ AI回复发送成功！\n\n⏳ 未检测到有新的聊天消息")
-                                Toast.makeText(context, "✅ AI回复已自动发送", Toast.LENGTH_SHORT).show()
-                                Timber.d("$TAG: AI reply sent successfully via streaming, count: $aiReplyCount")
-                                
-                                // 发送成功后继续监控，不关闭窗口
-                                kotlinx.coroutines.delay(2000)
-                                updateStatusContent("⏳ 未检测到有新的聊天消息")
-                            } else {
-                                // 发送失败，回退到传统方式
-                                autoFillAndSendMessage(cleanedReply)
-                            }
-                        } else {
-                            // 输入框点击失败，使用传统方式
-                            autoFillAndSendMessage(cleanedReply)
+                        kotlinx.coroutines.delay(500) // 短暂显示生成完毕状态
+                        
+                        // 使用智能延迟发送，让聊天更自然
+                        withContext(Dispatchers.Main) {
+                            sendMessageWithDelay(cleanedReply, currentFilteredData)
                         }
                     } else {
-                        withContext(Dispatchers.Main) {
-                            updateStatusContent("❌ AI生成的回复内容无效：\n「$cleanedReply」\n\n停止自动发送")
+                        // AI回复无效时，尝试生成简单的拟人化回复
+                        val fallbackReply = if (currentFilteredData != null) {
+                            generateFallbackReply(currentFilteredData)
+                        } else {
+                            ""
+                        }
+                        if (fallbackReply.isNotEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                updateStatusContent("⚠️ AI回复不够自然，使用备用回复：\n「$fallbackReply」\n\n⏰ 正在计算发送时机...")
+                            }
+                            
+                            kotlinx.coroutines.delay(300)
+                            
+                            withContext(Dispatchers.Main) {
+                                sendMessageWithDelay(fallbackReply, currentFilteredData)
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                updateStatusContent("❌ AI生成的回复内容无效：\n「$cleanedReply」\n\n停止自动发送")
+                            }
                         }
                     }
                 } else {
@@ -789,24 +1003,40 @@ class FloatingWeChatAutoChatWindow(
     }
     
     /**
-     * 清理AI回复内容
+     * 清理AI回复内容 - 针对拟人化聊天机器人优化
      */
     private fun cleanAIReply(reply: String): String {
         return reply.trim()
+            // 移除常见的回复前缀
             .removePrefix("回复：")
             .removePrefix("回复:")
             .removePrefix("答：")
             .removePrefix("答:")
+            .removePrefix("我回复：")
+            .removePrefix("我说：")
             .removePrefix("USER_REVIEW_SUB_PROMPT:")
+            // 移除错误信息
             .removePrefix("模型未初始化")
             .removePrefix("模型没有初始化")
             .removePrefix("请稍后再试")
+            // 移除可能的格式标记
+            .removePrefix("【回复】")
+            .removePrefix("[回复]")
+            .removePrefix("回复内容：")
+            // 移除多余的引号
+            .removePrefix("\"")
+            .removeSuffix("\"")
+            .removePrefix("'")
+            .removeSuffix("'")
+            // 移除换行符，保持单行回复
+            .replace("\n", " ")
+            .replace("\r", "")
             .trim()
-            .take(200) // 限制长度避免过长
+            .take(100) // 限制长度，符合微信聊天习惯
     }
     
     /**
-     * 验证AI回复是否有效（基础验证）
+     * 验证AI回复是否有效（针对拟人化聊天优化）
      */
     private fun isValidAIReply(reply: String): Boolean {
         // 基础验证：确保不是错误信息
@@ -817,12 +1047,39 @@ class FloatingWeChatAutoChatWindow(
             "初始化失败",
             "ERROR",
             "Exception",
-            "FATAL"
+            "FATAL",
+            "抱歉",
+            "无法",
+            "不能",
+            "系统",
+            "AI助手",
+            "智能助手"
         )
         
+        // 不合适的回复模式
+        val inappropriatePatterns = listOf(
+            "作为一个",
+            "我是一个",
+            "根据您的",
+            "很高兴为您",
+            "如果您需要",
+            "请问还有什么",
+            "希望我的回答"
+        )
+        
+        // 检查是否包含过多的格式标记
+        val formatMarkers = listOf("【", "】", "[", "]", "##", "**")
+        val hasFormatMarkers = formatMarkers.any { reply.contains(it) }
+        
         return reply.isNotEmpty() && 
-               reply.length >= 2 && 
-               !errorPhrases.any { reply.contains(it, ignoreCase = true) }
+               reply.length >= 1 && 
+               reply.length <= 100 && // 符合微信聊天长度
+               !errorPhrases.any { reply.contains(it, ignoreCase = true) } &&
+               !inappropriatePatterns.any { reply.contains(it, ignoreCase = true) } &&
+               !hasFormatMarkers && // 不包含格式标记
+               !reply.startsWith("根据") && // 避免过于正式的开头
+               !reply.startsWith("基于") &&
+               !reply.contains("您") // 避免过于正式的称谓
     }
     
     /**
@@ -1309,7 +1566,6 @@ class FloatingWeChatAutoChatWindow(
                 val className = node.className?.toString() ?: ""
                 val description = node.contentDescription?.toString() ?: ""
                 
-                // 查找输入框节点
                 (className.contains("EditText") || 
                  description.contains("输入") || 
                  node.isEditable) &&
@@ -1319,14 +1575,14 @@ class FloatingWeChatAutoChatWindow(
             if (inputNodes.isNotEmpty()) {
                 val inputNode = inputNodes.first()
                 
-                // 直接设置文本内容（覆盖之前的内容）
+                // 流式填充文本
                 val arguments = android.os.Bundle()
                 arguments.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
                 inputNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
             }
             
         } catch (e: Exception) {
-            Timber.e(e, "$TAG: Error in streaming input field fill")
+            Timber.e(e, "$TAG: Error in streaming fill")
         }
     }
     
@@ -1362,5 +1618,370 @@ class FloatingWeChatAutoChatWindow(
             Timber.e(e, "$TAG: Error sending message directly")
             false
         }
+    }
+    
+    /**
+     * 计算智能延迟时间（秒）
+     * 根据回复内容和聊天情况计算合适的延迟时间，模拟真实聊天节奏
+     */
+    private fun calculateSmartDelay(reply: String, conversationData: WeChatConversationFilter.FilteredWeChatData?): Int {
+        // 基础延迟时间（秒）
+        var delaySeconds = 2
+        
+        // 根据回复长度调整延迟
+        when {
+            reply.length <= 5 -> delaySeconds = kotlin.random.Random.nextInt(1, 3) // 短回复：1-2秒
+            reply.length <= 15 -> delaySeconds = kotlin.random.Random.nextInt(2, 5) // 中等回复：2-4秒
+            reply.length <= 30 -> delaySeconds = kotlin.random.Random.nextInt(3, 7) // 长回复：3-6秒
+            else -> delaySeconds = kotlin.random.Random.nextInt(5, 10) // 很长回复：5-9秒
+        }
+        
+        // 根据回复类型调整延迟
+        when {
+            // 简单确认类回复，延迟较短
+            reply in listOf("好的", "嗯嗯", "哈哈", "是的", "👀", "😂") -> {
+                delaySeconds = kotlin.random.Random.nextInt(1, 3)
+            }
+            
+            // 问题回复，需要"思考"时间
+            reply.contains("?") || reply.contains("？") -> {
+                delaySeconds += kotlin.random.Random.nextInt(2, 4)
+            }
+            
+            // 复杂回复，需要更多"打字"时间
+            reply.contains("因为") || reply.contains("所以") || reply.contains("不过") -> {
+                delaySeconds += kotlin.random.Random.nextInt(1, 3)
+            }
+            
+            // 情感回复，稍微快一点
+            reply.contains("哈哈") || reply.contains("😂") || reply.contains("🤣") -> {
+                delaySeconds = maxOf(1, delaySeconds - 1)
+            }
+        }
+        
+        // 根据对话频率调整（如果对方刚发了很多消息，回复可以快一点）
+        conversationData?.let { data ->
+            val recentMessages = data.conversationMessages.takeLast(5)
+            val recentOtherMessages = recentMessages.filter { it.isFromOther }
+            
+            if (recentOtherMessages.size >= 3) {
+                // 对方连续发了多条消息，回复快一点
+                delaySeconds = maxOf(1, delaySeconds - 2)
+            }
+        }
+        
+        // 限制延迟范围：1-15秒
+        return delaySeconds.coerceIn(1, 15)
+    }
+    
+    /**
+     * 获取延迟原因说明
+     */
+    private fun getDelayReason(reply: String, delaySeconds: Int): String {
+        return when {
+            delaySeconds <= 2 -> "快速回复"
+            reply.length <= 5 -> "简短回复"
+            reply.length <= 15 -> "正在打字"
+            reply.length <= 30 -> "组织语言中"
+            reply.contains("?") || reply.contains("？") -> "思考问题中"
+            reply.contains("因为") || reply.contains("所以") -> "整理思路中"
+            else -> "认真回复中"
+        }
+    }
+    
+    /**
+     * 延迟发送消息
+     */
+    private fun sendMessageWithDelay(message: String, conversationData: WeChatConversationFilter.FilteredWeChatData?) {
+        // 取消之前的延迟任务
+        delayJob?.cancel()
+        
+        val delaySeconds = calculateSmartDelay(message, conversationData)
+        val delayReason = getDelayReason(message, delaySeconds)
+        
+        isDelayedSending = true
+        currentPendingMessage = message
+        
+        // 显示延迟控制按钮
+        showDelayControls()
+        
+        // 显示延迟状态
+        updateStatusContent("✅ AI回复已生成，为了更自然的聊天体验\n\n📝 回复内容：「$message」\n\n⏰ $delayReason，需要等待 $delaySeconds 秒后发送\n\n💡 点击下方按钮可立即发送或取消")
+        
+        // 启动延迟任务
+        delayJob = coroutineScope.launch {
+            try {
+                // 倒计时显示
+                for (remainingSeconds in delaySeconds downTo 1) {
+                    if (!isDelayedSending) break // 如果被取消，退出循环
+                    
+                    withContext(Dispatchers.Main) {
+                        updateStatusContent("✅ AI回复已生成，为了更自然的聊天体验\n\n📝 回复内容：「$message」\n\n⏰ $delayReason，还需等待 $remainingSeconds 秒后发送\n\n💡 点击下方按钮可立即发送或取消")
+                    }
+                    
+                    kotlinx.coroutines.delay(1000) // 等待1秒
+                }
+                
+                // 延迟结束，发送消息
+                if (isDelayedSending) {
+                    withContext(Dispatchers.Main) {
+                        updateStatusContent("📤 延迟时间到，正在发送回复...")
+                    }
+                    
+                    kotlinx.coroutines.delay(500) // 短暂延迟显示发送状态
+                    
+                    // 实际发送消息
+                    autoFillAndSendMessage(message)
+                    val sent = true // autoFillAndSendMessage内部处理成功状态
+                    
+                    if (sent) {
+                        // 增加AI回复计数
+                        aiReplyCount++
+                        updateReplyCountDisplay()
+                        
+                        withContext(Dispatchers.Main) {
+                            updateStatusContent("✅ AI回复发送成功！\n\n⏳ 未检测到有新的聊天消息")
+                            Toast.makeText(context, "✅ AI回复已自动发送", Toast.LENGTH_SHORT).show()
+                        }
+                        
+                        Timber.d("$TAG: Delayed AI reply sent successfully, count: $aiReplyCount")
+                        
+                        // 发送成功后继续监控
+                        kotlinx.coroutines.delay(2000)
+                        withContext(Dispatchers.Main) {
+                            updateStatusContent("⏳ 未检测到有新的聊天消息")
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            updateStatusContent("❌ 延迟发送失败，请手动发送")
+                        }
+                    }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                Timber.d("$TAG: Delayed sending was cancelled")
+            } catch (e: Exception) {
+                Timber.e(e, "$TAG: Error in delayed sending")
+                withContext(Dispatchers.Main) {
+                    updateStatusContent("❌ 延迟发送过程中出错：${e.message}")
+                }
+                            } finally {
+                    isDelayedSending = false
+                    currentPendingMessage = ""
+                    withContext(Dispatchers.Main) {
+                        hideDelayControls()
+                    }
+                }
+        }
+    }
+    
+    /**
+     * 立即发送消息（取消延迟）
+     */
+    private fun sendMessageImmediately(message: String) {
+        // 取消延迟任务
+        delayJob?.cancel()
+        isDelayedSending = false
+        currentPendingMessage = ""
+        
+        hideDelayControls()
+        updateStatusContent("📤 立即发送回复...")
+        
+        coroutineScope.launch {
+            kotlinx.coroutines.delay(300)
+            
+            autoFillAndSendMessage(message)
+            val sent = true // autoFillAndSendMessage内部处理成功状态
+            
+            if (sent) {
+                aiReplyCount++
+                updateReplyCountDisplay()
+                
+                withContext(Dispatchers.Main) {
+                    updateStatusContent("✅ AI回复立即发送成功！\n\n⏳ 未检测到有新的聊天消息")
+                    Toast.makeText(context, "✅ AI回复已立即发送", Toast.LENGTH_SHORT).show()
+                }
+                
+                Timber.d("$TAG: AI reply sent immediately, count: $aiReplyCount")
+                
+                kotlinx.coroutines.delay(2000)
+                withContext(Dispatchers.Main) {
+                    updateStatusContent("⏳ 未检测到有新的聊天消息")
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    updateStatusContent("❌ 立即发送失败，请手动发送")
+                }
+            }
+        }
+    }
+    
+    /**
+     * 取消发送
+     */
+    private fun cancelSending() {
+        delayJob?.cancel()
+        isDelayedSending = false
+        currentPendingMessage = ""
+        
+        hideDelayControls()
+        updateStatusContent("❌ 已取消发送\n\n⏳ 未检测到有新的聊天消息")
+        Toast.makeText(context, "已取消发送", Toast.LENGTH_SHORT).show()
+    }
+    
+    /**
+     * 生成备用的拟人化回复
+     */
+    private fun generateFallbackReply(data: WeChatConversationFilter.FilteredWeChatData): String {
+        val lastMessage = data.conversationMessages.lastOrNull()
+        val lastContent = lastMessage?.content?.lowercase() ?: ""
+        
+        // 根据最后一条消息的内容特征生成合适的回复
+        return when {
+            // 问候类
+            lastContent.contains("你好") || lastContent.contains("hi") || lastContent.contains("hello") -> {
+                listOf("嗨！", "你好呀👋", "哈喽～").random()
+            }
+            
+            // 问题类
+            lastContent.contains("?") || lastContent.contains("？") -> {
+                listOf("让我想想🤔", "这个问题有点意思", "emmm...").random()
+            }
+            
+            // 感叹类
+            lastContent.contains("!") || lastContent.contains("！") -> {
+                listOf("哇塞！", "真的假的", "牛啊👌").random()
+            }
+            
+            // 表达累/忙
+            lastContent.contains("累") || lastContent.contains("忙") -> {
+                listOf("辛苦了😮‍💨", "打工人不容易", "要注意休息哦").random()
+            }
+            
+            // 表达开心
+            lastContent.contains("开心") || lastContent.contains("高兴") || lastContent.contains("哈哈") -> {
+                listOf("哈哈哈🤣", "看你这么开心我也开心", "笑死我了").random()
+            }
+            
+            // 吃饭相关
+            lastContent.contains("吃") || lastContent.contains("饭") || lastContent.contains("饿") -> {
+                listOf("我也饿了", "吃什么好呢🤔", "干饭人干饭魂！").random()
+            }
+            
+            // 工作相关
+            lastContent.contains("工作") || lastContent.contains("上班") -> {
+                listOf("打工人加油💪", "工作顺利！", "搬砖不易啊").random()
+            }
+            
+            // 默认通用回复
+            else -> {
+                listOf(
+                    "哈哈",
+                    "是的呢",
+                    "确实",
+                    "有道理",
+                    "懂了",
+                    "👀",
+                    "嗯嗯",
+                    "真的",
+                    "哇",
+                    "好的"
+                ).random()
+            }
+        }
+    }
+    
+    /**
+     * 测试关闭功能 - 用于调试关闭按钮问题
+     * 这个方法可以通过外部调用来测试窗口关闭是否正常工作
+     */
+    fun testCloseFunction(): String {
+        val debugInfo = StringBuilder()
+        
+        try {
+            debugInfo.append("=== 窗口关闭功能测试 ===\n")
+            
+            // 检查窗口状态
+            windowWrapper?.let { wrapper ->
+                val isContained = AssistsWindowManager.contains(wrapper)
+                debugInfo.append("窗口是否在管理器中: $isContained\n")
+                
+                val view = wrapper.getView()
+                debugInfo.append("窗口视图是否为空: ${view == null}\n")
+                
+                if (view != null) {
+                    debugInfo.append("窗口视图可见性: ${view.visibility}\n")
+                    debugInfo.append("窗口视图是否附加到窗口: ${view.isAttachedToWindow}\n")
+                }
+                
+                // 测试关闭操作
+                debugInfo.append("\n--- 执行关闭操作 ---\n")
+                close()
+                
+                // 检查关闭后状态
+                kotlinx.coroutines.GlobalScope.launch {
+                    kotlinx.coroutines.delay(1000) // 等待1秒
+                    
+                    val isStillContained = AssistsWindowManager.contains(wrapper)
+                    debugInfo.append("关闭后窗口是否仍在管理器中: $isStillContained\n")
+                    
+                    val currentWrapper = windowWrapper
+                    debugInfo.append("窗口引用是否已清理: ${currentWrapper == null}\n")
+                    
+                    Timber.d("$TAG: Close test result:\n$debugInfo")
+                }
+                
+            } ?: run {
+                debugInfo.append("窗口引用为空，无法测试\n")
+            }
+            
+            debugInfo.append("=== 测试完成 ===\n")
+            
+        } catch (e: Exception) {
+            debugInfo.append("测试过程中出现异常: ${e.message}\n")
+            Timber.e(e, "$TAG: Error in close function test")
+        }
+        
+        return debugInfo.toString()
+    }
+    
+    /**
+     * 获取窗口状态信息 - 用于调试
+     */
+    fun getWindowStatus(): String {
+        val status = StringBuilder()
+        
+        try {
+            status.append("=== 窗口状态信息 ===\n")
+            
+            windowWrapper?.let { wrapper ->
+                status.append("窗口包装器: 存在\n")
+                status.append("是否在管理器中: ${AssistsWindowManager.contains(wrapper)}\n")
+                
+                val view = wrapper.getView()
+                status.append("视图: ${if (view != null) "存在" else "不存在"}\n")
+                
+                if (view != null) {
+                    status.append("视图可见性: ${view.visibility}\n")
+                    status.append("视图是否附加: ${view.isAttachedToWindow}\n")
+                    status.append("视图宽度: ${view.width}\n")
+                    status.append("视图高度: ${view.height}\n")
+                }
+                
+            } ?: run {
+                status.append("窗口包装器: 不存在\n")
+            }
+            
+            status.append("监控状态: $isMonitoring\n")
+            status.append("AI处理状态: $isAIProcessing\n")
+            status.append("流式显示状态: $isStreaming\n")
+            
+            status.append("=== 状态信息结束 ===\n")
+            
+        } catch (e: Exception) {
+            status.append("获取状态信息时出现异常: ${e.message}\n")
+            Timber.e(e, "$TAG: Error getting window status")
+        }
+        
+        return status.toString()
     }
 } 
