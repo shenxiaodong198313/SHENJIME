@@ -114,7 +114,7 @@
     <color name="suggestion_text_color">#4CAF50</color>
     
     <!-- 窗口背景颜色 -->
-    <color name="window_background">#E6000000</color>
+    <color name="window_background">#40000000</color>
     
     <!-- AI状态颜色 -->
     <color name="ai_status_color">#FF81C784</color>

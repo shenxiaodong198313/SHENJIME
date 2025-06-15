@@ -11,7 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@drawable/analysis_result_background_transparent"
         android:padding="12dp"
         android:scrollbars="vertical"
         android:fadeScrollbars="false">

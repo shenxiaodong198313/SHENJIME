@@ -275,7 +275,7 @@
     <color name="text_secondary">#FF757575</color>
     <color name="warning_orange">#FFFF9800</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="window_background">#E6000000</color>
+    <color name="window_background">#40000000</color>
     <dimen name="candidate_divider_height">24dp</dimen>
     <dimen name="candidate_word_margin">8dp</dimen>
     <dimen name="h1">18sp</dimen>

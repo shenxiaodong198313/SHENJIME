@@ -2,8 +2,8 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     
-    <!-- 半透明黑色背景 -->
-    <solid android:color="#80000000" />
+    <!-- 半透明黑色背景，比顶部和底部更深但仍保持透明效果 -->
+    <solid android:color="#60000000" />
     
     <!-- 圆角 -->
     <corners android:radius="8dp" />
